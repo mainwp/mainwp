@@ -2724,7 +2724,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Grab Sites List.
         $grid_response = (array) static::call_gridpane_api( 'GET', '/site?per_page=' . $sites_count, $accessToken );
-        Api_Backups_Utility::log_debug( 'GridPane API get sites :: [response=' . ( is_array( $grid_response ) ? print_r( $grid_response, true ) : 'INVALID' ). '] :: '  . $accessToken  ); // phpcs:ignore -- NOSONAR - for debugging.
+        Api_Backups_Utility::log_debug( 'GridPane API get sites' );
         $grid_response_decoded = json_decode( $grid_response[0] );
         if ( is_object( $grid_response_decoded ) && property_exists( $grid_response_decoded, 'data' ) ) {
             return $grid_response_decoded->data;

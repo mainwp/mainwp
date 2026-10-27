@@ -236,10 +236,6 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         }
         // phpcs:enable
 
-        if ( 1 === MainWP_DB::instance()->get_websites_count() ) {
-            $ret['redirectUrl'] = esc_url( admin_url( 'admin.php?page=managesites' ) );
-        }
-
         die( wp_json_encode( $ret ) );
     }
 

@@ -527,7 +527,16 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
             'kinsta' => 'mainwp_kinsta_api_key',
         );
         foreach ( $key_fields as $provider => $field ) {
-            MainWP_DB::instance()->update_website_option( $site, 'mainwp_api_backups_' . $provider . '_api_key', wp_json_encode( array( 'encrypted_val' => 'original-' . $provider ) ) );
+            MainWP_DB::instance()->update_website_option(
+				$site,
+				'mainwp_api_backups_' . $provider . '_api_key',
+				wp_json_encode(
+					array(
+						'encrypted_val' => 'original-' . $provider,
+						'file_key'      => 'fixture_provider_key',
+					)
+				)
+			);
             $_POST[ $field ] = 'retain' === $keys ? MainWP_Credential_Render::value_for_input( true ) : ( 'clear' === $keys ? '' : 'fixture-' . $provider );
         }
         $_REQUEST = array_merge( $_POST, array( 'id' => (string) $site ) );

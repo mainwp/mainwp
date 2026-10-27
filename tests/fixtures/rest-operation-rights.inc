@@ -137,6 +137,7 @@ namespace {
 	);
 	$root = dirname( __DIR__, 2 );
 	require $root . '/includes/rest-api/class-mainwp-rest-authentication.php';
+	require $root . '/class/class-mainwp-system.php';
 	require $root . '/includes/abilities/class-mainwp-abilities-util.php';
 	require $root . '/includes/rest-api/controller/version2/class-mainwp-rest-controller.php';
 	foreach ( glob( $root . '/includes/rest-api/controller/version2/*.php' ) as $file ) {

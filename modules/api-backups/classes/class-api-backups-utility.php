@@ -643,6 +643,10 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return false;
         }
 
+        if ( ! is_string( $value ) ) {
+            return true;
+        }
+
         // MWP-1543: settings forms render the sentinel ('••••••••') in the
         // password input when a value is already stored. A submission that
         // returns the sentinel unchanged means "leave existing value alone";
@@ -673,7 +677,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         $encrypted = $this->encrypt_api_keys( $value, false, $key_file, $name );
-        if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) ) {
+        if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) && ! empty( $encrypted['encrypted_val'] ) ) {
             return update_option( $opt_name, $encrypted );
         }
 
@@ -748,6 +752,10 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( ! in_array( $name, $names ) ) {
             return false;
+        }
+
+        if ( ! is_string( $value ) ) {
+            return true;
         }
 
         // MWP-1543: same sentinel short-circuit as update_api_key(); the

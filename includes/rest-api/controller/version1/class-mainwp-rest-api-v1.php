@@ -679,8 +679,8 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * Check request permissions.
      *
-     * @param array $request The request made in the API call which includes all parameters.
-     * @param array $item API Keys using.
+     * @param \WP_REST_Request $request The request made in the API call which includes all parameters.
+     * @param array            $item    API Keys using.
      *
      * @return bool Whether the api permissions are valid.
      * @throws \MainWP_Exception Request permissions check.
@@ -735,6 +735,15 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
         if ( empty( $allow_methods ) || ! in_array( $method, $allow_methods ) ) {
             /* translators: %s: HTTP method name */
             throw new MainWP_Exception( sprintf( esc_html__( 'Sorry, you are not allowed to do the %s method.', 'mainwp' ), ( isset( $methods_map[ $method ] ) ? $methods_map[ $method ] : '' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+
+        // Legacy management routes also delete through POST, so method rights alone are insufficient.
+        if ( isset( $request['action'] ) && 'delete' === $request['action'] && ! in_array( 'd', $item_pers, true ) ) {
+            // WordPress's route end anchor also matches before a final newline.
+            $route = strtolower( trim( $request->get_route(), "/ \t\r\n\0\x0B" ) );
+            if ( in_array( $route, array( 'mainwp/v1/site/site-manage-plugin', 'mainwp/v1/site/site-manage-theme' ), true ) ) {
+                throw new MainWP_Exception( esc_html__( 'Sorry, you are not allowed to delete plugins or themes.', 'mainwp' ) );
+            }
         }
 
         return true;

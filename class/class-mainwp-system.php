@@ -719,7 +719,11 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     require_once ABSPATH . WPINC . '/pluggable.php'; // NOSONAR - WP compatible.
                 }
 
-                return apply_filters( 'mainwp_currentusercan', true, $cap_type, $cap );
+                try {
+                    return apply_filters( 'mainwp_currentusercan', true, $cap_type, $cap );
+                } catch ( \Throwable $e ) {
+                    return false;
+                }
             }
         }
     }

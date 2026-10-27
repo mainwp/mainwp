@@ -237,6 +237,7 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			$this->assertSame( 1, $xpath->query( '//*[@id="' . $prefix . '-password-explanation"][@hidden][not(@role="tooltip")][not(contains(@class,"popup"))]' )->length );
 		}
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-csv-password-explanation"]/following-sibling::div//*[@id="mainwp-managesites-row-import-sites"]' )->length );
+		$this->assertStringContainsString( 'Your Dashboard uses each password once to set up a secure key with its site. None of them are saved or sent to MainWP.com.', $xpath->query( '//*[@id="mainwp-onboarding-csv-password-help"]/parent::*' )->item( 0 )->textContent );
 		$this->assertSame( 1, $xpath->query( '//input[@id="mainwp_managesites_add_admin_pwd"]/preceding-sibling::div[contains(@class,"mainwp-onboarding-password-note")][.//strong[normalize-space(.)="Used once, then discarded."]][.//i[contains(@class,"lock")]]' )->length );
 	}
 
@@ -303,6 +304,7 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			$this->assertSame( 1, $xpath->query( $row . '/i[@id="mainwp-onboarding-' . $id . '-icon"][@class="notched circle loading icon"][@aria-hidden="true"]' )->length );
 			$this->assertSame( 1, $xpath->query( $row . '/div[@class="content"][starts-with(normalize-space(.),"' . $label . '")]/span[@class="screen-reader-text"][@id="mainwp-onboarding-' . $id . '"][normalize-space(.)="Checking..."]' )->length );
 		}
+		$this->assertSame( 1, $xpath->query( '//span[@id="mainwp-onboarding-child-label"][normalize-space(.)="MainWP Child installed and active"]/following-sibling::span[@id="mainwp-onboarding-child"][@class="screen-reader-text"]' )->length );
 	}
 
 	/** The summary celebrates connections without claiming success for an empty Dashboard. */

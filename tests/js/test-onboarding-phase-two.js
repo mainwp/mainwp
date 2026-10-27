@@ -285,8 +285,9 @@ function uiHarness(mode = 'single-site', tabs = true, storage = new Map(), start
     let submits = 0;
     const copy = {
         checking: 'Checking...', yes: 'Yes', notYet: 'Not yet', no: 'No', notChecked: 'Not checked',
-        unreachable: "We can't reach %s. Check the URL and that the site is online.",
-        install: 'Install or activate MainWP Child',
+        unreachable: 'Check the URL and that the site is online.',
+        install: "Open the site's plugin installer",
+        childReady: 'MainWP Child installed and active', childNotActive: 'MainWP Child not active',
         remaining: 'For security, MainWP Child switches off in about %d minutes if nothing connects to it.', remainingOne: 'For security, MainWP Child switches off in about 1 minute if nothing connects to it.', remainingLess: 'For security, MainWP Child switches off in less than a minute if nothing connects to it.',
         idleTitle: "We'll check the site for you", idleBody: "Enter the site URL and username, and we'll confirm the site is reachable and MainWP Child is ready.", checkingTitle: 'Checking %s…', checkingBody: 'This takes a few seconds.', connectingTitle: 'Connecting…', readyTitle: 'Ready to connect', installTitle: 'Install or activate MainWP Child', expiredTitle: 'MainWP Child switched itself off', stoppedTitle: "We couldn't finish checking %s", unreachableTitle: "Can't reach %s", polling: "We'll keep checking while this page is open.", childNotAnswering: 'Inactive Child error',
         windowClosed: 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.',
@@ -478,12 +479,13 @@ function matrixView(status, deadline, timers = [], request = null, zone = matrix
         rowClasses: rows.slice(0, 2).map(label => [label === 'Yes', label === 'No']),
         rowIcons: rows.slice(0, 2).map(label => ({
             Yes: 'green check icon', No: 'red times icon', 'Checking...': 'notched circle loading icon',
-            'Not yet': 'orange circle icon', 'Not checked': 'grey circle icon'
+            'Not yet': 'exclamation circle icon', 'Not checked': 'grey circle icon'
         })[label]),
+        childLabel: rows[0] === 'Yes' && rows[1] !== 'Yes' ? 'MainWP Child not active' : 'MainWP Child installed and active',
         install: rows[2], installHref: rows[2] ? matrixSite + 'wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term' : '',
         timer: rows[3] && deadline !== 'none', expiry: rows[4], retry: rows[5],
         timerLine: deadline === 'none' ? matrixDefault : deadline === 'future' ? 'For security, MainWP Child switches off in less than a minute if nothing connects to it.' : matrixClosed,
-        detectionMessage: status === 'unreachable' ? `We can't reach ${matrixSite}. Check the URL and that the site is online.`
+        detectionMessage: status === 'unreachable' ? 'Check the URL and that the site is online.'
             : status === 'error' ? '<p>Blocked</p>' : '',
         messageClass: ['detected'].includes(status) ? 'ui green message' : ['waiting', 'expired'].includes(status) || (status === 'timed_out' && rows[0] === 'Yes') ? 'ui yellow message' : ['error', 'unreachable'].includes(status) ? 'ui red message' : 'ui message',
         headline: ({ idle: "We'll check the site for you", checking: `Checking ${matrixSite}…`, connecting: 'Connecting…', detected: 'Ready to connect', waiting: 'Install or activate MainWP Child', expired: 'MainWP Child switched itself off', unreachable: `Can't reach ${matrixSite}`, error: 'Could not connect. Try again.', timed_out: rows[0] === 'Yes' ? 'Install or activate MainWP Child' : `We couldn't finish checking ${matrixSite}`, stopped: `We couldn't finish checking ${matrixSite}` })[status],
@@ -609,6 +611,7 @@ function matrixSnapshot(h, controller) {
         rows: ['reachable', 'child'].map(id => row(id).text()),
         rowClasses: ['reachable', 'child'].map(id => [row(id).prop('is-ok'), row(id).prop('is-failed')]),
         rowIcons: ['reachable', 'child'].map(id => row(id + '-icon').attr('class')),
+        childLabel: row('child-label').text(),
         install: visible('install'), installHref: row('install-link').attr('href'),
         timer: visible('timer'), timerLine: row('time-left').text(),
         expiry: visible('expiry'), retry: visible('retry'), detectionMessage: row('detection-message').html(),
@@ -776,7 +779,7 @@ test('wizard fields debounce detection, render install guidance, and enable Conn
     assert.equal(h.$('#mainwp-onboarding-install-link').attr('href'), 'https://example.org/wordpress/wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term');
     h.reply({ response: 'HTTPERROR', failure_ux: '<p>Existing transport advice</p>' });
     assert.equal(h.$('#mainwp-onboarding-reachable').text(), 'No');
-    assert.equal(h.$('#mainwp-onboarding-detection-message').text(), "We can't reach https://example.org/wordpress/. Check the URL and that the site is online.");
+    assert.equal(h.$('#mainwp-onboarding-detection-message').text(), 'Check the URL and that the site is online.');
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
     h.trigger('#mainwp_managesites_add', 'click');
     assert.equal(h.requests.at(-1).options.data.action, 'mainwp_addwp');
@@ -785,6 +788,32 @@ test('wizard fields debounce detection, render install guidance, and enable Conn
     h.reply({ response: 'ERROR Bad password', failure_ux: '<p>Specific authentication error</p>' });
     assert.equal(h.messages.at(-1)[1], '<p>Specific authentication error</p>');
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
+});
+
+test('automatic re-poll keeps the needs-Child presentation while a user check starts fresh', () => {
+    const h = uiHarness();
+    h.fill(); h.advance(400); h.reply({ response: 'NOMAINWP' });
+    assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', h.context), 'waiting');
+    h.advance(5000);
+    assert.equal(h.requests.length, 2);
+    assert.equal(h.requests.at(-1).settled, false);
+    assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', h.context), 'checking');
+    assert.equal(h.$('#mainwp-onboarding-detection').attr('class'), 'ui yellow message');
+    assert.equal(h.$('#mainwp-onboarding-detection-headline').text(), 'Install or activate MainWP Child');
+    assert.equal(h.$('#mainwp-onboarding-state-icon').attr('class'), 'exclamation icon');
+    assert.equal(h.$('#mainwp-onboarding-polling').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-child-label').text(), 'MainWP Child not active');
+    assert.equal(h.$('#mainwp-onboarding-detection-body').prop('hidden'), true);
+    assert.equal(h.$('#mainwp-onboarding-detection-body').text(), '');
+    h.trigger('#mainwp-onboarding-retry', 'click');
+    assert.equal(h.$('#mainwp-onboarding-detection').attr('class'), 'ui message');
+    assert.equal(h.$('#mainwp-onboarding-detection-headline').text(), 'Checking https://example.org/wordpress/…');
+    assert.equal(h.$('#mainwp-onboarding-state-icon').attr('class'), 'notched circle loading icon');
+    assert.equal(h.$('#mainwp-onboarding-detection-body').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-detection-body').text(), 'This takes a few seconds.');
+    assert.equal(h.$('#mainwp-onboarding-polling').prop('hidden'), true);
+    assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), true);
 });
 
 test('detected countdown pauses rendering in hidden tabs, catches up on return, and checks expiry without assuming it', () => {
@@ -998,6 +1027,24 @@ for (const missing of [true, false]) {
     });
 }
 
+test('escaped translated Child-not-answering errors use detection without generic diagnostics', () => {
+    const h = uiHarness(); h.fill(); h.advance(400); h.reply({ response: 'NOMAINWP' });
+    h.context.mainwpSetupLocalize.childNotAnswering = "MainWP Child isn't answering";
+    h.$('#mainwp_managesites_add_admin_pwd').val('password');
+    h.trigger('#mainwp_managesites_add', 'click');
+    h.reply({ response: 'ERROR MainWP Child isn&#039;t answering', failure_ux: '<p>Diagnostics</p>' });
+    assert.equal(vm.runInContext('mainwp_onboarding_connect_failure.category', h.context), 'child_not_answering');
+    assert.equal(h.messages.some(message => message[1] === '<p>Diagnostics</p>'), false);
+    assert.deepEqual(h.messages.at(-1), ['#mainwp-message-zone']);
+});
+
+test('error matching decodes only esc_html entities in one pass with ampersands last', () => {
+    const c = load();
+    assert.equal(c.mainwp_onboarding_decode('&#039; &#39; &quot; &lt; &gt; &amp;'), "' ' \" < > &");
+    assert.equal(c.mainwp_onboarding_decode('&amp;#039; &amp;quot; &amp;lt; &amp;gt; &amp;amp;'), '&#039; &quot; &lt; &gt; &amp;');
+    assert.equal(c.mainwp_onboarding_decode('&#x27; &#34; &apos; &nbsp;'), '&#x27; &#34; &apos; &nbsp;');
+});
+
 test('detection for a different URL does not clear a Child failure for the original URL', () => {
     const h = uiHarness(); h.fill(); h.advance(400); h.reply({ response: 'NOMAINWP' });
     h.$('#mainwp_managesites_add_admin_pwd').val('password'); h.trigger('#mainwp_managesites_add', 'click');
@@ -1057,9 +1104,20 @@ test('wizard stylesheet contains its gutters, reserves status space and suppress
     const css = fs.readFileSync(require.resolve('../../assets/css/mainwp-onboarding.css'), 'utf8');
     assert.match(css, /#mainwp-quick-setup-wizard\.ui\.grid\s*\{[^}]*margin-left:\s*0;[^}]*margin-right:\s*0;/);
     assert.doesNotMatch(css, /min-height:\s*20rem/);
-    assert.match(css, /#mainwp-onboarding-detection\[data-state="idle"\],[\s\S]*?#mainwp-onboarding-detection\[data-state="detected"\]\s*\{[^}]*min-height:/);
+    const reserved = [...css.matchAll(/([^{}]+)\{([^{}]*min-height:\s*(9|12)rem;[^{}]*)\}/g)];
+    assert.equal(reserved.length, 2);
+    for (const [, selectors] of reserved) {
+        for (const state of ['idle', 'checking', 'connecting', 'detected']) {
+            assert.ok(selectors.includes(`#mainwp-onboarding-detection[data-state="${state}"]`), state);
+        }
+    }
     assert.match(css, /#mainwp-onboarding-detection\.ui\.message::before\s*\{[^}]*display:\s*none/);
     assert.match(css, /\.mainwp-onboarding-password-explanation\[hidden\][^{]*\{[^}]*display:\s*none/);
+    assert.match(css, /#mainwp-onboarding-detection \[hidden\]\s*\{\s*display:\s*none !important;/);
+    assert.match(css, /#mainwp-onboarding-install\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;[^}]*align-items:\s*center;[^}]*gap:\s*0\.5em 1em;/);
+    assert.match(css, /#mainwp-onboarding-install a:not\(\.button\)\s*\{[^}]*white-space:\s*nowrap;/);
+    assert.match(css, /#mainwp-onboarding-install \.ui\.button\s*\{[^}]*margin-top:\s*0;/);
+    assert.match(css, /@media \(max-width: 991px\)\s*\{\s*#mainwp-onboarding-tiles\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*grid-auto-flow:\s*dense;/);
 });
 
 test('welcome titles resist attached-label margins and wrap between words with room for the badge', () => {
@@ -1122,13 +1180,18 @@ test('status rows keep localized screen-reader text for success, failure and pen
     const css = fs.readFileSync(require.resolve('../../assets/css/mainwp-onboarding.css'), 'utf8');
     assert.match(css, /#mainwp-onboarding-detection \.screen-reader-text\s*\{[^}]*position:\s*absolute;[^}]*clip-path:\s*inset\(50%\)/);
     const h = uiHarness();
-    for (const [status, reachable, child, labels] of [
-        ['detected', 'ok', 'ok', ['Yes', 'Yes']], ['waiting', 'ok', 'pending', ['Yes', 'Not yet']],
-        ['unreachable', 'failed', 'pending', ['No', 'Not checked']], ['checking', 'pending', 'pending', ['Checking...', 'Checking...']]
+    assert.match(php, /<span id="mainwp-onboarding-child-label"><\?php esc_html_e\( 'MainWP Child installed and active', 'mainwp' \); \?><\/span> <span class="screen-reader-text"/);
+    for (const [status, reachable, child, labels, childLabel] of [
+        ['detected', 'ok', 'ok', ['Yes', 'Yes'], 'MainWP Child installed and active'],
+        ['waiting', 'ok', 'pending', ['Yes', 'Not yet'], 'MainWP Child not active'],
+        ['expired', 'ok', 'failed', ['Yes', 'No'], 'MainWP Child not active'],
+        ['unreachable', 'failed', 'pending', ['No', 'Not checked'], 'MainWP Child installed and active'],
+        ['checking', 'pending', 'pending', ['Checking...', 'Checking...'], 'MainWP Child installed and active']
     ]) {
         h.context.mainwp_onboarding_render_detection({ status, reachable, child, minutes: null, deadline: null, result: {} });
         assert.equal(h.$('#mainwp-onboarding-detection').attr('data-state'), status);
         assert.deepEqual(['reachable', 'child'].map(id => h.$('#mainwp-onboarding-' + id).text()), labels);
+        assert.equal(h.$('#mainwp-onboarding-child-label').text(), childLabel);
     }
 });
 
@@ -1146,8 +1209,8 @@ test('wizard status accents, password help and summary details retain their pres
     assert.match(css, /\.mainwp-onboarding-check\s*\{[^}]*border-radius:\s*50%;[^}]*background:\s*var\(--mainwp-onboarding-success[^}]*box-shadow:[^}]*color-mix[^}]*color:\s*var\(--mainwp-onboarding-icon-foreground, #fff\)/);
     assert.match(css, /prefers-reduced-motion: reduce[\s\S]*?\.mainwp-onboarding-check\s*\{\s*animation:\s*none/);
     assert.match(css, /#mainwp-onboarding-next-steps small\s*\{[^}]*display:\s*inline/);
-    assert.match(css, /#mainwp-onboarding-disable-monitoring\s*\{[^}]*white-space:\s*nowrap/);
-    assert.match(summary(), /id="mainwp-onboarding-disable-monitoring"[^>]*>&middot; Turn off<\/a>/);
+    assert.match(css, /#mainwp-onboarding-disable-monitoring\s*\{[^}]*display:\s*block;[^}]*width:\s*fit-content;[^}]*white-space:\s*nowrap/);
+    assert.match(summary(), /id="mainwp-onboarding-disable-monitoring"[^>]*>Turn off<\/a>/);
 });
 
 
@@ -1367,7 +1430,7 @@ test('summary update tiles retain synced, unsynced and restricted actions and mo
         assert.match(html, /View updates/);
         assert.match(html, /admin.php\?page=managesites&amp;updateid=42/);
         if (input.unsynced) {
-            assert.match(html, /Updates and health will show here after the first successful sync/);
+            assert.match(html, /Updates will show here after the first sync<\/div>/);
             assert.doesNotMatch(html, /3 updates waiting|Up to date|id="mainwp-onboarding-update-list"/);
         }
     }
@@ -1400,7 +1463,7 @@ test('summary uptime and digest tiles honor effective monitoring and email branc
     for (const [disable, recipients, shown] of [[1, 'digest@example.org', false], [0, '', false], [0, '  ', false], [0, 'digest@example.org', true]]) {
         const html = summary({ daily_digest: { disable, recipients } });
         assert.equal(html.includes('id="mainwp-onboarding-digest"'), shown);
-        if (shown) assert.match(html, /Emailed when updates are waiting or a site disconnects/);
+        if (shown) assert.match(html, /Emailed when updates are waiting or a site disconnects<\/div>/);
     }
 });
 

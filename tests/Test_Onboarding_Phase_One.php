@@ -660,7 +660,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		}
 		$xpath = $this->html_xpath( $html );
 		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-wordpress"]' )->length );
-		$this->assertStringContainsString( 'Updates and health will show here after the first successful sync.', $html );
+		$this->assertStringContainsString( 'Updates will show here after the first sync', $html );
 		$this->assertStringNotContainsString( 'Up to date', $html );
 		$this->assertStringNotContainsString( 'Site health:', $html );
 		$this->assertSame( 1, $this->html_xpath( $html )->query( '//*[@id="mainwp-onboarding-uptime"]/*[@class="mainwp-onboarding-value"][normalize-space(.)="Off"]' )->length );
@@ -685,7 +685,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			} finally {
 				$html = ob_get_clean();
 			}
-			$this->assertStringContainsString( 'Updates and health will show here after the first successful sync.', $html );
+			$this->assertStringContainsString( 'Updates will show here after the first sync', $html );
 			$xpath = $this->html_xpath( $html );
 			$this->assertSame( 0, $xpath->query( '//button[@id="mainwp-onboarding-update-all"]' )->length );
 			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
@@ -1420,7 +1420,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$property->setAccessible( true );
 			$property->setValue( null, 'none' === $variant ? 0 : 1 );
 			$xpath = $this->html_xpath( $this->render_summary( $id ) );
-			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-uptime"][.//*[normalize-space(.)="On"]]//a[normalize-space(.)="· Turn off"]' )->length, $variant );
+			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-uptime"][.//*[normalize-space(.)="On"]]//a[normalize-space(.)="Turn off"]' )->length, $variant );
 			$link = $xpath->query( '//*[@id="mainwp-onboarding-disable-monitoring"]' )->item( 0 );
 			$this->assertNotFalse( wp_verify_nonce( $link->getAttribute( 'data-security' ), 'mainwp_onboarding_disable_monitoring' ) );
 			$this->assertSame( 0, $xpath->query( '//*[@id="mainwp_setup_enableUptimeMonitoring"]' )->length );
@@ -1473,7 +1473,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$line  = $xpath->query( '//*[@id="mainwp-onboarding-digest"]' );
 			$this->assertSame( ! $disabled && '' !== trim( $recipient ) ? 1 : 0, $line->length );
 			if ( $line->length ) {
-				$this->assertSame( 'Emailed when updates are waiting or a site disconnects.', $xpath->query( '//*[@id="mainwp-onboarding-digest"]/*[@class="mainwp-onboarding-detail"]' )->item( 0 )->textContent );
+				$this->assertSame( 'Emailed when updates are waiting or a site disconnects', $xpath->query( '//*[@id="mainwp-onboarding-digest"]/*[@class="mainwp-onboarding-detail"]' )->item( 0 )->textContent );
 			}
 		}
 	}

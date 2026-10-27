@@ -119,7 +119,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             ),
             'next_steps'         => array(
                 'name'    => esc_html__( 'Site Summary', 'mainwp' ),
-                'desc'    => esc_html__( 'Updates and health', 'mainwp' ),
+                'desc'    => esc_html__( 'Updates and monitoring', 'mainwp' ),
                 'view'    => array( $this, 'mwp_setup_ready' ),
                 'handler' => array( $this, 'mwp_setup_ready_save' ),
             ),
@@ -144,9 +144,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'notYet'            => __( 'Not yet', 'mainwp' ),
                 'no'                => __( 'No', 'mainwp' ),
                 'notChecked'        => __( 'Not checked', 'mainwp' ),
-                /* translators: %s: validated site URL. */
-                'unreachable'       => __( "We can't reach %s. Check the URL and that the site is online.", 'mainwp' ),
-                'install'           => __( 'Install or activate MainWP Child', 'mainwp' ),
+                'childReady'        => __( 'MainWP Child installed and active', 'mainwp' ),
+                'childNotActive'    => __( 'MainWP Child not active', 'mainwp' ),
+                'unreachable'       => __( 'Check the URL and that the site is online.', 'mainwp' ),
+                'install'           => __( "Open the site's plugin installer", 'mainwp' ),
                 /* translators: %d: minutes remaining. */
                 'remaining'         => __( 'For security, MainWP Child switches off in about %d minutes if nothing connects to it.', 'mainwp' ),
                 'remainingOne'      => __( 'For security, MainWP Child switches off in about 1 minute if nothing connects to it.', 'mainwp' ),
@@ -695,7 +696,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                             </div>
                                             <div class="item">
                                                 <i id="mainwp-onboarding-child-icon" class="notched circle loading icon" aria-hidden="true"></i>
-                                                <div class="content"><?php esc_html_e( 'MainWP Child installed and active', 'mainwp' ); ?> <span class="screen-reader-text" id="mainwp-onboarding-child"><?php esc_html_e( 'Checking...', 'mainwp' ); ?></span></div>
+                                                <div class="content"><span id="mainwp-onboarding-child-label"><?php esc_html_e( 'MainWP Child installed and active', 'mainwp' ); ?></span> <span class="screen-reader-text" id="mainwp-onboarding-child"><?php esc_html_e( 'Checking...', 'mainwp' ); ?></span></div>
                                             </div>
                                         </div>
                                         <div id="mainwp-onboarding-detection-message"></div>
@@ -789,7 +790,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     </div>
                                     <div class="mainwp-onboarding-password-note">
                                         <i class="lock icon" aria-hidden="true"></i> <strong><?php esc_html_e( 'Used once, then discarded.', 'mainwp' ); ?></strong>
-                                        <?php esc_html_e( "Your Dashboard uses it to set up a secure key with the site. It isn't saved and never goes to MainWP.com.", 'mainwp' ); ?>
+                                        <?php esc_html_e( 'Your Dashboard uses each password once to set up a secure key with its site. None of them are saved or sent to MainWP.com.', 'mainwp' ); ?>
                                         <button type="button" class="mainwp-onboarding-disclosure" id="mainwp-onboarding-csv-password-help" aria-expanded="false" aria-controls="mainwp-onboarding-csv-password-explanation"><?php esc_html_e( 'How does that work?', 'mainwp' ); ?></button>
                                     </div>
                                     <div class="mainwp-onboarding-password-explanation" id="mainwp-onboarding-csv-password-explanation" hidden><?php esc_html_e( 'Your browser sends the password to your own Dashboard. The Dashboard passes it to the site one time so the two can create a 2048-bit key pair. From then on they connect with the key. You can change this password after connecting; just keep the administrator account.', 'mainwp' ); ?></div>
@@ -1388,7 +1389,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <?php endif; ?>
                         <?php else : ?>
                             <div class="mainwp-onboarding-value"><i class="yellow circle tiny icon" aria-hidden="true"></i><?php esc_html_e( 'Awaiting first sync', 'mainwp' ); ?></div>
-                            <div class="mainwp-onboarding-detail"><?php esc_html_e( 'Updates and health will show here after the first successful sync.', 'mainwp' ); ?></div>
+                            <div class="mainwp-onboarding-detail"><?php esc_html_e( 'Updates will show here after the first sync', 'mainwp' ); ?></div>
                         <?php endif; ?>
                         <?php if ( $can_update ) : ?>
                             <?php /* translators: 1: site name, 2: update counts. */ $confirm = sprintf( __( 'Update %1$s now? This installs %2$s. Updates can occasionally break a site, so make sure you have a recent backup.', 'mainwp' ), $site->name, $counts ); ?>
@@ -1412,7 +1413,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         }
                         ?>
                         <?php if ( ! empty( $settings['active'] ) && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) : ?>
-                            <a href="#" id="mainwp-onboarding-disable-monitoring" data-security="<?php echo esc_attr( wp_create_nonce( 'mainwp_onboarding_disable_monitoring' ) ); ?>" data-error="<?php echo esc_attr__( 'Unable to turn off monitoring. Please try again.', 'mainwp' ); ?>">&middot; <?php esc_html_e( 'Turn off', 'mainwp' ); ?></a>
+                            <a href="#" id="mainwp-onboarding-disable-monitoring" data-security="<?php echo esc_attr( wp_create_nonce( 'mainwp_onboarding_disable_monitoring' ) ); ?>" data-error="<?php echo esc_attr__( 'Unable to turn off monitoring. Please try again.', 'mainwp' ); ?>"><?php esc_html_e( 'Turn off', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1420,7 +1421,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="ui segment mainwp-onboarding-tile" id="mainwp-onboarding-digest">
                         <div class="mainwp-onboarding-label"><?php esc_html_e( 'Daily digest', 'mainwp' ); ?></div>
                         <div class="mainwp-onboarding-value"><i class="green circle tiny icon" aria-hidden="true"></i><?php esc_html_e( 'On', 'mainwp' ); ?></div>
-                        <div class="mainwp-onboarding-detail"><?php esc_html_e( 'Emailed when updates are waiting or a site disconnects.', 'mainwp' ); ?></div>
+                        <div class="mainwp-onboarding-detail"><?php esc_html_e( 'Emailed when updates are waiting or a site disconnects', 'mainwp' ); ?></div>
                     </div>
                 <?php endif; ?>
             </div>

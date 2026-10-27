@@ -178,6 +178,10 @@ function mainwp_onboarding_escape(text) {
   return jQuery('<div>').text(text).html();
 }
 
+function mainwp_onboarding_decode(text) {
+  return text.replace(/&#039;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+
 function mainwp_onboarding_fields() {
   return {
     url: mainwp_onboarding_site_url(jQuery('#mainwp_managesites_add_wpurl').val(), jQuery('#mainwp_managesites_add_wpurl_protocol').val()),
@@ -328,7 +332,7 @@ function mainwp_onboarding_render_time(state) {
 function mainwp_onboarding_render_detection(state) {
   const fields = mainwp_onboarding_fields();
   const site = fields.url || jQuery('#mainwp_managesites_add_wpurl').val().trim();
-  const needsChild = state.status === 'waiting' || (state.status === 'timed_out' && state.reachable === 'ok');
+  const needsChild = state.status === 'waiting' || (['timed_out', 'checking'].includes(state.status) && state.reachable === 'ok');
   const color = state.status === 'detected' ? 'green' : needsChild || state.status === 'expired' ? 'yellow'
     : ['unreachable', 'error'].includes(state.status) ? 'red' : '';
   const title = needsChild ? 'installTitle' : ({ idle: 'idleTitle', checking: 'checkingTitle', connecting: 'connectingTitle',
@@ -336,23 +340,24 @@ function mainwp_onboarding_render_detection(state) {
     stopped: 'stoppedTitle', timed_out: 'stoppedTitle' })[state.status];
   jQuery('#mainwp-onboarding-detection').attr('class', 'ui ' + (color ? color + ' ' : '') + 'message').attr('data-state', state.status).prop('hidden', false);
   jQuery('#mainwp-onboarding-detection-headline').text(mainwp_onboarding_copy(title).replace('%s', site));
-  const stateIcon = ['checking', 'connecting'].includes(state.status) ? 'notched circle loading' : color === 'green' ? 'check'
+  const stateIcon = needsChild ? 'exclamation' : ['checking', 'connecting'].includes(state.status) ? 'notched circle loading' : color === 'green' ? 'check'
     : color === 'yellow' ? 'exclamation' : color === 'red' ? 'times' : 'info';
   jQuery('#mainwp-onboarding-state-icon').attr('class', stateIcon + ' icon');
-  const body = state.status === 'idle' ? 'idleBody' : state.status === 'checking' ? 'checkingBody' : '';
+  const body = state.status === 'idle' ? 'idleBody' : state.status === 'checking' && state.reachable !== 'ok' ? 'checkingBody' : '';
   jQuery('#mainwp-onboarding-detection-body').text(mainwp_onboarding_copy(body)).prop('hidden', !body);
   jQuery('#mainwp-onboarding-checks').prop('hidden', state.status === 'idle');
   const settled = ['error', 'unreachable', 'timed_out', 'stopped', 'expired'].includes(state.status);
+  jQuery('#mainwp-onboarding-child-label').text(mainwp_onboarding_copy(state.reachable === 'ok' && state.child !== 'ok' ? 'childNotActive' : 'childReady'));
   for (const [id, status] of [['reachable', state.reachable], ['child', state.child]]) {
     const label = status === 'ok' ? 'yes' : status === 'failed' ? 'no' : id === 'child' && state.reachable === 'ok' ? 'notYet' : settled ? 'notChecked' : 'checking';
     jQuery('#mainwp-onboarding-' + id).text(mainwp_onboarding_copy(label)).toggleClass('is-ok', status === 'ok').toggleClass('is-failed', status === 'failed');
-    const icon = label === 'yes' ? 'green check' : label === 'no' ? 'red times' : label === 'checking' ? 'notched circle loading' : label === 'notYet' ? 'orange circle' : 'grey circle';
+    const icon = label === 'yes' ? 'green check' : label === 'no' ? 'red times' : label === 'checking' ? 'notched circle loading' : label === 'notYet' ? 'exclamation circle' : 'grey circle';
     jQuery('#mainwp-onboarding-' + id + '-icon').attr('class', icon + ' icon');
   }
   const install = ['waiting', 'timed_out', 'checking'].includes(state.status) && state.reachable === 'ok' && !!fields.url;
   jQuery('#mainwp-onboarding-install').prop('hidden', !install);
   jQuery('#mainwp-onboarding-install-link').attr('href', install ? mainwp_onboarding_install_url(fields.url) : '').text(mainwp_onboarding_copy('install').replace('%s', site));
-  jQuery('#mainwp-onboarding-polling').prop('hidden', state.status !== 'waiting');
+  jQuery('#mainwp-onboarding-polling').prop('hidden', !(state.status === 'waiting' || (state.status === 'checking' && state.reachable === 'ok')));
   jQuery('#mainwp-onboarding-timer').prop('hidden', state.status !== 'detected' || state.minutes === 0 || state.deadline === null);
   mainwp_onboarding_render_time(state);
   jQuery('#mainwp-onboarding-expiry').prop('hidden', state.status !== 'expired');
@@ -612,7 +617,7 @@ let mainwp_setup_managesites_add = function () {
 
       if (failed) {
         mainwp_onboarding_connecting = false;
-        const childNotAnswering = response === 'ERROR ' + mainwp_onboarding_copy('childNotAnswering');
+        const childNotAnswering = mainwp_onboarding_decode(response) === mainwp_onboarding_decode('ERROR ' + mainwp_onboarding_copy('childNotAnswering'));
         mainwp_onboarding_connect_failure = { url, category: childNotAnswering ? 'child_not_answering' : 'other' };
         if (!childNotAnswering) mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
         if (mainwp_onboarding_detection) mainwp_onboarding_detection.connectFailed(detectionState, false);

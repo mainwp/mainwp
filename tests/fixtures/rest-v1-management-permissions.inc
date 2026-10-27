@@ -99,14 +99,17 @@ namespace {
         $response = call_user_func( $handler['callback'], $request );
         $status   = is_wp_error( $response ) ? $response->data['status'] : $response->status;
     }
+    // Use the same route pattern as WP_REST_Server::match_request_to_handler().
+    $matches_registered_route = (bool) preg_match( '@^' . $canonical . '$@i', $request->get_route() );
     echo json_encode(
         array(
-            'status'            => $status,
-            'error_code'        => is_wp_error( $response ) ? $response->code : null,
-            'registered_method' => $handler['methods'],
-            'db_reads'          => $GLOBALS['v1_fixture']['db_reads'],
-            'calls'             => $GLOBALS['v1_fixture']['calls'],
-            'rest_doing'        => defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING,
+            'status'                   => $status,
+            'error_code'               => is_wp_error( $response ) ? $response->code : null,
+            'registered_method'        => $handler['methods'],
+            'db_reads'                 => $GLOBALS['v1_fixture']['db_reads'],
+            'calls'                    => $GLOBALS['v1_fixture']['calls'],
+            'rest_doing'               => defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING,
+            'matches_registered_route' => $matches_registered_route,
         ),
         JSON_THROW_ON_ERROR
     );

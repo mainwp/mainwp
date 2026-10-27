@@ -99,6 +99,52 @@ class Test_REST_V1_Management_Permissions extends TestCase {
         }
     }
 
+    /**
+     * Requests whose final URL-encoded newline survives route decoding.
+     *
+     * @return array
+     */
+    public static function newline_routes(): array {
+        $cases = array();
+        foreach ( array( 'plugin', 'theme' ) as $type ) {
+            $canonical = '/mainwp/v1/site/site-manage-' . $type;
+            foreach ( array( $canonical, strtoupper( $canonical ) ) as $path ) {
+                $route = rawurldecode( $path . '%0A' );
+                foreach ( array( 'query', 'header' ) as $credentials ) {
+                    foreach ( array( 'w', 'r,w', 'w,d' ) as $permissions ) {
+                        $label           = $path . '/' . $credentials . '/' . $permissions;
+                        $cases[ $label ] = array( compact( 'type', 'route', 'credentials', 'permissions' ), 'w,d' === $permissions );
+                    }
+                }
+            }
+        }
+        return $cases;
+    }
+
+    /**
+     * PCRE accepts a final newline before WordPress's route end anchor.
+     *
+     * @dataProvider newline_routes
+     * @param array $input   Probe inputs.
+     * @param bool  $allowed Whether Delete permission was granted.
+     */
+    public function test_newline_routes_enforce_delete_permission( array $input, bool $allowed ): void {
+        $result = $this->probe( $input );
+        $this->assertTrue( $result['matches_registered_route'] );
+        $this->assertSame( $allowed ? 200 : 401, $result['status'] );
+        $this->assertSame( $allowed, $result['rest_doing'] );
+        $this->assertSame( $allowed ? 1 : 0, $result['db_reads'] );
+        if ( $allowed ) {
+            $this->assertSame(
+                array( array( $input['type'] . '_action', array( 'action' => 'delete', $input['type'] => 'fixture-item' ) ) ),
+                $result['calls']
+            );
+        } else {
+            $this->assertSame( 'rest_method_not_allowed', $result['error_code'] );
+            $this->assertSame( array(), $result['calls'] );
+        }
+    }
+
     /** Failed authentication still stops before site lookup or transport. */
     public function test_invalid_credentials_and_disabled_keys_are_rejected(): void {
         foreach ( array( 'plugin', 'theme' ) as $type ) {

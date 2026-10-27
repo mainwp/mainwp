@@ -188,7 +188,7 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		$this->assertSame( 0, $xpath->query( $cards . '/a//p' )->length );
 		$this->assertSame( 1, $xpath->query( $cards . '/a[1]/div[@class="extra content"]/span[@class="ui green button"][@aria-hidden="true"][normalize-space(.)="Connect my first site"]' )->length );
 		$this->assertSame( 1, $xpath->query( $cards . '/a[2]/div[@class="extra content"]/span[@class="ui basic button"][@aria-hidden="true"][normalize-space(.)="Import a CSV"]' )->length );
-		$this->assertSame( 1, $xpath->query( $cards . '/a[1]//span[@class="ui small green label"][normalize-space(.)="Recommended"]' )->length );
+		$this->assertSame( 1, $xpath->query( $cards . '/a[1]//span[@class="ui top right attached green label"][normalize-space(.)="Recommended"]' )->length );
 		$this->assertSame( 0, $xpath->query( $cards . '/a//a | ' . $cards . '/a//button' )->length );
 		$preview = $cards . '/following-sibling::*[1][self::div][@class="mainwp-onboarding-preview"]';
 		$grid    = $preview . '/div[@class="ui stackable grid"]';
@@ -199,6 +199,45 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		$this->assertSame( 3, $xpath->query( $details . '/div[@class="ui list"]/div[@class="item"]' )->length );
 		$this->assertSame( 3, $xpath->query( $details . '/div[@class="ui list"]/div[@class="item"][i[@class="green check icon"]][div[@class="content"]]' )->length );
 		$this->assertSame( 0, $xpath->query( '//figure | ' . $preview . '//span | ' . $preview . '//img[@width="1200"]' )->length );
+	}
+
+	/** The quiet exit retains its destination and the CSV card describes a full login. */
+	public function test_welcome_corner_and_quiet_skip_replace_walkthrough(): void {
+		$html  = $this->view( 'mwp_setup_welcome' );
+		$xpath = $this->html_xpath( $html );
+		$this->assertStringNotContainsString( 'Walkthrough', $html );
+		$this->assertStringContainsString( "Upload a CSV with each site's address and an administrator login.", html_entity_decode( $html, ENT_QUOTES, 'UTF-8' ) );
+		$skip = $xpath->query( '//a[normalize-space(.)="Skip setup, I\'ll add sites later"]' )->item( 0 );
+		$this->assertNotNull( $skip );
+		$this->assertSame( admin_url( 'admin.php?page=mainwp_tab' ), $skip->getAttribute( 'href' ) );
+		$this->assertStringNotContainsString( 'button', $skip->getAttribute( 'class' ) );
+	}
+
+	/** Initial status and field names remain accessible before JavaScript runs. */
+	public function test_connect_reserves_status_and_labels_url_input_and_protocol(): void {
+		$xpath = $this->html_xpath( $this->view( 'mwp_setup_connect_first_site' ) );
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-detection"][@class="ui message"][@data-state="idle"][@aria-live="polite"][not(@hidden)]' )->length );
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-detection-headline"][@tabindex="-1"][normalize-space(.)="We\'ll check the site for you"]' )->length );
+		foreach ( array(
+			'wpurl'     => 'Site URL',
+			'wpadmin'   => 'Administrator username',
+			'admin_pwd' => 'Administrator password',
+		) as $id => $label ) {
+			$this->assertSame( 1, $xpath->query( '//label[@for="mainwp_managesites_add_' . $id . '"][starts-with(normalize-space(.),"' . $label . '")]/span[normalize-space(.)="(Required)"]' )->length );
+		}
+		$this->assertSame( 1, $xpath->query( '//select[@id="mainwp_managesites_add_wpurl_protocol"][@aria-label="Protocol"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="How to install MainWP Child"]' )->length );
+	}
+
+	/** Both forms explain the password in place, with unique controlled regions. */
+	public function test_password_reassurance_precedes_input_and_disclosures_are_inline(): void {
+		$xpath = $this->html_xpath( $this->view( 'mwp_setup_connect_first_site' ) );
+		foreach ( array( 'mainwp-onboarding', 'mainwp-onboarding-csv' ) as $prefix ) {
+			$this->assertSame( 1, $xpath->query( '//button[@id="' . $prefix . '-password-help"][@type="button"][@aria-expanded="false"][@aria-controls="' . $prefix . '-password-explanation"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//*[@id="' . $prefix . '-password-explanation"][@hidden][not(@role="tooltip")][not(contains(@class,"popup"))]' )->length );
+		}
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-csv-password-explanation"]/following-sibling::div//*[@id="mainwp-managesites-row-import-sites"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//input[@id="mainwp_managesites_add_admin_pwd"]/preceding-sibling::div[contains(@class,"mainwp-onboarding-password-note")][.//strong[normalize-space(.)="Used once, then discarded."]][.//i[contains(@class,"lock")]]' )->length );
 	}
 
 	/**
@@ -230,16 +269,16 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			$this->assertStringContainsString( 'id="mainwp-onboarding-detection"', $html );
 			$this->assertStringContainsString( 'qsw_nonce[mainwp_checkwp]', $html );
 			$this->assertStringNotContainsString( 'onmouseover="alert', $html );
-			$xpath = $this->html_xpath( $html );
-			$this->assertSame( 1, $xpath->query( '//h1[normalize-space(.)="Connect your first site"]' )->length );
+			$xpath   = $this->html_xpath( $html );
+			$heading = 'multiple-site' === $expected ? 'Import your sites' : 'Connect your first site';
+			$this->assertSame( 1, $xpath->query( '//h1[normalize-space(.)="' . $heading . '"]' )->length );
 			$intro = 'multiple-site' === $expected ? "Upload a CSV with each site's address and an administrator login." : "You'll need the site's address and an administrator login.";
 			$this->assertSame( $intro, trim( $xpath->query( '//h1/following-sibling::p[1]' )->item( 0 )->textContent ) );
-			$this->assertSame( 1, $xpath->query( '//a[@id="mainwp_managesites_add_import"][normalize-space(.)="Connect sites"]' )->length );
-			$this->assertStringContainsString( 'Unconnected MainWP Child installations switch off for security after a set time.', $html );
+			$this->assertSame( 1, $xpath->query( '//button[@id="mainwp_managesites_add_import"][@type="button"][@disabled][normalize-space(.)="Connect sites"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-timer"]/p[@id="mainwp-onboarding-time-left"]' )->length );
 			$this->assertSame( 0, $xpath->query( '//div[contains(@class,"menu-connect-first-site")]' )->length );
-			$switch = 'single-site' === $expected ? 'Import a CSV instead' : 'Connect one site instead';
-			$other  = 'single-site' === $expected ? 'multiple-site' : 'single-site';
-			$this->assertSame( 1, $xpath->query( '//p[@class="ui small text"]/a[normalize-space(.)="' . $switch . '"][contains(@href,"mode=' . $other . '")][contains(@href,"step=connect_first_site")]' )->length );
+			$this->assertStringNotContainsString( 'Import a CSV instead', $html );
+			$this->assertSame( 'multiple-site' === $expected ? 1 : 0, $xpath->query( '//a[normalize-space(.)="Connect one site instead"][contains(@href,"mode=single-site")][contains(@href,"step=connect_first_site")]' )->length );
 			$this->assertSame( 1, $xpath->query( '//div[@data-tab="' . $expected . '"][contains(@class,"active")]' )->length );
 			$this->assertSame( 0, $xpath->query( '//div[@data-tab][contains(@class,"attached")]' )->length );
 		}
@@ -257,17 +296,67 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'Connect one site instead', $html );
 		$labels = array(
 			'reachable' => 'Site reachable',
-			'child'     => 'MainWP Child detected',
+			'child'     => 'MainWP Child installed and active',
 		);
 		foreach ( $labels as $id => $label ) {
-			$row = '//div[@id="mainwp-onboarding-detection"]/div[@class="ui list"]/div[@class="item"]';
+			$row = '//div[@id="mainwp-onboarding-detection"]/div[@class="ui horizontal list"]/div[@class="item"]';
 			$this->assertSame( 1, $xpath->query( $row . '/i[@id="mainwp-onboarding-' . $id . '-icon"][@class="notched circle loading icon"][@aria-hidden="true"]' )->length );
-			$this->assertSame( 1, $xpath->query( $row . '/div[@class="content"][starts-with(normalize-space(.),"' . $label . '")]/strong[@id="mainwp-onboarding-' . $id . '"][normalize-space(.)="Checking..."]' )->length );
+			$this->assertSame( 1, $xpath->query( $row . '/div[@class="content"][starts-with(normalize-space(.),"' . $label . '")]/span[@class="screen-reader-text"][@id="mainwp-onboarding-' . $id . '"][normalize-space(.)="Checking..."]' )->length );
 		}
 	}
 
-	/** The summary card follows the same menu and permission guard as Get Started. */
-	public function test_summary_ai_card_follows_mcp_availability(): void {
+	/** The summary celebrates connections without claiming success for an empty Dashboard. */
+	public function test_summary_hero_tiles_and_footer_per_variant(): void {
+		$id = $this->create_test_site( array( 'name' => 'Agency <Site>' ) );
+		$this->set_site_option( $id, 'site_info', wp_json_encode( array( 'wpversion' => '6.7' ) ) );
+		$this->set_site_option( $id, 'favi_icon', 'https://example.org/site-icon.png' );
+		update_option(
+			'mainwp_settings_notification_emails',
+			array(
+				'daily_digest' => array(
+					'disable'    => 0,
+					'recipients' => 'digest@example.org',
+				),
+			)
+		);
+		$property = new \ReflectionProperty( MainWP_Manage_Sites::class, 'total_sites' );
+		$property->setAccessible( true );
+		foreach ( array(
+			array( $id, 1, 'Your first site is connected' ),
+			array( 0, 3, '3 sites connected' ),
+			array( 0, 0, 'No sites connected yet' ),
+		) as list( $site_id, $count, $heading ) ) {
+			$_GET['siteid'] = $site_id;
+			$property->setValue( null, $count );
+			$html  = $this->view( 'mwp_setup_ready' );
+			$xpath = $this->html_xpath( $html );
+			$this->assertSame( $heading, trim( $xpath->query( '//h1' )->item( 0 )->textContent ) );
+			$this->assertSame( $count ? 1 : 0, $xpath->query( '//*[@class="mainwp-onboarding-check"][@aria-hidden="true"]' )->length );
+			$this->assertSame( $count ? 0 : 1, $xpath->query( '//*[contains(@class,"mainwp-onboarding-empty")]' )->length );
+			$this->assertSame( $site_id ? 1 : 0, $xpath->query( '//*[@id="mainwp-onboarding-wordpress"]' )->length );
+			$this->assertSame( $site_id ? 1 : 0, $xpath->query( '//*[@id="mainwp-onboarding-updates"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-tiles"]/*[@id="mainwp-onboarding-uptime"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-tiles"]/*[@id="mainwp-onboarding-digest"]' )->length );
+			$this->assertStringNotContainsString( 'Site health:', $html );
+			$this->assertStringNotContainsString( 'What&#039;s next', $html );
+			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-next-steps"]' )->length );
+			$add = $count ? 'Add another site' : 'Add your first site';
+			$this->assertSame( 1, $xpath->query( '//form//a[@class="ui basic button"][normalize-space(.)="' . $add . '"][contains(@href,"do=new")]' )->length );
+			$this->assertSame( 1, $xpath->query( '//form//button[@type="submit"][@class="ui green button"][normalize-space(.)="Go to Dashboard"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//form//*[@class="ten wide column"]//*[@id="mainwp-guided-tours-option"]' )->length );
+			$this->assertSame( ! $site_id && $count ? 1 : 0, $xpath->query( '//a[contains(@href,"page=UpdatesManage")][normalize-space(.)="View updates"]' )->length );
+			if ( $site_id ) {
+				$this->assertStringContainsString( 'Agency &lt;Site&gt;', $html );
+				$this->assertSame( 1, $xpath->query( '//*[@class="mainwp-onboarding-site"]//img[@src="https://example.org/site-icon.png"]' )->length );
+				$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-site-icon"]' )->length );
+				$this->assertStringContainsString( 'Up to date', $html );
+				$this->assertStringContainsString( 'Nothing waiting right now', $html );
+			}
+		}
+	}
+
+	/** The summary link follows the same menu and permission guard as Get Started. */
+	public function test_summary_ai_link_follows_mcp_availability(): void {
 		global $_mainwp_disable_menus_items;
 		$before                      = $_mainwp_disable_menus_items;
 		$_mainwp_disable_menus_items = array();
@@ -277,9 +366,9 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		};
 		try {
 			$html = $this->view( 'mwp_setup_ready' );
-			$this->assertStringContainsString( 'Connect your AI assistant', $html );
-			$this->assertStringContainsString( '<code>Which of my sites have plugin updates waiting?</code>', $html );
-			$this->assertStringContainsString( 'Changes wait for your approval.', $html );
+			$this->assertStringNotContainsString( 'Connect your AI assistant', $html );
+			$this->assertStringNotContainsString( '<code>', $html );
+			$this->assertStringContainsString( 'changes wait for your approval', $html );
 			$this->assertStringContainsString( 'Connect Claude or Cursor', $html );
 			$this->assertStringNotContainsString( 'Set up MCP', $html );
 			$this->assertStringContainsString( 'admin.php?page=mainwp-mcp', $html );
@@ -293,24 +382,24 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			}
 			$xpath = new \DOMXPath( $document );
 			$group = '//div[@id="mainwp-onboarding-next-steps"]';
-			$this->assertSame( 1, $xpath->query( $group . '[@class="ui three doubling stackable cards"]' )->length );
-			$this->assertSame( 3, $xpath->query( $group . '/div[@class="card"]' )->length );
-			$this->assertSame( 3, $xpath->query( $group . '/div[@class="card"][div[@class="content"]/div[@class="header"]][div[@class="content"]/div[@class="description"]]' )->length );
+			$this->assertSame( 1, $xpath->query( $group )->length );
+			$this->assertSame( 0, $xpath->query( $group . '/div[@class="card"]' )->length );
+			$this->assertSame( 2, $xpath->query( $group . '//a' )->length );
 			$this->assertSame( 0, $xpath->query( $group . '//h3' )->length );
-			$this->assertSame( 1, $xpath->query( $group . '/div[@class="card"]//a[normalize-space(.)="Connect Claude or Cursor"][contains(@href,"admin.php?page=mainwp-mcp")]' )->length );
+			$this->assertSame( 1, $xpath->query( $group . '//a[normalize-space(.)="Connect Claude or Cursor"][contains(@href,"admin.php?page=mainwp-mcp")]' )->length );
 			add_filter( 'mainwp_is_disable_menu_item', $hide, 10, 3 );
 			$html  = $this->view( 'mwp_setup_ready' );
 			$xpath = $this->html_xpath( $html );
 			$this->assertStringNotContainsString( 'Connect your AI assistant', $html );
-			$this->assertSame( 1, $xpath->query( $group . '[@class="ui two stackable cards"]' )->length );
-			$this->assertSame( 2, $xpath->query( $group . '/div[@class="card"]' )->length );
+			$this->assertSame( 1, $xpath->query( $group )->length );
+			$this->assertSame( 1, $xpath->query( $group . '//a' )->length );
 			remove_filter( 'mainwp_is_disable_menu_item', $hide, 10 );
 			wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
 			$html  = $this->view( 'mwp_setup_ready' );
 			$xpath = $this->html_xpath( $html );
 			$this->assertStringNotContainsString( 'Connect your AI assistant', $html );
-			$this->assertSame( 1, $xpath->query( $group . '[@class="ui two stackable cards"]' )->length );
-			$this->assertSame( 2, $xpath->query( $group . '/div[@class="card"]' )->length );
+			$this->assertSame( 1, $xpath->query( $group )->length );
+			$this->assertSame( 1, $xpath->query( $group . '//a' )->length );
 		} finally {
 			remove_filter( 'mainwp_is_disable_menu_item', $hide, 10 );
 			$_mainwp_disable_menus_items = $before;

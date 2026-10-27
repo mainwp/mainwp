@@ -2,6 +2,8 @@ const MAINWP_ONBOARDING_POLL_INTERVAL = 5000;
 const MAINWP_ONBOARDING_MAX_DURATION = 20 * 60 * 1000;
 let mainwp_onboarding_detection = null;
 let mainwp_onboarding_connecting = false;
+let mainwp_onboarding_connect_failure = null;
+let mainwp_onboarding_clear_deadline = () => {};
 
 function mainwp_onboarding_site_url(value, protocol) {
   try {
@@ -108,6 +110,7 @@ function mainwp_onboarding_detection_controller(options) {
   }
   function restart(carry) {
     cancel();
+    if (!carry && options.carry) carry = options.carry();
     const next = mainwp_onboarding_initial_state(options.now());
     // A failed connect to the same target keeps the Child's reported deadline.
     if (carry && carry.detected) Object.assign(next, { detected: true, deadline: carry.deadline, minutes: carry.minutes });
@@ -194,6 +197,31 @@ function mainwp_onboarding_check_request(fields, done) {
 function mainwp_onboarding_bind_detection() {
   let debounce = null;
   let countdown = null;
+  function storageKey(url) { return 'mainwp-onboarding-window:' + url; }
+  function readDeadline() {
+    const url = mainwp_onboarding_fields().url;
+    if (!url) return null;
+    try {
+      const entry = JSON.parse(window.localStorage.getItem(storageKey(url)));
+      if (!entry || entry.url !== url || !Number.isFinite(entry.deadline) || entry.deadline < 0
+        || !(entry.minutes === null || (Number.isInteger(entry.minutes) && entry.minutes > 0))) return null;
+      return { detected: true, deadline: entry.deadline, minutes: entry.minutes };
+    } catch (error) {
+      // Storage is optional; blocked access must not prevent a connection.
+      return null;
+    }
+  }
+  mainwp_onboarding_clear_deadline = function (url) {
+    try { window.localStorage.removeItem(storageKey(url)); } catch (error) { /* Storage may be blocked. */ }
+  };
+  function saveDeadline(state) {
+    const url = mainwp_onboarding_fields().url;
+    if (!url || state.status !== 'detected') return;
+    if (state.deadline === null) { mainwp_onboarding_clear_deadline(url); return; }
+    try {
+      window.localStorage.setItem(storageKey(url), JSON.stringify({ url, deadline: state.deadline, minutes: state.minutes }));
+    } catch (error) { /* Detection also works without persistent storage. */ }
+  }
   function singleSite() {
     const mode = jQuery('.menu-connect-first-site .active.item').attr('data-tab') || jQuery('#mainwp-qsw-connect-site-form').attr('data-mode');
     return mode === 'single-site';
@@ -209,7 +237,7 @@ function mainwp_onboarding_bind_detection() {
     jQuery('#mainwp_managesites_add').prop('disabled', mainwp_onboarding_connecting || !fields.url || !fields.admin || (passwordRequired && !password));
   }
   mainwp_onboarding_detection = mainwp_onboarding_detection_controller({
-    now: () => Date.now(), hidden: () => document.hidden, ready,
+    now: () => Date.now(), hidden: () => document.hidden, ready, carry: readDeadline,
     // Wrapped so the timers keep the window as their receiver; browsers reject options.setTimeout().
     setTimeout: (callback, delay) => setTimeout(callback, delay), clearTimeout: id => clearTimeout(id),
     request: done => {
@@ -220,6 +248,12 @@ function mainwp_onboarding_bind_detection() {
     render: state => {
       clearInterval(countdown);
       countdown = null;
+      saveDeadline(state);
+      const failure = mainwp_onboarding_connect_failure;
+      if (state.status === 'detected' && failure && failure.category === 'child_not_answering' && failure.url === mainwp_onboarding_fields().url) {
+        mainwp_set_message_zone('#mainwp-message-zone');
+        mainwp_onboarding_connect_failure = null;
+      }
       mainwp_onboarding_render_detection(state);
       if (state.status === 'detected' && state.deadline !== null && state.deadline > Date.now() && !document.hidden) {
         countdown = setInterval(() => {
@@ -250,7 +284,10 @@ function mainwp_onboarding_bind_detection() {
     debounce = setTimeout(() => mainwp_onboarding_detection.restart(), 400);
   });
   jQuery('#mainwp_managesites_add_admin_pwd, #mainwp-administrator-password-checkbox-field').on('input change', updateButton);
-  jQuery('#mainwp-onboarding-retry').on('click', () => mainwp_onboarding_detection.restart());
+  jQuery('#mainwp-onboarding-retry').on('click', () => {
+    mainwp_onboarding_detection.restart();
+    jQuery('#mainwp-onboarding-detection-headline').trigger('focus');
+  });
   jQuery(document).on('visibilitychange', function () {
     if (document.hidden) {
       clearInterval(countdown);
@@ -280,9 +317,8 @@ function mainwp_onboarding_remaining_text(seconds) {
 
 function mainwp_onboarding_render_time(state) {
   let text = '';
-  if (state.minutes !== 0) {
-    text = state.deadline === null ? (state.minutes === null ? mainwp_onboarding_copy('defaultTime') : '')
-      : Date.now() >= state.deadline ? mainwp_onboarding_copy('windowClosed')
+  if (state.minutes !== 0 && state.deadline !== null) {
+    text = Date.now() >= state.deadline ? mainwp_onboarding_copy('windowClosed')
       : mainwp_onboarding_remaining_text(Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000)));
   }
   const timeLeft = jQuery('#mainwp-onboarding-time-left');
@@ -292,7 +328,20 @@ function mainwp_onboarding_render_time(state) {
 function mainwp_onboarding_render_detection(state) {
   const fields = mainwp_onboarding_fields();
   const site = fields.url || jQuery('#mainwp_managesites_add_wpurl').val().trim();
-  jQuery('#mainwp-onboarding-detection').prop('hidden', state.status === 'idle' && (!fields.url || !fields.admin));
+  const needsChild = state.status === 'waiting' || (state.status === 'timed_out' && state.reachable === 'ok');
+  const color = state.status === 'detected' ? 'green' : needsChild || state.status === 'expired' ? 'yellow'
+    : ['unreachable', 'error'].includes(state.status) ? 'red' : '';
+  const title = needsChild ? 'installTitle' : ({ idle: 'idleTitle', checking: 'checkingTitle', connecting: 'connectingTitle',
+    detected: 'readyTitle', expired: 'expiredTitle', unreachable: 'unreachableTitle', error: 'error',
+    stopped: 'stoppedTitle', timed_out: 'stoppedTitle' })[state.status];
+  jQuery('#mainwp-onboarding-detection').attr('class', 'ui ' + (color ? color + ' ' : '') + 'message').attr('data-state', state.status).prop('hidden', false);
+  jQuery('#mainwp-onboarding-detection-headline').text(mainwp_onboarding_copy(title).replace('%s', site));
+  const stateIcon = ['checking', 'connecting'].includes(state.status) ? 'notched circle loading' : color === 'green' ? 'check'
+    : color === 'yellow' ? 'exclamation' : color === 'red' ? 'times' : 'info';
+  jQuery('#mainwp-onboarding-state-icon').attr('class', stateIcon + ' icon');
+  const body = state.status === 'idle' ? 'idleBody' : state.status === 'checking' ? 'checkingBody' : '';
+  jQuery('#mainwp-onboarding-detection-body').text(mainwp_onboarding_copy(body)).prop('hidden', !body);
+  jQuery('#mainwp-onboarding-checks').prop('hidden', state.status === 'idle');
   const settled = ['error', 'unreachable', 'timed_out', 'stopped', 'expired'].includes(state.status);
   for (const [id, status] of [['reachable', state.reachable], ['child', state.child]]) {
     const label = status === 'ok' ? 'yes' : status === 'failed' ? 'no' : id === 'child' && state.reachable === 'ok' ? 'notYet' : settled ? 'notChecked' : 'checking';
@@ -303,13 +352,11 @@ function mainwp_onboarding_render_detection(state) {
   const install = ['waiting', 'timed_out', 'checking'].includes(state.status) && state.reachable === 'ok' && !!fields.url;
   jQuery('#mainwp-onboarding-install').prop('hidden', !install);
   jQuery('#mainwp-onboarding-install-link').attr('href', install ? mainwp_onboarding_install_url(fields.url) : '').text(mainwp_onboarding_copy('install').replace('%s', site));
-  jQuery('#mainwp-onboarding-install-fallback').text(mainwp_onboarding_copy('fallback').replace('%s', site));
-  jQuery('#mainwp-onboarding-timer').prop('hidden', state.status !== 'detected' || state.minutes === 0);
+  jQuery('#mainwp-onboarding-polling').prop('hidden', state.status !== 'waiting');
+  jQuery('#mainwp-onboarding-timer').prop('hidden', state.status !== 'detected' || state.minutes === 0 || state.deadline === null);
   mainwp_onboarding_render_time(state);
-  const wasExpired = jQuery('#mainwp-onboarding-expiry').prop('hidden') === false;
   jQuery('#mainwp-onboarding-expiry').prop('hidden', state.status !== 'expired');
-  if (state.status === 'expired' && !wasExpired) mainwp_set_message_zone('#mainwp-message-zone');
-  jQuery('#mainwp-onboarding-expiry-message').text(mainwp_onboarding_copy('expired').replace('%s', site));
+  jQuery('#mainwp-onboarding-expiry-message').text((state.minutes === null ? mainwp_onboarding_copy('expiredUnknown') : state.minutes === 1 ? mainwp_onboarding_copy('expiredOne') : mainwp_onboarding_copy('expired').replace('%d', state.minutes)));
   jQuery('#mainwp-onboarding-plugins-link').attr('href', fields.url ? fields.url + 'wp-admin/plugins.php' : '');
   jQuery('#mainwp-onboarding-retry').prop('hidden', !['expired', 'error', 'unreachable', 'timed_out', 'stopped'].includes(state.status));
   const message = jQuery('#mainwp-onboarding-detection-message').empty();
@@ -318,6 +365,17 @@ function mainwp_onboarding_render_detection(state) {
     if (state.result.failure_ux) message.html(state.result.failure_ux);
     else message.text(state.result.error || String(state.result.response || mainwp_onboarding_copy('error')).replace(/^ERROR\s*/, ''));
   }
+}
+
+function mainwp_onboarding_update_import_button() {
+  if (!jQuery('#mainwp_connect_first_site_form').length) return false;
+  let hasRow = false;
+  jQuery('#mainwp_connect_first_site_form .mainwp-managesites-import-site-url').each(function () {
+    if (jQuery(this).val().trim()) hasRow = true;
+  });
+  const enabled = !!jQuery('#connect_first_site_file_bulkupload').val() || hasRow;
+  jQuery('#mainwp_managesites_add_import').prop('disabled', !enabled);
+  return enabled;
 }
 
 jQuery(function () {
@@ -333,17 +391,10 @@ jQuery(function () {
   });
 
   ['mainwp-onboarding', 'mainwp-onboarding-csv'].forEach(function (prefix) {
-    jQuery('#' + prefix + '-password-help').popup({
-      popup: '#' + prefix + '-password-explanation',
-      on: 'hover',
-      position: 'top center'
-    }).on('focus', function () {
-      jQuery(this).popup('show');
-    }).on('blur', function () {
-      jQuery(this).popup('hide');
-    }).on('click', function (event) {
-      event.preventDefault();
-      jQuery(this).popup('show');
+    jQuery('#' + prefix + '-password-help').on('click', function () {
+      const expanded = jQuery(this).attr('aria-expanded') === 'true';
+      jQuery(this).attr('aria-expanded', String(!expanded));
+      jQuery('#' + prefix + '-password-explanation').prop('hidden', expanded);
     });
   });
 
@@ -377,8 +428,18 @@ jQuery(function () {
     });
   });
 
-  // Handle submit import file CVS.
+  mainwp_onboarding_update_import_button();
+  jQuery(document).on('input change', '#connect_first_site_file_bulkupload, #mainwp_connect_first_site_form .mainwp-managesites-import-site-url', mainwp_onboarding_update_import_button);
+  const importRows = jQuery('#mainwp-managesites-row-import-sites');
+  if (jQuery('#mainwp_connect_first_site_form').length && importRows.length && typeof MutationObserver !== 'undefined') {
+    // Restored and deleted rows can change readiness without an input event.
+    const observer = new MutationObserver(mainwp_onboarding_update_import_button);
+    observer.observe(importRows[0], { childList: true, subtree: true });
+    jQuery(window).on('pagehide', () => observer.disconnect());
+  }
+
   jQuery(document).on('click', '#mainwp_managesites_add_import', function () {
+    if (!mainwp_onboarding_update_import_button()) return false;
     let error_messages = mainwp_managesites_import_handle_form_before_submit();
     // If there is an error, prevent submission and display the error
     if (error_messages.length > 0) {
@@ -474,6 +535,7 @@ const mainwp_menu_connect_first_site_onvisible_callback = function (objItem) {
 let mainwp_setup_managesites_add = function () {
   if (mainwp_onboarding_connecting) return;
   mainwp_set_message_zone('#mainwp-message-zone');
+  mainwp_onboarding_connect_failure = null;
   let errors = [];
 
   const title = jQuery('#mainwp_managesites_add_wpname');
@@ -537,6 +599,8 @@ let mainwp_setup_managesites_add = function () {
       let response = String(res_things.error || res_things.response || '').trim();
       const failed = res_things.error || response.substring(0, 5) == 'ERROR' || !res_things.siteid;
 
+      if (!failed) mainwp_onboarding_clear_deadline(url);
+
       // Leave the "Adding the site" spinner up until the summary page replaces this one.
       if (!failed && jQuery('#mainwp_connect_first_site_form').length) {
         mainwp_forceReload('admin.php?page=mainwp-setup&step=next_steps&siteid=' + Number(res_things.siteid));
@@ -548,7 +612,9 @@ let mainwp_setup_managesites_add = function () {
 
       if (failed) {
         mainwp_onboarding_connecting = false;
-        mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
+        const childNotAnswering = response === 'ERROR ' + mainwp_onboarding_copy('childNotAnswering');
+        mainwp_onboarding_connect_failure = { url, category: childNotAnswering ? 'child_not_answering' : 'other' };
+        if (!childNotAnswering) mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
         if (mainwp_onboarding_detection) mainwp_onboarding_detection.connectFailed(detectionState, false);
       } else {
         mainwp_set_message_zone('#mainwp-message-zone', response, 'green');

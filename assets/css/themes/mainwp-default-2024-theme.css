@@ -21,6 +21,21 @@
   --grey-darker-alt: #575759;
 }
 
+:root {
+  --mainwp-onboarding-text: var(--font-color);
+  --mainwp-onboarding-muted: var(--font-color-light);
+  --mainwp-onboarding-surface: var(--grey-light);
+  --mainwp-onboarding-surface-secondary: var(--grey-light-alt);
+  --mainwp-onboarding-border: var(--grey-light-alt);
+  --mainwp-onboarding-link: color-mix(in srgb, var(--link-color) 80%, #000);
+  --mainwp-onboarding-info-accent: var(--accent);
+  --mainwp-onboarding-success: var(--green-color);
+  --mainwp-onboarding-warning: var(--yellow-color);
+  --mainwp-onboarding-danger: var(--red-color);
+  --mainwp-onboarding-info-surface: color-mix(in srgb, var(--mainwp-onboarding-info-accent) 10%, var(--mainwp-onboarding-surface));
+  --mainwp-onboarding-icon-foreground: #fff;
+}
+
 .mainwp-ui.mainwp-custom-theme #mainwp-all-active-plugins-table i.circular.icon.cached-icon-customable,
 .mainwp-ui.mainwp-custom-theme #mainwp-globally-ignored-plugins i.circular.icon.cached-icon-customable{
   height: 1em !important;

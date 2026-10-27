@@ -401,9 +401,10 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 				$this->assertSame( 1, $xpath->query( $footer . '/div[@class="ten wide column"]/a[@id="mainwp_addsite_continue_button"][@class="ui basic button"]' )->length );
 			}
 		}
-		$this->assertSame( 3, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"][@class="ui three doubling stackable cards"]/div[@class="card"][div[@class="content"]/div[@class="description"]]' )->length );
-		$this->assertStringContainsString( 'Connect your WordPress sites to manage them together.', $html );
-		$this->assertStringContainsString( 'Group sites by client for reports and billing.', $html );
+		$this->assertSame( 0, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="card"]' )->length );
+		$this->assertSame( 2, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//a' )->length );
+		$this->assertStringContainsString( 'More you can do:', $html );
+		$this->assertStringContainsString( 'for reports and billing', $html );
 		$this->assertStringContainsString( 'https://www.usetiful.com/privacy-policy', $html );
 		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[input[@id="mainwp-guided-tours-option"]]/following-sibling::span[@id="mainwp-onboarding-tour-help"][@class="ui small text"]/a[@href="https://www.usetiful.com/privacy-policy"]' )->length );
 	}
@@ -658,11 +659,11 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$html = ob_get_clean();
 		}
 		$xpath = $this->html_xpath( $html );
-		$this->assertSame( 0, $xpath->query( '//div[@class="ui relaxed list"]/div[@class="item"][starts-with(normalize-space(.),"WordPress ")]' )->length );
+		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-wordpress"]' )->length );
 		$this->assertStringContainsString( 'Updates and health will show here after the first successful sync.', $html );
-		$this->assertStringNotContainsString( 'Everything is up to date', $html );
+		$this->assertStringNotContainsString( 'Up to date', $html );
 		$this->assertStringNotContainsString( 'Site health:', $html );
-		$this->assertStringContainsString( 'Uptime monitoring is off.', $html );
+		$this->assertSame( 1, $this->html_xpath( $html )->query( '//*[@id="mainwp-onboarding-uptime"]/*[@class="mainwp-onboarding-value"][normalize-space(.)="Off"]' )->length );
 		$this->assertSame( 0, $xpath->query( '//button[@id="mainwp-onboarding-update-all"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
 	}
@@ -688,9 +689,9 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$xpath = $this->html_xpath( $html );
 			$this->assertSame( 0, $xpath->query( '//button[@id="mainwp-onboarding-update-all"]' )->length );
 			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
-			$this->assertStringNotContainsString( 'Everything is up to date', $html );
+			$this->assertStringNotContainsString( 'Up to date', $html );
 			$this->assertStringNotContainsString( 'Site health:', $html );
-			$this->assertStringContainsString( 'Uptime monitoring is off.', $html );
+			$this->assertSame( 1, $this->html_xpath( $html )->query( '//*[@id="mainwp-onboarding-uptime"]/*[@class="mainwp-onboarding-value"][normalize-space(.)="Off"]' )->length );
 		}
 	}
 
@@ -731,7 +732,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 				$html = ob_get_clean();
 			}
 			$xpath = $this->html_xpath( $html );
-			$this->assertStringContainsString( $count ? sprintf( '%d updates waiting', 3 * $count ) : 'Everything is up to date', $html );
+			$this->assertStringContainsString( $count ? sprintf( '%d updates waiting', 3 * $count ) : 'Up to date', $html );
 			$button = $xpath->query( '//button[@id="mainwp-onboarding-update-all"]' );
 			$this->assertSame( $count && ! $hide ? 1 : 0, $button->length );
 			if ( $button->length ) {
@@ -750,7 +751,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 	 */
 	public static function update_counts() {
 		return array(
-			'zero'     => array( 0, 'Everything is up to date' ),
+			'zero'     => array( 0, 'Up to date' ),
 			'singular' => array( 1, '1 plugin update, 1 theme update, 1 translation update' ),
 			'plural'   => array( 2, '2 plugin updates, 2 theme updates, 2 translation updates' ),
 		);
@@ -775,13 +776,13 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			}
 			$xpath = $this->html_xpath( $html );
 			$this->assertSame( $heading, trim( $xpath->query( '//h1' )->item( 0 )->textContent ) );
-			$this->assertSame( $count ? 0 : 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="Add your first site"]' )->length );
-			$this->assertSame( $count ? 1 : 0, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="Add another site"]' )->length );
-			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Add a site"]' )->length );
+			$this->assertSame( $count ? 0 : 1, $xpath->query( '//form//a[normalize-space(.)="Add your first site"]' )->length );
+			$this->assertSame( $count ? 1 : 0, $xpath->query( '//form//a[normalize-space(.)="Add another site"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//form//a[contains(@href,"do=new")][@class="ui basic button"]' )->length );
 			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
 			$client_header = $count ? 'Assign sites to a client' : 'Add your first client';
-			$client_button = $count ? 'Assign to a client' : 'Add a client';
-			$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="' . $client_header . '"]' )->length );
+			$client_button = $client_header;
+			$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//a[normalize-space(.)="' . $client_header . '"]' )->length );
 			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="' . $client_button . '"]' )->length );
 			$client_url = $count ? add_query_arg( 'siteid', 0, $this->invoke( 'get_next_step_link', array( 'add_client' ) ) ) : admin_url( 'admin.php?page=ClientAddNew' );
 			$this->assertSame( $client_url, $xpath->query( '//a[normalize-space(.)="' . $client_button . '"]/@href' )->item( 0 )->value );
@@ -863,8 +864,8 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		} finally {
 			$html = ob_get_clean();
 		}
-		$this->assertStringContainsString( $expected ? 'Uptime monitoring is on. Email alerts are disabled.' : 'Uptime monitoring is off.', $html );
-		$this->assertStringNotContainsString( $expected ? 'Uptime monitoring is off.' : 'Uptime monitoring is on.', $html );
+		$this->assertSame( $expected ? 'On' : 'Off', trim( $this->html_xpath( $html )->query( '//*[@id="mainwp-onboarding-uptime"]/*[@class="mainwp-onboarding-value"]' )->item( 0 )->textContent ) );
+		$this->assertSame( $expected ? 1 : 0, $this->html_xpath( $html )->query( '//*[@id="mainwp-onboarding-uptime"]//*[contains(.,"Email alerts are disabled")]' )->length );
 		$xpath = $this->html_xpath( $html );
 		$this->assertSame( $global_active, $xpath->query( '//a[@id="mainwp-onboarding-disable-monitoring"]' )->length );
 	}
@@ -952,7 +953,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		} finally {
 			$html = ob_get_clean();
 		}
-		$this->assertStringContainsString( "Uptime monitoring is on. We'll email alerts@example.org if Onboarding goes down.", html_entity_decode( $html, ENT_QUOTES, 'UTF-8' ) );
+		$this->assertStringContainsString( 'Alerts go to alerts@example.org', html_entity_decode( $html, ENT_QUOTES, 'UTF-8' ) );
 		$xpath = $this->html_xpath( $html );
 		$this->assertSame( 1, $xpath->query( '//button[@id="mainwp-onboarding-update-all"][normalize-space(.)="Update everything now"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Review updates first"]' )->length );
@@ -960,17 +961,17 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 0, $xpath->query( '//input[@id="mainwp_setup_enableUptimeMonitoring"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//form//button[@type="submit"][normalize-space(.)="Go to Dashboard"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//form//button[@type="submit"]' )->length );
-		$this->assertSame( 1, $xpath->query( '//p[@id="mainwp-onboarding-uptime"]/a[@id="mainwp-onboarding-disable-monitoring"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-uptime"]//a[@id="mainwp-onboarding-disable-monitoring"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[@class="ui checkbox"]/input[@id="mainwp-guided-tours-option"]' )->length );
 		$this->assertSame( 'ui green button', $xpath->query( '//button[@id="mainwp-onboarding-update-all"]/@class' )->item( 0 )->value );
 		$this->assertSame( 'ui basic button', $xpath->query( '//a[normalize-space(.)="Review updates first"]/@class' )->item( 0 )->value );
-		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]/parent::div/preceding-sibling::*[1][@class="ui hidden divider"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//strong[normalize-space(.)="More you can do:"]' )->length );
 		$this->assertSame( 'ui green button', $xpath->query( '//form//button[@type="submit"]/@class' )->item( 0 )->value );
-		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="Add another site"]' )->length );
-		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Add a site"]' )->length );
-		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="Assign this site to a client"]' )->length );
-		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Assign to a client"]' )->length );
-		$this->assertSame( add_query_arg( 'siteid', $site->id, $this->invoke( 'get_next_step_link', array( 'add_client' ) ) ), $xpath->query( '//a[normalize-space(.)="Assign to a client"]/@href' )->item( 0 )->value );
+		$this->assertSame( 1, $xpath->query( '//form//a[normalize-space(.)="Add another site"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//form//a[contains(@href,"do=new")]' )->length );
+		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//a[normalize-space(.)="Assign this site to a client"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Assign this site to a client"]' )->length );
+		$this->assertSame( add_query_arg( 'siteid', $site->id, $this->invoke( 'get_next_step_link', array( 'add_client' ) ) ), $xpath->query( '//a[normalize-space(.)="Assign this site to a client"]/@href' )->item( 0 )->value );
 	}
 
 	/** Default connection fields exclude optional settings and keep help independently focusable. */
@@ -997,15 +998,15 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		foreach ( array( 'mainwp_managesites_add_wpurl', 'mainwp_managesites_add_wpadmin', 'mainwp_managesites_add_admin_pwd' ) as $id ) {
 			$this->assertSame( 1, $xpath->query( '//input[@id="' . $id . '"][not(ancestor::*[@id="mainwp-onboarding-advanced"])]' )->length, $id );
 		}
-		$this->assertSame( 1, $xpath->query( '//a[@id="mainwp-onboarding-password-help"][@href="#mainwp-onboarding-password-explanation"][@aria-describedby="mainwp-onboarding-password-explanation"]' )->length );
-		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-password-help"]/ancestor::*[@id="mainwp-administrator-password-field"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//button[@id="mainwp-onboarding-password-help"][@type="button"][@aria-controls="mainwp-onboarding-password-explanation"][@aria-expanded="false"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-password-help"]/ancestor::*[@id="mainwp-administrator-password-field"]' )->length );
 		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-password-help"]/ancestor::*[contains(concat(" ", normalize-space(@class), " "), " label ")]' )->length );
-		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"][@role="tooltip"]' )->length );
-		$this->assertStringContainsString( 'Your password is never stored by your Dashboard and never sent to MainWP.com.', $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"]' )->item( 0 )->textContent );
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"][@hidden][not(@role="tooltip")]' )->length );
+		$this->assertStringContainsString( 'Your browser sends the password to your own Dashboard.', $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"]' )->item( 0 )->textContent );
 	}
 
-	/** CSV help needs a wrapping popup because the explanation exceeds the viewport. */
-	public function test_csv_password_help_uses_accessible_wrapping_popup(): void {
+	/** CSV help expands inline so the explanation can wrap within the form. */
+	public function test_csv_password_help_uses_accessible_inline_disclosure(): void {
 		$_GET = array(
 			'page' => 'mainwp-setup',
 			'step' => 'connect_first_site',
@@ -1017,11 +1018,11 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$html = ob_get_clean();
 		}
 		$xpath = $this->html_xpath( $html );
-		$this->assertSame( 1, $xpath->query( '//a[@id="mainwp-onboarding-csv-password-help"][@href="#mainwp-onboarding-csv-password-explanation"][@aria-describedby="mainwp-onboarding-csv-password-explanation"][normalize-space(.)="How?"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//button[@id="mainwp-onboarding-csv-password-help"][@type="button"][@aria-expanded="false"][@aria-controls="mainwp-onboarding-csv-password-explanation"][normalize-space(.)="How does that work?"]' )->length );
 		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-csv-password-help"]/@data-tooltip' )->length );
 		$this->assertSame( 0, $xpath->query( '//*[@data-tooltip][normalize-space(.)="How?"]' )->length );
-		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-csv-password-explanation"][@class="ui wide popup"][@role="tooltip"]' )->length );
-		$this->assertSame( 'Used once to set up a secure key. Never stored or sent to MainWP.com. How?', trim( $xpath->query( '//*[@id="mainwp-onboarding-csv-password-help"]/parent::*' )->item( 0 )->textContent ) );
+		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-csv-password-explanation"][not(contains(@class,"popup"))][@hidden][not(@role="tooltip")]' )->length );
+		$this->assertStringContainsString( 'Used once, then discarded.', $xpath->query( '//*[@id="mainwp-onboarding-csv-password-help"]/parent::*' )->item( 0 )->textContent );
 		$this->assertSame( $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"]' )->item( 0 )->textContent, $xpath->query( '//*[@id="mainwp-onboarding-csv-password-explanation"]' )->item( 0 )->textContent );
 	}
 
@@ -1341,6 +1342,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$xpath = $this->html_xpath( $html );
 		$this->assertSame( 5, $xpath->query( '//ul[@id="mainwp-onboarding-update-list"]/li' )->length );
 		$this->assertStringContainsString( '7 updates waiting', $html );
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-updates"][contains(@class,"mainwp-onboarding-updates-waiting")]' )->length );
 		$this->assertStringContainsString( 'and 2 more', $html );
 		$this->assertSame( 'Example 5 1.0 to 2.0', $xpath->query( '//ul[@id="mainwp-onboarding-update-list"]/li[5]' )->item( 0 )->textContent );
 		// Three translations share the hidden last row, so the overflow counts updates, not rows.
@@ -1356,7 +1358,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Example 7 1.0 to 2.0', $html );
 		MainWP_DB::instance()->update_website_values( $site->id, array( 'plugin_upgrades' => '[]' ) );
 		$html = $this->render_summary( $site->id );
-		$this->assertStringContainsString( 'Everything is up to date', $html );
+		$this->assertStringContainsString( 'Up to date', $html );
 		$this->assertStringNotContainsString( 'mainwp-onboarding-update-list', $html );
 		$this->assertStringNotContainsString( 'id="mainwp-onboarding-update-all"', $html );
 	}
@@ -1375,7 +1377,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
 			$this->assertSame( $tours, (int) get_option( 'mainwp_enable_guided_tours' ) );
 			$html = $this->render_summary( 0 );
-			$this->assertStringContainsString( 'Uptime monitoring is off.', $html );
+			$this->assertSame( 1, $this->html_xpath( $html )->query( '//*[@id="mainwp-onboarding-uptime"]/*[@class="mainwp-onboarding-value"][normalize-space(.)="Off"]' )->length );
 			$this->assertStringNotContainsString( 'id="mainwp-onboarding-disable-monitoring"', $html );
 			$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
 		}
@@ -1418,7 +1420,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$property->setAccessible( true );
 			$property->setValue( null, 'none' === $variant ? 0 : 1 );
 			$xpath = $this->html_xpath( $this->render_summary( $id ) );
-			$this->assertSame( 1, $xpath->query( '//p[@id="mainwp-onboarding-uptime"][contains(.,"Uptime monitoring is on.")]/a[normalize-space(.)="Turn off"]' )->length, $variant );
+			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-uptime"][.//*[normalize-space(.)="On"]]//a[normalize-space(.)="· Turn off"]' )->length, $variant );
 			$link = $xpath->query( '//*[@id="mainwp-onboarding-disable-monitoring"]' )->item( 0 );
 			$this->assertNotFalse( wp_verify_nonce( $link->getAttribute( 'data-security' ), 'mainwp_onboarding_disable_monitoring' ) );
 			$this->assertSame( 0, $xpath->query( '//*[@id="mainwp_setup_enableUptimeMonitoring"]' )->length );
@@ -1450,8 +1452,8 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 					),
 				)
 			);
-			$line = trim( $this->html_xpath( $this->render_summary( $site->id ) )->query( '//p[@id="mainwp-onboarding-uptime"]' )->item( 0 )->textContent );
-			$this->assertStringStartsWith( '' === trim( $recipients ) ? 'Uptime monitoring is on. Email alerts are disabled.' : "Uptime monitoring is on. We'll email alerts@example.org if", $line );
+			$line = trim( $this->html_xpath( $this->render_summary( $site->id ) )->query( '//*[@id="mainwp-onboarding-uptime"]' )->item( 0 )->textContent );
+			$this->assertStringContainsString( '' === trim( $recipients ) ? 'Email alerts are disabled' : 'Alerts go to alerts@example.org', $line );
 		}
 	}
 
@@ -1468,10 +1470,10 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 				)
 			);
 			$xpath = $this->html_xpath( $this->render_summary( 0 ) );
-			$line  = $xpath->query( '//p[@id="mainwp-onboarding-digest"]' );
+			$line  = $xpath->query( '//*[@id="mainwp-onboarding-digest"]' );
 			$this->assertSame( ! $disabled && '' !== trim( $recipient ) ? 1 : 0, $line->length );
 			if ( $line->length ) {
-				$this->assertSame( "We'll email digest@example.org a daily digest when updates are waiting or a site is disconnected.", $line->item( 0 )->textContent );
+				$this->assertSame( 'Emailed when updates are waiting or a site disconnects.', $xpath->query( '//*[@id="mainwp-onboarding-digest"]/*[@class="mainwp-onboarding-detail"]' )->item( 0 )->textContent );
 			}
 		}
 	}
@@ -1579,7 +1581,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 0, $data['updates']['total_theme_upgrades'] );
 		$this->assertSame( 1, $data['updates']['total_translation_upgrades'] );
 		$this->assertSame( array( 'WordPress 6.7 to 6.8', 'kept 2.0', '1 translation update' ), $data['rows'] );
-		$this->assertTrue( $data['good'] );
+		$this->assertArrayNotHasKey( 'good', $data );
 		$db->update_website_option( $site, 'ignored_trans_updates', 1 );
 		$db->update_website_option( $site, 'ignored_wp_upgrades', wp_json_encode( array( 'ignored_versions' => array( '6.8' ) ) ) );
 		$db->update_website_option(
@@ -1598,7 +1600,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 0, $data['updates']['total_wp_upgrades'] );
 		$this->assertSame( 0, $data['updates']['total_translation_upgrades'] );
 		$this->assertSame( array( 'kept 2.0' ), $data['rows'] );
-		$this->assertFalse( $data['good'], 'A high score cannot conceal a critical issue.' );
+		$this->assertArrayNotHasKey( 'good', $data, 'Health is omitted until it agrees with the Overview.' );
 		$db->update_website_option( $site, 'ignored_trans_updates', 0 );
 		$site = MainWP_DB::instance()->get_website_by_id( $site->id );
 		$this->assertSame( 1, $this->invoke( 'summary_data', array( $site ) )['updates']['total_translation_upgrades'] );

@@ -263,14 +263,14 @@ test('wizard auth starts with password despite saved state; Advanced can still s
     }
 });
 
-test('summary uptime format preserves positional placeholders', () => {
+test('summary uptime recipient format remains translatable and escaped', () => {
     const { execFileSync } = require('node:child_process');
     const wizard = fs.readFileSync(require.resolve('../../pages/page-mainwp-setup-wizard.php'), 'utf8');
     const match = wizard.match(/esc_html__\(\s*((?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'))\s*,\s*'mainwp'\s*\), esc_html\( \$email\['recipients'\] \)/);
     assert.ok(match, 'Find the translated uptime format used by the summary.');
-    const php = `set_error_handler(function($level, $message) { throw new RuntimeException($message); }); echo sprintf(${match[1]}, 'alerts@example.org', 'Onboarding');`;
+    const php = `set_error_handler(function($level, $message) { throw new RuntimeException($message); }); echo sprintf(${match[1]}, 'alerts@example.org');`;
     const result = execFileSync('php', ['-r', php], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
-    assert.equal(result, "Uptime monitoring is on. We'll email alerts@example.org if Onboarding goes down.");
+    assert.equal(result, 'Alerts go to alerts@example.org');
 });
 
 test('first wizard exits keep their requested destinations instead of activation redirects', () => {
@@ -305,28 +305,19 @@ test('ordinary admin requests do not consume wizard entry redirects', () => {
 });
 
 for (const prefix of ['mainwp-onboarding', 'mainwp-onboarding-csv']) {
-    test(`${prefix} password explanation opens on hover, focus and click and closes on blur`, () => {
+    test(`${prefix} password explanation toggles inline with aria-expanded`, () => {
         const h = harness();
         const selector = `#${prefix}-password-help`;
-        const help = h.$(selector);
-        const popup = { visible: false, options: undefined };
-        help.popup = action => {
-            if (typeof action === 'object') popup.options = action;
-            else popup.visible = action === 'show';
-            return help;
-        };
+        const help = h.$(selector).attr('aria-expanded', 'false');
+        help.popup = () => { assert.fail('Inline explanations must not initialize a popup.'); };
         vm.runInContext(setup, h.context);
-        assert.equal(popup.options?.on, 'hover');
-        assert.equal(popup.options?.popup, `#${prefix}-password-explanation`);
-        assert.equal(popup.options?.position, 'top center');
-        h.handlers.get(selector + ':focus').call(help);
-        assert.equal(popup.visible, true);
-        h.handlers.get(selector + ':blur').call(help);
-        assert.equal(popup.visible, false);
-        let prevented = false;
-        h.handlers.get(selector + ':click').call(help, { preventDefault() { prevented = true; } });
-        assert.equal(prevented, true);
-        assert.equal(popup.visible, true);
+        const click = h.handlers.get(selector + ':click');
+        click.call(help);
+        assert.equal(help.attr('aria-expanded'), 'true');
+        assert.equal(h.$(`#${prefix}-password-explanation`).prop('hidden'), false);
+        click.call(help);
+        assert.equal(help.attr('aria-expanded'), 'false');
+        assert.equal(h.$(`#${prefix}-password-explanation`).prop('hidden'), true);
     });
 }
 

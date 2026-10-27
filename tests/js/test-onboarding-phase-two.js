@@ -267,8 +267,8 @@ test('milestones wait for widget initialization and consume each animation marke
     assert.deepEqual(starts, [pending], 'Repeated initialization must not replay a milestone.');
 });
 
-function uiHarness(mode = 'single-site', tabs = true) {
-    let now = 1000;
+function uiHarness(mode = 'single-site', tabs = true, storage = new Map(), startedAt = 1000) {
+    let now = startedAt;
     let nextId = 1;
     const timers = new Map();
     const elements = new Map();
@@ -279,18 +279,24 @@ function uiHarness(mode = 'single-site', tabs = true) {
     const reloads = [];
     const readyCallbacks = [];
     const document = { hidden: false };
-    const window = {};
+    const window = { localStorage: storage instanceof Map ? { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) } : storage };
+    const mutations = [];
+    let validations = 0;
+    let submits = 0;
     const copy = {
         checking: 'Checking...', yes: 'Yes', notYet: 'Not yet', no: 'No', notChecked: 'Not checked',
         unreachable: "We can't reach %s. Check the URL and that the site is online.",
-        install: 'Install MainWP Child on %s →',
-        fallback: "If the link doesn't open the plugin installer, install MainWP Child from Plugins > Add New on %s.",
-        remaining: 'About %d minutes left to connect.', remainingOne: 'About 1 minute left to connect.', remainingLess: 'Less than a minute left to connect.', defaultTime: 'By default this is 20 minutes after activation.',
+        install: 'Install or activate MainWP Child',
+        remaining: 'For security, MainWP Child switches off in about %d minutes if nothing connects to it.', remainingOne: 'For security, MainWP Child switches off in about 1 minute if nothing connects to it.', remainingLess: 'For security, MainWP Child switches off in less than a minute if nothing connects to it.',
+        idleTitle: "We'll check the site for you", idleBody: "Enter the site URL and username, and we'll confirm the site is reachable and MainWP Child is ready.", checkingTitle: 'Checking %s…', checkingBody: 'This takes a few seconds.', connectingTitle: 'Connecting…', readyTitle: 'Ready to connect', installTitle: 'Install or activate MainWP Child', expiredTitle: 'MainWP Child switched itself off', stoppedTitle: "We couldn't finish checking %s", unreachableTitle: "Can't reach %s", polling: "We'll keep checking while this page is open.", childNotAnswering: 'Inactive Child error',
         windowClosed: 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.',
-        expired: 'MainWP Child may have switched itself off because the connection window expired. Check that it is active on %s, reactivate it if needed, and click Retry.',
+        expired: "It wasn't connected within %d minutes, so it turned off for security. Reactivate it on the site's Plugins page, then check again.",
+        expiredOne: "It wasn't connected within 1 minute, so it turned off for security. Reactivate it on the site's Plugins page, then check again.",
+        expiredUnknown: "Its connection window ended, so it turned off for security. Reactivate it on the site's Plugins page, then check again.",
         error: 'Could not connect. Try again.', password: 'Enter the administrator password.'
     };
     function trigger(selector, event) {
+        if (selector === '#mainwp_connect_first_site_form' && event === 'submit') submits++;
         for (const callback of events.get(selector + ':' + event) || []) callback.call($(selector));
     }
     function $(selector) {
@@ -301,7 +307,8 @@ function uiHarness(mode = 'single-site', tabs = true) {
             const attributes = {};
             let text = '';
             const el = {
-                length: ['#mainwp-onboarding-detection', '#mainwp_connect_first_site_form'].includes(selector) ? 1 : 0,
+                length: ['#mainwp-onboarding-detection', '#mainwp_connect_first_site_form', '#mainwp-managesites-row-import-sites'].includes(selector) ? 1 : 0,
+                0: {},
                 attr(name, value) { if (value === undefined) return attributes[name]; attributes[name] = value; return el; },
                 prop(name, value) { return el.attr(name, value); },
                 val(value) { if (value === undefined) return attributes.value || (String(key).includes('qsw_nonce') ? 'test-nonce' : ''); attributes.value = value; return el; },
@@ -358,6 +365,8 @@ function uiHarness(mode = 'single-site', tabs = true) {
     $('#mainwp-qsw-connect-site-form').attr('data-mode', mode);
     if (tabs) $('.menu-connect-first-site .active.item').attr('data-tab', mode);
     const context = load({
+        MutationObserver: class { constructor(callback) { mutations.push(callback); } observe() {} disconnect() {} },
+        mainwp_managesites_import_handle_form_before_submit() { validations++; return []; },
         jQuery: $, document, window, mainwpSetupLocalize: copy, Date: { now: () => now }, ajaxurl: '/admin-ajax.php',
         setTimeout: browserTimer((callback, delay) => schedule(callback, delay)), clearTimeout: browserTimer(id => timers.delete(id)),
         setInterval: browserTimer((callback, delay) => schedule(callback, delay, true)), clearInterval: browserTimer(id => timers.delete(id)),
@@ -377,7 +386,8 @@ function uiHarness(mode = 'single-site', tabs = true) {
         }
         now = end;
     }
-    return { $, context, requests, messages, textWrites, reloads, timers, advance, document, now: () => now,
+    return { $, context, requests, messages, textWrites, reloads, timers, advance, document, storage, mutations,
+        validations: () => validations, submits: () => submits, now: () => now,
         trigger: (selector, event) => trigger(selector, event),
         reply: result => requests.at(-1).options.success(result),
         fill() {
@@ -458,7 +468,7 @@ const matrixEvents = [...Object.keys(matrixReplies), 'changed field', 'unchanged
     'tab shown', 'countdown deadline', 'Retry', 'connect success', 'connect ERROR', 'connect transport error'];
 const matrixZone = ['#mainwp-message-zone', 'validation', 'yellow'];
 const matrixClosed = 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.';
-const matrixDefault = 'By default this is 20 minutes after activation.';
+const matrixDefault = '';
 const matrixSite = 'https://example.org/wordpress/';
 
 function matrixView(status, deadline, timers = [], request = null, zone = matrixZone, rows = matrixStatuses[status]) {
@@ -471,10 +481,14 @@ function matrixView(status, deadline, timers = [], request = null, zone = matrix
             'Not yet': 'orange circle icon', 'Not checked': 'grey circle icon'
         })[label]),
         install: rows[2], installHref: rows[2] ? matrixSite + 'wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term' : '',
-        timer: rows[3], expiry: rows[4], retry: rows[5],
-        timerLine: deadline === 'none' ? matrixDefault : deadline === 'future' ? 'Less than a minute left to connect.' : matrixClosed,
+        timer: rows[3] && deadline !== 'none', expiry: rows[4], retry: rows[5],
+        timerLine: deadline === 'none' ? matrixDefault : deadline === 'future' ? 'For security, MainWP Child switches off in less than a minute if nothing connects to it.' : matrixClosed,
         detectionMessage: status === 'unreachable' ? `We can't reach ${matrixSite}. Check the URL and that the site is online.`
             : status === 'error' ? '<p>Blocked</p>' : '',
+        messageClass: ['detected'].includes(status) ? 'ui green message' : ['waiting', 'expired'].includes(status) || (status === 'timed_out' && rows[0] === 'Yes') ? 'ui yellow message' : ['error', 'unreachable'].includes(status) ? 'ui red message' : 'ui message',
+        headline: ({ idle: "We'll check the site for you", checking: `Checking ${matrixSite}…`, connecting: 'Connecting…', detected: 'Ready to connect', waiting: 'Install or activate MainWP Child', expired: 'MainWP Child switched itself off', unreachable: `Can't reach ${matrixSite}`, error: 'Could not connect. Try again.', timed_out: rows[0] === 'Yes' ? 'Install or activate MainWP Child' : `We couldn't finish checking ${matrixSite}`, stopped: `We couldn't finish checking ${matrixSite}` })[status],
+        stateIcon: ['checking', 'connecting'].includes(status) ? 'notched circle loading icon' : status === 'detected' ? 'check icon' : ['waiting', 'expired'].includes(status) || (status === 'timed_out' && rows[0] === 'Yes') ? 'exclamation icon' : ['error', 'unreachable'].includes(status) ? 'times icon' : 'info icon',
+        polling: status === 'waiting',
         zone
     };
 }
@@ -489,19 +503,19 @@ function matrixExpected(status, event, deadline) {
         if (status !== 'checking' && !canRecheck) return base;
         if (event === 'reply OK') {
             const next = matrixView('detected', 'future', ['countdown']);
-            next.timerLine = 'About 2 minutes left to connect.';
+            next.timerLine = 'For security, MainWP Child switches off in about 2 minutes if nothing connects to it.';
             return next;
         }
         if (event === 'reply OK remaining 0') return matrixView('detected', 'passed');
         if (event === 'reply NOMAINWP') return deadline === 'passed'
-            ? matrixView('expired', deadline, [], null, status === 'expired' ? matrixZone : ['#mainwp-message-zone'])
+            ? matrixView('expired', deadline, [], null, matrixZone)
             : matrixView('waiting', deadline, ['cap', 'poll']);
         return matrixView(event === 'reply ERROR' ? 'error' : 'unreachable', deadline);
     }
     if (event === 'changed field') return matrixView('idle', 'none', ['debounce'], status === 'connecting' ? request : null);
     if (event === 'unchanged change') return base;
     if (event === 'Retry') return status === 'connecting' ? matrixView('idle', 'none', [], request)
-        : matrixView('checking', 'none', ['cap'], 'mainwp_checkwp');
+        : matrixView('checking', status === 'detected' ? deadline : 'none', ['cap'], 'mainwp_checkwp');
     if (event === 'tab hidden') {
         base.timers = ['idle', 'checking', 'waiting'].includes(status) ? ['cap'] : [];
         if (status === 'checking') base.request = null;
@@ -598,6 +612,8 @@ function matrixSnapshot(h, controller) {
         install: visible('install'), installHref: row('install-link').attr('href'),
         timer: visible('timer'), timerLine: row('time-left').text(),
         expiry: visible('expiry'), retry: visible('retry'), detectionMessage: row('detection-message').html(),
+        messageClass: row('detection').attr('class'), headline: row('detection-headline').text(),
+        stateIcon: row('state-icon').attr('class'), polling: visible('polling'),
         zone: h.messages.at(-1)
     };
 }
@@ -610,9 +626,9 @@ const matrixSequences = [
             h.reply({ response: response === 'ERROR' ? 'ERROR blocked' : response,
                 failure_ux: response === 'ERROR' ? '<p>Blocked</p>' : undefined, connection_window_remaining: 120 });
         },
-        expected: response === 'OK' ? { ...matrixView('detected', 'future', ['countdown']), timerLine: 'About 2 minutes left to connect.' }
+        expected: response === 'OK' ? { ...matrixView('detected', 'future', ['countdown']), timerLine: 'For security, MainWP Child switches off in about 2 minutes if nothing connects to it.' }
             : matrixView(response === 'NOMAINWP' ? 'expired' : response === 'ERROR' ? 'error' : 'unreachable', 'passed', [], null,
-                response === 'NOMAINWP' ? ['#mainwp-message-zone'] : matrixZone)
+                matrixZone)
     }))),
     ...Object.entries(matrixReplies).map(([event, result]) => ({
         name: `E2 detected | countdown then ${event} | future`, status: 'detected', deadline: 'future',
@@ -653,7 +669,7 @@ const matrixSequences = [
             h.advance(400);
             h.reply({ response: 'NOMAINWP' });
         },
-        expected: matrixView('expired', 'passed', [], null, ['#mainwp-message-zone'])
+        expected: matrixView('expired', 'passed')
     },
     ...['none', 'future', 'passed'].map(deadline => ({
         name: `E3 expired | password validation then refresh | ${deadline}`, status: 'expired', deadline,
@@ -668,7 +684,7 @@ const matrixSequences = [
             if (deadline === 'future') h.advance(2000);
             h.reply({ response: 'NOMAINWP' });
         },
-        expected: matrixView('expired', 'passed', [], null, ['#mainwp-message-zone'])
+        expected: matrixView('expired', 'passed', [], null, ['#mainwp-message-zone', '<p>Wrong password</p>', 'red'])
     })),
     ...['connect ERROR', 'connect transport error'].map(event => ({
         name: `connecting | changed target then ${event} then NOMAINWP | passed`, status: 'connecting', deadline: 'passed',
@@ -694,7 +710,7 @@ const matrixSequences = [
             h.trigger('#mainwp-onboarding-retry', 'click');
             h.reply({ response: 'OK', connection_window_remaining: 120 });
         },
-        expected: { ...matrixView('detected', 'future', ['countdown']), timerLine: 'About 2 minutes left to connect.' }
+        expected: { ...matrixView('detected', 'future', ['countdown']), timerLine: 'For security, MainWP Child switches off in about 2 minutes if nothing connects to it.' }
     }
 ];
 
@@ -733,7 +749,7 @@ for (const mode of ['single-site', 'multiple-site']) {
 test('wizard fields debounce detection, render install guidance, and enable Connect independently of pre-check', () => {
     const h = uiHarness();
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), true);
-    assert.equal(h.$('#mainwp-onboarding-detection').prop('hidden'), true);
+    assert.equal(h.$('#mainwp-onboarding-detection').prop('hidden'), false);
     h.fill();
     assert.equal(h.$('#mainwp-onboarding-detection').prop('hidden'), false);
     h.advance(399);
@@ -750,7 +766,7 @@ test('wizard fields debounce detection, render install guidance, and enable Conn
     assert.equal(h.$('#mainwp-onboarding-child').text(), 'Not yet');
     assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), false);
     assert.equal(h.$('#mainwp-onboarding-install-link').attr('href'), 'https://example.org/wordpress/wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term');
-    assert.match(h.$('#mainwp-onboarding-install-fallback').text(), /Plugins > Add New on https:\/\/example.org\/wordpress\//);
+    assert.equal(h.$('#mainwp-onboarding-polling').prop('hidden'), false);
     h.$('#mainwp_managesites_add_admin_pwd').val('password');
     h.trigger('#mainwp_managesites_add_admin_pwd', 'input');
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
@@ -776,9 +792,9 @@ test('detected countdown pauses rendering in hidden tabs, catches up on return, 
     h.fill(); h.advance(400);
     h.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 61 });
     assert.equal(h.$('#mainwp-onboarding-timer').prop('hidden'), false);
-    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 2 minutes left to connect.');
+    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'For security, MainWP Child switches off in about 2 minutes if nothing connects to it.');
     h.advance(1000);
-    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 1 minute left to connect.');
+    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'For security, MainWP Child switches off in about 1 minute if nothing connects to it.');
     h.visible(true);
     h.advance(60000);
     assert.equal(h.requests.length, 1);
@@ -804,7 +820,7 @@ test('countdown writes its live region only when the displayed text changes', ()
     h.advance(59000);
     assert.equal(writes(), initial);
     h.advance(1000);
-    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 1 minute left to connect.');
+    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'For security, MainWP Child switches off in about 1 minute if nothing connects to it.');
     assert.equal(writes(), initial + 1);
     h.trigger('window', 'pagehide');
     assert.equal(h.timers.size, 0);
@@ -816,7 +832,7 @@ test('empty fields remain idle after a hidden tab exceeds the polling cap and fi
     h.advance(1200001);
     h.visible(false);
     assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', h.context), 'idle');
-    assert.equal(h.$('#mainwp-onboarding-detection').prop('hidden'), true);
+    assert.equal(h.$('#mainwp-onboarding-detection').prop('hidden'), false);
     assert.equal(h.$('#mainwp-onboarding-retry').prop('hidden'), true);
     assert.equal(h.requests.length, 0);
     assert.equal(h.timers.size, 0);
@@ -829,13 +845,13 @@ test('empty fields remain idle after a hidden tab exceeds the polling cap and fi
     assert.equal(h.timers.size, 0);
 });
 
-test('older Child default explanation and disabled timer are distinct from reported countdowns', () => {
-    for (const [fields, expected] of [[{}, 'By default this is 20 minutes after activation.'], [{ connection_window_minutes: 0 }, '']]) {
+test('older Child without metadata and disabled windows hide the timer', () => {
+    for (const [fields, expected] of [[{}, ''], [{ connection_window_minutes: 0 }, '']]) {
         const h = uiHarness();
         h.fill(); h.advance(400);
         h.reply({ response: 'OK', ...fields });
         assert.equal(h.$('#mainwp-onboarding-time-left').text(), expected);
-        assert.equal(h.$('#mainwp-onboarding-timer').prop('hidden'), fields.connection_window_minutes === 0);
+        assert.equal(h.$('#mainwp-onboarding-timer').prop('hidden'), true);
         assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
         assert.equal(h.timers.size, 0);
     }
@@ -912,4 +928,496 @@ test('password controls enable Connect, while the advanced password-off mode rem
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
     h.trigger('#mainwp_managesites_add', 'click');
     assert.equal(h.requests.at(-1).options.data.action, 'mainwp_addwp');
+});
+
+
+test('deadline survives reload through two bind harnesses sharing storage', () => {
+    const storage = new Map();
+    const first = uiHarness('single-site', false, storage);
+    first.fill(); first.advance(400);
+    first.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 1 });
+    assert.equal(storage.size, 1);
+    const second = uiHarness('single-site', false, storage, 5000);
+    second.fill(); second.advance(400); second.reply({ response: 'NOMAINWP' });
+    assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', second.context), 'expired');
+    assert.equal(second.$('#mainwp-onboarding-expiry').prop('hidden'), false);
+});
+
+for (const scenario of ['missing', 'future', 'mismatch', 'invalid deadline', 'invalid minutes', 'parse', 'throw']) {
+    test('stored carry validation: ' + scenario, () => {
+        const storage = new Map();
+        const first = uiHarness('single-site', false, storage);
+        first.fill(); first.advance(400);
+        first.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 60 });
+        const [key, value] = [...storage][0] || ['missing', '{}'];
+        const entry = JSON.parse(value);
+        if (scenario === 'missing') storage.clear();
+        if (scenario === 'mismatch') storage.set(key, JSON.stringify({ ...entry, url: 'https://other.example/' }));
+        if (scenario === 'invalid deadline') storage.set(key, JSON.stringify({ ...entry, deadline: '1000' }));
+        if (scenario === 'invalid minutes') storage.set(key, JSON.stringify({ ...entry, minutes: -1 }));
+        if (scenario === 'parse') storage.set(key, '{');
+        const blocked = { getItem() { throw Error('blocked'); }, setItem() { throw Error('blocked'); }, removeItem() { throw Error('blocked'); } };
+        const second = uiHarness('single-site', false, scenario === 'throw' ? blocked : storage, scenario === 'future' ? 2000 : 100000);
+        second.fill(); second.advance(400); second.reply({ response: 'NOMAINWP' });
+        assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', second.context), 'waiting');
+        second.trigger('#mainwp-onboarding-retry', 'click');
+        second.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 120 });
+        assert.equal(second.$('#mainwp-onboarding-detection-headline').text(), 'Ready to connect');
+    });
+}
+
+for (const result of [{ response: 'OK' }, { response: 'OK', connection_window_minutes: 0 }]) {
+    test('OK without usable deadline deletes stored history: ' + JSON.stringify(result), () => {
+        const h = uiHarness(); h.fill(); h.advance(400);
+        h.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 60 });
+        assert.equal(h.storage.size, 1);
+        h.trigger('#mainwp-onboarding-retry', 'click'); h.reply(result);
+        assert.equal(h.storage.size, 0);
+    });
+}
+
+test('successful connect deletes history before redirect', () => {
+    const h = uiHarness(); h.fill(); h.advance(400);
+    h.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 60 });
+    assert.equal(h.storage.size, 1);
+    h.context.mainwp_forceReload = url => { assert.equal(h.storage.size, 0); h.reloads.push(url); };
+    h.$('#mainwp_managesites_add_admin_pwd').val('password');
+    h.trigger('#mainwp_managesites_add', 'click'); h.reply({ response: 'Connected', siteid: 42 });
+    assert.equal(h.reloads.length, 1);
+});
+
+for (const missing of [true, false]) {
+    test(missing ? 'Child-not-answering failure uses detection and clears on detected' : 'wrong-password diagnostics survive detection OK', () => {
+        const h = uiHarness(); h.fill(); h.advance(400); h.reply({ response: 'NOMAINWP' });
+        h.$('#mainwp_managesites_add_admin_pwd').val('password');
+        h.trigger('#mainwp_managesites_add', 'click');
+        h.reply({ response: missing ? 'ERROR Inactive Child error' : 'ERROR Wrong password', failure_ux: '<p>Diagnostics</p>' });
+        assert.equal(h.messages.some(message => message[1] === '<p>Diagnostics</p>'), !missing);
+        h.reply({ response: 'OK' });
+        assert.deepEqual(h.messages.at(-1), missing ? ['#mainwp-message-zone'] : ['#mainwp-message-zone', '<p>Diagnostics</p>', 'red']);
+    });
+}
+
+test('detection for a different URL does not clear a Child failure for the original URL', () => {
+    const h = uiHarness(); h.fill(); h.advance(400); h.reply({ response: 'NOMAINWP' });
+    h.$('#mainwp_managesites_add_admin_pwd').val('password'); h.trigger('#mainwp_managesites_add', 'click');
+    h.reply({ response: 'ERROR Inactive Child error', failure_ux: '<p>Diagnostics</p>' });
+    h.context.mainwp_set_message_zone('#mainwp-message-zone', 'Other message', 'yellow');
+    h.$('#mainwp_managesites_add_wpurl').val('other.example'); h.trigger('#mainwp_managesites_add_wpurl', 'input'); h.advance(400);
+    h.reply({ response: 'OK' });
+    assert.equal(h.messages.at(-1)[1], 'Other message');
+});
+
+test('Check again focuses the headline and automatic polling never moves focus', () => {
+    const h = uiHarness(); let focused = 0;
+    h.$('#mainwp-onboarding-detection-headline').on('focus', () => focused++);
+    h.fill(); h.advance(400); h.reply({ response: 'NOMAINWP' }); h.advance(5000);
+    assert.equal(focused, 0);
+    h.reply({ response: 'HTTPERROR' }); h.trigger('#mainwp-onboarding-retry', 'click');
+    assert.equal(focused, 1);
+});
+
+test('timed out reachable site keeps install actions without promising automatic checks', () => {
+    const h = uiHarness(); h.fill(); h.advance(400); h.reply({ response: 'NOMAINWP' });
+    h.advance(1200000);
+    assert.equal(h.$('#mainwp-onboarding-detection').attr('class'), 'ui yellow message');
+    assert.equal(h.$('#mainwp-onboarding-detection-headline').text(), 'Install or activate MainWP Child');
+    assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-polling').prop('hidden'), true);
+    assert.equal(h.$('#mainwp-onboarding-retry').prop('hidden'), false);
+});
+
+test('CSV allows file-only submit, blocks empty, and recomputes after file and row changes', () => {
+    const h = uiHarness('multiple-site', false);
+    const button = h.$('#mainwp_managesites_add_import');
+    const file = h.$('#connect_first_site_file_bulkupload');
+    assert.equal(button.prop('disabled'), true);
+    h.trigger('#mainwp_managesites_add_import', 'click');
+    assert.equal(h.validations(), 0); assert.equal(h.submits(), 0);
+    file.val('sites.csv'); h.trigger('#connect_first_site_file_bulkupload', 'change');
+    assert.equal(button.prop('disabled'), false);
+    h.trigger('#mainwp_managesites_add_import', 'click');
+    assert.equal(h.validations(), 1); assert.equal(h.submits(), 1);
+    file.val(''); h.trigger('#connect_first_site_file_bulkupload', 'change');
+    assert.equal(button.prop('disabled'), true);
+    const row = h.$('row-url').val('example.org');
+    h.$('#mainwp_connect_first_site_form .mainwp-managesites-import-site-url').each = callback => callback.call(row);
+    h.trigger('#mainwp_connect_first_site_form .mainwp-managesites-import-site-url', 'input');
+    assert.equal(button.prop('disabled'), false);
+    row.val(''); h.trigger('#mainwp_connect_first_site_form .mainwp-managesites-import-site-url', 'change');
+    assert.equal(button.prop('disabled'), true);
+    row.val('restored.example'); h.mutations.forEach(callback => callback());
+    assert.equal(button.prop('disabled'), false);
+    h.$('#mainwp_connect_first_site_form .mainwp-managesites-import-site-url').each = () => {};
+    h.mutations.forEach(callback => callback());
+    assert.equal(button.prop('disabled'), true);
+});
+
+test('wizard stylesheet contains its gutters, reserves status space and suppresses duplicate theme icons', () => {
+    const css = fs.readFileSync(require.resolve('../../assets/css/mainwp-onboarding.css'), 'utf8');
+    assert.match(css, /#mainwp-quick-setup-wizard\.ui\.grid\s*\{[^}]*margin-left:\s*0;[^}]*margin-right:\s*0;/);
+    assert.doesNotMatch(css, /min-height:\s*20rem/);
+    assert.match(css, /#mainwp-onboarding-detection\[data-state="idle"\],[\s\S]*?#mainwp-onboarding-detection\[data-state="detected"\]\s*\{[^}]*min-height:/);
+    assert.match(css, /#mainwp-onboarding-detection\.ui\.message::before\s*\{[^}]*display:\s*none/);
+    assert.match(css, /\.mainwp-onboarding-password-explanation\[hidden\][^{]*\{[^}]*display:\s*none/);
+});
+
+test('welcome titles resist attached-label margins and wrap between words with room for the badge', () => {
+    const css = fs.readFileSync(require.resolve('../../assets/css/mainwp-onboarding.css'), 'utf8');
+    assert.match(css, /\.card \.header\s*\{[^}]*margin-top:\s*0 !important;[^}]*overflow-wrap:\s*normal;[^}]*word-break:\s*normal;/);
+    assert.doesNotMatch(css, /padding-right:\s*8em/);
+    assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) max-content/);
+    assert.match(css, /@media \(max-width: 991px\)[\s\S]*?\.content:not\(\.extra\)\s*\{[^}]*padding-top:\s*3em/);
+    assert.match(css, /gap:\s*0\.5rem 1\.5rem/);
+});
+
+test('minute copy uses localized singular and plural strings for countdown and expiry', () => {
+    const php = fs.readFileSync(require.resolve('../../pages/page-mainwp-setup-wizard.php'), 'utf8');
+    const localized = Object.fromEntries([...php.matchAll(/'(remaining(?:One|Less)?|expired(?:One|Unknown)?)'\s*=> __\( ('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"), 'mainwp' \)/g)]
+        .map(([, key, literal]) => [key, require('node:child_process').execFileSync('php', ['-r', 'echo ' + literal + ';'], { encoding: 'utf8' })]));
+    assert.equal(Object.keys(localized).length, 6);
+    const h = uiHarness();
+    Object.assign(h.context.mainwpSetupLocalize, localized);
+    for (const [seconds, expected] of [[59, 'less than a minute'], [60, 'about 1 minute if'], [61, 'about 2 minutes'], [1200, 'about 20 minutes']]) {
+        assert.ok(h.context.mainwp_onboarding_remaining_text(seconds).includes(expected));
+    }
+    for (const [minutes, expected] of [[1, 'within 1 minute,'], [2, 'within 2 minutes,'], [20, 'within 20 minutes,'], [null, 'Its connection window ended']]) {
+        h.context.mainwp_onboarding_render_detection({ status: 'expired', reachable: 'ok', child: 'failed', minutes, deadline: 0, result: {} });
+        const text = h.$('#mainwp-onboarding-expiry-message').text();
+        assert.ok(text.includes(expected), text);
+        assert.doesNotMatch(text, /1 minutes|%d/);
+    }
+});
+
+test('wizard theme mapping loads bundled default-2024 and preserves other themes and custom URLs', () => {
+    const php = fs.readFileSync(require.resolve('../../pages/page-mainwp-setup-wizard.php'), 'utf8');
+    const start = php.indexOf('$selected_theme = MainWP_Settings::get_instance()->get_selected_theme();');
+    const end = php.indexOf("\n        if ( ! empty( $_POST['save_step'] )", start);
+    assert.ok(start > 0 && end > start);
+    const mapping = php.slice(start, end);
+    const runner = `
+define('MAINWP_PLUGIN_URL', 'https://dashboard.example/plugins/mainwp/');
+define('MAINWP_VERSION', '6');
+class MainWP_Settings {
+    public static function get_instance() { return new self(); }
+    public function get_selected_theme() { return stream_get_contents(STDIN); }
+    public function get_custom_theme_folder() { return array('', 'https://dashboard.example/uploads/mainwp/themes/'); }
+}
+function wp_enqueue_style($handle, $src, $deps, $version) { echo json_encode(array($handle, $src)); }
+${mapping}`;
+    for (const [theme, file] of [['default-2024', 'default-2024'], ['default', 'default'], ['default-dark', 'default-dark'], ['dark', 'dark'], ['wpadmin', 'wpadmin'], ['minimalistic', 'minimalistic'], ['custom.css', null]]) {
+        const [handle, url] = JSON.parse(require('node:child_process').execFileSync('php', ['-r', runner], { input: theme, encoding: 'utf8' }));
+        assert.equal(url, file ? `https://dashboard.example/plugins/mainwp/assets/css/themes/mainwp-${file}-theme.css` : 'https://dashboard.example/uploads/mainwp/themes/custom.css');
+        if (theme === 'default-2024') assert.equal(handle, 'mainwp-custom-dashboard-extension-default-2024-theme');
+        if (file) assert.ok(fs.existsSync(require('node:path').resolve(__dirname, `../../assets/css/themes/mainwp-${file}-theme.css`)));
+    }
+});
+
+test('status rows keep localized screen-reader text for success, failure and pending states', () => {
+    const php = fs.readFileSync(require.resolve('../../pages/page-mainwp-setup-wizard.php'), 'utf8');
+    for (const id of ['reachable', 'child']) {
+        assert.ok(php.includes(`class="screen-reader-text" id="mainwp-onboarding-${id}"`));
+        assert.match(php, new RegExp(`<i id="mainwp-onboarding-${id}-icon"[^>]*aria-hidden="true"`));
+    }
+    const css = fs.readFileSync(require.resolve('../../assets/css/mainwp-onboarding.css'), 'utf8');
+    assert.match(css, /#mainwp-onboarding-detection \.screen-reader-text\s*\{[^}]*position:\s*absolute;[^}]*clip-path:\s*inset\(50%\)/);
+    const h = uiHarness();
+    for (const [status, reachable, child, labels] of [
+        ['detected', 'ok', 'ok', ['Yes', 'Yes']], ['waiting', 'ok', 'pending', ['Yes', 'Not yet']],
+        ['unreachable', 'failed', 'pending', ['No', 'Not checked']], ['checking', 'pending', 'pending', ['Checking...', 'Checking...']]
+    ]) {
+        h.context.mainwp_onboarding_render_detection({ status, reachable, child, minutes: null, deadline: null, result: {} });
+        assert.equal(h.$('#mainwp-onboarding-detection').attr('data-state'), status);
+        assert.deepEqual(['reachable', 'child'].map(id => h.$('#mainwp-onboarding-' + id).text()), labels);
+    }
+});
+
+test('wizard status accents, password help and summary details retain their presentation hooks', () => {
+    const css = fs.readFileSync(require.resolve('../../assets/css/mainwp-onboarding.css'), 'utf8');
+    assert.match(css, /#mainwp-onboarding-state-icon\s*\{[^}]*width:\s*28px;[^}]*height:\s*28px;[^}]*border-radius:\s*50%;[^}]*color:\s*var\(--mainwp-onboarding-icon-foreground, #fff\) !important;[^}]*background:\s*var\(--onboarding-state-color\)/);
+    assert.match(css, /#mainwp-onboarding-detection \.ui\.horizontal\.list > \.item > \.content\s*\{[^}]*color:\s*var\(--mainwp-onboarding-text, #2f3437\)/);
+    assert.match(css, /#mainwp-onboarding-detection \.ui\.horizontal\.list > \.item > \.red\.icon\s*\{[^}]*color:\s*var\(--mainwp-onboarding-danger, #b94141\) !important/);
+    assert.match(css, /#mainwp-onboarding-detection\.ui\.message\s*\{[^}]*border-left:\s*0 !important/);
+    assert.match(css, /#mainwp-onboarding-detection a:not\(\.button\),[\s\S]*?\{[^}]*color:[^}]*!important;[^}]*text-decoration:\s*none/);
+    assert.match(css, /#mainwp-onboarding-detection a:not\(\.button\):hover,[\s\S]*?#mainwp-onboarding-detection a:not\(\.button\):focus,[\s\S]*?\{[^}]*text-decoration:\s*underline !important/);
+    assert.match(css, /\.mainwp-onboarding-password-note\s*\{[^}]*background:\s*var\(--mainwp-onboarding-info-surface, #ecf3f7\)/);
+    assert.match(css, /\.mainwp-onboarding-password-note > \.lock\.icon\s*\{[^}]*width:\s*22px;[^}]*height:\s*22px;[^}]*border-radius:\s*50%/);
+    assert.match(css, /\.mainwp-onboarding-disclosure\s*\{[^}]*display:\s*inline/);
+    assert.match(css, /\.mainwp-onboarding-check\s*\{[^}]*border-radius:\s*50%;[^}]*background:\s*var\(--mainwp-onboarding-success[^}]*box-shadow:[^}]*color-mix[^}]*color:\s*var\(--mainwp-onboarding-icon-foreground, #fff\)/);
+    assert.match(css, /prefers-reduced-motion: reduce[\s\S]*?\.mainwp-onboarding-check\s*\{\s*animation:\s*none/);
+    assert.match(css, /#mainwp-onboarding-next-steps small\s*\{[^}]*display:\s*inline/);
+    assert.match(css, /#mainwp-onboarding-disable-monitoring\s*\{[^}]*white-space:\s*nowrap/);
+    assert.match(summary(), /id="mainwp-onboarding-disable-monitoring"[^>]*>&middot; Turn off<\/a>/);
+});
+
+
+test('fresh OK overwrites the stored deadline and expiry uses the reported window', () => {
+    const h = uiHarness(); h.fill(); h.advance(400);
+    h.reply({ response: 'OK', connection_window_minutes: 2, connection_window_remaining: 1 });
+    h.advance(1000); h.reply({ response: 'OK', connection_window_minutes: 5, connection_window_remaining: 120 });
+    const entry = JSON.parse([...h.storage.values()][0]);
+    assert.equal(entry.minutes, 5);
+    assert.equal(entry.deadline, h.now() + 120000);
+    const reloaded = uiHarness('single-site', false, h.storage, entry.deadline + 1);
+    reloaded.fill(); reloaded.advance(400); reloaded.reply({ response: 'NOMAINWP' });
+    assert.equal(reloaded.$('#mainwp-onboarding-expiry-message').text(), "It wasn't connected within 5 minutes, so it turned off for security. Reactivate it on the site's Plugins page, then check again.");
+});
+
+test('file-only wizard submit passes the real shared CSV validator with empty rows', () => {
+    const h = uiHarness('multiple-site', false);
+    const shared = fs.readFileSync(require.resolve('../../assets/js/mainwp-managesites-import.js'), 'utf8');
+    vm.runInContext(shared.slice(shared.indexOf('const mainwp_managesites_import_handle_form_before_submit =')), h.context);
+    const file = h.$('#connect_first_site_file_bulkupload');
+    h.$('input[name="mainwp_managesites_file_bulkupload"]').val = value => file.val(value);
+    // The shared validator sees the same empty manual row as the wizard.
+    h.$('#mainwp-managesites-row-import-sites .mainwp-managesites-import-rows').each = callback => callback(0);
+    file.val('sites.csv'); h.trigger('#connect_first_site_file_bulkupload', 'change');
+    h.trigger('#mainwp_managesites_add_import', 'click');
+    assert.equal(h.submits(), 1);
+    file.val(''); h.trigger('#connect_first_site_file_bulkupload', 'change');
+    h.trigger('#mainwp_managesites_add_import', 'click');
+    assert.equal(h.submits(), 1);
+});
+
+
+const summaryPhp = String.raw`/**
+ * Render the real summary and icon helper without a WordPress database.
+ *
+ * @package MainWP/Dashboard/Tests
+ */
+
+$input = json_decode( stream_get_contents( STDIN ), true );
+define( 'ABSPATH', __DIR__ );
+set_error_handler(
+	static function ( $level, $message ) {
+		throw new RuntimeException( $message );
+	}
+);
+$site = (object) array(
+	'id'                  => 42,
+	'name'                => 'Agency <Site>',
+	'url'                 => 'https://site.example/',
+	'cust_site_icon_info' => $input['icon'] ?? '',
+	'sync_errors'         => '',
+	'plugin_upgrades'     => '[]',
+	'theme_upgrades'      => '[]',
+);
+$_GET = array( 'siteid' => ( $input['variant'] ?? 'single' ) === 'single' ? 42 : 0 );
+
+function get_option( $name, $default = false ) {
+	return $GLOBALS['input']['options'][ $name ] ?? $default;
+}
+function mainwp_current_user_can( $type, $right ) {
+	return ! in_array( $right, $GLOBALS['input']['denied'] ?? array(), true );
+}
+function absint( $value ) { return abs( (int) $value ); }
+function esc_html( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
+function esc_attr( $value ) { return esc_html( $value ); }
+function esc_url( $value ) { return esc_html( $value ); }
+function __( $text, $domain ) { return $text; }
+function esc_html__( $text, $domain ) { return esc_html( $text ); }
+function esc_attr__( $text, $domain ) { return esc_attr( $text ); }
+function esc_html_e( $text, $domain ) { echo esc_html( $text ); }
+function _n( $single, $plural, $count, $domain ) { return 1 === (int) $count ? $single : $plural; }
+function wp_kses_post( $html ) { return $html; }
+function admin_url( $path ) { return 'https://dashboard.example.org/wp-admin/' . $path; }
+function add_query_arg( $name, $value, $url ) { return $url . '&' . $name . '=' . $value; }
+function wp_create_nonce( $action ) { return 'nonce-' . $action; }
+function wp_nonce_field( $action ) { echo '<input name="_wpnonce" value="nonce-' . esc_attr( $action ) . '">'; }
+function checked( $value ) { if ( $value ) { echo 'checked="checked"'; } }
+
+class Summary_DB {
+	public static function instance() { return new self(); }
+	public function get_websites_count() { return $GLOBALS['input']['count'] ?? 0; }
+	public function get_website_by_id( $id ) { return $GLOBALS['site']; }
+	public function get_website_option( $site, $name ) {
+		if ( 'site_info' === $name ) {
+			return empty( $GLOBALS['input']['unsynced'] ) ? array( 'wpversion' => '6.7' ) : array();
+		}
+		return 'favi_icon' === $name ? ( $GLOBALS['input']['favicon'] ?? '' ) : array();
+	}
+}
+class Summary_Utility {
+	public static function get_decoded_array( $value ) { return is_array( $value ) ? $value : ( json_decode( $value, true ) ?: array() ); }
+	public static function remove_http_prefix( $url ) { return preg_replace( '#^https?:#', '', $url ); }
+}
+class Summary_Monitoring {
+	public static function get_global_monitoring_settings() { return array( 'active' => $GLOBALS['input']['active'] ?? 1 ); }
+}
+class Summary_Monitors {
+	public static function instance() { return new self(); }
+	public function get_primary_monitor( $id ) { return (object) array( 'active' => $GLOBALS['input']['monitor'] ?? -1 ); }
+}
+class Summary_Notifications {
+	public static function get_general_email_settings( $type ) {
+		return $GLOBALS['input'][ $type ] ?? array( 'disable' => 0, 'recipients' => 'alerts@example.org' );
+	}
+}
+class Summary_System {
+	public static function can_edit_website( $site ) { return true; }
+	public static function is_admin() { return $GLOBALS['input']['admin'] ?? true; }
+	public static function get_mainwp_dir( $path, $create ) { return array( '', 'https://dashboard.example.org/site-icons/' ); }
+}
+class Summary_Abilities {
+	public static function check_rest_api_permission() { return $GLOBALS['input']['rest'] ?? true; }
+}
+class Summary_Menu {
+	public static function is_disable_menu_item( $level, $slug ) { return $GLOBALS['input']['hide_ai'] ?? false; }
+}
+class Summary_Updates {
+	public static function prepare_update_data( $type, $id ) {
+		return array(
+			'total_wp_upgrades'          => 0,
+			'total_plugin_upgrades'      => 0,
+			'total_theme_upgrades'       => 0,
+			'total_translation_upgrades' => $GLOBALS['input']['translations'] ?? 0,
+			'all_plugins_updates'       => array(),
+			'all_themes_updates'        => array(),
+		);
+	}
+	public static function render_bottom( $ids, $all ) { echo '<div id="fixture-update-modal">' . implode( ',', $ids ) . '</div>'; }
+}
+class Summary_Footer {
+	public static function render_footer_content( $sites, $id ) { echo '<div id="fixture-update-footer">' . (int) $id . '</div>'; }
+}
+foreach ( array(
+	'MainWP_DB'                       => Summary_DB::class,
+	'MainWP_Utility'                  => Summary_Utility::class,
+	'MainWP_Uptime_Monitoring_Handle'  => Summary_Monitoring::class,
+	'MainWP_DB_Uptime_Monitoring'      => Summary_Monitors::class,
+	'MainWP_Notification_Settings'    => Summary_Notifications::class,
+	'MainWP_System_Utility'           => Summary_System::class,
+	'MainWP_Abilities_Util'           => Summary_Abilities::class,
+	'MainWP_Menu'                     => Summary_Menu::class,
+	'MainWP_Updates_Overview'         => Summary_Updates::class,
+	'MainWP_System_View'              => Summary_Footer::class,
+) as $name => $class ) {
+	class_alias( $class, 'MainWP\\Dashboard\\' . $name );
+}
+require $input['root'] . '/pages/page-mainwp-setup-wizard.php';
+require $input['root'] . '/pages/page-mainwp-manage-sites.php';
+require $input['root'] . '/class/class-mainwp-connect.php';
+class Summary_Wizard extends MainWP\Dashboard\MainWP_Setup_Wizard {
+	public function get_next_step_link( $step = '' ) { return admin_url( 'admin.php?page=mainwp-setup&step=' . $step ); }
+}
+$wizard = ( new ReflectionClass( Summary_Wizard::class ) )->newInstanceWithoutConstructor();
+$wizard->mwp_setup_ready();
+`;
+
+function summary(input = {}) {
+    const { execFileSync } = require('node:child_process');
+    const path = require('node:path');
+    return execFileSync('php', ['-r', summaryPhp], {
+        input: JSON.stringify({ root: path.resolve(__dirname, '../..'), ...input }), encoding: 'utf8'
+    });
+}
+
+test('summary hero celebrates single and CSV connections, with a neutral empty state', () => {
+    const single = summary();
+    assert.match(single, /Your first site is connected/);
+    assert.match(single, /class="mainwp-onboarding-check"/);
+    assert.match(single, /class="mainwp-onboarding-site"[\s\S]*Agency &lt;Site&gt;/);
+    assert.doesNotMatch(single, /Site health:|What(?:'|&#039;)s next|<code>/);
+    for (const [count, headline] of [[0, 'No sites connected yet'], [1, '1 site connected'], [3, '3 sites connected']]) {
+        const html = summary({ variant: 'csv', count });
+        assert.ok(html.includes(headline));
+        assert.equal(html.includes('class="mainwp-onboarding-check"'), count > 0);
+        assert.equal(html.includes('admin.php?page=UpdatesManage'), count > 0);
+        assert.equal(html.includes('Add another site'), count > 0);
+        assert.equal(html.includes('Add your first site'), count === 0);
+        assert.doesNotMatch(html, /id="mainwp-onboarding-wordpress"|id="mainwp-onboarding-updates"/);
+        assert.match(html, /id="mainwp-onboarding-uptime"/);
+        assert.match(html, /id="mainwp-onboarding-digest"/);
+    }
+});
+
+test('summary displays the Manage Sites icon independently of the hidden request marker', () => {
+    for (const [input, expected, request] of [
+        [{}, /big wordpress/, true],
+        [{ favicon: 'https://site.example/icon.png' }, /src="https:\/\/site.example\/icon.png"/, false],
+        [{ favicon: 'images/icon.png' }, /src="\/\/site.example\/images\/icon.png"/, false],
+        [{ icon: 'uploaded:agency.png;selected:;color:' }, /src="https:\/\/dashboard.example.org\/site-icons\/agency.png"/, false],
+        [{ icon: 'uploaded:;selected:star;color:blue' }, /star big icon/, false]
+    ]) {
+        const html = summary(input);
+        assert.match(html, expected);
+        assert.equal(html.includes('id="mainwp-onboarding-site-icon" hidden'), request);
+    }
+});
+
+test('summary update tiles retain synced, unsynced and restricted actions and modal renderers', () => {
+    const current = summary();
+    assert.match(current, /id="mainwp-onboarding-wordpress"/);
+    assert.match(current, /Up to date/);
+    assert.match(current, /Nothing waiting right now/);
+    assert.doesNotMatch(current, /id="mainwp-onboarding-update-all"/);
+    const waiting = summary({ translations: 3 });
+    assert.match(waiting, /ui yellow segment mainwp-onboarding-tile mainwp-onboarding-updates-waiting/);
+    assert.match(waiting, /3 updates waiting/);
+    assert.match(waiting, /id="mainwp-onboarding-update-list"/);
+    assert.match(waiting, /id="mainwp-onboarding-update-all" data-siteid="42" data-confirm=/);
+    assert.match(waiting, /Review updates first/);
+    for (const input of [
+        { translations: 3, options: { mainwp_hide_update_everything: true } },
+        ...['update_wordpress', 'update_plugins', 'update_themes', 'update_translations'].map(right => ({ translations: 3, denied: [right] })),
+        { unsynced: true, translations: 3 }
+    ]) {
+        const html = summary(input);
+        assert.doesNotMatch(html, /id="mainwp-onboarding-update-all"/);
+        assert.match(html, /View updates/);
+        assert.match(html, /admin.php\?page=managesites&amp;updateid=42/);
+        if (input.unsynced) {
+            assert.match(html, /Updates and health will show here after the first successful sync/);
+            assert.doesNotMatch(html, /3 updates waiting|Up to date|id="mainwp-onboarding-update-list"/);
+        }
+    }
+    assert.match(waiting, /id="fixture-update-footer">42/);
+    assert.match(waiting, /id="fixture-update-modal">42/);
+});
+
+test('summary uptime and digest tiles honor effective monitoring and email branches', () => {
+    for (const [input, value, detail, off] of [
+        [{}, 'On', 'Alerts go to alerts@example.org', true],
+        [{ uptime: { disable: 1, recipients: 'alerts@example.org' } }, 'On', 'Email alerts are disabled', true],
+        [{ uptime: { disable: 0, recipients: '  ' } }, 'On', 'Email alerts are disabled', true],
+        [{ monitor: 0 }, 'Off', '', true],
+        [{ active: 0 }, 'Off', '', false],
+        [{ active: 0, monitor: 1 }, 'On', 'Alerts go to alerts@example.org', false],
+        [{ variant: 'csv', count: 2 }, 'On', '', true],
+        [{ variant: 'csv', count: 0, active: 0 }, 'Off', '', false]
+    ]) {
+        const html = summary(input);
+        const uptime = html.match(/id="mainwp-onboarding-uptime"[\s\S]*?<div class="mainwp-onboarding-value">([\s\S]*?)<\/div>/);
+        assert.ok(uptime);
+        assert.equal(uptime[1].replace(/<[^>]*>/g, '').trim(), value);
+        if (detail) assert.ok(html.includes(detail));
+        else assert.doesNotMatch(html, /Alerts go to|Email alerts are disabled/);
+        assert.equal(html.includes('id="mainwp-onboarding-disable-monitoring"'), off);
+    }
+    const escaped = summary({ uptime: { disable: 0, recipients: '<script>bad()</script>' } });
+    assert.match(escaped, /Alerts go to &lt;script&gt;bad\(\)&lt;\/script&gt;/);
+    assert.doesNotMatch(escaped, /<script>/);
+    for (const [disable, recipients, shown] of [[1, 'digest@example.org', false], [0, '', false], [0, '  ', false], [0, 'digest@example.org', true]]) {
+        const html = summary({ daily_digest: { disable, recipients } });
+        assert.equal(html.includes('id="mainwp-onboarding-digest"'), shown);
+        if (shown) assert.match(html, /Emailed when updates are waiting or a site disconnects/);
+    }
+});
+
+test('summary keeps guarded AI links and the Dashboard submit beside secondary setup controls', () => {
+    const html = summary();
+    assert.match(html, /id="mainwp-onboarding-next-steps"/);
+    assert.match(html, /More you can do:/);
+    assert.match(html, /Assign this site to a client/);
+    assert.match(html, /Connect Claude or Cursor/);
+    assert.match(html, /changes wait for your approval/);
+    assert.match(html, /<form[^>]*>[\s\S]*class="ui basic button"[^>]*>Add another site/);
+    assert.match(html, /<button type="submit" class="ui green button">Go to Dashboard/);
+    assert.match(html, /name="save_step" value="1"/);
+    assert.match(html, /mainwp-onboarding-tour-help[\s\S]*Usetiful Privacy Policy/);
+    for (const input of [{ admin: false }, { rest: false }, { hide_ai: true }]) {
+        const restricted = summary(input);
+        assert.doesNotMatch(restricted, /Connect Claude or Cursor|changes wait for your approval|<code>/);
+        assert.match(restricted, /id="mainwp-onboarding-next-steps"/);
+    }
 });

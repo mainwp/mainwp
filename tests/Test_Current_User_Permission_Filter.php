@@ -303,6 +303,100 @@ class Test_Current_User_Permission_Filter extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Process-wide contexts that grant access before the permission filter.
+	 *
+	 * @return array
+	 */
+	public static function global_permission_contexts(): array {
+		return array(
+			'cron' => array( 'DOING_CRON' ),
+			'CLI'  => array( 'WP_CLI' ),
+			'REST' => array( 'MAINWP_REST_API_DOING' ),
+		);
+	}
+
+	/**
+	 * Exercise real context constants without changing PHPUnit's request context.
+	 *
+	 * @dataProvider global_permission_contexts
+	 * @param string $context_constant Constant enabled only in the child process.
+	 */
+	public function test_global_permission_context_returns_before_filter( string $context_constant ): void {
+		$constants_before = array();
+		foreach ( self::global_permission_contexts() as $context ) {
+			$constants_before[ $context[0] ] = array( defined( $context[0] ), defined( $context[0] ) ? constant( $context[0] ) : null );
+		}
+
+		$process   = false;
+		$pipes     = array();
+		$output    = '';
+		$error     = '';
+		$exit_code = null;
+		$timed_out = false;
+		try {
+			$process = proc_open(
+				array( PHP_BINARY, '-d', 'display_errors=stderr', __DIR__ . '/fixtures/global-permission-context.inc', ABSPATH, $context_constant ),
+				array(
+					0 => array( 'pipe', 'r' ),
+					1 => array( 'pipe', 'w' ),
+					2 => array( 'pipe', 'w' ),
+				),
+				$pipes
+			);
+			$this->assertIsResource( $process );
+			fclose( $pipes[0] );
+			stream_set_blocking( $pipes[1], false );
+			stream_set_blocking( $pipes[2], false );
+			$deadline = hrtime( true ) + 10 * 1000000000;
+			while ( true ) {
+				$output .= stream_get_contents( $pipes[1] );
+				$error  .= stream_get_contents( $pipes[2] );
+				$status  = proc_get_status( $process );
+				if ( ! $status['running'] ) {
+					$exit_code = $status['exitcode'];
+					break;
+				}
+				if ( hrtime( true ) >= $deadline ) {
+					$timed_out = true;
+					break;
+				}
+				usleep( 10000 );
+			}
+		} finally {
+			if ( is_resource( $process ) && proc_get_status( $process )['running'] ) {
+				proc_terminate( $process, 9 );
+			}
+			foreach ( $pipes as $descriptor => $pipe ) {
+				if ( is_resource( $pipe ) ) {
+					if ( 1 === $descriptor ) {
+						$output .= stream_get_contents( $pipe );
+					} elseif ( 2 === $descriptor ) {
+						$error .= stream_get_contents( $pipe );
+					}
+					fclose( $pipe );
+				}
+			}
+			if ( is_resource( $process ) ) {
+				proc_close( $process );
+			}
+		}
+
+		foreach ( $constants_before as $name => $before ) {
+			$this->assertSame( $before, array( defined( $name ), defined( $name ) ? constant( $name ) : null ), $name . ' changed in the parent process.' );
+		}
+		$this->assertFalse( $timed_out, 'Permission context child exceeded 10 seconds. ' . $error );
+		$this->assertSame( 0, $exit_code, $error );
+		$this->assertSame( '', $error );
+		$this->assertSame(
+			array(
+				'permission' => true,
+				'calls'      => array(),
+			),
+			json_decode( $output, true, 512, JSON_THROW_ON_ERROR )
+		);
+	}
+
+	/**
 	 * Userless CLI keeps its grant and userless REST keeps its refusal.
 	 *
 	 * @dataProvider userless_ability_contexts

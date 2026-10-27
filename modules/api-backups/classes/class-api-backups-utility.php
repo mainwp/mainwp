@@ -643,6 +643,10 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return false;
         }
 
+        if ( ! is_string( $value ) ) {
+            return true;
+        }
+
         // MWP-1543: settings forms render the sentinel ('••••••••') in the
         // password input when a value is already stored. A submission that
         // returns the sentinel unchanged means "leave existing value alone";
@@ -673,7 +677,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         $encrypted = $this->encrypt_api_keys( $value, false, $key_file, $name );
-        if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) ) {
+        if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) && ! empty( $encrypted['encrypted_val'] ) ) {
             return update_option( $opt_name, $encrypted );
         }
 
@@ -750,6 +754,10 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return false;
         }
 
+        if ( ! is_string( $value ) ) {
+            return true;
+        }
+
         // MWP-1543: same sentinel short-circuit as update_api_key(); the
         // per-site Edit Site form renders the sentinel placeholder when a
         // value already exists, and an unchanged submission must not
@@ -780,10 +788,9 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return true;
         }
 
-        $encrypted = wp_json_encode( $this->encrypt_api_keys( $value, $website_id, $key_file, $name ) );
-
-        if ( ! empty( $encrypted ) ) {
-            return Api_Backups_Helper::update_website_option( $website_id, $opt_name, $encrypted );
+        $encrypted = $this->encrypt_api_keys( $value, $website_id, $key_file, $name );
+        if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) && ! empty( $encrypted['encrypted_val'] ) ) {
+            return Api_Backups_Helper::update_website_option( $website_id, $opt_name, wp_json_encode( $encrypted ) );
         }
 
         return false;

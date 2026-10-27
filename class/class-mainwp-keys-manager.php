@@ -144,12 +144,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return bool False when the name is not a key file name.
      */
     public function delete_key_file( $file_key ) {
-        // The name arrives through the mainwp_delete_key_file action, so it must not reach outside the keys directory.
-        if ( ! is_string( $file_key ) || 1 !== preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$/D', $file_key ) ) {
+        $file_path = $this->key_file_path( $file_key, true );
+        if ( false === $file_path ) {
             return false;
         }
-        $key_dir   = static::get_keys_dir();
-        $file_path = $key_dir . $file_key;
         MainWP_Utility::delete_file( $file_path ); // delete file content key.
         return true;
     }
@@ -162,16 +160,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return bool Whether exact absence was proved.
      */
     public function delete_key_file_with_result( $file_key ) {
-        if ( ! is_string( $file_key ) || 1 !== preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$/D', $file_key ) ) {
+        $file_path = $this->key_file_path( $file_key, true );
+        if ( false === $file_path ) {
             return false;
         }
-
-        $key_dir = static::get_keys_dir();
-        if ( ! is_string( $key_dir ) || '' === $key_dir ) {
-            return false;
-        }
-
-        $file_path = trailingslashit( $key_dir ) . $file_key;
         if ( ! $this->key_entry_present( $file_path ) ) {
             return true;
         }
@@ -217,6 +209,47 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Resolve a canonical key basename directly inside the private directory.
+     *
+     * Reads and writes also require an existing target to be a regular file in
+     * that directory. Deletion removes the directory entry, including a dangling
+     * symlink, without following its target.
+     *
+     * @param mixed $file_key Key basename.
+     * @param bool  $delete_entry Whether only the entry's parent needs resolving.
+     * @return string|false Confined path, or false for an unsafe name or target.
+     */
+    private function key_file_path( $file_key, $delete_entry = false ) {
+        if ( ! is_string( $file_key ) || '' === $file_key || strlen( $file_key ) > 255 || false !== strpbrk( $file_key, "/\\\0" ) ) {
+            return false;
+        }
+        // Historical generators appended a SHA-1 suffix to an unrestricted caller prefix.
+        if ( 1 !== preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]*$/D', $file_key ) && 1 !== preg_match( '/^.*_[a-f0-9]{40}$/sD', $file_key ) ) {
+            return false;
+        }
+        $configured_dir = static::get_keys_dir();
+        $key_dir        = realpath( $configured_dir );
+        if ( false === $key_dir || ! is_dir( $key_dir ) ) {
+            // No entry can exist below a missing directory; preserve idempotent deletion.
+            if ( $delete_entry && ! file_exists( $configured_dir ) && ! is_link( $configured_dir ) ) {
+                return trailingslashit( $configured_dir ) . $file_key;
+            }
+            return false;
+        }
+        $path = $key_dir . DIRECTORY_SEPARATOR . $file_key;
+        if ( realpath( dirname( $path ) ) !== $key_dir ) {
+            return false;
+        }
+        if ( ! $delete_entry && ( file_exists( $path ) || is_link( $path ) ) ) {
+            $target = realpath( $path );
+            if ( false === $target || dirname( $target ) !== $key_dir || ! is_file( $target ) ) {
+                return false;
+            }
+        }
+        return $path;
+    }
+
+    /**
      * Method get_decrypt_values()
      *
      * Get decrypt value.
@@ -255,7 +288,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $opt = get_option( $name );
 
-        if ( ! empty( $opt ) && is_array( $opt ) && ! empty( $opt['file_key'] ) ) {
+        if ( ! empty( $opt ) && is_array( $opt ) && ! empty( $opt['file_key'] ) && false !== $this->key_file_path( $opt['file_key'] ) ) {
             $file_name = $opt['file_key'];
         } else {
             $file_name = $prefix . sha1( sha1( $prefix . $name . time() ) . 'key_files' ); // NOSONAR - safe for salt file name.
@@ -300,9 +333,11 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function save_key_file( $key_file, $key_val ) {
         static::init_keys_dir();
-        $key_dir   = static::get_keys_dir();
-        $file_path = $key_dir . $key_file;
-        $saved     = file_put_contents( $file_path, $key_val ); //phpcs:ignore
+        $file_path = $this->key_file_path( $key_file );
+        if ( false === $file_path ) {
+            return false;
+        }
+        $saved = file_put_contents( $file_path, $key_val ); //phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Private key files.
         return false === $saved ? false : true;
     }
 
@@ -316,9 +351,8 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return string Decrypt value.
      */
     public function get_key_val( $key_file ) {
-        $key_dir = static::get_keys_dir();
-        $path    = $key_dir . $key_file;
-        if ( file_exists( $path ) ) {
+        $path = $this->key_file_path( $key_file );
+        if ( false !== $path && is_file( $path ) ) {
             return file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- private key files.
         }
         return '';
@@ -741,9 +775,9 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             include_once ABSPATH . WPINC . '/pluggable.php'; // NOSONAR - WP compatible.
         }
 
-        if ( ! empty( $key_file ) && is_string( $key_file ) ) {
+        if ( ! empty( $key_file ) && false !== $this->key_file_path( $key_file ) ) {
             $file_name = $key_file;
-        } elseif ( ! empty( $data ) && is_array( $data ) && ! empty( $data['file_key'] ) ) {
+        } elseif ( ! empty( $data ) && is_array( $data ) && ! empty( $data['file_key'] ) && false !== $this->key_file_path( $data['file_key'] ) ) {
             $file_name = $data['file_key'];
         } else {
             $ran       = wp_rand( 0, 9990 ); // to fix repeat value.

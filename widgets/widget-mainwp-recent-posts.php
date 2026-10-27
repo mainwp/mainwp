@@ -790,8 +790,11 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         *
         * @since 4.1
         */
-        do_action( 'mainwp_before_post_action', $type, $pAction, $postId, $website );
         try {
+            if ( ! current_user_can( 'manage_options' ) && ! MainWP_Bulk_Post::can_access_remote_post( $website, $postId, $type ) ) {
+                wp_die( -1 );
+            }
+            do_action( 'mainwp_before_post_action', $type, $pAction, $postId, $website );
             $information = MainWP_Connect::fetch_url_authed(
                 $website,
                 'post_action',

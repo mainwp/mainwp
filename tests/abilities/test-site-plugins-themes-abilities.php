@@ -173,16 +173,13 @@ class MainWP_Site_Plugins_Themes_Ability_Test extends MainWP_Abilities_Test_Case
 		$this->skip_if_no_abilities_api();
 		$this->set_current_user_as_admin();
 
-		// Abilities API triggers _doing_it_wrong() when permission_callback returns WP_Error.
-		$this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
-
 		$result = $this->execute_ability( 'mainwp/get-site-plugins-v1', [
 			'site_id_or_domain' => 999999,
 		] );
 
 		$this->assertWPError( $result );
-		// Abilities API wraps permission errors with ability_invalid_permissions.
-		$this->assertEquals( 'ability_invalid_permissions', $result->get_error_code() );
+		$this->assertEquals( 'mainwp_site_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
 		// Original error message should mention the site was not found.
 		$this->assertStringContainsString( 'site', strtolower( $result->get_error_message() ) );
 	}
@@ -387,16 +384,13 @@ class MainWP_Site_Plugins_Themes_Ability_Test extends MainWP_Abilities_Test_Case
 		$this->skip_if_no_abilities_api();
 		$this->set_current_user_as_admin();
 
-		// Abilities API triggers _doing_it_wrong() when permission_callback returns WP_Error.
-		$this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
-
 		$result = $this->execute_ability( 'mainwp/get-site-themes-v1', [
 			'site_id_or_domain' => 999999,
 		] );
 
 		$this->assertWPError( $result );
-		// Abilities API wraps permission errors with ability_invalid_permissions.
-		$this->assertEquals( 'ability_invalid_permissions', $result->get_error_code() );
+		$this->assertEquals( 'mainwp_site_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
 		// Original error message should mention the site was not found.
 		$this->assertStringContainsString( 'site', strtolower( $result->get_error_message() ) );
 	}

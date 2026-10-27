@@ -425,7 +425,8 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 		$other  = $this->create_test_site();
 		$record = $this->create_record( 'site', $site );
 		$this->restrict_current_user_to_sites( array( $other ) );
-		$this->assert_permission_denied( 'mainwp/get-site-knowledge-v1', array( 'site_id' => $site ), 'mainwp_site_not_found', 404 );
+		$this->assertTrue( wp_get_ability( 'mainwp/get-site-knowledge-v1' )->check_permissions( array( 'site_id' => $site ) ) );
+		$this->assert_error( $this->execute_ability( 'mainwp/get-site-knowledge-v1', array( 'site_id' => $site ) ), 'mainwp_site_not_found', 404 );
 		$this->assert_permission_denied( 'mainwp/get-knowledge-record-v1', array( 'record_id' => $record->id ), 'mainwp_knowledge_not_found', 404 );
 		$this->clear_filters();
 		$this->successful_call( 'mainwp/get-site-knowledge-v1', array( 'site_id' => $site ) );
@@ -926,6 +927,14 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 			$ability = wp_get_ability( $name );
 			$hidden  = $ability->check_permissions( array( $field => $hidden_id ) + $input );
 			$absent  = $ability->check_permissions( array( $field => $missing ) + $input );
+			if ( 'mainwp/get-site-knowledge-v1' === $name ) {
+				$this->assertTrue( $hidden );
+				$this->assertTrue( $absent );
+				$hidden = $ability->execute( array( $field => $hidden_id ) + $input );
+				$absent = $ability->execute( array( $field => $missing ) + $input );
+				$this->assert_error( $hidden, 'mainwp_site_not_found', 404 );
+				$this->assert_error( $absent, 'mainwp_site_not_found', 404 );
+			}
 			$this->assertWPError( $hidden, $name );
 			$this->assertWPError( $absent, $name );
 			$this->assertSame( $absent->get_error_code(), $hidden->get_error_code(), $name );

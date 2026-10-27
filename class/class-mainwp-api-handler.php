@@ -97,7 +97,9 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 }
                 $count       = 0;
                 $bulk_checks = array();
-                sleep( 3 );
+                if ( $i < $total_check ) {
+                    sleep( 3 );
+                }
             }
         }
         return $output;

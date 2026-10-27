@@ -694,7 +694,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $userid = null;
         foreach ( $websites as $website ) {
             $websiteValues = array(
-                'dtsAutomaticSyncStart' => $local_timestamp,
+                'dtsAutomaticSyncStart' => max( $local_timestamp, (int) get_option( 'mainwp_updatescheck_start_last_timestamp' ), $manual_trigger_last_timestamp ),
             );
             if ( null === $userid ) {
                 $userid = $website->userid;

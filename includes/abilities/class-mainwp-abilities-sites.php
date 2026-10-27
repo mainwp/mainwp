@@ -852,9 +852,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Execute callback for mainwp/get-site-v1.
      *
-     * NOTE: Site resolution and ACL check are performed in permission_callback
-     * via make_site_permission_callback(). If we reach this execute callback,
-     * permissions have already been verified.
+     * Resolve and authorize the site here so not-found errors retain their 404.
      *
      * @param array $input Validated input from Abilities API.
      * @return array|\WP_Error
@@ -863,8 +861,12 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         $site = MainWP_Abilities_Util::resolve_site( $input['site_id_or_domain'] );
 
         if ( is_wp_error( $site ) ) {
-            // This shouldn't happen if permission_callback passed, but handle gracefully.
             return $site;
+        }
+
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
+        if ( is_wp_error( $access_check ) ) {
+            return $access_check;
         }
 
         $include_stats = MainWP_Abilities_Util::get_boolean_input( $input, 'include_stats' );
@@ -1065,13 +1067,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        // ACL check is done in permission_callback, but double-check for safety.
-        if ( ! MainWP_Abilities_Util::can_access_site( $site, $input ) ) {
-            return new \WP_Error(
-                'mainwp_access_denied',
-                __( 'You do not have permission to access this site.', 'mainwp' ),
-                array( 'status' => 403 )
-            );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
+        if ( is_wp_error( $access_check ) ) {
+            return $access_check;
         }
 
         // Check child version for plugin data.
@@ -1163,13 +1161,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        // ACL check is done in permission_callback, but double-check for safety.
-        if ( ! MainWP_Abilities_Util::can_access_site( $site, $input ) ) {
-            return new \WP_Error(
-                'mainwp_access_denied',
-                __( 'You do not have permission to access this site.', 'mainwp' ),
-                array( 'status' => 403 )
-            );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
+        if ( is_wp_error( $access_check ) ) {
+            return $access_check;
         }
 
         // Check child version for theme data.

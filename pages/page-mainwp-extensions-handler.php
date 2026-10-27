@@ -376,30 +376,25 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * No SSL Filter Function.
+     * Legacy callback retained without disabling certificate verification.
      *
-     * @param bool $args args.
+     * @param array $args HTTP request arguments.
      *
-     * @return mixed args.
+     * @return array HTTP request arguments.
      */
     public static function no_ssl_filter_function( $args ) {
-        $args['sslverify'] = false;
         return $args;
     }
 
     /**
-     * No SSL Filter Extention Upgrade.
+     * Legacy upgrade callback retained without disabling certificate verification.
      *
-     * @param bool  $r Results.
-     * @param mixed $url Upgrade Extension URL.
+     * @param array  $r   HTTP request arguments.
+     * @param string $url Unused legacy upgrade URL.
      *
-     * @return mixed false|$r.
+     * @return array HTTP request arguments.
      */
-    public static function no_ssl_filter_extension_upgrade( $r, $url ) {
-        if ( ( false !== strpos( $url, 'am_download_file=' ) ) && ( false !== strpos( $url, 'am_email=' ) ) ) {
-            $r['sslverify'] = false;
-        }
-
+    public static function no_ssl_filter_extension_upgrade( $r, $url ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Preserve the legacy filter callback signature.
         return $r;
     }
 
@@ -438,13 +433,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             remove_all_filters( 'upgrader_source_selection' );
         }
 
-        $installer          = new \WP_Upgrader();
-        $ssl_verifyhost     = get_option( 'mainwp_sslVerifyCertificate' );
-        $ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
-
-        if ( empty( $ssl_api_verifyhost ) ) {
-            add_filter( 'http_request_args', array( static::get_class_name(), 'no_ssl_filter_function' ), 99, 2 );
-        }
+        $installer = new \WP_Upgrader();
 
         add_filter( 'http_request_args', array( static::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
 
@@ -459,10 +448,6 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         );
 
         remove_filter( 'http_request_args', array( static::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
-
-        if ( '0' === $ssl_verifyhost ) {
-            remove_filter( 'http_request_args', array( static::get_class_name(), 'no_ssl_filter_function' ), 99 );
-        }
 
         $error       = null;
         $output      = null;

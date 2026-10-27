@@ -276,12 +276,14 @@ class Test_Global_Backup_Credential_Persistence extends \WP_UnitTestCase {
 	public function test_settings_form_rejection_preserves_previous_credential(): void {
 		$utility = Api_Backups_Utility::get_instance();
 		$this->assertTrue( $utility->update_api_key( 'plesk', 'fixture-original' ) );
-		$before = $this->key_files();
-		$post   = $_POST;
-		$reject = static function () {
+		$before     = $this->key_files();
+		$post       = $_POST;
+		$rejections = 0;
+		$reject     = static function () use ( &$rejections ) {
+			++$rejections;
 			return false;
 		};
-		$_POST  = array(
+		$_POST      = array(
 			'submit'               => '1',
 			'wp_nonce_plesk'       => wp_create_nonce( 'cloudways_api_form_general' ),
 			'mainwp_plesk_api_key' => 'fixture-replacement',
@@ -295,6 +297,7 @@ class Test_Global_Backup_Credential_Persistence extends \WP_UnitTestCase {
 			$_POST = $post;
 			remove_filter( 'mainwp_encrypt_key_value', $reject, 20 );
 		}
+		$this->assertSame( 1, $rejections, 'The settings form must attempt the credential replacement.' );
 		$this->assertTrue( 'fixture-original' === $utility->get_api_key( 'plesk' ), 'The settings form must preserve the original credential after rejection.' );
 		$this->assertSame( $before, $this->key_files() );
 	}
@@ -303,11 +306,13 @@ class Test_Global_Backup_Credential_Persistence extends \WP_UnitTestCase {
 	public function test_rest_rejection_preserves_previous_credential(): void {
 		$utility = Api_Backups_Utility::get_instance();
 		$this->assertTrue( $utility->update_api_key( 'plesk', 'fixture-original' ) );
-		$before  = $this->key_files();
-		$reject  = static function () {
+		$before     = $this->key_files();
+		$rejections = 0;
+		$reject     = static function () use ( &$rejections ) {
+			++$rejections;
 			return false;
 		};
-		$request = new \WP_REST_Request( 'PUT', '/mainwp/v2/settings/api-backups/plesk/edit' );
+		$request    = new \WP_REST_Request( 'PUT', '/mainwp/v2/settings/api-backups/plesk/edit' );
 		$request->set_header( 'content-type', 'application/json' );
 		$request->set_body( wp_json_encode( array( 'secrets' => array( 'api_key' => 'fixture-replacement' ) ) ) );
 		$auth          = \MainWP_REST_Authentication::get_instance();
@@ -338,6 +343,7 @@ class Test_Global_Backup_Credential_Persistence extends \WP_UnitTestCase {
 			$GLOBALS['wp_filter']['rest_pre_dispatch'] = $dispatch_hook;
 		}
 		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 1, $rejections, 'The REST route must attempt the credential replacement.' );
 		$this->assertSame( $rest_doing, defined( 'MAINWP_REST_API_DOING' ), 'The credential route fixture must not change process-wide authentication state.' );
 		$this->assertTrue( 'fixture-original' === $utility->get_api_key( 'plesk' ), 'The REST writer must preserve the original credential after rejection.' );
 		$this->assertSame( $before, $this->key_files() );
@@ -449,5 +455,63 @@ class Test_Global_Backup_Credential_Persistence extends \WP_UnitTestCase {
 		$this->assertTrue( $this->key_files() === $before );
 		$this->assertCount( 2, $this->keys );
 		$this->assertFileDoesNotExist( MainWP_Keys_Manager::get_keys_dir() . $this->keys[1] );
+	}
+
+	/**
+	 * Stored and read-filter metadata can change comparison without changing key ownership.
+	 *
+	 * @return array Persistence/read filter and first-save/replacement cases.
+	 */
+	public static function modified_readback_cases(): array {
+		return array(
+			'first-save-write-metadata'  => array( false, false ),
+			'replacement-write-metadata' => array( true, false ),
+			'first-save-read-metadata'   => array( false, true ),
+			'replacement-read-metadata'  => array( true, true ),
+		);
+	}
+
+	/**
+	 * Failed comparison must keep the staged file referenced by the persisted option.
+	 *
+	 * @dataProvider modified_readback_cases
+	 * @param bool $existing Whether there is an old credential to preserve.
+	 * @param bool $read_filter Whether metadata is added on read instead of write.
+	 */
+	public function test_modified_readback_keeps_referenced_staged_file( bool $existing, bool $read_filter ): void {
+		$utility = Api_Backups_Utility::get_instance();
+		$option  = 'mainwp_api_backups_plesk_api_key';
+		if ( $existing ) {
+			$this->assertTrue( $utility->update_api_key( 'plesk', 'fixture-original' ) );
+		}
+		$previous = get_option( $option );
+		$before   = count( $this->key_files() );
+		$metadata = static function ( $envelope ) {
+			if ( is_array( $envelope ) ) {
+				$envelope['fixture_metadata'] = 'retained';
+			}
+			return $envelope;
+		};
+		$hook     = ( $read_filter ? 'option_' : 'pre_update_option_' ) . $option;
+		add_filter( $hook, $metadata );
+		try {
+			$result = $utility->update_api_key( 'plesk', 'fixture-replacement' );
+		} finally {
+			remove_filter( $hook, $metadata );
+		}
+		$stored = get_option( $option );
+		$staged = end( $this->keys );
+		$this->assertFalse( $result, 'A changed readback must retain the existing false return contract.' );
+		$this->assertTrue( is_array( $stored ) && $stored['file_key'] === $staged, 'The persisted option must reference the captured staged file.' );
+		if ( $existing ) {
+			$this->assertNotSame( $previous['file_key'], $staged );
+			$this->assertFileExists( MainWP_Keys_Manager::get_keys_dir() . $previous['file_key'] );
+			$this->assertTrue( 'fixture-original' === $utility->decrypt_api_keys( $previous ), 'The saved original envelope must remain decryptable.' );
+		}
+		$this->assertFileExists( MainWP_Keys_Manager::get_keys_dir() . $staged, 'Comparison failure must not delete a key referenced by the stored option.' );
+		$this->assertTrue( 'fixture-replacement' === $utility->get_api_key( 'plesk' ), 'The persisted replacement must remain decryptable.' );
+		$this->assertCount( $before + 1, $this->key_files(), 'The persisted stage and any original key must both remain.' );
+		$this->assertCount( $existing ? 2 : 1, $this->keys );
+		$this->assertSame( ! $read_filter, isset( $stored['fixture_metadata'] ) );
 	}
 }

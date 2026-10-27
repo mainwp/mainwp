@@ -700,7 +700,8 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         $new_key_file = $encrypted['file_key'];
         update_option( $opt_name, $encrypted );
         // An unchanged option also returns false, so confirm the stored envelope.
-        if ( get_option( $opt_name ) === $encrypted ) {
+        $stored = get_option( $opt_name );
+        if ( $stored === $encrypted ) {
             if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file && $staged_key_file !== $new_key_file ) {
                 do_action( 'mainwp_delete_key_file', $staged_key_file );
             }
@@ -710,7 +711,11 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return true;
         }
 
-        if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file ) {
+        $stored_key_file = '';
+        if ( is_array( $stored ) && isset( $stored['file_key'] ) && is_string( $stored['file_key'] ) ) {
+            $stored_key_file = $stored['file_key'];
+        }
+        if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file && $staged_key_file !== $stored_key_file ) {
             do_action( 'mainwp_delete_key_file', $staged_key_file );
         }
         return false;

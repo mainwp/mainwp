@@ -1201,7 +1201,7 @@ test('wizard status accents, password help and summary details retain their pres
     assert.match(css, /#mainwp-onboarding-detection \.ui\.horizontal\.list > \.item > \.content\s*\{[^}]*color:\s*var\(--mainwp-onboarding-text, #2f3437\)/);
     assert.match(css, /#mainwp-onboarding-detection \.ui\.horizontal\.list > \.item > \.red\.icon\s*\{[^}]*color:\s*var\(--mainwp-onboarding-danger, #b94141\) !important/);
     assert.match(css, /#mainwp-onboarding-detection\.ui\.message\s*\{[^}]*border-left:\s*0 !important/);
-    assert.match(css, /#mainwp-onboarding-detection a:not\(\.button\),[\s\S]*?\{[^}]*color:[^}]*!important;[^}]*text-decoration:\s*none/);
+    assert.match(css, /#mainwp-onboarding-detection a:not\(\.button\),[\s\S]*?\{[^}]*color:[^}]*!important;[^}]*font-weight:\s*600;[^}]*text-decoration:\s*none/);
     assert.match(css, /#mainwp-onboarding-detection a:not\(\.button\):hover,[\s\S]*?#mainwp-onboarding-detection a:not\(\.button\):focus,[\s\S]*?\{[^}]*text-decoration:\s*underline !important/);
     assert.match(css, /\.mainwp-onboarding-password-note\s*\{[^}]*background:\s*var\(--mainwp-onboarding-info-surface, #ecf3f7\)/);
     assert.match(css, /\.mainwp-onboarding-password-note > \.lock\.icon\s*\{[^}]*width:\s*22px;[^}]*height:\s*22px;[^}]*border-radius:\s*50%/);

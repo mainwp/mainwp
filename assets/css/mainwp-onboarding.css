@@ -157,9 +157,11 @@
 #mainwp-onboarding-detection .ui.horizontal.list > .item > .red.icon {
     color: var(--mainwp-onboarding-danger, #b94141) !important;
 }
+/* The link color sits under 3:1 against the body text, so weight marks these links without relying on color. */
 #mainwp-onboarding-detection a:not(.button),
 #mainwp-quick-setup-wizard .mainwp-onboarding-disclosure {
     color: var(--mainwp-onboarding-link, #2f7097) !important;
+    font-weight: 600;
     text-decoration: none !important;
 }
 #mainwp-onboarding-detection a:not(.button):hover,

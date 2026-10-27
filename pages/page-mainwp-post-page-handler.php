@@ -1142,10 +1142,11 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $downloadfile = $downloaded_images[ $originalImgUrl ];
                     if ( null === $downloadfile ) {
                         $extension_position = strrpos( $originalImgUrl, '.' );
-                        $failed_pattern     = '#' . preg_quote( substr( $originalImgUrl, 0, $extension_position ), '#' ) . '(?:-\d{3}x\d{3})?' . preg_quote( substr( $originalImgUrl, $extension_position ), '#' ) . '#';
+                        $failed_pattern     = '#' . preg_quote( substr( $originalImgUrl, 0, $extension_position ), '#' ) . '(?:-\d+x\d+)?' . preg_quote( substr( $originalImgUrl, $extension_position ), '#' ) . '#';
                         preg_match_all( $failed_pattern, str_replace( '\\/', '/', $new_post['post_content'] ), $failed_matches );
                         foreach ( $failed_matches[0] as $failed_url ) {
                             $image_replacements[ $failed_url ] = $failed_url;
+                            $downloaded_images[ $failed_url ]  = null;
                         }
                         continue;
                     }
@@ -1355,10 +1356,11 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $downloadfile = $downloaded_images[ $image_key ];
                     if ( null === $downloadfile ) {
                         $extension_position = strrpos( $image_key, '.' );
-                        $failed_pattern     = '#' . preg_quote( substr( $image_key, 0, $extension_position ), '#' ) . '(?:-\d{3}x\d{3})?' . preg_quote( substr( $image_key, $extension_position ), '#' ) . '#';
+                        $failed_pattern     = '#' . preg_quote( substr( $image_key, 0, $extension_position ), '#' ) . '(?:-\d+x\d+)?' . preg_quote( substr( $image_key, $extension_position ), '#' ) . '#';
                         preg_match_all( $failed_pattern, str_replace( '\\/', '/', $content ), $failed_matches );
                         foreach ( $failed_matches[0] as $failed_url ) {
                             $image_replacements[ $failed_url ] = $failed_url;
+                            $downloaded_images[ $failed_url ]  = null;
                         }
                         continue;
                     }

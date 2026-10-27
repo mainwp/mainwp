@@ -175,7 +175,7 @@ class Test_Post_Page_Image_Upload_Failure extends \WP_UnitTestCase {
 	 * @return string Source content.
 	 */
 	private function failed_content(): string {
-		return '<a href="' . $this->source_url . 'failed.png"><img src="' . $this->source_url . 'failed-150x150.png" srcset="' . $this->source_url . 'failed-600x600.png 600w, ' . $this->source_url . 'failed.png 600w" /></a><img src="' . $this->source_url . 'failed.png" /><img src="' . $this->source_url . 'failed-300x300.png" />';
+		return '<a href="' . $this->source_url . 'failed.png"><img src="' . $this->source_url . 'failed-150x150.png" srcset="' . $this->source_url . 'failed-600x600.png 600w, ' . $this->source_url . 'failed-1024x768.png 1024w, ' . $this->source_url . 'failed-1536x1536.png 1536w, ' . $this->source_url . 'failed.png 600w" /></a><img src="' . $this->source_url . 'failed.png" /><img src="' . $this->source_url . 'failed-300x300.png" />';
 	}
 
 	/**

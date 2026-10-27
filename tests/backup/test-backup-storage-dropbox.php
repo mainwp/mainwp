@@ -1051,6 +1051,69 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 
 		$this->assertCount( 0, $this->requests, 'The transport must not run for a blocked host.' );
 	}
+	/** Namespace identity comes from metadata, without writing an existing marker. */
+	public function test_retention_marker_returns_server_file_id_without_overwrite() {
+		$provider = $this->make_provider(
+			array(
+				$this->token_response(),
+				$this->response(
+					200,
+					wp_json_encode(
+						array(
+							'.tag' => 'file',
+							'id'   => 'id:original',
+							'size' => 1,
+						)
+					)
+				),
+			)
+		);
+		$this->assertTrue( method_exists( $provider, 'retention_marker_id' ), 'Dropbox needs a server-issued namespace proof.' );
+		$this->assertSame( 'id:original', $provider->retention_marker_id( '.mainwp-retention-' . str_repeat( 'a', 32 ) ) );
+		$this->assertCount( 2, $this->requests );
+		$this->assertStringEndsWith( '/2/files/get_metadata', $this->requests[1]['url'] );
+		$this->assertLessThanOrEqual( 30, $this->requests[1]['args']['timeout'] );
+	}
+
+	/** Missing markers are created once; ambiguous failures must never create one. */
+	public function test_retention_marker_creates_only_after_definite_absence() {
+		$missing  = $this->response( 409, wp_json_encode( array( 'error_summary' => 'path/not_found/..' ) ) );
+		$provider = $this->make_provider(
+			array(
+				$this->token_response(),
+				$missing,
+				$this->response(
+					200,
+					wp_json_encode(
+						array(
+							'id'   => 'id:new-marker',
+							'size' => 1,
+						)
+					)
+				),
+				$this->response(
+					200,
+					wp_json_encode(
+						array(
+							'.tag' => 'file',
+							'id'   => 'id:new-marker',
+							'size' => 1,
+						)
+					)
+				),
+			)
+		);
+		$this->assertTrue( method_exists( $provider, 'retention_marker_id' ) );
+		try {
+			$this->assertSame( 'id:new-marker', $provider->retention_marker_id( '.mainwp-retention-' . str_repeat( 'a', 32 ) ) );
+		} catch ( \RuntimeException $e ) {
+			$this->fail( 'A successful untagged upload response must be followed by metadata readback.' );
+		}
+		$this->assertCount( 4, $this->requests );
+		$upload = json_decode( $this->requests[2]['args']['headers']['Dropbox-API-Arg'], true );
+		$this->assertSame( 'add', $upload['mode'] );
+		$this->assertFalse( $upload['autorename'] );
+	}
 }
 
 // phpcs:disable Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double for the wiring test above.

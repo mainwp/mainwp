@@ -98,6 +98,7 @@ namespace MainWP\\Dashboard {
     class MainWP_System_Utility {
         public static function get_default_map_site_fields() { return array(); }
         public static function is_suspended_site($site) { return false; }
+        public static function can_edit_website($site) { return true; }
     }
     class MainWP_DB {
         public static function instance() { return new self(); }
@@ -131,6 +132,7 @@ namespace {
     function esc_html__($value, $domain) { return esc_html($value); }
     function wp_json_encode($value) { return json_encode($value); }
     function do_action(...$args) {}
+    function mainwp_current_user_can($type, $id) { return true; }
     function wp_slash($value) {
         return is_array($value) ? array_map('wp_slash', $value) : (is_string($value) ? addslashes($value) : $value);
     }
@@ -177,12 +179,14 @@ namespace {
     function esc_attr_e($value, $domain) { echo esc_attr($value); }
     function wp_json_encode($value) { return json_encode($value); }
     function do_action(...$args) {}
+    function sanitize_key($value) { return strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', $value)); }
+    function wp_verify_nonce($nonce, $action) { return 'fixture-nonce' === $nonce && 'mainwp-admin-nonce' === $action; }
     $csv_contents = stream_get_contents(STDIN);
     $wp_filesystem = new class {
         public function get_contents($path) { return $GLOBALS['csv_contents']; }
     };
     $_FILES = array('import_user_file_bulkupload' => array('error' => UPLOAD_ERR_OK, 'tmp_name' => '/test/upload.csv'));
-    $_POST = array();
+    $_POST = array('_wpnonce' => 'fixture-nonce');
     require ${JSON.stringify(process.env.MAINWP_USERS_PHP || require.resolve('../../pages/page-mainwp-user.php'))};
     class Upload_Render_Test extends \\MainWP\\Dashboard\\MainWP_User {
         public static function render_header($shownPage = '') {}

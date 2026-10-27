@@ -288,6 +288,9 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function remove_backup_task( $id ) {
         $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE id = %d', $id ) );
+        if ( '' === $this->wpdb->last_error && ! $this->get_backup_task_by_id( (int) $id ) && '' === $this->wpdb->last_error ) {
+            delete_option( MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . (int) $id );
+        }
         $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' WHERE task_id = %d', $id ) );
     }
 

@@ -2389,7 +2389,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="item"><?php esc_html_e( 'If needed, you can tag your sites in the Tag field.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. If Require Unique Security ID is enabled on the child site (Settings > MainWP Child), enter the Unique Security ID. Generate or create a new ID there by enabling Require Unique Security ID and clicking Save Settings.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'If the website you are trying to connect is protected with HTTP Basic Auth, enter the HTTP Username & Password. If not, leave it blank.', 'mainwp' ); ?></div>
-            <div class="item"><?php esc_html_e( 'Keep the default value of "1" to verify the SSL certificate for your sites, or change it if you prefer not to verify.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Leave SSL Verification blank to use the global setting. Enter "1" to verify the SSL certificate or "0" to disable verification.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Leave the SSL Version as "auto" unless you know the specific version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Repeat this process for all sites you want to add.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Use the Add New Row button to add additional rows if you need to connect more sites at once.', 'mainwp' ); ?></div>
@@ -2540,7 +2540,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'verify_certificate' => array(
                     'label'      => 'Verify Certificate',
                     'input_type' => 'number',
-                    'default'    => 1,
+                    'default'    => '',
                     'class'      => 'mini ' . $default_class . '-verify-certificate',
                     'id'         => $default_class . '-verify-certificate',
                 ),

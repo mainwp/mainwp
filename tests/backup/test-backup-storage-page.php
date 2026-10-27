@@ -369,7 +369,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 			);
 			$this->assertArrayNotHasKey( 'error', $result );
 			$this->assertSame( $id, $result['id'] );
-			$row = $store->get_destination( $id );
+			$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
 			$this->assertSame( 'Renamed SFTP', $row->name );
 			$this->assertSame( $settings, $row->settings );
 			$this->assertFalse( $row->credentials_invalid );
@@ -457,7 +457,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 			);
 			$this->assertArrayNotHasKey( 'error', $result );
 			$this->assertSame( $id, $result['id'] );
-			$row = $store->get_destination( $id );
+			$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
 			$this->assertSame( 'Renamed SFTP', $row->name );
 			$this->assertSame( $settings, $row->settings );
 			$this->assertFalse( $row->credentials_invalid );
@@ -1834,5 +1834,238 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'class="ui small text"', $output );
 		$this->assertStringContainsString( 'class="ui mini red button mainwp-storage-delete"', $output );
 		$this->assertStringNotContainsString( 'basic red button', $output );
+	}
+	/**
+	 * Dropbox continuity uses provider metadata under each token's account.
+	 *
+	 * @param array $objects Stored remote objects by account and path.
+	 * @param array $requests Captured provider requests.
+	 * @return callable
+	 */
+	private function retention_dropbox_transport( array &$objects, array &$requests ) {
+		return static function ( $pre, $args, $url ) use ( &$objects, &$requests ) {
+			unset( $pre );
+			$requests[] = array( $url, $args );
+			$status     = 200;
+			$data       = array();
+			if ( str_ends_with( $url, '/oauth2/token' ) ) {
+				$data = array( 'access_token' => $args['body']['refresh_token'] );
+			} else {
+				$token   = substr( $args['headers']['Authorization'], 7 );
+				$account = str_starts_with( $token, 'other-' ) ? 'other' : 'original';
+				$arg     = json_decode( $args['headers']['Dropbox-API-Arg'] ?? $args['body'], true );
+				$path    = $arg['path'];
+				if ( str_ends_with( $url, '/upload' ) ) {
+					$id                           = $objects[ $account ][ $path ]['id'] ?? 'id:file' . count( $requests );
+					$objects[ $account ][ $path ] = array(
+						'.tag' => 'file',
+						'id'   => $id,
+						'size' => strlen( $args['body'] ),
+					);
+					$data                         = $objects[ $account ][ $path ];
+				} elseif ( str_ends_with( $url, '/delete_v2' ) ) {
+					unset( $objects[ $account ][ $path ] );
+				} elseif ( 'broken-token' === $token && str_contains( $path, '.mainwp-retention-' ) ) {
+					$status = 503;
+				} elseif ( isset( $objects[ $account ][ $path ] ) ) {
+					$data = $objects[ $account ][ $path ];
+				} else {
+					$status = 409;
+					$data   = array( 'error_summary' => 'path/not_found/..' );
+				}
+			}
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode( $data ),
+				'response' => array(
+					'code'    => $status,
+					'message' => '',
+				),
+			);
+		};
+	}
+
+	/** Renames keep an invalid receipt without testing the connection or marker. */
+	public function test_dropbox_rename_with_invalid_receipt_never_uses_http() {
+		$store    = MainWP_Backup_Storage_Destinations::instance();
+		$field    = '_mainwp_retention_identity';
+		$settings = array(
+			'app_key'       => 'app-key',
+			'app_secret'    => 'app-secret',
+			'refresh_token' => 'original-token',
+			'base_path'     => 'backups',
+			$field          => array(
+				'key'     => '.mainwp-retention-' . str_repeat( 'a', 32 ),
+				'id'      => 'id:original',
+				'receipt' => 'invalid',
+			),
+		);
+		$id       = $store->add_destination(
+			array(
+				'provider' => 'dropbox',
+				'name'     => 'Before',
+				'settings' => $settings,
+			)
+		);
+		$calls    = 0;
+		$blocked  = static function () use ( &$calls ) {
+			++$calls;
+			return new \WP_Error( 'blocked', 'HTTP blocked' );
+		};
+		add_filter( 'pre_http_request', $blocked );
+		try {
+			foreach ( array(
+				null,
+				array(
+					'app_key'       => 'app-key',
+					'app_secret'    => '',
+					'refresh_token' => '',
+					'base_path'     => 'backups',
+				),
+			) as $submitted ) {
+				$result = MainWP_Backup_Storage_Handler::save_destination(
+					array(
+						'id'       => $id,
+						'provider' => 'dropbox',
+						'name'     => 'Renamed',
+						'settings' => $submitted,
+					)
+				);
+				$this->assertSame( 0, $calls, 'A rename must skip the connection test as well as marker verification.' );
+				$this->assertSame( array( 'id' => $id ), $result );
+				$row = $store->get_destination( $id );
+				$this->assertSame( 'Renamed', $row->name );
+				$this->assertSame( $settings, $row->settings );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $blocked );
+		}
+	}
+
+	/** Target edits rebuild proof; OAuth on the same account preserves its binding. */
+	public function test_dropbox_target_change_and_same_account_oauth_verify_identity() {
+		$objects   = array();
+		$requests  = array();
+		$transport = $this->retention_dropbox_transport( $objects, $requests );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$store      = MainWP_Backup_Storage_Destinations::instance();
+			$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+			$settings   = array(
+				'app_key'       => 'app-key',
+				'app_secret'    => 'app-secret',
+				'refresh_token' => 'original-token',
+				'base_path'     => 'backups',
+			);
+			$id         = $store->add_destination(
+				array(
+					'provider' => 'dropbox',
+					'name'     => 'Dropbox',
+					'settings' => $settings,
+				)
+			);
+			$row        = $store->prepare_retention_identity( $store->get_destination( $id ) );
+			$binding    = $protection::destination_binding( $row );
+			$identity   = $row->settings['_mainwp_retention_identity'];
+			$start      = MainWP_Backup_Storage_Handler::start_dropbox_oauth(
+				array(
+					'id'       => $id,
+					'name'     => 'Reconnected',
+					'settings' => $settings,
+				)
+			);
+			parse_str( wp_parse_url( $start['authorize_url'], PHP_URL_QUERY ), $params );
+			$exchange = static function () {
+				return array(
+					'body'     => wp_json_encode( array( 'refresh_token' => 'original-rotated' ) ),
+					'response' => array( 'code' => 200 ),
+				);
+			};
+			$requests = array();
+			$this->assertSame( array( 'id' => $id ), MainWP_Backup_Storage_Handler::complete_dropbox_oauth( $params['state'], 'code', $exchange ) );
+			$this->assertNotEmpty( $requests );
+			$row = $store->get_destination( $id );
+			$this->assertSame( $binding, $protection::destination_binding( $row ) );
+			$this->assertSame( $identity['key'], $row->settings['_mainwp_retention_identity']['key'] );
+			$this->assertTrue( $protection::dropbox_identity_valid( $row->settings ) );
+			$settings              = $row->settings;
+			$settings['base_path'] = 'other-target';
+			$requests              = array();
+			$this->assertSame(
+				array( 'id' => $id ),
+				MainWP_Backup_Storage_Handler::save_destination(
+					array(
+						'id'       => $id,
+						'provider' => 'dropbox',
+						'name'     => 'Retargeted',
+						'settings' => $settings,
+					)
+				)
+			);
+			$this->assertNotEmpty( $requests );
+			$row = $store->get_destination( $id );
+			$this->assertTrue( $protection::dropbox_identity_valid( $row->settings ) );
+			$this->assertNotSame( $binding, $protection::destination_binding( $row ) );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
+	/** Replacement credentials must resolve to the original server-issued file ID. */
+	public function test_retention_dropbox_rotation_proves_namespace_and_keeps_identity_private() {
+		$objects   = array();
+		$requests  = array();
+		$transport = $this->retention_dropbox_transport( $objects, $requests );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$store      = MainWP_Backup_Storage_Destinations::instance();
+			$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+			$field      = '_mainwp_retention_identity';
+			$settings   = array(
+				'app_key'       => 'app-key',
+				'app_secret'    => 'app-secret',
+				'refresh_token' => 'original-token',
+				'base_path'     => 'backups',
+			);
+			$input      = array(
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox',
+				'settings' => $settings,
+			);
+			$created    = MainWP_Backup_Storage_Handler::save_destination( $input );
+			$this->assertArrayHasKey( 'id', $created );
+			$input['id'] = $created['id'];
+			$row         = $store->get_destination( $created['id'] );
+			$this->assertArrayNotHasKey( $field, $row->settings, 'Default saves must not create retention marker objects.' );
+			$this->assertEmpty( array_filter( $objects['original'] ?? array() ) );
+			$this->assertTrue( method_exists( $store, 'prepare_retention_identity' ) );
+			$row      = $store->prepare_retention_identity( $row );
+			$identity = $row->settings[ $field ];
+			$binding  = $protection::destination_binding( $row );
+			$this->assertTrue( $protection::dropbox_identity_valid( $row->settings ) );
+			$input['settings']['refresh_token'] = 'original-rotated';
+			$input['settings'][ $field ]        = array(
+				'key'     => 'forged',
+				'id'      => 'id:forged',
+				'receipt' => 'forged',
+			);
+			$this->assertArrayHasKey( 'id', MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$row = $store->get_destination( $created['id'] );
+			$this->assertSame( $binding, $protection::destination_binding( $row ) );
+			$this->assertSame( $identity['key'], $row->settings[ $field ]['key'] );
+			$this->assertArrayNotHasKey( $field, MainWP_Backup_Storage_Handler::destination_for_edit( $created['id'] )['settings'] );
+			$public = \MainWP\Dashboard\MainWP_Backup_Read_Model::get_destination( $created['id'] );
+			$this->assertStringNotContainsString( $identity['key'], wp_json_encode( $public ) );
+			$input['settings']['refresh_token'] = 'other-account';
+			$this->assertArrayHasKey( 'id', MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$this->assertNotSame( $binding, $protection::destination_binding( $store->get_destination( $created['id'] ) ) );
+			$input['settings']['refresh_token'] = 'original-returned';
+			$this->assertArrayHasKey( 'id', MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$this->assertSame( $binding, $protection::destination_binding( $store->get_destination( $created['id'] ) ) );
+			$input['settings']['refresh_token'] = 'broken-token';
+			$this->assertArrayHasKey( 'error', MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$this->assertSame( 'original-returned', $store->get_destination( $created['id'] )->settings['refresh_token'] );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
 	}
 }

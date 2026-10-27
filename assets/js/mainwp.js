@@ -1661,6 +1661,10 @@ jQuery(function ($) {
 })
 
 jQuery(function () {
+    jQuery(document).on('change', '#mainwp_managesites_verify_certificate', function () {
+        jQuery(this).data('sslVerifyExplicit', true);
+    });
+
     jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function () {
         let url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
         let protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
@@ -1906,6 +1910,7 @@ let mainwp_managesites_add = function () {
         url: url,
         admin: jQuery('#mainwp_managesites_add_wpadmin').val().trim(),
         verify_certificate: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
+        ssl_verify_explicit: jQuery('#mainwp_managesites_verify_certificate').data('sslVerifyExplicit') === true ? 1 : 0,
         ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
         http_user: jQuery('#mainwp_managesites_add_http_user').val().trim(),
         http_pass: jQuery('#mainwp_managesites_add_http_pass').val().trim()
@@ -1963,6 +1968,7 @@ let mainwp_managesites_add = function () {
                 managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val().trim()),
                 managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
                 ssl_verify: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
+                ssl_verify_explicit: jQuery('#mainwp_managesites_verify_certificate').data('sslVerifyExplicit') === true ? 1 : 0,
                 ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
                 groupids: group_ids,
                 clientid: client_id,
@@ -2042,7 +2048,7 @@ let mainwp_managesites_add = function () {
                     jQuery('#mainwp_managesites_add_admin_pwd').val('');
                     jQuery('#mainwp_managesites_add_uniqueId').val('');
                     jQuery('#mainwp_managesites_add_addgroups').dropdown('clear');
-                    jQuery('#mainwp_managesites_verify_certificate').val(1);
+                    jQuery('#mainwp_managesites_verify_certificate').val(1).prop('checked', true).data('sslVerifyExplicit', false);
 
                     jQuery("input[name^='creport_token_']").each(function () {
                         jQuery(this).val('');

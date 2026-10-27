@@ -181,13 +181,36 @@ class MainWP_Backup_Run_History {
     }
 
     /**
+     * Keep newer Child errors in history without changing transport classification.
+     *
+     * @param \Throwable $error Request or Child failure.
+     * @return array Error code and sanitized Child text or replay context.
+     */
+    public static function error_context( \Throwable $error ): array {
+        $code  = MainWP_Backup_Error_Codes::code_for_exception( $error );
+        $extra = $error instanceof MainWP_Exception ? (string) $error->get_message_extra() : '';
+        $child = $error instanceof MainWP_Exception ? (string) $error->get_message_error_code() : '';
+        if ( MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR === $code && preg_match( '/^mainwp_[a-z0-9_]{1,57}$/D', $child ) && MainWP_Backup_Operations::safe_error( $child )['code'] !== $child ) {
+            $safe = self::history_error( $child, wp_specialchars_decode( MainWP_Error_Helper::get_error_message( $error ), ENT_QUOTES ) );
+            return array(
+                'code'  => $safe['code'],
+                'extra' => $safe['message'],
+            );
+        }
+        return array(
+            'code'  => $code,
+            'extra' => preg_match( '/^AUTH_ERROR2(?:; mainwp_[a-z0-9_]+)?$/', $extra ) ? $extra : '',
+        );
+    }
+
+    /**
      * The first terminal observation wins, even if a later poll disagrees.
      *
      * @param int      $id History identity.
      * @param string   $outcome Terminal outcome.
-     * @param string   $error_code Code only, never a stored message.
+     * @param string   $error_code Registered, house or unregistered Child code.
      * @param int|null $snapshot_id Snapshot belonging to this run.
-     * @param string   $error_extra Replay tag and registered transport cause only.
+     * @param string   $error_extra Sanitized Child text or replay tag and registered transport cause.
      * @return bool Whether a running row changed.
      */
     public static function finalize( int $id, string $outcome, string $error_code = '', ?int $snapshot_id = null, string $error_extra = '' ): bool {
@@ -232,7 +255,7 @@ class MainWP_Backup_Run_History {
     }
 
     /**
-     * Preserve replay and registered transport causes without retaining request text.
+     * Use fixed messages for known codes and cleaned Child text for unknown codes.
      *
      * @param string $code Primary error code.
      * @param string $extra Exception context or an older stored message.
@@ -240,6 +263,15 @@ class MainWP_Backup_Run_History {
      */
     private static function history_error( string $code, string $extra ): array {
         $safe = MainWP_Backup_Operations::safe_error( $code );
+        if ( $safe['code'] !== $code && preg_match( '/^mainwp_[a-z0-9_]{1,57}$/D', $code ) ) {
+            $message = trim( MainWP_Backup_Error_Codes::sanitize_message( $extra ) );
+            if ( '' !== $message ) {
+                return array(
+                    'code'    => $code,
+                    'message' => mb_substr( $message, 0, 2000 ),
+                );
+            }
+        }
         if ( MainWP_Backup_Error_Codes::ERR_TIMEOUT === $safe['code'] && preg_match( '/\bAUTH_ERROR2(?:; (mainwp_[a-z0-9_]+))?\)?$/', $extra, $match ) ) {
             $cause            = isset( $match[1] ) && in_array( $match[1], MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? '; ' . $match[1] : '';
             $safe['message'] .= ' (AUTH_ERROR2' . $cause . ')';
@@ -256,7 +288,7 @@ class MainWP_Backup_Run_History {
      * @param int|null $site_id Null closes remaining sites in the run.
      * @param string   $error_code Safe formatter input.
      * @param int|null $snapshot_id This site's snapshot.
-     * @param string   $error_extra Replay tag and registered transport cause only.
+     * @param string   $error_extra Sanitized Child text or replay tag and registered transport cause.
      */
     public static function finalize_run( int $task_id, int $started, string $outcome, ?int $site_id = null, string $error_code = '', ?int $snapshot_id = null, string $error_extra = '' ): void {
         $where  = 'task_id = %d AND started = %d';
@@ -311,7 +343,7 @@ class MainWP_Backup_Run_History {
      * @param string $trigger Lane identity.
      * @param string $outcome Terminal outcome.
      * @param string $error_code Safe formatter input.
-     * @param string $error_extra Replay tag and registered transport cause only.
+     * @param string $error_extra Sanitized Child text or replay tag and registered transport cause.
      */
     public static function finalize_ref( int $site_id, string $ref, string $trigger, string $outcome, string $error_code = '', string $error_extra = '' ): void {
         self::finalize_matching( 'site_id = %d AND ref = %s AND trigger_source = %s', array( $site_id, $ref, $trigger ), $outcome, $error_code, null, $error_extra );
@@ -326,7 +358,7 @@ class MainWP_Backup_Run_History {
      * @param string   $outcome Terminal outcome.
      * @param string   $error_code Safe formatter input.
      * @param int|null $snapshot_id This site's snapshot.
-     * @param string   $error_extra Replay tag and registered transport cause only.
+     * @param string   $error_extra Sanitized Child text or replay tag and registered transport cause.
      */
     private static function finalize_matching( string $where, array $values, string $outcome, string $error_code, ?int $snapshot_id = null, string $error_extra = '' ): void {
         self::write(
@@ -423,7 +455,7 @@ class MainWP_Backup_Run_History {
         foreach ( $items as &$item ) {
             $item['error']    = '' !== $item['error_code'] ? self::history_error( $item['error_code'], $item['message'] ) : null;
             $override_message = 'gate_overridden' === $item['outcome'] && in_array( $item['message'], array( 'backup_missing', 'backup_pending_offsite' ), true ) ? $item['message'] : '';
-            // Old rows may predate the safe-message contract; reads rebuild it too.
+            // Legacy normalized codes still rebuild their fixed messages; Child text is cleaned again.
             $item['message'] = $item['error']['message'] ?? ( 'completed' === $item['outcome'] && 'update_gate' === $item['trigger_source'] ? 'Pre-update backup downloaded; no snapshot recorded.' : $override_message );
         }
         return array(

@@ -1020,8 +1020,9 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		$id                = $this->snapshot( 'cron' );
 		list( $old, $new ) = $this->retention_pair();
 		$events            = array();
-		$order             = static function ( $sql ) use ( &$events ) {
-			if ( false !== strpos( $sql, 'retention_count > 0' ) ) {
+		$task_query        = 'SELECT * FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$order             = static function ( $sql ) use ( &$events, $task_query ) {
+			if ( trim( $sql ) === $task_query ) {
 				$events[] = 'retention';
 			}
 			return $sql;
@@ -1057,12 +1058,13 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		list( $old, $new ) = $this->retention_pair();
 		$events            = array();
-		$throw             = static function ( $sql ) use ( &$events ) {
+		$task_query        = 'SELECT * FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$throw             = static function ( $sql ) use ( &$events, $task_query ) {
 			if ( false !== strpos( $sql, 'SELECT id, site_id, task_id, run_key, child_prune_attempts' ) ) {
 				$events[] = 'throw';
 				throw new \RuntimeException( 'resend failed' );
 			}
-			if ( false !== strpos( $sql, 'retention_count > 0' ) ) {
+			if ( trim( $sql ) === $task_query ) {
 				$events[] = 'retention';
 			}
 			return $sql;

@@ -451,6 +451,101 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 		$this->assertSame( 5, (int) $data['mainwp_on_demand_retention_count'] );
 	}
 
+	/** Both REST routes reject malformed counts before writing any backup settings. */
+	public function test_rest_global_count_validation_prevents_partial_writes(): void {
+		foreach ( array( 'general', 'backups' ) as $route ) {
+			foreach ( array( 'mainwp_backups_on_server', 'mainwp_backup_on_external_sources' ) as $field ) {
+				foreach ( array( 'invalid', '-1', '1.5', '', '999999999999999999999999999', true, array( 1 ) ) as $value ) {
+					foreach ( array( 'json', 'params', 'raw' ) as $source ) {
+						update_option( 'mainwp_backupsOnServer', '3' );
+						update_option( 'mainwp_backupOnExternalSources', '4' );
+						update_option( 'mainwp_enableNativeBackups', 0 );
+						update_option( 'mainwp_on_demand_retention_count', 5 );
+						$body           = array(
+							'mainwp_backups_on_server'     => '0',
+							'mainwp_backup_on_external_sources' => '0',
+							'mainwp_enable_native_backups' => true,
+							'mainwp_on_demand_retention_count' => 7,
+						);
+						$body[ $field ] = $value;
+						$response       = $this->do_authenticated_request( 'PUT', '/mainwp/v2/settings/' . $route . '/edit', $body, $source );
+						$this->assertSame( 400, $response->get_status(), $source . ':' . $route . ':' . $field . ':' . wp_json_encode( $value ) );
+						$this->assertSame( '3', get_option( 'mainwp_backupsOnServer' ) );
+						$this->assertSame( '4', get_option( 'mainwp_backupOnExternalSources' ) );
+						$this->assertFalse( MainWP_Backup_Settings::is_native_backups_enabled() );
+						$this->assertSame( 5, MainWP_Backup_Settings::get_on_demand_retention_count() );
+						$read = $this->do_authenticated_request( 'GET', '/mainwp/v2/settings/' . $route );
+						$this->assertSame( 200, $read->get_status() );
+						$this->assertSame( '3', $read->get_data()['data']['mainwp_backups_on_server'] );
+						$this->assertSame( '4', $read->get_data()['data']['mainwp_backup_on_external_sources'] );
+					}
+				}
+			}
+		}
+	}
+
+	/** Both REST routes preserve count string fields and supported whole-number coercions. */
+	public function test_rest_global_count_valid_roundtrip(): void {
+		foreach ( array( 'general', 'backups' ) as $route ) {
+			foreach ( array( '0', '7', 0, 6, '03' ) as $count ) {
+				$response = $this->do_authenticated_request(
+					'PUT',
+					'/mainwp/v2/settings/' . $route . '/edit',
+					array(
+						'mainwp_backups_on_server' => $count,
+						'mainwp_backup_on_external_sources' => $count,
+					)
+				);
+				$this->assertSame( 200, $response->get_status(), $route . ':' . wp_json_encode( $count ) );
+				$read = $this->do_authenticated_request( 'GET', '/mainwp/v2/settings/' . $route );
+				$this->assertSame( (string) $count, $read->get_data()['data']['mainwp_backups_on_server'] );
+				$this->assertSame( (string) $count, $read->get_data()['data']['mainwp_backup_on_external_sources'] );
+			}
+		}
+	}
+
+	/** Direct controller calls must retain the same preflight as route dispatch. */
+	public function test_direct_rest_count_validation_before_writes(): void {
+		foreach ( array( 'update_general_settings', 'update_backup_settings' ) as $method ) {
+			update_option( 'mainwp_backupsOnServer', '3' );
+			update_option( 'mainwp_backupOnExternalSources', '4' );
+			update_option( 'mainwp_enableNativeBackups', 0 );
+			$request = new WP_REST_Request( 'PUT' );
+			$request->set_header( 'content-type', 'application/json' );
+			$request->set_body(
+				wp_json_encode(
+					array(
+						'mainwp_backups_on_server'     => '0',
+						'mainwp_backup_on_external_sources' => 'invalid',
+						'mainwp_enable_native_backups' => true,
+					)
+				)
+			);
+			$result = \MainWP_Rest_Settings_Controller::instance()->$method( $request );
+			$this->assertWPError( $result );
+			$this->assertSame( '3', get_option( 'mainwp_backupsOnServer' ) );
+			$this->assertSame( '4', get_option( 'mainwp_backupOnExternalSources' ) );
+			$this->assertFalse( MainWP_Backup_Settings::is_native_backups_enabled() );
+		}
+	}
+
+	/** Existing REST count fields retain string zero as unlimited across reads. */
+	public function test_backups_edit_zero_retention_string_parity(): void {
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/settings/backups/edit',
+			array(
+				'mainwp_backups_on_server'          => '0',
+				'mainwp_backup_on_external_sources' => '0',
+			)
+		);
+		$this->assertSame( 200, $response->get_status() );
+		$read = $this->do_authenticated_request( 'GET', '/mainwp/v2/settings/backups' );
+		$this->assertSame( 200, $read->get_status() );
+		$this->assertSame( '0', $read->get_data()['data']['mainwp_backups_on_server'] );
+		$this->assertSame( '0', $read->get_data()['data']['mainwp_backup_on_external_sources'] );
+	}
+
 	/**
 	 * PUT settings/backups/edit persists the on-demand retention count.
 	 *

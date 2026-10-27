@@ -19,18 +19,19 @@ jQuery(function () {
     jQuery('#mainwp-onboarding-advanced').prop('hidden', expanded);
   });
 
-  const passwordHelp = jQuery('#mainwp-onboarding-password-help');
-  passwordHelp.popup({
-    popup: '#mainwp-onboarding-password-explanation',
-    on: 'hover',
-    position: 'top center'
-  }).on('focus', function () {
-    jQuery(this).popup('show');
-  }).on('blur', function () {
-    jQuery(this).popup('hide');
-  }).on('click', function (event) {
-    event.preventDefault();
-    jQuery(this).popup('show');
+  ['mainwp-onboarding', 'mainwp-onboarding-csv'].forEach(function (prefix) {
+    jQuery('#' + prefix + '-password-help').popup({
+      popup: '#' + prefix + '-password-explanation',
+      on: 'hover',
+      position: 'top center'
+    }).on('focus', function () {
+      jQuery(this).popup('show');
+    }).on('blur', function () {
+      jQuery(this).popup('hide');
+    }).on('click', function (event) {
+      event.preventDefault();
+      jQuery(this).popup('show');
+    });
   });
 
   jQuery('#mainwp-onboarding-update-all').on('click', function () {

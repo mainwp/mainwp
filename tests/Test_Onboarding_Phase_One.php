@@ -19,6 +19,7 @@ use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Setup_Wizard;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
+use MainWP\Dashboard\MainWP_Uptime_Monitoring_Status;
 
 /**
  * Exercises production helpers without booting the wizard's exit-driven page.
@@ -996,6 +997,191 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-password-help"]/ancestor::*[contains(concat(" ", normalize-space(@class), " "), " label ")]' )->length );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"][@role="tooltip"]' )->length );
 		$this->assertStringContainsString( 'Your password is never stored by your Dashboard and never sent to MainWP.com.', $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"]' )->item( 0 )->textContent );
+	}
+
+	/** CSV help needs a wrapping popup because the explanation exceeds the viewport. */
+	public function test_csv_password_help_uses_accessible_wrapping_popup(): void {
+		$_GET = array(
+			'page' => 'mainwp-setup',
+			'step' => 'connect_first_site',
+		);
+		ob_start();
+		try {
+			$this->wizard->mwp_setup_connect_first_site();
+		} finally {
+			$html = ob_get_clean();
+		}
+		$xpath = $this->html_xpath( $html );
+		$this->assertSame( 1, $xpath->query( '//a[@id="mainwp-onboarding-csv-password-help"][@href="#mainwp-onboarding-csv-password-explanation"][@aria-describedby="mainwp-onboarding-csv-password-explanation"][normalize-space(.)="How?"]' )->length );
+		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-csv-password-help"]/@data-tooltip' )->length );
+		$this->assertSame( 0, $xpath->query( '//*[@data-tooltip][normalize-space(.)="How?"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-csv-password-explanation"][@class="ui wide popup"][@role="tooltip"]' )->length );
+		$this->assertSame( 'Used once to set up a secure key. Never stored or sent to MainWP.com. How?', trim( $xpath->query( '//*[@id="mainwp-onboarding-csv-password-help"]/parent::*' )->item( 0 )->textContent ) );
+		$this->assertSame( $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"]' )->item( 0 )->textContent, $xpath->query( '//*[@id="mainwp-onboarding-csv-password-explanation"]' )->item( 0 )->textContent );
+	}
+
+	/** The checklist promises only the monitoring state that its completion checks. */
+	public function test_get_started_uptime_label_matches_monitoring_action(): void {
+		$item = MainWP_Get_Started::get_items()[3];
+		$this->assertSame( 'Turn on uptime monitoring', $item['title'] );
+		$this->assertSame( 'admin.php?page=MonitoringSettings', $item['url'] );
+	}
+
+	/**
+	 * Only unchecked monitors enabled by the scheduler count as pending.
+	 *
+	 * @dataProvider pending_monitor_states
+	 * @param int $global_active Global monitoring setting.
+	 * @param int $active Monitor override.
+	 * @param int $status Last check status.
+	 * @param int $expected Expected pending count.
+	 */
+	public function test_uptime_pending_count_matches_scheduler_activation( $global_active, $active, $status, $expected ): void {
+		$site = $this->site();
+		$db   = MainWP_DB_Uptime_Monitoring::instance();
+		$db->delete_site_monitors( $site->id );
+		$monitor_id = $db->update_wp_monitor(
+			array(
+				'wpid'   => $site->id,
+				'active' => $active,
+			)
+		);
+		$this->assertGreaterThan( 0, $monitor_id );
+		$this->assertSame(
+			$monitor_id,
+			$db->update_wp_monitor(
+				array(
+					'monitor_id'  => $monitor_id,
+					'last_status' => $status,
+				)
+			)
+		);
+		$settings           = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( false );
+		$settings['active'] = $global_active;
+		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+		$scope = static function () use ( $site ) {
+			return array( $site->id );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			$result = $db->get_count_up_down_monitors();
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		}
+		$this->assertArrayHasKey( 'count_pending', $result );
+		$this->assertSame( $expected, (int) $result['count_pending'] );
+		$this->assertSame( 1 === $status ? 1 : 0, (int) $result['count_up'] );
+		$this->assertSame( 0 === $status ? 1 : 0, (int) $result['count_down'] );
+	}
+
+	/**
+	 * Activation and status combinations include both inherited global states.
+	 *
+	 * @return array
+	 */
+	public static function pending_monitor_states() {
+		$cases = array();
+		foreach ( array( 0, 1 ) as $global ) {
+			foreach ( array( -1, 0, 1 ) as $active ) {
+				foreach ( array( 99, 1, 0 ) as $status ) {
+					$expected = 99 === $status && ( 1 === $active || ( -1 === $active && 1 === $global ) ) ? 1 : 0;
+					$cases[ "global=$global active=$active status=$status" ] = array( $global, $active, $status, $expected );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/** Pending totals must not reveal monitors on inaccessible or staging sites. */
+	public function test_uptime_pending_count_respects_site_access_and_staging(): void {
+		$site      = $this->site();
+		$excluded  = $this->site();
+		$staging   = $this->site();
+		$suspended = $this->site();
+		MainWP_DB::instance()->update_website_values( $staging->id, array( 'is_staging' => 1 ) );
+		MainWP_DB::instance()->update_website_values( $suspended->id, array( 'suspended' => 1 ) );
+		$db = MainWP_DB_Uptime_Monitoring::instance();
+		foreach ( array( $site, $excluded, $staging, $suspended ) as $monitor_site ) {
+			$db->delete_site_monitors( $monitor_site->id );
+			$this->assertGreaterThan(
+				0,
+				$db->update_wp_monitor(
+					array(
+						'wpid'   => $monitor_site->id,
+						'active' => 1,
+					)
+				)
+			);
+		}
+		// The scheduler skips suspended sites, so their monitors never get a first check.
+		$allowed = array( $site->id, $staging->id, $suspended->id );
+		$scope   = static function () use ( &$allowed ) {
+			return $allowed;
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			$this->assertSame( 1, (int) $db->get_count_up_down_monitors()['count_pending'] );
+			$allowed = array();
+			$this->assertSame( 0, (int) $db->get_count_up_down_monitors()['count_pending'] );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		}
+	}
+
+	/**
+	 * The widget explains pending checks without adding a line when none remain.
+	 *
+	 * @dataProvider pending_widget_counts
+	 * @param int    $count Pending monitors.
+	 * @param string $expected Expected line, or empty when absent.
+	 */
+	public function test_uptime_widget_pending_line( $count, $expected ): void {
+		$site = $this->site();
+		$db   = MainWP_DB_Uptime_Monitoring::instance();
+		$db->delete_site_monitors( $site->id );
+		for ( $index = 0; $index < $count; ++$index ) {
+			$this->assertGreaterThan(
+				0,
+				$db->update_wp_monitor(
+					array(
+						'wpid'   => $site->id,
+						'suburl' => 'pending-' . $index,
+						'active' => 1,
+					)
+				)
+			);
+		}
+		$scope = static function () use ( $site ) {
+			return array( $site->id );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		ob_start();
+		try {
+			MainWP_Uptime_Monitoring_Status::render_status();
+		} finally {
+			$html = ob_get_clean();
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		}
+		$lines = $this->html_xpath( $html )->query( '//div[@class="ui mainwp-cards small cards"]/following-sibling::p[@class="ui small text"]' );
+		$this->assertSame( $count ? 1 : 0, $lines->length );
+		if ( $count ) {
+			$this->assertSame( $expected, trim( $lines->item( 0 )->textContent ) );
+		} else {
+			$this->assertStringNotContainsString( 'waiting for', $html );
+		}
+	}
+
+	/**
+	 * Pending widget copy at zero, one and two monitors.
+	 *
+	 * @return array
+	 */
+	public static function pending_widget_counts() {
+		return array(
+			'none'     => array( 0, '' ),
+			'singular' => array( 1, '1 monitor waiting for its first check' ),
+			'plural'   => array( 2, '2 monitors waiting for their first check' ),
+		);
 	}
 
 	/** CSV and other AJAX callers defer only when the interactive sender opts in. */

@@ -368,6 +368,121 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		);
 	}
 
+	/**
+	 * Scheduler and public cleanup previews agree on damage-aware coverage.
+	 *
+	 * @dataProvider damaged_retention_cases
+	 * @param string $path Retention entry point.
+	 * @param string $copies Available archive copies.
+	 */
+	public function test_damaged_archive_retention_preview_and_execution( string $path, string $copies ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( 'mainwp_on_demand_retention_count', 1 );
+		$this->site_id = $this->create_test_site();
+		$db            = \MainWP\Dashboard\MainWP_DB_Backup::instance();
+		$task          = $db->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) );
+		$db->update_backup_task_with_values( $task->id, array( 'retention_count' => 25 ) );
+		$task                  = $db->get_backup_task_by_id( $task->id );
+		list( $old, $old_dir ) = $this->make_snapshot_with_dir(
+			array(
+				'task_id' => $task->id,
+				'created' => time() - 200,
+			)
+		);
+		list( $new, $new_dir ) = $this->make_snapshot_with_dir(
+			array(
+				'task_id' => $task->id,
+				'created' => time() - 100,
+			)
+		);
+		$snapshots             = MainWP_Backup_Snapshots::instance();
+		$snapshots->mark_artifact_damaged( $new, 'artifact.tar', 'checksum_mismatch' );
+		if ( 'all damaged' === $copies ) {
+			$snapshots->mark_artifact_damaged( $old, 'artifact.tar', 'checksum_mismatch' );
+		}
+		$destination = null;
+		if ( 'cloud' === $copies ) {
+			$destination = $this->make_retention_destination();
+			$store       = MainWP_Backup_Upload_Job_Store::instance();
+			$store->enqueue_for_snapshot( $new, array( $destination ) );
+			$job = $store->get_jobs_for_snapshot( $new )[0];
+			$this->assertTrue( $store->save_checkpoint( $job->id, array( 'artifacts' => $this->verified_artifacts( $new ) ) ) );
+			$this->assertTrue( $store->complete_job( $job->id ) );
+			$catalog = \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog::instance()->assemble_plan( array( $snapshots->get_snapshot_by_id( $new ) ) );
+			$this->assertSame( 'remote', $catalog[0]['source'] );
+		}
+		$expected = 'cloud' === $copies ? array( $old ) : array();
+		try {
+			$units = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $this->site_id, (int) $task->id );
+			$this->assertSame( array( 'all damaged' !== $copies, 'cloud' === $copies ), array_column( $units, 'is_restorable' ) );
+			$this->assertTrue( MainWP_Backup_Snapshots::snapshot_has_damage( $snapshots->get_snapshot_by_id( $new ) ) );
+			if ( 'scheduler' === $path ) {
+				add_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+				try {
+					$preview = \MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::instance()->run_retention_for_pair( $task, $this->site_id );
+				} finally {
+					remove_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+				}
+				$selected = array_merge( array(), ...array_column( $preview['candidates'], 'snapshot_ids' ) );
+			} else {
+				$preview = \MainWP\Dashboard\MainWP_Backup_Operations::preview_site_cleanup( $this->site_id, null );
+				$this->assertNotWPError( $preview );
+				$selected = array_merge( array(), ...array_column( $preview['would_affect']['on_demand_units'], 'snapshot_ids' ) );
+				$dry_run  = \MainWP\Dashboard\MainWP_Backup_Operations::cleanup_site_backups( $this->site_id, null, true );
+				$this->assertNotWPError( $dry_run );
+				$this->assertSame( $preview['would_affect']['on_demand_units'], $dry_run['on_demand_units'] );
+			}
+			$this->assertSame( $expected, $selected );
+			foreach ( array(
+				$old => $old_dir,
+				$new => $new_dir,
+			) as $id => $dir ) {
+				$this->assertSame( 'complete', $snapshots->get_snapshot_by_id( $id )->status );
+				$this->assertFileExists( $dir . '/artifact.tar' );
+			}
+			$result = 'scheduler' === $path
+				? \MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::instance()->run_retention_for_pair( $task, $this->site_id )
+				: \MainWP\Dashboard\MainWP_Backup_Operations::cleanup_site_backups( $this->site_id, null );
+			$this->assertNotWPError( $result );
+			$this->assertSame( array(), $result['errors'] );
+			$this->assertSame( $selected, $result['deleted_ids'] );
+			foreach ( array(
+				$old => $old_dir,
+				$new => $new_dir,
+			) as $id => $dir ) {
+				$pruned = in_array( $id, $expected, true );
+				$this->assertSame( $pruned ? 'pruned' : 'complete', $snapshots->get_snapshot_by_id( $id )->status );
+				if ( $pruned ) {
+					$this->assertFileDoesNotExist( $dir . '/artifact.tar' );
+				} else {
+					$this->assertFileExists( $dir . '/artifact.tar' );
+				}
+			}
+		} finally {
+			$db->remove_backup_task( $task->id );
+			if ( null !== $destination ) {
+				\MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->delete_destination( $destination );
+			}
+			delete_option( 'mainwp_on_demand_retention_count' );
+		}
+	}
+
+	/**
+	 * Coverage combinations through both retention entry points.
+	 *
+	 * @return array
+	 */
+	public static function damaged_retention_cases() {
+		$cases = array();
+		foreach ( array( 'scheduler', 'cleanup' ) as $path ) {
+			foreach ( array( 'local', 'cloud', 'all damaged' ) as $copies ) {
+				$cases[ $path . ': ' . $copies ] = array( $path, $copies );
+			}
+		}
+		return $cases;
+	}
+
 	/** An open incremental run keeps its parent units despite a lowered setting. */
 	public function test_live_hidden_count_preserves_units_held_by_open_run() {
 		$db   = \MainWP\Dashboard\MainWP_DB_Backup::instance();

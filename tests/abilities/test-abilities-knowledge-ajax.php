@@ -905,7 +905,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 
 		// The panel script reads these by name; a missing one leaves the View button or the read-only modal without text.
 		$html = $this->render_site_knowledge();
-		$this->assertStringContainsString( 'data-view="View knowledge record"', $html );
+		$this->assertStringContainsString( 'data-view="View Knowledge Record"', $html );
 		$this->assertStringContainsString( 'data-close="Close"', $html );
 		$this->assertStringContainsString( '<input type="text" id="mainwp-knowledge-type-view" readonly>', $html );
 		$this->assertSame( 'View', \MainWP\Dashboard\MainWP_Knowledge_UI::js_strings()['view'] );
@@ -979,7 +979,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			'Facts an AI agent should know before it acts on this site: hosting, stack, constraints, known quirks.',
 			'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.',
 			'Client records apply to every site assigned to the client, and AI agents receive them together with the records of this site. They are read-only here.',
-			'Procedures and rules to follow: how to deploy, what to check first, and what never to touch.',
+			'Procedures for specific tasks, such as deployments and checks before updates. Store standing rules and restrictions in Context.',
 		) as $text ) {
 			$this->assertStringContainsString( $text, $site );
 		}

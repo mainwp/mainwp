@@ -87,7 +87,6 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
     public static function render_settings(): void {  //phpcs:ignore -- NOSONAR - complex.
 
         $backupsOnServer            = get_option( 'mainwp_backupsOnServer' );
-        $backupOnExternalSources    = get_option( 'mainwp_backupOnExternalSources' );
         $onDemandRetentionCount     = MainWP_Backup_Settings::get_on_demand_retention_count();
         $archiveFormat              = get_option( 'mainwp_archiveFormat' );
         $maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
@@ -102,17 +101,15 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         $loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
         $loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 
-        $primaryBackup           = get_option( 'mainwp_primaryBackup' );
-        $countErrors             = MainWP_Backup_Settings::get_count_errors();
-        $submitted               = array();
-        $backupsOnServer         = false === $backupsOnServer ? 1 : intval( $backupsOnServer );
-        $backupOnExternalSources = false === $backupOnExternalSources ? 1 : intval( $backupOnExternalSources );
-        $maximumFileDescriptors  = false === $maximumFileDescriptors ? 150 : intval( $maximumFileDescriptors );
+        $primaryBackup          = get_option( 'mainwp_primaryBackup' );
+        $countErrors            = MainWP_Backup_Settings::get_count_errors();
+        $submitted              = array();
+        $backupsOnServer        = false === $backupsOnServer ? 1 : intval( $backupsOnServer );
+        $maximumFileDescriptors = false === $maximumFileDescriptors ? 150 : intval( $maximumFileDescriptors );
         if ( ! empty( $countErrors ) ) {
             // Errors exist only after the authorized, nonce-checked POST was refused.
             $submitted                  = array_filter( wp_unslash( $_POST ), 'is_scalar' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Re-render scalar form values; each output is escaped.
             $backupsOnServer            = $submitted['mainwp_options_backupOnServer'] ?? $backupsOnServer;
-            $backupOnExternalSources    = $submitted['mainwp_options_backupOnExternalSources'] ?? $backupOnExternalSources;
             $onDemandRetentionCount     = $submitted['mainwp_options_onDemandRetentionCount'] ?? $onDemandRetentionCount;
             $archiveFormat              = $submitted['mainwp_archiveFormat'] ?? $archiveFormat;
             $maximumFileDescriptors     = $submitted['mainwp_options_maximumFileDescriptors'] ?? $maximumFileDescriptors;
@@ -189,29 +186,15 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupsOnServer', (int) $backupsOnServer );
-            esc_html_e( 'Backups on server', 'mainwp' );
+            esc_html_e( 'Leftover backup files to keep', 'mainwp' );
             ?>
             </label>
             <div class="ten wide column">
-                <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnServer" value="<?php echo esc_attr( $backupsOnServer ); ?>" <?php echo isset( $countErrors['mainwp_options_backupOnServer'] ) ? 'aria-invalid="true" aria-describedby="mainwp-backup-server-count-error"' : ''; ?>/></span>
+                <span data-tooltip="<?php esc_attr_e( 'How many older downloaded backup files to keep in each site\'s backup folder on this dashboard when they are not part of a completed snapshot. 0 keeps them all.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnServer" value="<?php echo esc_attr( $backupsOnServer ); ?>" <?php echo isset( $countErrors['mainwp_options_backupOnServer'] ) ? 'aria-invalid="true" aria-describedby="mainwp-backup-server-count-error"' : ''; ?>/></span>
                 <?php if ( isset( $countErrors['mainwp_options_backupOnServer'] ) ) : ?>
                     <div class="ui pointing red basic label" id="mainwp-backup-server-count-error" role="alert"><?php echo esc_html( $countErrors['mainwp_options_backupOnServer'] ); ?></div>
                 <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field <?php echo isset( $countErrors['mainwp_options_backupOnExternalSources'] ) ? 'error' : ''; ?>" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
-            <label class="six wide column middle aligned">
-            <?php
-            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupOnExternalSources', (int) $backupOnExternalSources );
-            esc_html_e( 'Backups on remote storage', 'mainwp' );
-            ?>
-            </label>
-            <div class="ten wide column">
-                <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on your external sources. This does not affect backups on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnExternalSources" value="<?php echo esc_attr( $backupOnExternalSources ); ?>" <?php echo isset( $countErrors['mainwp_options_backupOnExternalSources'] ) ? 'aria-invalid="true" aria-describedby="mainwp-backup-remote-count-error"' : ''; ?>/></span>
-                <?php if ( isset( $countErrors['mainwp_options_backupOnExternalSources'] ) ) : ?>
-                    <div class="ui pointing red basic label" id="mainwp-backup-remote-count-error" role="alert"><?php echo esc_html( $countErrors['mainwp_options_backupOnExternalSources'] ); ?></div>
-                <?php endif; ?>
+                <span class="ui small text"><?php esc_html_e( 'This only cleans up leftover files. It does not limit how many Built-In Backups are kept: scheduled backups follow the retention set on each backup task, and Back Up Now follows the setting below.', 'mainwp' ); ?></span>
             </div>
         </div>
 

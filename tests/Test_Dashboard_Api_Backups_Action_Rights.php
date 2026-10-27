@@ -548,10 +548,7 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
         $this->filter(
             'mainwp_encrypt_key_value',
             static function ( $value, $data ) {
-                return array(
-					'encrypted_val' => $data,
-					'file_key'      => 'fixture_provider_key',
-				);
+                return array( 'encrypted_val' => $data, 'file_key' => 'fixture-key-file' );
             }
         );
         $settings = new class() extends Api_Backups_Settings {
@@ -597,16 +594,11 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
                 $expected = 'clear' === $keys ? '' : 'fixture-' . $provider;
             }
             $stored = MainWP_DB::instance()->get_website_option( $site, 'mainwp_api_backups_' . $provider . '_api_key', '' );
-            $this->assertSame(
-				'' === $expected ? '' : wp_json_encode(
-					array(
-						'encrypted_val' => $expected,
-						'file_key'      => 'fixture_provider_key',
-					)
-				),
-				$stored,
-				$field
-			);
+            $envelope = array( 'encrypted_val' => $expected );
+            if ( $manage && $accessible && 'replace' === $keys ) {
+                $envelope['file_key'] = 'fixture-key-file';
+            }
+            $this->assertSame( '' === $expected ? '' : wp_json_encode( $envelope ), $stored, $field );
         }
     }
 

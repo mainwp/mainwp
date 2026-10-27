@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Settings;
+
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -940,7 +942,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             MainWP_Client_Handler::show_notice_existed_contact_emails();
             ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-            <?php if ( $updated ) { ?>
+            <?php if ( $updated && ( ! class_exists( Api_Backups_Settings::class ) || ! Api_Backups_Settings::get_instance()->has_credential_save_failed() ) ) { ?>
             <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
             <?php } ?>
             <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data" class="ui form">

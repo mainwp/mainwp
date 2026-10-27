@@ -128,6 +128,20 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         'adminname',
         'securekey',
         'uniqueId',
+        'register_verify_key',
+        'mainwp_cloudflair_key',
+        'mainwp_cloudflare_bearer_token',
+        'mainwp_cloudflair_email',
+        'mainwp_api_backups_vultr_api_key',
+        'mainwp_api_backups_gridpane_api_key',
+        'mainwp_api_backups_linode_api_key',
+        'mainwp_api_backups_digitalocean_api_key',
+        'mainwp_api_backups_cloudways_api_key',
+        'mainwp_api_backups_cpanel_api_key',
+        'mainwp_api_backups_plesk_api_key',
+        'mainwp_api_backups_kinsta_api_key',
+        'cpanel_account_username',
+        'mainwp_3rd_party_kinsta_downloadable_backups',
         // Projected onto the row for the health_score fast-path (not a schema field);
         // reserve it so ?custom_fields=health_site_status cannot surface the raw value.
         'health_site_status',
@@ -141,13 +155,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return mixed The same item with credential fields removed.
      */
     private function strip_never_in_response_fields( $prepared ) {
-        if ( is_array( $prepared ) ) {
-            foreach ( static::$never_in_response_fields as $field ) {
-                unset( $prepared[ $field ] );
-            }
-        } elseif ( is_object( $prepared ) ) {
-            foreach ( static::$never_in_response_fields as $field ) {
-                unset( $prepared->{$field} );
+        if ( ! is_array( $prepared ) && ! is_object( $prepared ) ) {
+            return $prepared;
+        }
+
+        $fields = is_array( $prepared ) ? array_keys( $prepared ) : array_keys( get_object_vars( $prepared ) );
+
+        // Option lookups can ignore case while the response alias keeps the caller's spelling.
+        foreach ( $fields as $field ) {
+            foreach ( static::$never_in_response_fields as $secret_field ) {
+                if ( 0 === strcasecmp( (string) $field, $secret_field ) ) {
+                    if ( is_array( $prepared ) ) {
+                        unset( $prepared[ $field ] );
+                    } else {
+                        unset( $prepared->{$field} );
+                    }
+                    break;
+                }
             }
         }
         return $prepared;

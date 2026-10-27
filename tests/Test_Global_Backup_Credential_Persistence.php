@@ -197,6 +197,68 @@ class Test_Global_Backup_Credential_Persistence extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * Vetoed replacements may also reuse the previous filename after encryption.
+	 *
+	 * @return array Credential names and filename rewrites.
+	 */
+	public static function vetoed_replacements(): array {
+		return array(
+			'api_key'                    => array( '', false ),
+			'access_token'               => array( 'access_token', false ),
+			'api_key-same-filename'      => array( '', true ),
+			'access_token-same-filename' => array( 'access_token', true ),
+		);
+	}
+
+	/**
+	 * A filtered readback cannot confirm a vetoed replacement or retain its staged key.
+	 *
+	 * @dataProvider vetoed_replacements
+	 * @param string $variant Optional credential name.
+	 * @param bool   $same_filename Whether a later filter reuses the previous filename.
+	 */
+	public function test_vetoed_write_with_filtered_readback_preserves_previous_credential( string $variant, bool $same_filename ): void {
+		$utility = Api_Backups_Utility::get_instance();
+		$option  = 'mainwp_api_backups_cloudways_' . ( $variant ?: 'api_key' );
+		$this->assertTrue( $utility->update_api_key( 'cloudways', 'fixture-original', $variant ) );
+		$previous  = get_option( $option );
+		$before    = $this->key_files();
+		$attempted = null;
+		$refuse    = static function ( $replacement, $old ) use ( &$attempted ) {
+			$attempted = $replacement;
+			return $old;
+		};
+		$lie       = static function ( $stored ) use ( &$attempted ) {
+			return $attempted ?? $stored;
+		};
+		$rename    = static function ( $envelope ) use ( $previous, $same_filename ) {
+			if ( $same_filename ) {
+				$envelope['file_key'] = $previous['file_key'];
+			}
+			return $envelope;
+		};
+		add_filter( 'mainwp_encrypt_key_value', $rename, 20 );
+		add_filter( 'pre_update_option_' . $option, $refuse, 10, 2 );
+		add_filter( 'option_' . $option, $lie );
+		try {
+			$result = $utility->update_api_key( 'cloudways', 'fixture-replacement', $variant );
+		} finally {
+			remove_filter( 'mainwp_encrypt_key_value', $rename, 20 );
+			remove_filter( 'pre_update_option_' . $option, $refuse, 10 );
+			remove_filter( 'option_' . $option, $lie );
+		}
+		$this->assertFalse( $result, 'A vetoed replacement must fail even when readback matches the attempted envelope.' );
+		$this->assertTrue( get_option( $option ) === $previous, 'The vetoed write must leave the original stored envelope.' );
+		$this->assertTrue( 'fixture-original' === $utility->get_api_key( 'cloudways', '', $variant ), 'The original credential must still decrypt.' );
+		$this->assertFileExists( MainWP_Keys_Manager::get_keys_dir() . $previous['file_key'] );
+		$this->assertCount( 2, $this->keys );
+		$this->assertSame( $same_filename ? $previous['file_key'] : $this->keys[1], $attempted['file_key'] );
+		$this->assertNotSame( $previous['file_key'], $this->keys[1] );
+		$this->assertFileDoesNotExist( MainWP_Keys_Manager::get_keys_dir() . $this->keys[1] );
+		$this->assertSame( $before, $this->key_files(), 'A vetoed write must preserve the exact original filenames.' );
+	}
+
 	/** An unchanged valid envelope is saved even when update_option returns false. */
 	public function test_unchanged_envelope_is_confirmed_by_readback(): void {
 		$utility = Api_Backups_Utility::get_instance();
@@ -245,31 +307,117 @@ class Test_Global_Backup_Credential_Persistence extends \WP_UnitTestCase {
 	public function test_throwing_filter_preserves_previous_key_and_hook_cleanup(): void {
 		$utility = Api_Backups_Utility::get_instance();
 		$this->assertTrue( $utility->update_api_key( 'plesk', 'fixture-original' ) );
-		$previous = get_option( 'mainwp_api_backups_plesk_api_key' );
-		$before   = count( $this->key_files() );
-		$hooks    = $GLOBALS['wp_filter']['mainwp_encrypt_key_value']->callbacks[10];
-		$throw    = static function () {
-			throw new \RuntimeException( 'Fixture encryption filter failure.' );
+		$previous       = get_option( 'mainwp_api_backups_plesk_api_key' );
+		$before         = count( $this->key_files() );
+		$hooks          = $GLOBALS['wp_filter']['mainwp_encrypt_key_value']->callbacks[10];
+		$expected_error = new \RuntimeException( 'Fixture encryption filter failure.' );
+		$capture_key    = null;
+		$throw          = static function () use ( $expected_error, $hooks, &$capture_key ) {
+			foreach ( $GLOBALS['wp_filter']['mainwp_encrypt_key_value']->callbacks[10] as $id => $callback ) {
+				if ( ! isset( $hooks[ $id ] ) ) {
+					$capture_key = $callback['function'];
+				}
+			}
+			throw $expected_error;
 		};
 		add_filter( 'mainwp_encrypt_key_value', $throw, 20 );
-		$caught = false;
+		$caught       = false;
+		$caught_error = null;
 		try {
 			$utility->update_api_key( 'plesk', 'fixture-replacement' );
 		} catch ( \RuntimeException $error ) {
-			$caught = true;
+			$caught       = true;
+			$caught_error = $error;
 		} finally {
 			remove_filter( 'mainwp_encrypt_key_value', $throw, 20 );
 		}
 		$this->assertTrue( $caught, 'Existing exception propagation must remain unchanged.' );
+		$this->assertSame( $expected_error, $caught_error, 'The original throwable must propagate unchanged.' );
 		$this->assertTrue( get_option( 'mainwp_api_backups_plesk_api_key' ) === $previous );
 		$this->assertTrue( 'fixture-original' === $utility->get_api_key( 'plesk' ), 'A throwing filter must leave the original credential readable.' );
 		$this->assertSame( $hooks, $GLOBALS['wp_filter']['mainwp_encrypt_key_value']->callbacks[10] );
+		$this->assertNotNull( $capture_key, 'The throwing filter must observe the temporary capture callback.' );
+		$this->assertFalse( has_filter( 'mainwp_encrypt_key_value', $capture_key ), 'The temporary capture filter must be removed after a throw.' );
 		$this->assertCount( 2, $this->keys );
 		$this->assertNotSame( $this->keys[0], $this->keys[1] );
 		$this->assertFileExists( MainWP_Keys_Manager::get_keys_dir() . $previous['file_key'] );
-		$this->assertFileExists( MainWP_Keys_Manager::get_keys_dir() . $this->keys[1] );
-		// Match the per-site exception path; staged-file exception cleanup is a separate change.
-		$this->assertCount( $before + 1, $this->key_files() );
+		$this->assertFileDoesNotExist( MainWP_Keys_Manager::get_keys_dir() . $this->keys[1] );
+		$this->assertCount( $before, $this->key_files() );
+	}
+
+	/** A nested provider save keeps its persisted key when the outer filter throws. */
+	public function test_nested_save_survives_outer_encryption_throw(): void {
+		$utility = Api_Backups_Utility::get_instance();
+		$this->assertTrue( $utility->update_api_key( 'plesk', 'fixture-original' ) );
+		$previous     = get_option( 'mainwp_api_backups_plesk_api_key' );
+		$old_key_hash = hash_file( 'sha256', MainWP_Keys_Manager::get_keys_dir() . $previous['file_key'] );
+		$hooks        = array();
+		foreach ( array( 'mainwp_encrypt_key_value', 'updated_option', 'added_option' ) as $hook ) {
+			$hooks[ $hook ] = $GLOBALS['wp_filter'][ $hook ]->callbacks ?? array();
+		}
+		$expected_error = new \RuntimeException( 'Fixture outer encryption filter failure.' );
+		$nested         = false;
+		$nested_result  = null;
+		$nested_option  = null;
+		$nested_hash    = null;
+		$captures       = array();
+		$throw          = static function ( $envelope ) use ( $utility, $hooks, $expected_error, &$nested, &$nested_result, &$nested_option, &$nested_hash, &$captures ) {
+			foreach ( $GLOBALS['wp_filter']['mainwp_encrypt_key_value']->callbacks[10] as $id => $callback ) {
+				if ( ! isset( $hooks['mainwp_encrypt_key_value'][10][ $id ] ) ) {
+					$captures[ $id ] = $callback['function'];
+				}
+			}
+			if ( $nested ) {
+				return $envelope;
+			}
+			$nested = true;
+			try {
+				$nested_result = $utility->update_api_key( 'cloudways', 'fixture-nested' );
+				$nested_option = get_option( 'mainwp_api_backups_cloudways_api_key' );
+				$nested_hash   = hash_file( 'sha256', MainWP_Keys_Manager::get_keys_dir() . $nested_option['file_key'] );
+			} finally {
+				$nested = false;
+			}
+			throw $expected_error;
+		};
+		add_filter( 'mainwp_encrypt_key_value', $throw, 20 );
+		$caught_error = null;
+		try {
+			$utility->update_api_key( 'plesk', 'fixture-replacement' );
+		} catch ( \Throwable $error ) {
+			$caught_error = $error;
+		} finally {
+			remove_filter( 'mainwp_encrypt_key_value', $throw, 20 );
+		}
+		$this->assertSame( $expected_error, $caught_error, 'The outer throwable must propagate unchanged.' );
+		$this->assertTrue( $nested_result, 'The nested provider save must succeed.' );
+		$this->assertTrue( get_option( 'mainwp_api_backups_plesk_api_key' ) === $previous );
+		$this->assertTrue( get_option( 'mainwp_api_backups_cloudways_api_key' ) === $nested_option );
+		$this->assertFileExists( MainWP_Keys_Manager::get_keys_dir() . $previous['file_key'] );
+		$this->assertTrue( hash_file( 'sha256', MainWP_Keys_Manager::get_keys_dir() . $previous['file_key'] ) === $old_key_hash, 'The original key bytes must survive.' );
+		$this->assertTrue( 'fixture-original' === $utility->get_api_key( 'plesk' ) );
+		$this->assertCount( 3, $this->keys );
+		$this->assertCount( 3, array_unique( $this->keys ) );
+		$this->assertSame(
+			array(
+				'outer_stage_exists' => false,
+				'nested_key_exists'  => true,
+			),
+			array(
+				'outer_stage_exists' => file_exists( MainWP_Keys_Manager::get_keys_dir() . $this->keys[1] ),
+				'nested_key_exists'  => file_exists( MainWP_Keys_Manager::get_keys_dir() . $nested_option['file_key'] ),
+			),
+			'Only the outer unused stage may be deleted.'
+		);
+		$this->assertTrue( hash_file( 'sha256', MainWP_Keys_Manager::get_keys_dir() . $nested_option['file_key'] ) === $nested_hash, 'The nested persisted key bytes must survive.' );
+		$this->assertTrue( 'fixture-nested' === $utility->get_api_key( 'cloudways' ) );
+		$this->assertCount( 2, $captures );
+		foreach ( $captures as $capture ) {
+			$this->assertFalse( has_filter( 'mainwp_encrypt_key_value', $capture ), 'Both temporary capture callbacks must be removed.' );
+		}
+		foreach ( $hooks as $hook => $callbacks ) {
+			$this->assertSame( $callbacks, $GLOBALS['wp_filter'][ $hook ]->callbacks ?? array(), 'Temporary hooks must be restored: ' . $hook );
+		}
 	}
 
 	/** The settings form reaches the same failure-safe writer with real encryption. */

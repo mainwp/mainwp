@@ -625,6 +625,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
      * @param string $name name data.
      * @param string $value value data.
      * @param string $opt_name Option name.
+     * @throws \Throwable When an encryption filter throws.
      */
     public function update_api_key( $name, $value, $opt_name = '' ) {
 
@@ -678,7 +679,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
 
         $staged_key_file = '';
         $capture_key     = static function ( $envelope ) use ( &$staged_key_file ) {
-            if ( is_array( $envelope ) && ! empty( $envelope['file_key'] ) && is_string( $envelope['file_key'] ) ) {
+            if ( empty( $staged_key_file ) && is_array( $envelope ) && ! empty( $envelope['file_key'] ) && is_string( $envelope['file_key'] ) ) {
                 $staged_key_file = $envelope['file_key'];
             }
             return $envelope;
@@ -687,6 +688,11 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         add_filter( 'mainwp_encrypt_key_value', $capture_key, 10 );
         try {
             $encrypted = $this->encrypt_api_keys( $value, false, false, $name );
+        } catch ( \Throwable $error ) {
+            if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file ) {
+                do_action( 'mainwp_delete_key_file', $staged_key_file );
+            }
+            throw $error;
         } finally {
             remove_filter( 'mainwp_encrypt_key_value', $capture_key, 10 );
         }
@@ -720,7 +726,13 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         }
         // An unchanged option also returns false, so confirm the stored envelope.
         $stored = get_option( $opt_name );
-        if ( $stored === $encrypted ) {
+        if (
+            $stored === $encrypted
+            && (
+                $persisted === $encrypted
+                || ( null === $persisted && $new_key_file === $key_file && $encrypted === $current )
+            )
+        ) {
             if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file && $staged_key_file !== $new_key_file ) {
                 do_action( 'mainwp_delete_key_file', $staged_key_file );
             }
@@ -731,9 +743,6 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         $stored_key_file = '';
-        if ( is_array( $stored ) && isset( $stored['file_key'] ) && is_string( $stored['file_key'] ) ) {
-            $stored_key_file = $stored['file_key'];
-        }
         if ( is_array( $persisted ) && isset( $persisted['file_key'] ) && is_string( $persisted['file_key'] ) ) {
             $stored_key_file = $persisted['file_key'];
         }

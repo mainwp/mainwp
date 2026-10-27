@@ -119,6 +119,12 @@ A non-pass verdict skips eligible items with `backup_missing` or `backup_pending
 
 Each site dispatched through an override records one `gate_overridden` history row. Its fixed message is `backup_missing` or `backup_pending_offsite`; `ref` is the queued update job ID, or null for an immediate update. History write failures are logged without interrupting updates. The REST v2 update endpoints retain their existing advisory behavior.
 
+### Legacy upload age
+
+Completed legacy upload jobs predate `uploaded_at`. When that timestamp is missing or nonpositive, `upload_age_evidence()` uses a positive `snapshot.created` as age evidence. These jobs are deliberately not backfilled.
+
+Both automatic retention and remote minimum checks use this fallback, so a positive remote minimum may expire earlier than it would from the actual upload time. A missing or nonpositive fallback leaves age unknown and keeps a positive remote minimum hold in place. Incomplete jobs keep unknown age, even when `snapshot.created` is available.
+
 ## Registration Patterns
 
 ### Adding a New Ability

@@ -377,7 +377,10 @@ class MainWP_Backup_Retention_Protection {
         if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE === $job->status ) {
             $uploaded = (int) ( $job->checkpoint['uploaded_at'] ?? 0 );
             if ( $uploaded <= 0 && null !== $snapshot ) {
-                // Legacy completed jobs predate storage timestamps; no rows are backfilled.
+                // Legacy complete jobs predate uploaded_at. No backfill is deliberate (Dennis, 2026-10-24).
+                // A positive snapshot.created supplies age for automatic retention and remote
+                // minimum checks, so the minimum may expire earlier than with actual upload time.
+                // Missing or nonpositive age stays unknown.
                 $uploaded = (int) $snapshot->created;
             }
             return array(

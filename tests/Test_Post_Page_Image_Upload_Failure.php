@@ -319,4 +319,85 @@ class Test_Post_Page_Image_Upload_Failure extends \WP_UnitTestCase {
 		);
 		$this->assertSame( array(), $this->warnings );
 	}
+
+	/**
+	 * Existing subclasses can keep the public four-argument override.
+	 */
+	public function test_four_argument_subclass_override_loads_and_imports(): void {
+		$method = new \ReflectionMethod( MainWP_Post_Page_Handler::class, 'replace_advanced_image' );
+		$this->assertSame( 4, $method->getNumberOfParameters() );
+		$handler = new class() extends MainWP_Post_Page_Handler {
+			/**
+			 * Delegate through the existing public signature.
+			 *
+			 * @param string $content Post content.
+			 * @param array  $upload_dir Child uploads directory.
+			 * @param object $website Child site.
+			 * @param bool   $withslashes Whether URLs have escaped slashes.
+			 * @return string Imported content.
+			 */
+			public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false ) { // phpcs:ignore Generic.CodeAnalysis.UselessOverridingMethod.Found -- Exercise the legacy subclass declaration.
+				return parent::replace_advanced_image( $content, $upload_dir, $website, $withslashes );
+			}
+		};
+		$content = $this->failed_content();
+		$this->assertSame( $content, $handler::replace_advanced_image( $content, array( 'baseurl' => $this->source_url ), (object) array( 'url' => 'https://child.example.org/' ), false ) );
+		$this->assertSame( array( $this->source_url . 'failed.png' => 1 ), $this->downloads );
+	}
+
+	/**
+	 * Cover both advanced passes after the embedded import.
+	 *
+	 * @return array URL forms.
+	 */
+	public static function fallback_url_forms(): array {
+		return array(
+			'plain'   => array( false ),
+			'escaped' => array( true ),
+		);
+	}
+
+	/**
+	 * Cached failures survive a fallback whose matcher skips dotted folders.
+	 *
+	 * @dataProvider fallback_url_forms
+	 * @param bool $escaped Whether advanced URLs have escaped slashes.
+	 */
+	public function test_advanced_fallback_preserves_cached_dotted_folder_failure( bool $escaped ): void {
+		$failed    = $this->source_url . '2026.10/failed.png';
+		$success   = $this->source_url . '2026.10/success.png';
+		$advanced  = $this->source_url . 'advanced.png';
+		$reference = $escaped ? str_replace( '/', '\\/', $failed ) : $failed;
+		$trigger   = $escaped ? str_replace( '/', '\\/', $advanced ) : $advanced;
+		$content   = '<img src="' . $failed . '" /><img src="' . $success . '" /><!-- wp:image {"url":"' . $reference . '"} --><div style="background-image:url(' . $trigger . ')"></div>';
+		$imported  = null;
+		$capture   = static function ( $data, $postarr, $unsanitized_postarr ) use ( &$imported ) {
+			if ( 'bulkpost' === $data['post_type'] && null === $imported ) {
+				$imported = $unsanitized_postarr['post_content'];
+			}
+			return $data;
+		};
+		add_filter( 'wp_insert_post_data', $capture, 10, 3 );
+		try {
+			$result = $this->import( 'combined', $content );
+		} finally {
+			remove_filter( 'wp_insert_post_data', $capture );
+		}
+		$expected = str_replace( $success, $this->upload_dir['url'] . '/success.png', $content );
+		$expected = str_replace( $trigger, $this->upload_dir['url'] . '/advanced.png', $expected );
+		$this->assertSame( $expected, $imported );
+		$this->assertSame( wp_unslash( $expected ), $result );
+		$this->assertSame(
+			array(
+				$failed   => 1,
+				$success  => 1,
+				$advanced => 1,
+			),
+			$this->downloads
+		);
+		$this->assertFileDoesNotExist( $this->upload_dir['path'] . '/failed.png' );
+		$this->assertFileExists( $this->upload_dir['path'] . '/success.png' );
+		$this->assertFileExists( $this->upload_dir['path'] . '/advanced.png' );
+		$this->assertSame( array(), $this->warnings );
+	}
 }

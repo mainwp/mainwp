@@ -1234,8 +1234,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         if ( $replaceadvImg && $website ) {
-            $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, false, $downloaded_images );
-            $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, true, $downloaded_images ); // to fix images url with slashes.
+            $new_post['post_content'] = self::replace_advanced_image_with_cache( $new_post['post_content'], $upload_dir, $website, false, $downloaded_images );
+            $new_post['post_content'] = self::replace_advanced_image_with_cache( $new_post['post_content'], $upload_dir, $website, true, $downloaded_images ); // to fix images url with slashes.
         }
 
         $is_sticky = false;
@@ -1314,15 +1314,29 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * Handle upload advanced image.
      *
-     * @param array      $content post content data.
-     * @param array      $upload_dir upload directory info.
-     * @param mixed      $website The website.
-     * @param bool       $withslashes to use preg pattern with slashes.
-     * @param array|null $downloaded_images Download results shared by the current import.
+     * @param array $content post content data.
+     * @param array $upload_dir upload directory info.
+     * @param mixed $website The website.
+     * @param bool  $withslashes to use preg pattern with slashes.
      *
      * @return mixed array of result.
      */
-    public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false, &$downloaded_images = null ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false ) {
+        $downloaded_images = array();
+        return self::replace_advanced_image_with_cache( $content, $upload_dir, $website, $withslashes, $downloaded_images );
+    }
+
+    /**
+     * Import advanced images with download results from the current import.
+     *
+     * @param string $content Post content.
+     * @param array  $upload_dir Child uploads directory.
+     * @param mixed  $website The website.
+     * @param bool   $withslashes Whether URLs have escaped slashes.
+     * @param array  $downloaded_images Shared download results.
+     * @return string Imported content.
+     */
+    private static function replace_advanced_image_with_cache( $content, $upload_dir, $website, $withslashes, &$downloaded_images ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $upload_dir ) || ! isset( $upload_dir['baseurl'] ) ) {
             return $content;
@@ -1350,10 +1364,12 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $matches_checked[] = $match;
                 }
             }
-            if ( null === $downloaded_images ) {
-                $downloaded_images = array();
-            }
             $image_replacements = array();
+            foreach ( $downloaded_images as $image_url => $downloadfile ) {
+                if ( null === $downloadfile ) {
+                    $image_replacements[ $image_url ] = $image_url;
+                }
+            }
             foreach ( $matches_checked as $match ) {
 
                 $imgUrl = $match[0];

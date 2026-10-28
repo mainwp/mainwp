@@ -346,6 +346,103 @@ class Test_Post_Page_Image_Upload_Failure extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Cover successful dispatch and cleanup after an override throws.
+	 *
+	 * @return array Dispatch outcomes.
+	 */
+	public static function advanced_dispatch_outcomes(): array {
+		return array(
+			'normal'    => array( false ),
+			'exception' => array( true ),
+		);
+	}
+
+	/**
+	 * Inherited imports call the public override and release their cache.
+	 *
+	 * @dataProvider advanced_dispatch_outcomes
+	 * @param bool $throws Whether the override throws.
+	 */
+	public function test_create_post_dispatches_advanced_override_and_releases_cache( bool $throws ): void {
+		$handler          = new class() extends MainWP_Post_Page_Handler {
+			/**
+			 * Observed advanced passes.
+			 *
+			 * @var array
+			 */
+			public static $passes = array();
+			/**
+			 * Whether to interrupt the import.
+			 *
+			 * @var bool
+			 */
+			public static $throws = false;
+			/**
+			 * Observe dispatch before delegating to the public importer.
+			 *
+			 * @param string $content Post content.
+			 * @param array  $upload_dir Child uploads directory.
+			 * @param object $website Child site.
+			 * @param bool   $withslashes Whether URLs have escaped slashes.
+			 * @return string Imported content.
+			 * @throws \RuntimeException When the fixture interrupts the import.
+			 */
+			public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false ) {
+				self::$passes[] = $withslashes;
+				if ( self::$throws ) {
+					throw new \RuntimeException( 'Interrupted advanced image import.' );
+				}
+				return parent::replace_advanced_image( $content, $upload_dir, $website, $withslashes );
+			}
+		};
+		$handler::$passes = array();
+		$handler::$throws = $throws;
+		$failed           = $this->source_url . 'failed.png';
+		$success          = $this->source_url . 'success.png';
+		$content          = '<img src="' . $failed . '" /><img src="' . $success . '" />';
+		$result           = null;
+		try {
+			$result = $handler::create_post(
+				array(
+					'edit_id'      => 123,
+					'post_title'   => 'Subclass image import',
+					'post_name'    => 'subclass-image-import',
+					'post_type'    => 'post',
+					'post_status'  => 'draft',
+					'post_content' => $content,
+				),
+				array(),
+				'',
+				'',
+				array( 'baseurl' => $this->source_url ),
+				'',
+				array(),
+				true,
+				(object) array( 'url' => 'https://child.example.org/' )
+			);
+		} catch ( \RuntimeException $exception ) {
+			$this->assertTrue( $throws );
+			$this->assertSame( 'Interrupted advanced image import.', $exception->getMessage() );
+		}
+		$this->assertSame( $throws ? array( false ) : array( false, true ), $handler::$passes );
+		if ( $throws ) {
+			$this->assertNull( $result );
+		} else {
+			$this->assertTrue( $result['success'] );
+			$this->assertSame( str_replace( $success, $this->upload_dir['url'] . '/success.png', $content ), get_post( $result['id'] )->post_content );
+		}
+		$this->assertSame(
+			array(
+				$failed  => 1,
+				$success => 1,
+			),
+			$this->downloads
+		);
+		$this->assertSame( $failed, MainWP_Post_Page_Handler::replace_advanced_image( $failed, array( 'baseurl' => $this->source_url ), (object) array( 'url' => 'https://child.example.org/' ) ) );
+		$this->assertSame( 2, $this->downloads[ $failed ] );
+	}
+
+	/**
 	 * Cover both advanced passes after the embedded import.
 	 *
 	 * @return array URL forms.

@@ -20,6 +20,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Download results shared by the active advanced-image passes.
+     *
+     * @var array|null
+     */
+    private static $image_download_cache = null;
+
+    /**
      * Get Class Name
      *
      * @return string __CLASS__
@@ -1234,8 +1241,14 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         if ( $replaceadvImg && $website ) {
-            $new_post['post_content'] = self::replace_advanced_image_with_cache( $new_post['post_content'], $upload_dir, $website, false, $downloaded_images );
-            $new_post['post_content'] = self::replace_advanced_image_with_cache( $new_post['post_content'], $upload_dir, $website, true, $downloaded_images ); // to fix images url with slashes.
+            $previous_downloads         =& self::$image_download_cache;
+            self::$image_download_cache =& $downloaded_images;
+            try {
+                $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, false );
+                $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, true ); // to fix images url with slashes.
+            } finally {
+                self::$image_download_cache =& $previous_downloads;
+            }
         }
 
         $is_sticky = false;
@@ -1323,6 +1336,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false ) {
         $downloaded_images = array();
+        if ( null !== self::$image_download_cache ) {
+            $downloaded_images =& self::$image_download_cache;
+        }
         return self::replace_advanced_image_with_cache( $content, $upload_dir, $website, $withslashes, $downloaded_images );
     }
 

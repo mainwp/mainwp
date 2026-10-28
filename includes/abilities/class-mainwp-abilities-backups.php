@@ -2610,7 +2610,7 @@ class MainWP_Abilities_Backups {
         }
         if ( 'mainwp_insufficient_right' === $safe['code'] && is_array( $source ) && isset( $source['right'] ) && in_array( $source['right'], array_merge( self::READ_RIGHTS, MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS, array( 'restore_backups' ) ), true ) ) {
             $data['right'] = $source['right'];
-            if ( 'delete_backup_tasks' === $source['right'] ) {
+            if ( 'delete_backup_tasks' === $source['right'] && true === ( $source['retention_tightening'] ?? false ) ) {
                 $safe['message'] = __( 'Your role does not permit Delete Backup Tasks, which is also required for tightening retention.', 'mainwp' );
             }
         }

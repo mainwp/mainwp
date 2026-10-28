@@ -653,7 +653,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $delete_task = self::authorize_task( (int) $task->id, 'delete_backup_tasks', $context );
                 if ( is_wp_error( $delete_task ) ) {
                     if ( 'mainwp_insufficient_right' === $delete_task->get_error_code() ) {
-                        return new \WP_Error( 'mainwp_insufficient_right', __( 'Your role does not permit Delete Backup Tasks, which is also required for tightening retention.', 'mainwp' ), $delete_task->get_error_data() );
+                        $data                         = (array) $delete_task->get_error_data();
+                        $data['retention_tightening'] = true;
+                        return new \WP_Error( 'mainwp_insufficient_right', __( 'Your role does not permit Delete Backup Tasks, which is also required for tightening retention.', 'mainwp' ), $data );
                     }
                     return $delete_task;
                 }

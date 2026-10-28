@@ -313,6 +313,48 @@ class MainWP_Backup_Task_Edit_Retention_Rights_Test extends MainWP_Abilities_Tes
 		$this->assertSame( 'delete_backup_tasks', $result->get_error_data()['right'] );
 		if ( 'ability' === $path ) {
 			$this->assertStringContainsString( 'Delete Backup Tasks', $result->get_error_message() );
+			$this->assertStringContainsString( 'tightening retention', $result->get_error_message() );
+			$this->assertSame(
+				array(
+					'status' => 403,
+					'right'  => 'delete_backup_tasks',
+				),
+				$result->get_error_data(),
+				'Internal retention context must not appear in the ability response.'
+			);
+		}
+	}
+
+	/** Task deletion denials keep the general message at both ability boundaries. */
+	public function test_delete_task_denial_does_not_mention_retention(): void {
+		$this->staff( false );
+		$before = $this->row();
+		add_filter( 'user_has_cap', array( self::class, 'settings_bridge_caps' ) );
+		try {
+			$input   = array(
+				'task_id' => $this->task_id,
+				'confirm' => true,
+			);
+			$results = array(
+				MainWP_Abilities_Backups::authorize( 'mainwp/delete-backup-task-v1', $input ),
+				MainWP_Abilities_Backups::execute_delete_backup_task( $input ),
+			);
+			foreach ( $results as $result ) {
+				$this->assertWPError( $result );
+				$this->assertSame( 'mainwp_insufficient_right', $result->get_error_code() );
+				$this->assertSame( MainWP_Backup_Operations::safe_error( 'mainwp_insufficient_right' )['message'], $result->get_error_message() );
+				$this->assertStringNotContainsString( 'retention', $result->get_error_message() );
+				$this->assertSame(
+					array(
+						'status' => 403,
+						'right'  => 'delete_backup_tasks',
+					),
+					$result->get_error_data()
+				);
+			}
+			$this->assertSame( $before, $this->row() );
+		} finally {
+			remove_filter( 'user_has_cap', array( self::class, 'settings_bridge_caps' ) );
 		}
 	}
 

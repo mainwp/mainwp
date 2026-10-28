@@ -273,7 +273,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $name Option name of encrypted data.
      * @param string $prefix using for prefix key file name.
      *
-     * @return string Encrypted value.
+     * @return array{key: string, file_key: string, encrypted_value: string}|false Encrypted value data, or false on failure.
      */
     private function encrypt_value( $keypass, $name, $prefix ) {
 
@@ -805,7 +805,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $prefix prefix key file name.
      * @param string $key_file key file name.
      *
-     * @return string Encrypted value.
+     * @return array{encrypted_val: string, file_key: string}|false|0|0.0|''|'0'|null|array{} Encrypted envelope, false on failure, or the unchanged empty input.
      */
     public function encrypt_keys_data( $data, $prefix, $key_file = false ) {  //phpcs:ignore -- NOSONAR - complex.
 

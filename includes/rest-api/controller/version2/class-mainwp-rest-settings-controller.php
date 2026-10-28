@@ -2752,14 +2752,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'mainwp_backups_on_server'              => array(
                 'required'          => false,
-                'description'       => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
+                'description'       => __( 'Leftover downloaded backup files kept per site outside completed snapshots. Does not set Built-In Backups retention. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'validate_backup_retention_count' ),
             ),
             'mainwp_backup_on_external_sources'     => array(
                 'required'          => false,
-                'description'       => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
+                'description'       => __( 'Legacy remote backup count from the retired Backups Add-on. Stored for compatibility only; Built-In Backups do not use it.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'validate_backup_retention_count' ),
@@ -2831,14 +2831,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'mainwp_backups_on_server'             => array(
                 'required'          => false,
-                'description'       => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
+                'description'       => __( 'Leftover downloaded backup files kept per site outside completed snapshots. Does not set Built-In Backups retention. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'validate_backup_retention_count' ),
             ),
             'mainwp_backup_on_external_sources'    => array(
                 'required'          => false,
-                'description'       => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
+                'description'       => __( 'Legacy remote backup count from the retired Backups Add-on. Stored for compatibility only; Built-In Backups do not use it.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'validate_backup_retention_count' ),
@@ -5425,12 +5425,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
                 'mainwp_backups_on_server'                 => array(
                     'type'        => 'string',
-                    'description' => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
+                    'description' => __( 'Leftover downloaded backup files kept per site outside completed snapshots. Does not set Built-In Backups retention. 0 means unlimited.', 'mainwp' ),
                     'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_backup_on_external_sources'        => array(
                     'type'        => 'string',
-                    'description' => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
+                    'description' => __( 'Legacy remote backup count from the retired Backups Add-on. Stored for compatibility only; Built-In Backups do not use it.', 'mainwp' ),
                     'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_archive_format'                    => array(

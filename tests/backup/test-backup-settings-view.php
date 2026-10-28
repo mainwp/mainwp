@@ -118,10 +118,9 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			@$dom->loadHTML( $output, LIBXML_NONET );
 			$xpath = new \DOMXPath( $dom );
 			foreach ( array(
-				'mainwp_options_backupOnServer'          => $server,
-				'mainwp_options_backupOnExternalSources' => $remote,
-				'mainwp_options_onDemandRetentionCount'  => '11',
-				'mainwp_options_maximumFileDescriptors'  => '37',
+				'mainwp_options_backupOnServer'         => $server,
+				'mainwp_options_onDemandRetentionCount' => '11',
+				'mainwp_options_maximumFileDescriptors' => '37',
 			) as $field => $value ) {
 				$this->assertSame( $value, $xpath->evaluate( 'string(//input[@name="' . $field . '"]/@value)' ), $field );
 			}
@@ -132,7 +131,9 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			foreach ( array( 'mainwp_maximumFileDescriptorsAuto', 'mainwp_options_notificationOnBackupFail', 'mainwp_options_chunkedBackupTasks', 'mainwp_options_loadFilesBeforeZip' ) as $field ) {
 				$this->assertSame( 0, $xpath->query( '//input[@name="' . $field . '"][@checked]' )->length, $field );
 			}
-			foreach ( array( 'mainwp_options_backupOnServer', 'mainwp_options_backupOnExternalSources' ) as $field ) {
+			// MWP-2031: the retired remote count is no longer an editable field.
+			$this->assertSame( 0, $xpath->query( '//input[@name="mainwp_options_backupOnExternalSources"]' )->length );
+			foreach ( array( 'mainwp_options_backupOnServer' ) as $field ) {
 				$input = $xpath->query( '//input[@name="' . $field . '"]' )->item( 0 );
 				$this->assertSame( in_array( $field, $invalid, true ) ? 'true' : '', $input->getAttribute( 'aria-invalid' ), $field );
 				if ( in_array( $field, $invalid, true ) ) {
@@ -784,6 +785,44 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 3, MainWP_Backup_Settings::get_on_demand_retention_count() );
 
 		unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_onDemandRetentionCount'] );
+	}
+
+	/**
+	 * MWP-2031: the settings page describes what each count really does.
+	 *
+	 * The remote count has no Built-In Backups consumer, so the form no longer
+	 * offers it, and a form save leaves its stored value for compatibility.
+	 */
+	public function test_mwp_2031_global_counts_describe_real_behavior(): void {
+		$this->set_current_user_as_admin();
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( 'mainwp_backupsOnServer', 3 );
+		update_option( 'mainwp_backupOnExternalSources', 4 );
+		ob_start();
+		try {
+			MainWP_Backup_Settings_View::render_settings();
+		} finally {
+			$output = ob_get_clean();
+		}
+		$this->assertStringNotContainsString( 'mainwp_options_backupOnExternalSources', $output );
+		$this->assertStringNotContainsString( 'Backups on remote storage', $output );
+		$this->assertStringNotContainsString( 'Backups on server', $output );
+		$this->assertStringContainsString( 'Leftover backup files to keep', $output );
+		$this->assertStringContainsString( 'It does not limit how many Built-In Backups are kept', $output );
+		$this->assertStringContainsString( 'name="mainwp_options_backupOnServer" value="3"', $output );
+
+		$_POST = array(
+			'submit'                        => '1',
+			'wp_nonce'                      => wp_create_nonce( 'BackupSettings' ),
+			'mainwp_options_backupOnServer' => '2',
+		);
+		try {
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( 2, (int) get_option( 'mainwp_backupsOnServer' ) );
+			$this->assertSame( 4, (int) get_option( 'mainwp_backupOnExternalSources' ) );
+		} finally {
+			$_POST = array();
+		}
 	}
 
 	/** Global archive counts accept zero without changing on-demand retention. */

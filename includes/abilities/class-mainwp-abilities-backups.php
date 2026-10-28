@@ -2610,6 +2610,9 @@ class MainWP_Abilities_Backups {
         }
         if ( 'mainwp_insufficient_right' === $safe['code'] && is_array( $source ) && isset( $source['right'] ) && in_array( $source['right'], array_merge( self::READ_RIGHTS, MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS, array( 'restore_backups' ) ), true ) ) {
             $data['right'] = $source['right'];
+            if ( 'delete_backup_tasks' === $source['right'] ) {
+                $safe['message'] = __( 'Your role does not permit Delete Backup Tasks, which is also required for tightening retention.', 'mainwp' );
+            }
         }
         return new \WP_Error( $safe['code'], $safe['message'], $data );
     }
@@ -4226,7 +4229,7 @@ class MainWP_Abilities_Backups {
             'mainwp/update-backup-task-v1',
             array(
                 'label'               => __( 'Update Backup Task', 'mainwp' ),
-                'description'         => __( 'Change any subset of a task\'s fields; omitted fields keep their values. Saving makes you the task owner, as the Backups page does. Lowering retention prunes on the next sweep; dry_run lists the affected snapshots and the owner change. Possible errors: mainwp_invalid_input, mainwp_backup_task_not_found, mainwp_site_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'description'         => __( 'Change any subset of a task\'s fields; omitted fields keep their values. Saving makes you the task owner, as the Backups page does. Tightening retention also requires Delete Backup Tasks. Lowering retention prunes on the next sweep; dry_run lists the affected snapshots and the owner change. Possible errors: mainwp_invalid_input, mainwp_insufficient_right, mainwp_backup_task_not_found, mainwp_site_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::update_backup_task_input_schema(),

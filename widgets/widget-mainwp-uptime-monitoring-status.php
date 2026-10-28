@@ -39,8 +39,9 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
         if ( ! is_array( $result ) ) {
             $result = array();
         }
-        $up_number   = isset( $result['count_up'] ) ? intval( $result['count_up'] ) : 0;
-        $down_number = isset( $result['count_down'] ) ? intval( $result['count_down'] ) : 0;
+        $up_number      = isset( $result['count_up'] ) ? intval( $result['count_up'] ) : 0;
+        $down_number    = isset( $result['count_down'] ) ? intval( $result['count_down'] ) : 0;
+        $pending_number = isset( $result['count_pending'] ) ? intval( $result['count_pending'] ) : 0;
         ?>
         <div class="mainwp-widget-header">
             <div class="ui grid">
@@ -80,6 +81,14 @@ class MainWP_Uptime_Monitoring_Status { // phpcs:ignore Generic.Classes.OpeningB
                     </div>
                 </div>
             </div>
+            <?php if ( $pending_number > 0 ) : ?>
+                <p class="ui small text">
+                    <?php
+                    /* translators: %d: Number of monitors awaiting their first uptime check. */
+                    echo esc_html( sprintf( _n( '%d monitor waiting for its first check', '%d monitors waiting for their first check', $pending_number, 'mainwp' ), $pending_number ) );
+                    ?>
+                </p>
+            <?php endif; ?>
         </div>
         <div class="ui stackable grid mainwp-widget-footer">
             <div class="eight wide left aligned middle aligned column"></div>

@@ -28,6 +28,21 @@
  --area-radius: 1rem;
  --mainwp-area-padding: 1.25rem;
 }
+
+:root {
+  --mainwp-onboarding-text: var(--mainwp-text);
+  --mainwp-onboarding-muted: var(--mainwp-text-secondary);
+  --mainwp-onboarding-surface: var(--mainwp-element-background);
+  --mainwp-onboarding-surface-secondary: var(--mainwp-element-background-secondary);
+  --mainwp-onboarding-border: var(--mainwp-border);
+  --mainwp-onboarding-link: var(--mainwp-link-color);
+  --mainwp-onboarding-info-accent: var(--mainwp-blue);
+  --mainwp-onboarding-success: var(--mainwp-green);
+  --mainwp-onboarding-warning: var(--mainwp-yellow);
+  --mainwp-onboarding-danger: color-mix(in srgb, var(--mainwp-red) 80%, #fff);
+  --mainwp-onboarding-info-surface: color-mix(in srgb, var(--mainwp-onboarding-info-accent) 10%, var(--mainwp-onboarding-surface));
+  --mainwp-onboarding-icon-foreground: #fff;
+}
 .mainwp-ui.mainwp-custom-theme .ui.double.loader::after {
   display: none !important;
 }

@@ -2102,6 +2102,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         'w' => $box['layout']['2'],
                         'h' => $box['layout']['3'],
                     );
+                    if ( 'toplevel_page_mainwp_tab' === $page && 'get-started' === $box['id'] && empty( $wgsorted ) && ! isset( $selected_layout['layout'] ) && MainWP_Overview::is_first_onboarding_overview() ) {
+                        // Updates occupies all 12 columns through row 20.
+                        $layout['x'] = 0;
+                        $layout['y'] = 20;
+                    }
                 }
 
                 $layout_attrs_escaped = '';
@@ -2503,11 +2508,14 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </div>
         </div>
         <script type="text/javascript">
-        jQuery( '#mainwp-no-sites-modal' ).modal( {
-            blurring: true,
-            inverted: true,
-            closable: false
-        } ).modal( 'show' );
+        // Fomantic UI loads in the footer, after this markup.
+        jQuery( function() {
+            jQuery( '#mainwp-no-sites-modal' ).modal( {
+                blurring: true,
+                inverted: true,
+                closable: false
+            } ).modal( 'show' );
+        } );
         </script>
             <?php
     endif;

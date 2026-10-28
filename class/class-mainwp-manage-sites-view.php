@@ -2209,6 +2209,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $params['uploaded_site_icon'] = isset( $_POST['uploaded_icon'] ) && ! empty( $_POST['uploaded_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['uploaded_icon'] ) ) : '';
         $params['selected_site_icon'] = isset( $_POST['selected_icon'] ) && ! empty( $_POST['selected_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['selected_icon'] ) ) : '';
         $params['cust_icon_color']    = isset( $_POST['cust_color'] ) && ! empty( $_POST['cust_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['cust_color'] ) ) : '';
+        $params['defer_site_icon']    = ! empty( $_POST['defer_site_icon'] );
         $params['group_creation_ui']  = true;
 
         if ( isset( $_POST['qsw_page'] ) ) {
@@ -2263,7 +2264,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param array $params  Child site add parameters.
      */
     private static function maybe_fetch_initial_site_favicon( $site_id, $params ) {
-        if ( empty( $site_id ) ) {
+        if ( empty( $site_id ) || ! empty( $params['defer_site_icon'] ) ) {
             return;
         }
 
@@ -2558,7 +2559,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     } elseif ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
                         set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
                         /* translators: 1: Opening div tag, 2: Site name wrapped in strong tag, 3: Closing div tag, 4: Continue button anchor tag. */
-                        $message = sprintf( esc_html__( '%4$s%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page. Proceeding to the next step in 3 seconds...', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>', '<a href="admin.php?page=mainwp-setup&step=monitoring" class="ui mini basic green right floated button">Continue</a>' );
+                        $message = sprintf( esc_html__( '%4$s%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page. Proceeding to the next step in 3 seconds...', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>', '<a href="admin.php?page=mainwp-setup&step=next_steps&siteid=' . intval( $id ) . '" class="ui mini basic green right floated button">Continue</a>' );
                     } else {
                         /* translators: 1: Opening anchor tag for dashboard link, 2: Closing anchor tag, 3: Line break HTML tag. */
                         $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );

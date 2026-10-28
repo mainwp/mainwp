@@ -1214,6 +1214,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 });
 
                 mainwp_ui_state_init('addsite-adminpwd', function(state){
+                    if (jQuery('#mainwp_connect_first_site_form').length) {
+                        chkbx1.checkbox('set checked');
+                        jQuery('#mainwp-administrator-password-field').show();
+                        return;
+                    }
                     if( '1' === state || '0' === state ){
                         chkbx1.checkbox('set unchecked');
                         jQuery('#mainwp-administrator-password-field').fadeOut(500);
@@ -1225,6 +1230,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
 
                 mainwp_ui_state_init('addsite-uniqueid', function(state){
+                    if (jQuery('#mainwp_connect_first_site_form').length) {
+                        chkbx2.checkbox('set unchecked');
+                        jQuery('#mainwp-unique-security-id-field').hide();
+                        return;
+                    }
                     if( '1' === state || '0' === state ){
                         chkbx2.checkbox('set unchecked');
                         jQuery('#mainwp-unique-security-id-field').fadeOut(500);
@@ -2659,9 +2669,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string|null $title_page modal title.
      */
     public static function render_import_sites_modal( $url, $title_page = null ) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check for wizard navigation.
+        $is_wizard = isset( $_GET['page'] ) && 'mainwp-setup' === sanitize_key( wp_unslash( $_GET['page'] ) );
         ?>
-        <div class="ui large modal <?php echo ( 'Import Sites' === $title_page ) ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" data-page-url="<?php echo esc_url( $url ); ?>" >
-            <i class="close icon" <?php echo 'Import Sites' === $title_page ? 'style="display:none"' : ''; ?> ></i>
+        <div class="ui large modal <?php echo $is_wizard ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" data-page-url="<?php echo esc_url( $url ); ?>" >
+            <i class="close icon" <?php echo $is_wizard ? 'style="display:none"' : ''; ?> ></i>
             <div class="header"><?php echo esc_html( $title_page ); ?></div>
             <div class="scrolling content">
         <?php MainWP_Manage_Sites_View::render_import_sites(); ?>
@@ -2670,12 +2682,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui two column grid">
                     <div class="left aligned middle aligned column">
                         <input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
-                    <?php if ( 'Import Sites' === $title_page ) : ?>
-                            <a class="ui green button" id="mainwp-import-sites-modal-try-again" href="admin.php?page=mainwp-setup&step=connect_first_site" style="display:none"><?php esc_html_e( 'Try Again', 'mainwp' ); ?></a>
+                    <?php if ( $is_wizard ) : ?>
+                            <a class="ui basic green button" id="mainwp-import-sites-modal-try-again" href="admin.php?page=mainwp-setup&step=connect_first_site" style="display:none"><?php esc_html_e( 'Try Again', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>
                     <div class="right aligned middle aligned column">
-                    <?php if ( 'Import Sites' === $title_page ) : ?>
+                    <?php if ( $is_wizard ) : ?>
                             <a class="ui basic green button" id="mainwp-import-sites-modal-continue" href="<?php echo esc_url( $url ); ?>" style="display:none"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>

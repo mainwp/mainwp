@@ -141,12 +141,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     background: none !important;
 }
 
-#mainwp-qsw-exit-links {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-}
-
 /* Content Wrap */
 
 .mainwp-content-wrap {
@@ -2265,4 +2259,13 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
     background: var(--mainwp-element-background-secondary, var(--background-color-3, rgba(0, 0, 0, .03)));
     border: 1px solid var(--mainwp-border, var(--border-color, rgba(34, 36, 38, .15)));
     border-radius: var(--input-radius, 5px);
+}
+
+#mainwp-onboarding-tour-help {
+    display: block;
+    margin-top: 0.5em;
+}
+
+#mainwp-onboarding-uptime {
+    margin-top: 1em;
 }

@@ -1975,6 +1975,7 @@ let mainwp_managesites_add = function () {
                 selected_icon: jQuery('#mainwp_managesites_add_site_select_icon_hidden').val(),
                 cust_color: jQuery('#mainwp_managesites_add_site_color').val(),
                 uploaded_icon: jQuery('#mainwp_managesites_add_site_uploaded_icon_hidden').val(),
+                defer_site_icon: true,
                 managesites_add_http_user: jQuery('#mainwp_managesites_add_http_user').val(),
                 managesites_add_http_pass: jQuery('#mainwp_managesites_add_http_pass').val(),
             });
@@ -2024,6 +2025,13 @@ let mainwp_managesites_add = function () {
                     // The response is HTML for the CSV import log; feedback() needs the link as a node.
                     let added = mainwp_feedback_linked_message(MainWP.I18n.t('Site successfully added - Visit the Site\'s %1Dashboard%2 now.'), [{ href: 'admin.php?page=managesites&dashboard=' + encodeURIComponent(site_id), style: 'text-decoration: none;' }]);
                     feedback('mainwp-message-zone', added, 'green');
+
+                    if (site_id > 0 && !data.uploaded_icon && !data.selected_icon) {
+                        jQuery.post(ajaxurl, mainwp_secure_data({
+                            action: 'mainwp_get_site_icon',
+                            siteId: site_id
+                        }));
+                    }
 
                     if (site_id > 0) {
                         jQuery('.sync-ext-row').attr('status', 'queue');
@@ -4368,6 +4376,40 @@ jQuery(document).on('click', '#remove-mainwp-installation-warning', function () 
 jQuery(document).on('click', '.mainwp-notice-hide', function () {
     jQuery(this).closest('.ui.message').fadeOut("slow");
     return false;
+});
+
+jQuery(function () {
+    // The grid's earlier ready callback must finish before the icons start animating.
+    jQuery('#mainwp-get-started-list [data-celebrate="true"]').removeAttr('data-celebrate').addClass('tadaaaa');
+});
+
+jQuery(document).on('click', '#mainwp-onboarding-enable-monitoring', function () {
+    const button = jQuery(this);
+    const notice = jQuery('#mainwp-onboarding-monitoring-notice');
+    if (button.prop('disabled')) {
+        return;
+    }
+    const showError = function (message) {
+        notice.find('.mainwp-onboarding-monitoring-error').text(message).prop('hidden', false);
+    };
+    button.prop('disabled', true).addClass('loading');
+    notice.find('.mainwp-onboarding-monitoring-error').prop('hidden', true);
+    jQuery.post(ajaxurl, {
+        action: 'mainwp_onboarding_enable_monitoring',
+        security: button.attr('data-nonce')
+    }, null, 'json').done(function (response) {
+        if (response && response.success && response.data && response.data.message) {
+            notice.addClass('green').text(response.data.message);
+            const step = jQuery('#mainwp-get-started-list a[href$="page=MonitoringSettings"]');
+            step.attr('data-complete', 'true').find('i.icon').attr('class', 'green check circle icon');
+        } else {
+            showError(response && response.data && response.data.message ? response.data.message : button.attr('data-error'));
+        }
+    }).fail(function () {
+        showError(button.attr('data-error'));
+    }).always(function () {
+        button.prop('disabled', false).removeClass('loading');
+    });
 });
 
 // Hide dismissible Dashboard notices.

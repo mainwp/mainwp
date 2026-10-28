@@ -196,6 +196,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( empty( $currentVersion ) ) {
             update_option( 'mainwp_run_quick_setup', 'yes' );
+            add_option( 'mainwp_onboarding_fresh_install', time() );
             // Route the default-off write through the settings helper so it also
             // mirrors mainwp_enableLegacyBackupFeature=0. A bare native write
             // would leave the legacy flag absent, and a rollback to a pre-rename

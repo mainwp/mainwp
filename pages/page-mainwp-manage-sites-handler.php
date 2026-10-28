@@ -95,10 +95,15 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';
+                    foreach ( array( 'connection_window_minutes', 'connection_window_remaining' ) as $field ) {
+                        if ( isset( $information[ $field ] ) && is_int( $information[ $field ] ) ) {
+                            $ret[ $field ] = (int) $information[ $field ];
+                        }
+                    }
                 } elseif ( isset( $information['error'] ) ) {
-                    $ret['response']    = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
-                    $ret['resp_data']   = MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
-                    $ret['failure_ux']  = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
+                    $ret['response']   = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
+                    $ret['resp_data']  = MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+                    $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 } else {
                     $ret['response']   = 'ERROR';
                     $ret['resp_data']  = isset( $output['fetch_data'] ) ? $output['fetch_data'] : MainWP_Connect_Failure_Ux::readable_response_from_output( $output );

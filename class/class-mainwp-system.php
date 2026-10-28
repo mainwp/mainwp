@@ -144,6 +144,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $this->load_all_options();
 
         $this->update_install();
+        add_action( 'mainwp_install_update_actions', array( MainWP_Get_Started::class, 'record_first_update' ), 10, 4 );
         $this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
         add_action( 'shutdown', array( $this, 'hook_wp_shutdown' ) );

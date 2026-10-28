@@ -1,0 +1,383 @@
+@keyframes tadaaaa {
+    0% {
+        transform: scale(1) rotate(0deg);
+    }
+    10% {
+        transform: scale(0.9) rotate(-3deg);
+    }
+    20% {
+        transform: scale(1.1) rotate(3deg);
+    }
+    30% {
+        transform: scale(0.95) rotate(-2deg);
+    }
+    40% {
+        transform: scale(1.05) rotate(2deg);
+    }
+    50% {
+        transform: scale(1) rotate(0deg);
+    }
+    60% {
+        transform: scale(1.02) rotate(-1deg);
+    }
+    80% {
+        transform: scale(0.98) rotate(1deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.tadaaaa {
+    display: inline-block;
+    animation: tadaaaa 0.6s ease-in-out 1 forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tadaaaa { animation: none; }
+}
+
+.mainwp-onboarding-preview {
+    margin: 1.5em 0;
+}
+#mainwp-onboarding-start-cards .card .description { font-weight: normal; }
+#mainwp-get-started-list .item .header { line-height: 1.3; }
+
+#mainwp-onboarding-detection[hidden],
+#mainwp-onboarding-detection [hidden] { display: none !important; }
+
+#mainwp-onboarding-detection .screen-reader-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* The outer grid has no padded parent to absorb Fomantic's negative gutters. */
+#mainwp-quick-setup-wizard.ui.grid {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+#mainwp-onboarding-start-cards > .card:first-child {
+    outline: 1px solid var(--mainwp-onboarding-success, #6c9800);
+}
+#mainwp-onboarding-start-cards > .card .header {
+    margin-top: 0 !important;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+#mainwp-onboarding-start-cards > .card > .content:not(.extra) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    align-content: start;
+    column-gap: 1rem;
+}
+#mainwp-onboarding-start-cards .header {
+    grid-area: 1 / 1;
+}
+#mainwp-onboarding-start-cards .label {
+    grid-area: 1 / 2;
+    position: static;
+    align-self: start;
+    justify-self: end;
+}
+#mainwp-onboarding-start-cards .description {
+    grid-column: 1 / -1;
+}
+
+#mainwp-onboarding-detection {
+    --onboarding-state-color: var(--mainwp-onboarding-info-accent, #357da8);
+    overflow-wrap: anywhere;
+}
+#mainwp-onboarding-detection[data-state="idle"],
+#mainwp-onboarding-detection[data-state="checking"],
+#mainwp-onboarding-detection[data-state="connecting"],
+#mainwp-onboarding-detection[data-state="detected"] {
+    min-height: 9rem;
+}
+#mainwp-onboarding-detection.green { --onboarding-state-color: var(--mainwp-onboarding-success, #6c9800); }
+#mainwp-onboarding-detection.yellow { --onboarding-state-color: var(--mainwp-onboarding-warning, #d7b33e); }
+#mainwp-onboarding-detection.red { --onboarding-state-color: var(--mainwp-onboarding-danger, #b94141); }
+/* Themes add their own message icons; the status icon also covers neutral states. */
+#mainwp-onboarding-detection.ui.message::before {
+    display: none !important;
+}
+#mainwp-onboarding-detection.ui.message {
+    padding-left: 4.5rem;
+    border-left: 0 !important;
+    color: var(--mainwp-onboarding-text, #2f3437) !important;
+    background: color-mix(in srgb, var(--onboarding-state-color) 10%, var(--mainwp-onboarding-surface, #fff)) !important;
+}
+#mainwp-onboarding-state-icon {
+    position: absolute;
+    top: 1rem;
+    left: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    border-radius: 50%;
+    color: var(--mainwp-onboarding-icon-foreground, #fff) !important;
+    background: var(--onboarding-state-color);
+}
+/* White on the warning yellow falls under 3:1 in the light themes; a dark glyph reads in every theme. */
+#mainwp-onboarding-detection.yellow #mainwp-onboarding-state-icon {
+    color: #1b1c1d !important;
+}
+#mainwp-onboarding-state-icon.loading {
+    background: none;
+    color: var(--mainwp-onboarding-link, #2f7097) !important;
+}
+#mainwp-onboarding-detection .ui.horizontal.list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin: 0.5rem 0;
+}
+#mainwp-onboarding-detection .ui.horizontal.list > .item {
+    display: flex;
+    align-items: baseline;
+    margin: 0;
+}
+#mainwp-onboarding-detection .ui.horizontal.list > .item > .content {
+    padding-left: 0.4em;
+    color: var(--mainwp-onboarding-text, #2f3437);
+}
+#mainwp-onboarding-detection .ui.horizontal.list > .item > .icon {
+    color: var(--mainwp-onboarding-text, #2f3437) !important;
+}
+#mainwp-onboarding-detection .ui.horizontal.list > .item > .red.icon {
+    color: var(--mainwp-onboarding-danger, #b94141) !important;
+}
+/* The link color sits under 3:1 against the body text, so weight marks these links without relying on color. */
+#mainwp-onboarding-detection a:not(.button),
+#mainwp-quick-setup-wizard .mainwp-onboarding-disclosure {
+    color: var(--mainwp-onboarding-link, #2f7097) !important;
+    font-weight: 600;
+    text-decoration: none !important;
+}
+#mainwp-onboarding-detection a:not(.button):hover,
+#mainwp-onboarding-detection a:not(.button):focus,
+#mainwp-quick-setup-wizard .mainwp-onboarding-disclosure:hover,
+#mainwp-quick-setup-wizard .mainwp-onboarding-disclosure:focus {
+    text-decoration: underline !important;
+}
+#mainwp-onboarding-expiry {
+    display: contents;
+}
+#mainwp-onboarding-detection .ui.button {
+    margin-top: 0.5em;
+}
+#mainwp-onboarding-install {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5em 1em;
+}
+#mainwp-onboarding-install a:not(.button) {
+    white-space: nowrap;
+}
+#mainwp-onboarding-install .ui.button {
+    margin-top: 0;
+}
+
+.mainwp-onboarding-password-note {
+    font-size: 0.93rem;
+    line-height: 1.5;
+    margin: 0.5em 0;
+    padding: 0.75em 0.75em 0.75em 3.25em;
+    position: relative;
+    color: var(--mainwp-onboarding-text, #2f3437);
+    background: var(--mainwp-onboarding-info-surface, #ecf3f7);
+    border-radius: var(--label-radius, 5px);
+}
+.mainwp-onboarding-password-note > .lock.icon {
+    position: absolute;
+    top: 0.75em;
+    left: 0.75em;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    border-radius: 50%;
+    color: var(--mainwp-onboarding-icon-foreground, #fff) !important;
+    background: var(--mainwp-onboarding-info-accent, #357da8);
+}
+.mainwp-onboarding-disclosure {
+    display: inline;
+    border: 0;
+    padding: 0;
+    background: none;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+.mainwp-onboarding-password-explanation {
+    margin: 0.5em 0;
+    padding: 0.75em;
+    border-left: 3px solid var(--mainwp-onboarding-info-accent, #357da8);
+    background: var(--mainwp-onboarding-surface-secondary, #fbfbfc);
+}
+.mainwp-onboarding-password-explanation[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 991px) {
+    #mainwp-onboarding-start-cards .label {
+        position: absolute;
+    }
+    #mainwp-onboarding-start-cards > .card > .content:not(.extra) {
+        padding-top: 3em;
+        grid-template-columns: minmax(0, 1fr);
+    }
+    #mainwp-onboarding-detection[data-state="idle"],
+    #mainwp-onboarding-detection[data-state="checking"],
+    #mainwp-onboarding-detection[data-state="connecting"],
+    #mainwp-onboarding-detection[data-state="detected"] {
+        min-height: 12rem;
+    }
+}
+
+.mainwp-onboarding-hero {
+    display: flex;
+    align-items: center;
+    gap: 1.25em;
+    margin-bottom: 2em;
+}
+.mainwp-onboarding-hero > div {
+    min-width: 0;
+}
+.mainwp-onboarding-hero .ui.header {
+    margin: 0 0 0.25em;
+}
+.mainwp-onboarding-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 4.5em;
+    height: 4.5em;
+    border-radius: 50%;
+    background: var(--mainwp-onboarding-success, #6c9800);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--mainwp-onboarding-success, #6c9800) 12%, transparent);
+    color: var(--mainwp-onboarding-icon-foreground, #fff);
+    animation: mainwp-onboarding-connected 0.4s ease-out both;
+}
+.mainwp-onboarding-check::after {
+    content: "";
+    width: 1.2em;
+    height: 2em;
+    margin-top: -0.5em;
+    border: solid currentColor;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+.mainwp-onboarding-empty.icon {
+    color: var(--mainwp-onboarding-muted, #73777b);
+    font-size: 3em;
+}
+.mainwp-onboarding-site {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    overflow-wrap: anywhere;
+}
+#mainwp-onboarding-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1em;
+    margin-bottom: 1.5em;
+}
+#mainwp-quick-setup-wizard #mainwp-onboarding-tiles > .mainwp-onboarding-tile {
+    min-width: 0;
+    margin: 0;
+    padding: 1.25em;
+    border: 1px solid var(--mainwp-onboarding-border, #e8e8eb);
+    border-radius: var(--area-radius, 1rem);
+    background: var(--mainwp-onboarding-surface-secondary, #fbfbfc) !important;
+    box-shadow: none;
+    overflow-wrap: anywhere;
+}
+.mainwp-onboarding-label {
+    margin-bottom: 0.75em;
+    color: var(--mainwp-onboarding-muted, #73777b);
+    font-size: 0.8em;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.mainwp-onboarding-value {
+    font-size: 1.25em;
+    font-weight: 700;
+    margin-bottom: 0.5em;
+}
+.mainwp-onboarding-detail,
+#mainwp-onboarding-next-steps small,
+#mainwp-onboarding-tour-help {
+    color: var(--mainwp-onboarding-muted, #73777b);
+}
+#mainwp-quick-setup-wizard #mainwp-onboarding-tiles > .mainwp-onboarding-updates-waiting {
+    grid-column: span 2;
+    border-color: var(--mainwp-onboarding-warning, #d7b33e);
+    background: color-mix(in srgb, var(--mainwp-onboarding-warning, #d7b33e) 10%, var(--mainwp-onboarding-surface-secondary, #fbfbfc)) !important;
+}
+.mainwp-onboarding-updates-waiting .ui.button {
+    margin-top: 0.75em;
+}
+#mainwp-onboarding-next-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75em 1.5em;
+    margin-bottom: 1.5em;
+}
+#mainwp-onboarding-next-steps small {
+    display: inline;
+}
+#mainwp-onboarding-disable-monitoring {
+    display: block;
+    width: fit-content;
+    white-space: nowrap;
+}
+.mainwp-onboarding-footer-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1.25em;
+}
+.mainwp-onboarding-footer-options > .field {
+    flex: 1 1 16em;
+}
+.mainwp-onboarding-footer-options > .ui.button {
+    flex-shrink: 0;
+}
+#mainwp-onboarding-tour-help {
+    display: block;
+    margin-top: 0.5em;
+}
+@keyframes mainwp-onboarding-connected {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mainwp-onboarding-check { animation: none; }
+}
+@media (max-width: 991px) {
+    #mainwp-onboarding-tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-auto-flow: dense;
+    }
+}
+@media (max-width: 767px) {
+    #mainwp-onboarding-tiles {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    #mainwp-quick-setup-wizard #mainwp-onboarding-tiles > .mainwp-onboarding-updates-waiting {
+        grid-column: auto;
+    }
+}

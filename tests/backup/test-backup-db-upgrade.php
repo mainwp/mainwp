@@ -53,6 +53,13 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	private $saved_native_flag;
 
 	/**
+	 * Stored mainwp_onboarding_fresh_install before the test.
+	 *
+	 * @var mixed
+	 */
+	private $saved_fresh_flag;
+
+	/**
 	 * Snapshot options that install() mutates.
 	 *
 	 * @return void
@@ -62,6 +69,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->saved_db_version  = get_site_option( 'mainwp_db_version' );
 		$this->saved_legacy_flag = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$this->saved_native_flag = get_option( 'mainwp_enableNativeBackups' );
+		$this->saved_fresh_flag  = get_option( 'mainwp_onboarding_fresh_install' );
 	}
 
 	/**
@@ -205,6 +213,12 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			delete_option( 'mainwp_enableNativeBackups' );
 		} else {
 			update_option( 'mainwp_enableNativeBackups', $this->saved_native_flag );
+		}
+
+		if ( false === $this->saved_fresh_flag ) {
+			delete_option( 'mainwp_onboarding_fresh_install' );
+		} else {
+			update_option( 'mainwp_onboarding_fresh_install', $this->saved_fresh_flag );
 		}
 
 		parent::tear_down();
@@ -1918,6 +1932,8 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	public function test_fresh_install_creates_complete_schema() {
 		global $wpdb;
 
+		delete_option( 'mainwp_onboarding_fresh_install' );
+
 		$like = $wpdb->esc_like( $wpdb->prefix . 'mainwp_' ) . '%';
 
 		// Scope the drop-and-recreate to the tables MainWP_Install::install()
@@ -2018,6 +2034,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		);
 
 		$this->assertSame( 'yes', get_option( 'mainwp_run_quick_setup' ), 'Fresh install must queue the quick-setup wizard.' );
+		$this->assertGreaterThan( 0, (int) get_option( 'mainwp_onboarding_fresh_install' ), 'Fresh installs must retain their onboarding cohort after the wizard starts.' );
 		$this->assertNotFalse( get_option( 'mainwp_enableNativeBackups' ), 'Fresh install must write the native-backups flag explicitly.' );
 		$this->assertSame( 0, (int) get_option( 'mainwp_enableNativeBackups' ), 'Fresh install must default native backups to disabled.' );
 	}
@@ -2050,12 +2067,14 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->with_real_tables(
 			function () use ( $installer ) {
 				update_site_option( 'mainwp_db_version', '9.0.2.3' );
+				delete_option( 'mainwp_onboarding_fresh_install' );
 				$installer->install();
 			}
 		);
 
 		$this->assertSame( array( 'repair_backup_progress_index', 'repair_backup_progress_index' ), $installer->calls );
 		$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
+		$this->assertFalse( get_option( 'mainwp_onboarding_fresh_install' ) );
 	}
 
 	/**

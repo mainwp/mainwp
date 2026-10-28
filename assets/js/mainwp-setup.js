@@ -1,27 +1,450 @@
-jQuery(function () {
-  jQuery('.mainwp-field-tab-connect input[name=tab_connect]').change(function () {
-    const tab_active = this.value;
-    if (tab_active !== '') {
-      jQuery('#mainwp-qsw-connect-site-form').fadeIn(500);
-      jQuery('#mainwp_managesites_add').show();
-      jQuery('#mainwp-qsw-toggle-verify-mainwp-child-active').show();
-      jQuery('#mainwp_addsite_continue_button').hide();
-      jQuery('.menu-connect-first-site .item').tab('change tab', tab_active);
+const MAINWP_ONBOARDING_POLL_INTERVAL = 5000;
+const MAINWP_ONBOARDING_MAX_DURATION = 20 * 60 * 1000;
+let mainwp_onboarding_detection = null;
+let mainwp_onboarding_connecting = false;
+let mainwp_onboarding_connect_failure = null;
+let mainwp_onboarding_clear_deadline = () => {};
+
+function mainwp_onboarding_site_url(value, protocol) {
+  try {
+    if (value.includes('://') && !/^https?:\/\//i.test(value.trim())) return null;
+    const url = new URL(/^https?:\/\//i.test(value.trim()) ? value.trim() : protocol + '://' + value.trim());
+    if (!['http:', 'https:'].includes(url.protocol) || !url.hostname || url.username || url.password || ['21', '22'].includes(url.port)) return null;
+    url.search = '';
+    url.hash = '';
+    url.pathname = url.pathname.replace(/\/+$/, '') + '/';
+    return url.href;
+  } catch (error) {
+    return null;
+  }
+}
+
+function mainwp_onboarding_install_url(site) {
+  const url = mainwp_onboarding_site_url(site, 'https');
+  return url ? url + 'wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term' : null;
+}
+
+function mainwp_onboarding_initial_state(now) {
+  return { status: 'idle', startedAt: now, reachable: 'pending', child: 'pending', detected: false, deadline: null, minutes: null, result: {} };
+}
+
+function mainwp_onboarding_deadline_passed(state, now) {
+  return state.detected && state.deadline !== null && now >= state.deadline;
+}
+
+function mainwp_onboarding_detection_result(state, result, now) {
+  const next = Object.assign({}, state, { result: result || {} });
+  const response = String(next.result.response || '').trim();
+  if (response === 'OK') {
+    next.status = 'detected';
+    next.reachable = 'ok';
+    next.child = 'ok';
+    next.detected = true;
+    next.minutes = Number.isInteger(next.result.connection_window_minutes) ? next.result.connection_window_minutes : null;
+    next.deadline = next.minutes !== 0 && Number.isInteger(next.result.connection_window_remaining) && next.result.connection_window_remaining >= 0
+      ? now + next.result.connection_window_remaining * 1000 : null;
+  } else if (response === 'NOMAINWP') {
+    next.status = mainwp_onboarding_deadline_passed(state, now) ? 'expired' : 'waiting';
+    next.reachable = 'ok';
+    next.child = next.status === 'expired' ? 'failed' : 'pending';
+  } else if (['HTTPERROR', 'TIMEOUT', 'INVALID_URL'].includes(response) || /Invalid URL/i.test(next.result.error || '')) {
+    next.status = 'unreachable';
+    next.reachable = 'failed';
+    next.child = 'pending';
+  } else {
+    next.status = 'error';
+    next.reachable = 'pending';
+    next.child = 'pending';
+  }
+  return next;
+}
+
+// The controller owns one request chain; generations discard replies after edits or tab changes.
+function mainwp_onboarding_detection_controller(options) {
+  let state = mainwp_onboarding_initial_state(options.now());
+  let generation = 0;
+  let pollTimer = null;
+  let limitTimer = null;
+  let request = null;
+  let paused = false;
+  function publish() { options.render(state); }
+  function cancel() {
+    ++generation;
+    options.clearTimeout(pollTimer);
+    options.clearTimeout(limitTimer);
+    pollTimer = limitTimer = null;
+    if (request) request.abort();
+    request = null;
+  }
+  function stop(status) {
+    cancel();
+    if (status === 'idle') state = mainwp_onboarding_initial_state(options.now());
+    state.status = status;
+    publish();
+  }
+  function exhausted() {
+    if (options.now() - state.startedAt < MAINWP_ONBOARDING_MAX_DURATION) return false;
+    stop('timed_out');
+    return true;
+  }
+  function armLimit() {
+    limitTimer = options.setTimeout(() => stop('timed_out'), Math.max(0, MAINWP_ONBOARDING_MAX_DURATION - (options.now() - state.startedAt)));
+  }
+  function poll() {
+    if (exhausted() || options.hidden() || paused) return;
+    const current = generation;
+    state.status = 'checking';
+    publish();
+    request = options.request(function (result) {
+      if (current !== generation) return;
+      request = null;
+      if (exhausted()) return;
+      state = mainwp_onboarding_detection_result(state, result, options.now());
+      publish();
+      if (state.status === 'waiting') {
+        pollTimer = options.setTimeout(poll, MAINWP_ONBOARDING_POLL_INTERVAL);
+      } else {
+        cancel();
+      }
+    });
+  }
+  function restart(carry) {
+    cancel();
+    if (!carry && options.carry) carry = options.carry();
+    const next = mainwp_onboarding_initial_state(options.now());
+    // A failed connect to the same target keeps the Child's reported deadline.
+    if (carry && carry.detected) Object.assign(next, { detected: true, deadline: carry.deadline, minutes: carry.minutes });
+    state = next;
+    paused = options.hidden();
+    if (!options.ready()) { publish(); return; }
+    armLimit();
+    if (paused) publish();
+    else poll();
+  }
+  function checkExpiry() {
+    // A live chain evaluates its own replies against the carried deadline.
+    if (['connecting', 'checking', 'waiting'].includes(state.status) || request || options.hidden()
+      || !mainwp_onboarding_deadline_passed(state, options.now())) return;
+    cancel();
+    const current = generation;
+    request = options.request(function (result) {
+      if (current !== generation) return;
+      request = null;
+      state = mainwp_onboarding_detection_result(state, result, options.now());
+      publish();
+    });
+  }
+  return {
+    restart,
+    stop,
+    state: () => state,
+    refresh: publish,
+    checkExpiry,
+    connectFailed(previous, transportError) {
+      if (state !== previous) {
+        restart();
+      } else if (transportError) {
+        stop('stopped');
+      } else if (mainwp_onboarding_deadline_passed(state, options.now())) {
+        stop('stopped');
+        checkExpiry();
+      } else {
+        restart(previous);
+      }
+    },
+    pause() {
+      if (!['checking', 'waiting', 'idle'].includes(state.status)) {
+        if (request) cancel();
+        return;
+      }
+      paused = true;
+      cancel();
+      if (options.ready()) armLimit();
+    },
+    resume() {
+      if (!options.ready()) { paused = false; return; }
+      if (!paused || exhausted()) return;
+      paused = false;
+      if (options.ready()) poll();
+    }
+  };
+}
+
+function mainwp_onboarding_copy(key) {
+  return typeof mainwpSetupLocalize === 'object' ? mainwpSetupLocalize[key] || '' : '';
+}
+
+function mainwp_onboarding_escape(text) {
+  return jQuery('<div>').text(text).html();
+}
+
+function mainwp_onboarding_decode(text) {
+  return text.replace(/&#039;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+
+function mainwp_onboarding_fields() {
+  return {
+    url: mainwp_onboarding_site_url(jQuery('#mainwp_managesites_add_wpurl').val(), jQuery('#mainwp_managesites_add_wpurl_protocol').val()),
+    admin: jQuery('#mainwp_managesites_add_wpadmin').val().trim()
+  };
+}
+
+function mainwp_onboarding_check_request(fields, done) {
+  return jQuery.ajax({
+    url: ajaxurl, type: 'POST', dataType: 'json', timeout: 20000,
+    data: mainwp_setup_secure_data({ action: 'mainwp_checkwp', url: fields.url, admin: fields.admin }),
+    success: done,
+    error: function (xhr, status) { if (status !== 'abort') done({ response: status === 'timeout' ? 'TIMEOUT' : 'HTTPERROR' }); }
+  });
+}
+
+function mainwp_onboarding_bind_detection() {
+  let debounce = null;
+  let countdown = null;
+  function storageKey(url) { return 'mainwp-onboarding-window:' + url; }
+  function readDeadline() {
+    const url = mainwp_onboarding_fields().url;
+    if (!url) return null;
+    try {
+      const entry = JSON.parse(window.localStorage.getItem(storageKey(url)));
+      if (!entry || entry.url !== url || !Number.isFinite(entry.deadline) || entry.deadline < 0
+        || !(entry.minutes === null || (Number.isInteger(entry.minutes) && entry.minutes > 0))) return null;
+      return { detected: true, deadline: entry.deadline, minutes: entry.minutes };
+    } catch (error) {
+      // Storage is optional; blocked access must not prevent a connection.
+      return null;
+    }
+  }
+  mainwp_onboarding_clear_deadline = function (url) {
+    try { window.localStorage.removeItem(storageKey(url)); } catch (error) { /* Storage may be blocked. */ }
+  };
+  function saveDeadline(state) {
+    const url = mainwp_onboarding_fields().url;
+    if (!url || state.status !== 'detected') return;
+    if (state.deadline === null) { mainwp_onboarding_clear_deadline(url); return; }
+    try {
+      window.localStorage.setItem(storageKey(url), JSON.stringify({ url, deadline: state.deadline, minutes: state.minutes }));
+    } catch (error) { /* Detection also works without persistent storage. */ }
+  }
+  function singleSite() {
+    const mode = jQuery('.menu-connect-first-site .active.item').attr('data-tab') || jQuery('#mainwp-qsw-connect-site-form').attr('data-mode');
+    return mode === 'single-site';
+  }
+  function ready() {
+    const fields = mainwp_onboarding_fields();
+    return singleSite() && !!fields.admin && !!jQuery('#mainwp_managesites_add_wpurl').val().trim() && !mainwp_onboarding_connecting;
+  }
+  function updateButton() {
+    const fields = mainwp_onboarding_fields();
+    const passwordRequired = jQuery('#mainwp-administrator-password-checkbox-field').prop('checked');
+    const password = jQuery('#mainwp_managesites_add_admin_pwd').val();
+    jQuery('#mainwp_managesites_add').prop('disabled', mainwp_onboarding_connecting || !fields.url || !fields.admin || (passwordRequired && !password));
+  }
+  mainwp_onboarding_detection = mainwp_onboarding_detection_controller({
+    now: () => Date.now(), hidden: () => document.hidden, ready, carry: readDeadline,
+    // Wrapped so the timers keep the window as their receiver; browsers reject options.setTimeout().
+    setTimeout: (callback, delay) => setTimeout(callback, delay), clearTimeout: id => clearTimeout(id),
+    request: done => {
+      const fields = mainwp_onboarding_fields();
+      if (!fields.url) { done({ response: 'INVALID_URL' }); return null; }
+      return mainwp_onboarding_check_request(fields, done);
+    },
+    render: state => {
+      clearInterval(countdown);
+      countdown = null;
+      saveDeadline(state);
+      const failure = mainwp_onboarding_connect_failure;
+      if (state.status === 'detected' && failure && failure.category === 'child_not_answering' && failure.url === mainwp_onboarding_fields().url) {
+        mainwp_set_message_zone('#mainwp-message-zone');
+        mainwp_onboarding_connect_failure = null;
+      }
+      mainwp_onboarding_render_detection(state);
+      if (state.status === 'detected' && state.deadline !== null && state.deadline > Date.now() && !document.hidden) {
+        countdown = setInterval(() => {
+          mainwp_onboarding_render_time(state);
+          if (Date.now() >= state.deadline) {
+            clearInterval(countdown);
+            countdown = null;
+            mainwp_onboarding_detection.checkExpiry();
+          }
+        }, 1000);
+      }
+      updateButton();
     }
   });
-
-  jQuery('#mainwp-qsw-verify-mainwp-child-active').on('change', function () {
-    if (jQuery(this).is(':checked')) {
-      jQuery('#mainwp_managesites_add').removeClass('disabled');
-      jQuery('#mainwp_managesites_add_import').removeClass('disabled');
+  function target() {
+    const fields = mainwp_onboarding_fields();
+    return JSON.stringify(fields.url ? [fields.url, fields.admin]
+      : [jQuery('#mainwp_managesites_add_wpurl').val().trim(), jQuery('#mainwp_managesites_add_wpurl_protocol').val(), fields.admin]);
+  }
+  let appliedTarget = target();
+  jQuery('#mainwp_managesites_add_wpurl, #mainwp_managesites_add_wpurl_protocol, #mainwp_managesites_add_wpadmin').on('input change', function () {
+    const nextTarget = target();
+    if (nextTarget === appliedTarget) return;
+    appliedTarget = nextTarget;
+    clearTimeout(debounce);
+    // A different target must never inherit the previous Child's deadline.
+    mainwp_onboarding_detection.stop('idle');
+    debounce = setTimeout(() => mainwp_onboarding_detection.restart(), 400);
+  });
+  jQuery('#mainwp_managesites_add_admin_pwd, #mainwp-administrator-password-checkbox-field').on('input change', updateButton);
+  jQuery('#mainwp-onboarding-retry').on('click', () => {
+    mainwp_onboarding_detection.restart();
+    jQuery('#mainwp-onboarding-detection-headline').trigger('focus');
+  });
+  jQuery(document).on('visibilitychange', function () {
+    if (document.hidden) {
+      clearInterval(countdown);
+      mainwp_onboarding_detection.pause();
     } else {
-      jQuery('#mainwp_managesites_add').addClass('disabled');
-      jQuery('#mainwp_managesites_add_import').addClass('disabled');
+      mainwp_onboarding_detection.refresh();
+      mainwp_onboarding_detection.resume();
+      mainwp_onboarding_detection.checkExpiry();
     }
   });
+  jQuery(window).on('pagehide', function () {
+    clearTimeout(debounce);
+    clearInterval(countdown);
+    mainwp_onboarding_detection.stop('stopped');
+  });
+  const mode = jQuery('#mainwp-qsw-connect-site-form').attr('data-mode');
+  jQuery('#mainwp_managesites_add_import').toggle(mode === 'multiple-site');
+  jQuery('#mainwp_managesites_add').toggle(mode !== 'multiple-site');
+  mainwp_onboarding_detection.restart();
+}
 
-  // Handle submit import file CVS.
+function mainwp_onboarding_remaining_text(seconds) {
+  if (seconds < 60) return mainwp_onboarding_copy('remainingLess');
+  const minutes = Math.ceil(seconds / 60);
+  return minutes === 1 ? mainwp_onboarding_copy('remainingOne') : mainwp_onboarding_copy('remaining').replace('%d', minutes);
+}
+
+function mainwp_onboarding_render_time(state) {
+  let text = '';
+  if (state.minutes !== 0 && state.deadline !== null) {
+    text = Date.now() >= state.deadline ? mainwp_onboarding_copy('windowClosed')
+      : mainwp_onboarding_remaining_text(Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000)));
+  }
+  const timeLeft = jQuery('#mainwp-onboarding-time-left');
+  if (timeLeft.text() !== text) timeLeft.text(text);
+}
+
+function mainwp_onboarding_render_detection(state) {
+  const fields = mainwp_onboarding_fields();
+  const site = fields.url || jQuery('#mainwp_managesites_add_wpurl').val().trim();
+  const needsChild = state.status === 'waiting' || (['timed_out', 'checking'].includes(state.status) && state.reachable === 'ok');
+  const color = state.status === 'detected' ? 'green' : needsChild || state.status === 'expired' ? 'yellow'
+    : ['unreachable', 'error'].includes(state.status) ? 'red' : '';
+  const title = needsChild ? 'installTitle' : ({ idle: 'idleTitle', checking: 'checkingTitle', connecting: 'connectingTitle',
+    detected: 'readyTitle', expired: 'expiredTitle', unreachable: 'unreachableTitle', error: 'error',
+    stopped: 'stoppedTitle', timed_out: 'stoppedTitle' })[state.status];
+  jQuery('#mainwp-onboarding-detection').attr('class', 'ui ' + (color ? color + ' ' : '') + 'message').attr('data-state', state.status).prop('hidden', false);
+  jQuery('#mainwp-onboarding-detection-headline').text(mainwp_onboarding_copy(title).replace('%s', site));
+  const stateIcon = needsChild ? 'exclamation' : ['checking', 'connecting'].includes(state.status) ? 'notched circle loading' : color === 'green' ? 'check'
+    : color === 'yellow' ? 'exclamation' : color === 'red' ? 'times' : 'info';
+  jQuery('#mainwp-onboarding-state-icon').attr('class', stateIcon + ' icon');
+  const body = state.status === 'idle' ? 'idleBody' : state.status === 'checking' && state.reachable !== 'ok' ? 'checkingBody' : '';
+  jQuery('#mainwp-onboarding-detection-body').text(mainwp_onboarding_copy(body)).prop('hidden', !body);
+  jQuery('#mainwp-onboarding-checks').prop('hidden', state.status === 'idle');
+  const settled = ['error', 'unreachable', 'timed_out', 'stopped', 'expired'].includes(state.status);
+  jQuery('#mainwp-onboarding-child-label').text(mainwp_onboarding_copy(state.reachable === 'ok' && state.child !== 'ok' ? 'childNotActive' : 'childReady'));
+  for (const [id, status] of [['reachable', state.reachable], ['child', state.child]]) {
+    const label = status === 'ok' ? 'yes' : status === 'failed' ? 'no' : id === 'child' && state.reachable === 'ok' ? 'notYet' : settled ? 'notChecked' : 'checking';
+    jQuery('#mainwp-onboarding-' + id).text(mainwp_onboarding_copy(label)).toggleClass('is-ok', status === 'ok').toggleClass('is-failed', status === 'failed');
+    const icon = label === 'yes' ? 'green check' : label === 'no' ? 'red times' : label === 'checking' ? 'notched circle loading' : label === 'notYet' ? 'exclamation circle' : 'circle outline';
+    jQuery('#mainwp-onboarding-' + id + '-icon').attr('class', icon + ' icon');
+  }
+  const install = ['waiting', 'timed_out', 'checking'].includes(state.status) && state.reachable === 'ok' && !!fields.url;
+  jQuery('#mainwp-onboarding-install').prop('hidden', !install);
+  jQuery('#mainwp-onboarding-install-link').attr('href', install ? mainwp_onboarding_install_url(fields.url) : '').text(mainwp_onboarding_copy('install').replace('%s', site));
+  jQuery('#mainwp-onboarding-polling').prop('hidden', !(state.status === 'waiting' || (state.status === 'checking' && state.reachable === 'ok')));
+  jQuery('#mainwp-onboarding-timer').prop('hidden', state.status !== 'detected' || state.minutes === 0 || state.deadline === null);
+  mainwp_onboarding_render_time(state);
+  jQuery('#mainwp-onboarding-expiry').prop('hidden', state.status !== 'expired');
+  jQuery('#mainwp-onboarding-expiry-message').text((state.minutes === null ? mainwp_onboarding_copy('expiredUnknown') : state.minutes === 1 ? mainwp_onboarding_copy('expiredOne') : mainwp_onboarding_copy('expired').replace('%d', state.minutes)));
+  jQuery('#mainwp-onboarding-plugins-link').attr('href', fields.url ? fields.url + 'wp-admin/plugins.php' : '');
+  jQuery('#mainwp-onboarding-retry').prop('hidden', !['expired', 'error', 'unreachable', 'timed_out', 'stopped'].includes(state.status));
+  const message = jQuery('#mainwp-onboarding-detection-message').empty();
+  if (state.status === 'unreachable') message.text(mainwp_onboarding_copy('unreachable').replace('%s', site));
+  else if (state.status === 'error') {
+    if (state.result.failure_ux) message.html(state.result.failure_ux);
+    else message.text(state.result.error || String(state.result.response || mainwp_onboarding_copy('error')).replace(/^ERROR\s*/, ''));
+  }
+}
+
+function mainwp_onboarding_update_import_button() {
+  if (!jQuery('#mainwp_connect_first_site_form').length) return false;
+  let hasRow = false;
+  jQuery('#mainwp_connect_first_site_form .mainwp-managesites-import-site-url').each(function () {
+    if (jQuery(this).val().trim()) hasRow = true;
+  });
+  const enabled = !!jQuery('#connect_first_site_file_bulkupload').val() || hasRow;
+  jQuery('#mainwp_managesites_add_import').prop('disabled', !enabled);
+  return enabled;
+}
+
+jQuery(function () {
+  // Only a title the user typed stops following the URL; the shared Add Site script also fills it.
+  jQuery(document).on('input', '#mainwp_managesites_add_wpname', function () {
+    jQuery(this).attr('data-autofilled', '').attr('data-user-typed', jQuery(this).val().trim() === '' ? '' : '1');
+  });
+
+  jQuery('#mainwp-onboarding-advanced-toggle').on('click', function () {
+    const expanded = jQuery(this).attr('aria-expanded') === 'true';
+    jQuery(this).attr('aria-expanded', String(!expanded));
+    jQuery('#mainwp-onboarding-advanced').prop('hidden', expanded);
+  });
+
+  ['mainwp-onboarding', 'mainwp-onboarding-csv'].forEach(function (prefix) {
+    jQuery('#' + prefix + '-password-help').on('click', function () {
+      const expanded = jQuery(this).attr('aria-expanded') === 'true';
+      jQuery(this).attr('aria-expanded', String(!expanded));
+      jQuery('#' + prefix + '-password-explanation').prop('hidden', expanded);
+    });
+  });
+
+  jQuery('#mainwp-onboarding-update-all').on('click', function () {
+    updatesoverview_global_upgrade_all('all', Number(jQuery(this).attr('data-siteid')));
+  });
+
+  const siteIcon = jQuery('#mainwp-onboarding-site-icon');
+  if (siteIcon.length) {
+    jQuery.post(ajaxurl, {
+      action: 'mainwp_get_site_icon',
+      siteId: Number(siteIcon.attr('data-siteid')),
+      security: siteIcon.attr('data-security')
+    });
+  }
+
+  jQuery('#mainwp-onboarding-disable-monitoring').on('click', function (event) {
+    event.preventDefault();
+    const link = jQuery(this);
+    jQuery.post(ajaxurl, {
+      action: 'mainwp_onboarding_disable_monitoring',
+      security: link.attr('data-security')
+    }, function (response) {
+      if (response.success) {
+        mainwp_forceReload();
+      } else {
+        mainwp_set_message_zone('#mainwp-message-zone', jQuery('<div>').text(response.data.message).html(), 'red');
+      }
+    }, 'json').fail(function () {
+      mainwp_set_message_zone('#mainwp-message-zone', link.attr('data-error'), 'red');
+    });
+  });
+
+  mainwp_onboarding_update_import_button();
+  jQuery(document).on('input change', '#connect_first_site_file_bulkupload, #mainwp_connect_first_site_form .mainwp-managesites-import-site-url', mainwp_onboarding_update_import_button);
+  const importRows = jQuery('#mainwp-managesites-row-import-sites');
+  if (jQuery('#mainwp_connect_first_site_form').length && importRows.length && typeof MutationObserver !== 'undefined') {
+    // Restored and deleted rows can change readiness without an input event.
+    const observer = new MutationObserver(mainwp_onboarding_update_import_button);
+    observer.observe(importRows[0], { childList: true, subtree: true });
+    jQuery(window).on('pagehide', () => observer.disconnect());
+  }
+
   jQuery(document).on('click', '#mainwp_managesites_add_import', function () {
+    if (!mainwp_onboarding_update_import_button()) return false;
     let error_messages = mainwp_managesites_import_handle_form_before_submit();
     // If there is an error, prevent submission and display the error
     if (error_messages.length > 0) {
@@ -84,20 +507,24 @@ jQuery(function () {
       url = url.substring(8);
     }
 
-    if (jQuery('#mainwp_managesites_add_wpname').val() == '') {
-      jQuery('#mainwp_managesites_add_wpname').val(url);
+    const title = jQuery('#mainwp_managesites_add_wpname');
+    // A title filled from the URL follows URL corrections until the user types one.
+    if (title.val() == '' || !title.attr('data-user-typed')) {
+      title.val(url).attr('data-autofilled', '1');
     }
 
     jQuery('#mainwp_managesites_add_wpurl').val(url);
     jQuery('#mainwp_managesites_add_wpurl_protocol').val(protocol).trigger("change");
   });
 
+  if (jQuery('#mainwp-onboarding-detection').length) {
+    mainwp_onboarding_bind_detection();
+  }
 });
 
 // Handle tab onvisible.
 const mainwp_menu_connect_first_site_onvisible_callback = function (objItem) {
   const tab = jQuery(objItem).attr("data-tab");
-  jQuery('.mainwp-field-tab-connect input[name=tab_connect]').filter(`[value="${tab}"]`).parent().trigger('click'); // set checked class ui checkbox
   if (tab === 'multiple-site') {
     jQuery('#mainwp_managesites_add_import').show();
     jQuery('#mainwp_managesites_add').hide();
@@ -105,182 +532,127 @@ const mainwp_menu_connect_first_site_onvisible_callback = function (objItem) {
     jQuery('#mainwp_managesites_add').show();
     jQuery('#mainwp_managesites_add_import').hide();
   }
+  if (mainwp_onboarding_detection) {
+    mainwp_onboarding_detection.restart();
+  }
 }
 // Connect a new website
 let mainwp_setup_managesites_add = function () {
+  if (mainwp_onboarding_connecting) return;
   mainwp_set_message_zone('#mainwp-message-zone');
+  mainwp_onboarding_connect_failure = null;
   let errors = [];
 
-  if (jQuery('#mainwp_managesites_add_wpname').val().trim() == '') {
-    errors.push('Please enter a title for the website.');
+  const title = jQuery('#mainwp_managesites_add_wpname');
+  if (title.val().trim() == '' || !title.attr('data-user-typed')) {
+    // Drop a typed trailing slash so the autofilled title is the bare site address.
+    title.val(jQuery('#mainwp_managesites_add_wpurl').val().trim().replace(/\/+$/, '')).attr('data-autofilled', '1');
   }
 
-  if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '') {
-    errors.push('Please enter a valid URL for the site.');
-  } else {
-    let url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
-    if (!url.endsWith('/')) {
-      url += '/';
-    }
-
-    jQuery('#mainwp_managesites_add_wpurl').val(url);
-
-    if (!isUrl(jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val())) {
-      errors.push('Please enter a valid URL for the site.');
-    }
-  }
+  const fields = mainwp_onboarding_fields();
+  if (!fields.url) errors.push('Please enter a valid URL for the site.');
 
   if (jQuery('#mainwp_managesites_add_wpadmin').val().trim() == '') {
     errors.push('Please enter a username of the website administrator.');
+  }
+
+  if (jQuery('#mainwp-administrator-password-checkbox-field').prop('checked') && !jQuery('#mainwp_managesites_add_admin_pwd').val()) {
+    errors.push(mainwp_onboarding_copy('password'));
   }
 
   if (errors.length > 0) {
     mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'yellow');
   } else {
     mainwp_set_message_zone('#mainwp-message-zone', '<i class="notched circle loading icon"></i> Adding the site to your MainWP Dashboard. Please wait...', '');
-    jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //disable button to add..
+    jQuery('#mainwp_managesites_add').prop('disabled', true);
 
-    let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
+    const url = fields.url;
 
-    if (!url.endsWith('/')) {
-      url += '/';
-    }
-
-    let name = jQuery('#mainwp_managesites_add_wpname').val().trim();
+    const detectionState = mainwp_onboarding_detection ? mainwp_onboarding_detection.state() : null;
+    mainwp_onboarding_connecting = true;
+    if (mainwp_onboarding_detection) mainwp_onboarding_detection.stop('connecting');
+    let name = jQuery('#mainwp_managesites_add_wpname').val();
     name = name.replace(/"/g, '&quot;');
-
+    let group_ids = '';
     let data = mainwp_setup_secure_data({
-      action: 'mainwp_checkwp',
-      name: name,
-      url: url,
-      admin: jQuery('#mainwp_managesites_add_wpadmin').val().trim(),
+      action: 'mainwp_addwp',
+      managesites_add_wpname: name,
+      managesites_add_wpurl: url,
+      managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
+      managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val()),
+      managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
+      groupids: group_ids,
+      qsw_page: true,
+      defer_site_icon: true,
     });
 
-    jQuery.post(ajaxurl, data, function (res_things) {
-      let response = res_things.response;
-      response = response.trim();
+    // Extensions can supply report tokens and additional connection fields.
+    jQuery("input[name^='creport_token_']").each(function () {
+      let tname = jQuery(this).attr('name');
+      let tvalue = jQuery(this).val();
+      data[tname] = tvalue;
+    });
 
-      let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
-      if (!url.endsWith('/')) {
-        url += '/';
+    jQuery(".mainwp_addition_fields_addsite input").each(function () {
+      let tname = jQuery(this).attr('name');
+      let tvalue = jQuery(this).val();
+      data[tname] = tvalue;
+    });
+
+    jQuery.ajax({ url: ajaxurl, type: 'POST', data: data, dataType: 'json', success: function (res_things) {
+
+      let response = String(res_things.error || res_things.response || '').trim();
+      const failed = res_things.error || response.substring(0, 5) == 'ERROR' || !res_things.siteid;
+
+      if (!failed) mainwp_onboarding_clear_deadline(url);
+
+      // Leave the "Adding the site" spinner up until the summary page replaces this one.
+      if (!failed && jQuery('#mainwp_connect_first_site_form').length) {
+        mainwp_forceReload('admin.php?page=mainwp-setup&step=next_steps&siteid=' + Number(res_things.siteid));
+        return;
       }
 
-      url = url.replace(/"/g, '&quot;');
+      mainwp_set_message_zone('#mainwp-message-zone');
+      jQuery('#mainwp-info-zone').hide();
 
-      if (res_things.failure_ux) {
-        errors.push(res_things.failure_ux);
-      } else if (response == 'HTTPERROR') {
-        errors.push('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review <a href="https://docs.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'); // NOSONAR - noopener - open safe.
-      } else if (response == 'NOMAINWP') {
-        errors.push(mainwp_js_get_error_not_detected_connect());
-      } else if (response == 'TIMEOUT') {
-        let timeoutKind = res_things && res_things.timeout_kind ? res_things.timeout_kind : 'operation';
-        errors.push(mainwp_js_request_timeout_message(timeoutKind));
-      } else if (response.substring(0, 5) == 'ERROR') {
-        if (response.length == 5) {
-          errors.push('Undefined error occurred. Please try again. If the issue does not resolve, please review <a href="https://docs.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'); // NOSONAR - noopener - open safe.
-        } else {
-          let error = response.substring(6);
-          let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', false, true); // return text error.
-          if (false === err) {
-            errors.push(error); // it is not json string error.
-          } else if (true !== err && '' != err) {
-            errors.push(err); // decoded error.
-          }
-        }
-      } else if (response == 'OK') {
-        jQuery('#mainwp_managesites_add').attr('disabled', 'true');
+      if (failed) {
+        mainwp_onboarding_connecting = false;
+        const childNotAnswering = mainwp_onboarding_decode(response) === mainwp_onboarding_decode('ERROR ' + mainwp_onboarding_copy('childNotAnswering'));
+        mainwp_onboarding_connect_failure = { url, category: childNotAnswering ? 'child_not_answering' : 'other' };
+        if (!childNotAnswering) mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
+        if (mainwp_onboarding_detection) mainwp_onboarding_detection.connectFailed(detectionState, false);
+      } else {
+        mainwp_set_message_zone('#mainwp-message-zone', response, 'green');
 
-        let name = jQuery('#mainwp_managesites_add_wpname').val();
-        name = name.replace(/"/g, '&quot;');
-        let group_ids = '';
-        let data = mainwp_setup_secure_data({
-          action: 'mainwp_addwp',
-          managesites_add_wpname: name,
-          managesites_add_wpurl: url,
-          managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
-          managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val()),
-          managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
-          groupids: group_ids,
-          qsw_page: true,
-        });
+        jQuery('#mainwp_managesites_add_wpname').val('');
+        jQuery('#mainwp_managesites_add_wpurl').val('');
+        jQuery('#mainwp_managesites_add_wpurl_protocol').val('https');
+        jQuery('#mainwp_managesites_add_wpadmin').val('');
+        jQuery('#mainwp_managesites_add_admin_pwd').val('');
+        jQuery('#mainwp_managesites_add_uniqueId').val('');
 
-        // to support add client reports tokens values
         jQuery("input[name^='creport_token_']").each(function () {
-          let tname = jQuery(this).attr('name');
-          let tvalue = jQuery(this).val();
-          data[tname] = tvalue;
+          jQuery(this).val('');
         });
 
-        // support hooks fields
         jQuery(".mainwp_addition_fields_addsite input").each(function () {
-          let tname = jQuery(this).attr('name');
-          let tvalue = jQuery(this).val();
-          data[tname] = tvalue;
+          jQuery(this).val('');
         });
 
-        jQuery.post(ajaxurl, data, function (res_things) {
-
-          if (res_things.error) {
-            response = res_things.error;
-          } else {
-            response = res_things.response;
-          }
-
-          response = response.trim();
-
-          mainwp_set_message_zone('#mainwp-message-zone');
-          jQuery('#mainwp-info-zone').hide();
-
-          if (response.substring(0, 5) == 'ERROR') {
-            mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(6), 'red');
-          } else {
-            //Message the WP was added
-            mainwp_set_message_zone('#mainwp-message-zone', response, 'green');
-
-            //Reset fields
-            jQuery('#mainwp_managesites_add_wpname').val('');
-            jQuery('#mainwp_managesites_add_wpurl').val('');
-            jQuery('#mainwp_managesites_add_wpurl_protocol').val('https');
-            jQuery('#mainwp_managesites_add_wpadmin').val('');
-            jQuery('#mainwp_managesites_add_admin_pwd').val('');
-            jQuery('#mainwp_managesites_add_uniqueId').val('');
-
-            jQuery("input[name^='creport_token_']").each(function () {
-              jQuery(this).val('');
-            });
-
-            // support hooks fields
-            jQuery(".mainwp_addition_fields_addsite input").each(function () {
-              jQuery(this).val('');
-            });
-
-            setTimeout(function () {
-              mainwp_forceReload('admin.php?page=mainwp-setup&step=add_client');
-            }, 3000);
-          }
-
-          jQuery('#mainwp_managesites_add').prop("disabled", false);
-        }, 'json');
+        setTimeout(function () {
+          mainwp_forceReload('admin.php?page=mainwp-setup&step=next_steps&siteid=' + Number(res_things.siteid));
+        }, 3000);
       }
-      if (errors.length > 0) {
-        mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'red');
-        jQuery('#mainwp_managesites_add').prop("disabled", false);
-      }
-    }, 'json');
+
+      if (!mainwp_onboarding_detection && !mainwp_onboarding_connecting) jQuery('#mainwp_managesites_add').prop('disabled', false);
+    }, error: function () {
+      mainwp_onboarding_connecting = false;
+      if (mainwp_onboarding_detection) mainwp_onboarding_detection.connectFailed(detectionState, true);
+      mainwp_set_message_zone('#mainwp-message-zone', mainwp_onboarding_escape(mainwp_onboarding_copy('error')), 'red');
+      if (!mainwp_onboarding_detection) jQuery('#mainwp_managesites_add').prop('disabled', false);
+    }});
   }
 };
-
-// Check if the URL field is valid value
-function isUrl(url) {
-  try {
-    new URL(url);
-    return true;
-  } catch (e) {
-    console.log(e);
-  }
-  return false;
-}
 
 let mainwp_setup_secure_data = function (data) {
   if (data['action'] == undefined)

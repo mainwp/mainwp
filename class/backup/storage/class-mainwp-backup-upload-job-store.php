@@ -511,8 +511,11 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         if ( (int) ( $current['storage_age_floor'] ?? 0 ) > 0 ) {
             $checkpoint['storage_age_floor'] = (int) $current['storage_age_floor'];
         }
-        $encoded = (string) wp_json_encode( $checkpoint );
-        $now     = time();
+        $encoded = wp_json_encode( $checkpoint );
+        if ( false === $encoded ) {
+            return false;
+        }
+        $now = time();
         // Compare a digest so the UPDATE only sends one copy of a large checkpoint.
         $binds = array( $this->table(), $encoded, $now, $job_id, md5( (string) $row->checkpoint ) );
         $fence = '';
@@ -530,8 +533,10 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         if ( false === $changed ) {
             return false;
         }
-        $saved = $this->get_job( $job_id );
-        return null !== $saved && $saved->checkpoint === $checkpoint
+        $expected_checkpoint = json_decode( $encoded, true );
+        $expected_checkpoint = is_array( $expected_checkpoint ) ? $expected_checkpoint : array();
+        $saved               = $this->get_job( $job_id );
+        return null !== $saved && $saved->checkpoint === $expected_checkpoint
             && ( null === $lock_token || ( $saved->locked_by === $lock_token && (int) $saved->locked_until >= $now ) );
     }
 

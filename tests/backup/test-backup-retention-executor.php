@@ -15,6 +15,7 @@ namespace MainWP\Dashboard\Tests;
 
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 require_once __DIR__ . '/test-backup-now-continuation.php';
+require_once __DIR__ . '/class-mainwp-backup-read-fixtures.php';
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
@@ -32,6 +33,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Cancel_Transport_Guard;
 
 	use Backup_Private_Root_Fixture;
+	use Backup_Read_Purity_Guard;
 
 	/**
 	 * Isolate native writes.
@@ -75,7 +77,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		list( $id, $job_id, $destination ) = $this->make_unknown_age_upload( $status );
 		$protection                        = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
 		$now                               = time();
-		$first                             = $protection::remote_protection( array( $id ), $now );
+		$first                             = $protection::observe_remote_protection( array( $id ), $now );
 		$this->assertSame( $now + DAY_IN_SECONDS, $first['protected_until'] );
 		$this->assertFalse( $first['unknown_age'] );
 		$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $now + DAY_IN_SECONDS - 1 ) );
@@ -104,7 +106,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$stale               = $store->get_job( $job_id )->checkpoint;
 		$protection          = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
 		$now                 = time();
-		$first               = $protection::remote_protection( array( $id ), $now );
+		$first               = $protection::observe_remote_protection( array( $id ), $now );
 		$this->assertSame( $now + DAY_IN_SECONDS, $first['protected_until'] );
 		foreach ( array( 'prune:first', 'prune:second' ) as $offset => $token ) {
 			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now + ( 5 + $offset ) * DAY_IN_SECONDS;
@@ -125,12 +127,96 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	public function test_unknown_upload_preview_uses_the_sweep_deadline(): void {
 		list( $id ) = $this->make_unknown_age_upload( 'failed_permanent' );
 		$protection = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
-		$direct     = $protection::remote_protection( array( $id ) );
+		$direct     = $protection::observe_remote_protection( array( $id ) );
 		$this->assertGreaterThan( time(), $direct['protected_until'] );
 		$units = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $this->site_id, $this->task_id );
 		$this->assertCount( 1, $units );
 		$this->assertSame( $direct['protected_until'], $units[0]['protected_until'] );
 		$this->assertSame( $direct['unknown_age'], $units[0]['unknown_age'] );
+	}
+
+	/**
+	 * Previews report unknown age without changing the upload checkpoint.
+	 *
+	 * @dataProvider unknown_upload_statuses
+	 * @param string $status Upload state.
+	 */
+	public function test_unknown_upload_previews_do_not_record_age( string $status ): void {
+		list( $id, $job_id ) = $this->make_unknown_age_upload( $status );
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$before              = $store->get_job( $job_id );
+		$age                 = $this->guarded(
+			function () use ( $id ) {
+				$protection = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
+				$this->assertTrue( $protection::holds_automatic_removal( array( $id ) ) );
+				$units = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $this->site_id, $this->task_id );
+				$this->assertTrue( $units[0]['unknown_age'] );
+				MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true, false, true, null, true );
+				return $protection::remote_protection( array( $id ), null, false );
+			}
+		);
+		$this->assertTrue( $age['unknown_age'] );
+		$this->assertSame( 0, $age['protected_until'] );
+		$this->assertEquals( $before, $store->get_job( $job_id ) );
+	}
+
+	/** Destinations without a minimum never need an upload age checkpoint. */
+	public function test_zero_remote_minimum_does_not_record_age_during_execution(): void {
+		list( $id, $job_id ) = $this->make_unknown_age_upload( 'failed_permanent', 'complete', 0 );
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$before              = $store->get_job( $job_id );
+		$age                 = $this->guarded(
+			static function () use ( $id ) {
+				return \MainWP\Dashboard\MainWP_Backup_Retention_Protection::observe_remote_protection( array( $id ) );
+			}
+		);
+		$this->assertFalse( $age['unknown_age'] );
+		$this->assertSame( 0, $age['protected_until'] );
+		$this->assertEquals( $before, $store->get_job( $job_id ) );
+	}
+
+	/** Scheduler dry runs leave unknown age alone; real passes record one floor. */
+	public function test_scheduler_records_unknown_age_only_during_execution(): void {
+		global $wpdb;
+		list( $id, $job_id ) = $this->make_unknown_age_upload( 'failed_permanent' );
+		$task                = (object) array(
+			'id'                   => $this->task_id,
+			'retention_count'      => 1,
+			'retention_days'       => 0,
+			'retention_storage_mb' => 0,
+		);
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$scheduler           = \MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::instance();
+		$now                 = time();
+		add_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+		try {
+			$this->guarded(
+				function () use ( $scheduler, $task, $now ) {
+					$scheduler->run_retention_for_pair( $task, $this->site_id, 60, $now );
+				}
+			);
+		} finally {
+			remove_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+		}
+		$this->assertArrayNotHasKey( 'storage_age_floor', $store->get_job( $job_id )->checkpoint );
+		$scheduler->run_retention_for_pair( $task, $this->site_id, 60, $now );
+		$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['storage_age_floor'] );
+		$scheduler->run_retention_for_pair( $task, $this->site_id, 60, $now + 10 );
+		$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['storage_age_floor'] );
+		$this->make_snapshot_with_dir( array( 'created' => $now - 50 * DAY_IN_SECONDS ) );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'checkpoint' => wp_json_encode( array( 'storage_age_floor' => $now - 2 * DAY_IN_SECONDS ) ) ), array( 'id' => $job_id ) );
+		$this->assertFalse( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::holds_automatic_removal( array( $id ), $now ) );
+		add_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+		try {
+			$report = $this->guarded(
+				function () use ( $scheduler, $task, $now ) {
+					return $scheduler->run_retention_for_pair( $task, $this->site_id, 60, $now );
+				}
+			);
+		} finally {
+			remove_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+		}
+		$this->assertSame( array( array( $id ) ), array_column( $report['candidates'], 'snapshot_ids' ), 'The expired floor must stop blocking policy selection.' );
 	}
 
 	/** Deleted-site cleanup releases a unit after its first-observed hold expires. */
@@ -168,7 +254,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$old                 = $wpdb->suppress_errors( true );
 		add_filter( 'query', $filter );
 		try {
-			$age = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::remote_protection( array( $id ) );
+			$age = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::observe_remote_protection( array( $id ) );
 			$this->assertTrue( $age['unknown_age'] );
 			$this->assertSame( 0, $age['protected_until'] );
 			$this->assertArrayNotHasKey( 'storage_age_floor', MainWP_Backup_Upload_Job_Store::instance()->get_job( $job_id )->checkpoint );
@@ -176,7 +262,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 			remove_filter( 'query', $filter );
 			$wpdb->suppress_errors( $old );
 		}
-		$this->assertGreaterThan( time(), \MainWP\Dashboard\MainWP_Backup_Retention_Protection::remote_protection( array( $id ) )['protected_until'] );
+		$this->assertGreaterThan( time(), \MainWP\Dashboard\MainWP_Backup_Retention_Protection::observe_remote_protection( array( $id ) )['protected_until'] );
 	}
 
 	/** Large checkpoints retain the existing single-checkpoint packet budget. */
@@ -195,7 +281,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$old    = $wpdb->suppress_errors( true );
 		add_filter( 'query', $filter );
 		try {
-			$age = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::remote_protection( array( $id ) );
+			$age = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::observe_remote_protection( array( $id ) );
 			$this->assertFalse( $age['unknown_age'], 'The first floor must fit the same packet budget as the original checkpoint.' );
 			$floor               = $store->get_job( $job_id )->checkpoint['storage_age_floor'];
 			$checkpoint['phase'] = 'uploading';
@@ -216,14 +302,15 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @param string $status Upload state.
 	 * @param string $snapshot_status Snapshot state.
+	 * @param int    $minimum_days Destination minimum retention period.
 	 * @return array Snapshot, job and destination identities.
 	 */
-	private function make_unknown_age_upload( string $status, string $snapshot_status = 'complete' ): array {
+	private function make_unknown_age_upload( string $status, string $snapshot_status = 'complete', int $minimum_days = 1 ): array {
 		$destination = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->add_destination(
 			array(
 				'provider' => 's3',
 				'name'     => 'Unknown upload floor',
-				'settings' => array( 'minimum_remote_retention_days' => 1 ),
+				'settings' => array( 'minimum_remote_retention_days' => $minimum_days ),
 			)
 		);
 		list( $id )  = $this->make_snapshot_with_dir(
@@ -3555,7 +3642,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$store->save_checkpoint( $job->id, array() );
 		$this->assertSame( $now - 70 * DAY_IN_SECONDS, $protection::remote_protection( array( $id ), $now )['protected_until'] );
 		$store->set_status( $job->id, 'failed_permanent' );
-		$failed = $protection::remote_protection( array( $id ), $now );
+		$failed = $protection::observe_remote_protection( array( $id ), $now );
 		$this->assertFalse( $failed['unknown_age'] );
 		$this->assertSame( $now + 30 * DAY_IN_SECONDS, $failed['protected_until'] );
 	}

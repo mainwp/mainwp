@@ -251,8 +251,12 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 			remove_filter( 'query', $observe_shared );
 		}
 		$this->assertSame( 'error', $status );
-		$this->assertStringContainsString( 'HTTPS', $message );
-		$this->assertStringContainsString( '--ssl_verify=0', $message );
+		if ( isset( $extra['adminpassword'] ) && '' === $extra['adminpassword'] ) {
+			$this->assertSame( '--adminpassword needs a value. Use --adminpassword=<password>.', $message );
+		} else {
+			$this->assertStringContainsString( 'HTTPS', $message );
+			$this->assertStringContainsString( '--ssl_verify=0', $message );
+		}
 		$this->assertStringNotContainsString( 'CliFixture42', $message );
 		$this->assertSame( array(), $this->requests );
 		$this->assertSame( 0, $shared_calls, 'HTTP refusal must precede the shared handler site lookup.' );

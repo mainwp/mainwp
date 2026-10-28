@@ -1129,8 +1129,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      */
     public static function callback_site_add_site( $args = array(), $assoc_args = array(), $website = false ) {
         $fields        = static::get_cli_params( $args, $assoc_args, 'add-site' );
-        $adminpassword = isset( $fields['adminpassword'] ) ? (string) $fields['adminpassword'] : '';
+        $adminpassword = '';
         if ( isset( $fields['adminpassword'] ) ) {
+            if ( ! is_string( $fields['adminpassword'] ) || '' === $fields['adminpassword'] ) {
+                \WP_CLI::error( '--adminpassword needs a value. Use --adminpassword=<password>.' );
+                return;
+            }
+            $adminpassword = $fields['adminpassword'];
             if ( ! isset( $fields['ssl_verify'] ) ) {
                 $fields['ssl_verify'] = 1;
             }

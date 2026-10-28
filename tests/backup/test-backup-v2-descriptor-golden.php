@@ -26,7 +26,6 @@ function wp_json_encode( $value, $flags = 0, $depth = 512 ) {
 
 /** Pins the Dashboard reader to the Child's literal output. */
 class MainWP_Backup_V2_Descriptor_Golden_Test extends \WP_UnitTestCase {
- // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed -- The encoder observer belongs to this fixture.
 	/**
 	 * Observed flags; disabled outside the encoder test.
 	 *
@@ -34,36 +33,66 @@ class MainWP_Backup_V2_Descriptor_Golden_Test extends \WP_UnitTestCase {
 	 */
 	public static $encoding_flags = null;
 
-	const STABLE   = '{"format":2,"roots":[{"role":"site","coverage":"preserved"},{"role":"uploads","coverage":"restore"},{"role":"config","coverage":"recovery_only"}],"layout_id":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","core_policy":"managed_preserve","list_format":2,"path_encoding":"role-prefix"}';
-	const OBSERVED = '{"format":2,"roots":[{"role":"site","coverage":"preserved"},{"role":"uploads","coverage":"restore"},{"role":"config","coverage":"recovery_only"}],"layout_id":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","core_policy":"managed_preserve","list_format":2,"path_encoding":"role-prefix","core_version":"6.8/beta-2"}';
-	const DIGEST   = 'd14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86';
-
 	/**
-	 * Build an envelope around the Child bytes.
+	 * Load the portable descriptor cases shared with the Child suite.
 	 *
-	 * @param string $bytes Child metadata JSON.
 	 * @return array
 	 */
-	private function metadata( $bytes = self::STABLE ) {
+	public static function shared_descriptor_cases() {
+		$fixture = json_decode( file_get_contents( __DIR__ . '/fixtures/mwp2-descriptor-contract.json' ), true, 512, JSON_THROW_ON_ERROR );
+		$cases   = array();
+		foreach ( $fixture['cases'] as $fixture_case ) {
+			$cases[ $fixture_case['name'] ] = array( $fixture_case );
+		}
+		return $cases;
+	}
+
+	/**
+	 * Build an envelope from the shared canonical control.
+	 *
+	 * @return array
+	 */
+	private function metadata() {
+		$fixture_case = self::shared_descriptor_cases()['canonical_control'][0];
 		return array(
 			'backup_format'            => 2,
-			'layout_descriptor'        => json_decode( $bytes, true ),
-			'layout_descriptor_sha256' => self::DIGEST,
+			'layout_descriptor'        => $fixture_case['input_descriptor'],
+			'layout_descriptor_sha256' => $fixture_case['supplied_digest'],
 		);
 	}
 
-	/** Literal archive metadata retains the observed version outside the digest. */
-	public function test_child_metadata_bytes_and_observation() {
-		foreach ( array( self::STABLE, self::OBSERVED ) as $bytes ) {
-			$metadata = $this->metadata( $bytes );
-			$result   = MainWP_Backup_Snapshots::validate_format_metadata( $metadata );
-			$this->assertFalse( is_wp_error( $result ) );
-			$this->assertSame( $metadata, $result );
-			$stable = $result['layout_descriptor'];
-			unset( $stable['core_version'] );
-			$this->assertSame( self::STABLE, \wp_json_encode( $stable, JSON_UNESCAPED_SLASHES ) );
-			$this->assertSame( self::DIGEST, hash( 'sha256', \wp_json_encode( $stable, JSON_UNESCAPED_SLASHES ) ) );
+	/**
+	 * Every shared fixture passes through the real Dashboard validator.
+	 *
+	 * @dataProvider shared_descriptor_cases
+	 * @param array $fixture_case Portable contract case.
+	 */
+	public function test_child_metadata_bytes_and_observation( array $fixture_case ) {
+		$this->assertSame( $fixture_case['canonical_sha256'], hash( 'sha256', $fixture_case['canonical_bytes'] ) );
+		$descriptor = $fixture_case['input_descriptor'];
+		if ( isset( $fixture_case['metadata_bytes'] ) ) {
+			$descriptor = json_decode( $fixture_case['metadata_bytes'], true );
+			$this->assertSame( $fixture_case['input_descriptor'], $descriptor );
 		}
+		$result = MainWP_Backup_Snapshots::validate_format_metadata(
+			array(
+				'backup_format'            => $fixture_case['backup_format'],
+				'layout_descriptor'        => $descriptor,
+				'layout_descriptor_sha256' => $fixture_case['supplied_digest'],
+			)
+		);
+		if ( 'refuse' === $fixture_case['expected_result'] ) {
+			$this->assertWPError( $result );
+			$this->assertSame( $fixture_case['error_code'], $result->get_error_code() );
+			return;
+		}
+		$this->assertFalse( is_wp_error( $result ) );
+		$expected = json_decode( $fixture_case['canonical_bytes'], true );
+		if ( array_key_exists( 'core_version', $descriptor ) ) {
+			$expected['core_version'] = $descriptor['core_version'];
+		}
+		$this->assertSame( $expected, $result['layout_descriptor'] );
+		$this->assertSame( $fixture_case['canonical_sha256'], $result['layout_descriptor_sha256'] );
 	}
 
 	/** Received root order does not change the Child's digest or returned order. */
@@ -81,7 +110,8 @@ class MainWP_Backup_V2_Descriptor_Golden_Test extends \WP_UnitTestCase {
 			$result = MainWP_Backup_Snapshots::validate_format_metadata( $this->metadata() );
 			$this->assertFalse( is_wp_error( $result ) );
 			$this->assertSame( array( JSON_UNESCAPED_SLASHES ), self::$encoding_flags );
-			$this->assertSame( '"6.8/beta-2"', \wp_json_encode( '6.8/beta-2', self::$encoding_flags[0] ) );
+			$slash_case = self::shared_descriptor_cases()['slash_core_version'][0];
+			$this->assertStringNotContainsString( '\\/', \wp_json_encode( $slash_case['input_descriptor']['core_version'], self::$encoding_flags[0] ) );
 		} finally {
 			self::$encoding_flags = null;
 		}
@@ -115,7 +145,7 @@ class MainWP_Backup_V2_Descriptor_Golden_Test extends \WP_UnitTestCase {
 			array(
 				'role'                     => 'full',
 				'backup_format'            => '2',
-				'layout_descriptor_sha256' => self::DIGEST,
+				'layout_descriptor_sha256' => $this->metadata()['layout_descriptor_sha256'],
 			),
 			$this->metadata() + array( 'role' => 'manifest' ),
 		);

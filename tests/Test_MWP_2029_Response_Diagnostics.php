@@ -14,6 +14,59 @@ use MainWP\Dashboard\MainWP_Connect_Failure_Ux;
  */
 class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 
+	/** A failed transfer is distinct from a received empty response. */
+	public function test_failed_transfer_does_not_claim_an_empty_response(): void {
+		$diagnostic = MainWP_Connect_Failure_Ux::describe_received_response( false );
+		$this->assertSame( '', $diagnostic );
+		$summary = MainWP_Connect_Failure_Ux::summarize_response( 0, '', '', $diagnostic );
+		$this->assertStringNotContainsString( 'site returned an empty response', $summary['text'] );
+		$this->assertStringContainsString( 'no readable child response', $summary['text'] );
+	}
+
+	/** Both real transports preserve connection-refused errors without a body. */
+	public function test_connection_refusal_does_not_claim_a_received_response(): void {
+		$server = stream_socket_server( 'tcp://127.0.0.1:0', $errno, $error );
+		$this->assertIsResource( $server );
+		$address = stream_socket_get_name( $server, false );
+		fclose( $server );
+		set_transient( 'mainwp_public_dashboard_ip_data', array( 'value' => '203.0.113.10', 'status' => 'pass', 'community_value' => 'Detected' ), HOUR_IN_SECONDS );
+		$probe = \MainWP\Dashboard\MainWP_Connect::try_visit( 'http://' . $address . '/', false );
+		$this->assertSame( 0, $probe['httpCode'] );
+		$this->assertNotEmpty( $probe['error'] );
+		$this->assertSame( '', $probe['response_diagnostic'] );
+		$website = null;
+		$output  = array();
+		try {
+			\MainWP\Dashboard\MainWP_Connect::fetch_url_site( $website, 'http://' . $address . '/wp-admin/admin-ajax.php', 'function=register&user=fixture', false, false, null, null, 0, array( 'function' => 'register' ), $output );
+			$this->fail( 'A refused connection must raise the existing transport error.' );
+		} catch ( \MainWP\Dashboard\MainWP_Exception $caught ) {
+			$this->assertSame( 'HTTPERROR', $caught->getMessage() );
+			$this->assertSame( '', $output['response_diagnostic'] );
+			$this->assertStringNotContainsString( 'site returned an empty response', $output['failure_ux'] );
+		}
+	}
+
+	/** Cutting a localized page must not turn it into binary data. */
+	public function test_utf8_sample_boundary_preserves_html_classification(): void {
+		$prefix = '<html><title>Maintenance window</title><p>';
+		foreach ( array( "\xC3\xA9", "\xE3\x81\x82", "\xF0\x9F\x98\x80" ) as $character ) {
+			for ( $cut = 1; $cut < strlen( $character ); $cut++ ) {
+				$body = $prefix . str_repeat( 'x', 4096 - strlen( $prefix ) - $cut ) . $character . '</p></html>';
+				$text = MainWP_Connect_Failure_Ux::describe_received_response( $body );
+				$this->assertStringContainsString( 'HTML page', $text );
+				$this->assertStringContainsString( 'Maintenance window', $text );
+				$this->assertStringNotContainsString( 'binary data', $text );
+			}
+		}
+	}
+
+	/** Invalid bytes must remain binary even near the sample boundary. */
+	public function test_invalid_utf8_is_not_hidden_by_boundary_trimming(): void {
+		foreach ( array( "\xFF" . str_repeat( 'x', 5000 ), str_repeat( 'x', 4095 ) . "\xFF" . 'more text' ) as $body ) {
+			$this->assertStringContainsString( 'binary data', MainWP_Connect_Failure_Ux::describe_received_response( $body ) );
+		}
+	}
+
 	/**
 	 * Empty response has a next action.
 	 */

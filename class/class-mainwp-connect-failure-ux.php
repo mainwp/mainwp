@@ -304,7 +304,27 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string Safe description and, where possible, a short excerpt.
      */
     public static function describe_received_response( $body ) {
-        $sample = is_string( $body ) ? substr( $body, 0, 4096 ) : '';
+        if ( ! is_string( $body ) ) {
+            return '';
+        }
+        $sample = substr( $body, 0, 4096 );
+        if ( strlen( $body ) > 4096 && 1 !== preg_match( '//u', $sample ) ) {
+            // Validate at most three more bytes, then keep only complete
+            // characters inside the original cap. Invalid data stays binary.
+            for ( $extra = 1; $extra <= 3; $extra++ ) {
+                if ( 1 !== preg_match( '//u', substr( $body, 0, 4096 + $extra ) ) ) {
+                    continue;
+                }
+                for ( $trim = 1; $trim <= 3; $trim++ ) {
+                    $prefix = substr( $sample, 0, -$trim );
+                    if ( 1 === preg_match( '//u', $prefix ) ) {
+                        $sample = $prefix;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
         if ( '' === trim( $sample ) ) {
             return __( 'Body: the site returned an empty response. Ask the host to check the registration request to wp-admin/admin-ajax.php.', 'mainwp' );
         }
@@ -349,7 +369,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param int    $http_status HTTP status.
      * @param string $headers     Raw response headers.
-     * @param string $body        Raw response body. Only its presence is reported.
+     * @param string $body        Raw body; used only for the legacy presence check.
      * @param string $diagnostic  Capped, sanitized description from the transport.
      *
      * @return array<string,string>
@@ -381,7 +401,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $lines[] = esc_html__( 'Headers: none captured.', 'mainwp' );
         }
 
-        // The body is never displayed, but saying nothing came back would send
+        // The full body is never displayed, but saying nothing came back would send
         // someone debugging a WAF or error page in the wrong direction. The
         // hidden-data placeholder does not prove a body arrived.
         if ( is_string( $diagnostic ) && '' !== $diagnostic ) {

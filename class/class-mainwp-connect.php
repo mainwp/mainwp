@@ -653,7 +653,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'httpVersion'    => $http_version,
         );
 
-        $response_diagnostic = MainWP_Connect_Failure_Ux::describe_received_response( $data );
+        $response_diagnostic = $http_status > 0 ? MainWP_Connect_Failure_Ux::describe_received_response( $data ) : '';
         $hidden_data         = '[hidden response data]';
         $hide_raw            = (bool) apply_filters( 'mainwp_hide_raw_connection_response_data', true );
 
@@ -2592,7 +2592,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'http_status'         => $http_status,
             'headers'             => $resp_headers,
             'body'                => $response_body,
-            'response_diagnostic' => MainWP_Connect_Failure_Ux::describe_received_response( $data ),
+            'response_diagnostic' => $http_status > 0 ? MainWP_Connect_Failure_Ux::describe_received_response( $data ) : '',
             'resolved_ip'         => $resolved_ip,
             'error'               => $err,
         );

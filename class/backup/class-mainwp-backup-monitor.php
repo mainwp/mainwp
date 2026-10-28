@@ -52,7 +52,16 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         'restore_multisite_support'          => 'restore_multisite',
         'reconcile_unarchived_support'       => 'reconcile_unarchived_support',
         'restore_outcome_report'             => 'restore_outcome_report',
+        'backup_layout_v2_support'           => 'backup_layout_v2',
+        'restore_layout_v2_support'          => 'restore_layout_v2',
     );
+
+    /**
+     * V2 dispatch remains disabled until the producer and readers are ready.
+     *
+     * @var bool
+     */
+    private static bool $layout_v2_enabled = false;
 
     /**
      * Method get_class_name()
@@ -63,6 +72,129 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function get_class_name(): string {
         return __CLASS__;
+    }
+
+    /**
+     * Validate a restore chain without changing its stored source descriptor.
+     *
+     * @internal
+     * @param array $plan Stored restore operations.
+     * @return array|\WP_Error Source metadata, empty for v1, or a permanent refusal.
+     */
+    public static function restore_plan_metadata( array $plan ): array|\WP_Error {
+        $metadata    = array();
+        $legacy_file = false;
+        foreach ( $plan as $entry ) {
+            if ( ! is_array( $entry ) ) {
+                return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+            }
+            $current = MainWP_Backup_Snapshots::validate_format_metadata( $entry );
+            if ( is_wp_error( $current ) ) {
+                return $current;
+            }
+            if ( ! empty( $current ) ) {
+                $current['layout_descriptor'] = $entry['layout_descriptor'];
+            } elseif ( 'db' === ( $entry['role'] ?? '' ) && ! empty( $entry['snapshot_id'] ) ) {
+                // Database bytes remain v1 even when their source snapshot is v2.
+                $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $entry['snapshot_id'] );
+                if ( null !== $snapshot ) {
+                    $current = MainWP_Backup_Snapshots::format_metadata( (array) $snapshot->archives );
+                    if ( is_wp_error( $current ) ) {
+                        return $current;
+                    }
+                    if ( ! empty( $current ) ) {
+                        foreach ( (array) $snapshot->archives as $archive ) {
+                            if ( is_array( $archive ) && 'manifest' === ( $archive['role'] ?? '' ) && in_array( $archive['backup_format'] ?? null, array( 2, '2' ), true ) ) {
+                                $current['layout_descriptor'] = $archive['layout_descriptor'];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if ( empty( $current ) ) {
+                if ( in_array( $entry['role'] ?? '', array( 'full', 'part', 'tombstones', 'manifest' ), true ) ) {
+                    $legacy_file = true;
+                }
+                continue;
+            }
+            if ( ! empty( $metadata ) && $metadata['layout_descriptor_sha256'] !== $current['layout_descriptor_sha256'] ) {
+                return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+            }
+            if ( empty( $metadata ) ) {
+                $metadata = $current;
+            }
+        }
+        if ( ! empty( $metadata ) && $legacy_file ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+        }
+        return $metadata;
+    }
+
+    /**
+     * Admit v2 only on this call's fresh destination capability report.
+     *
+     * @internal
+     * @param object $website            Destination website.
+     * @param array  $plan               Stored source operations.
+     * @param string $expected_layout_id Pinned destination layout.
+     * @param bool   $pin_layout         Capture a fresh binding for a new job only.
+     * @return array|\WP_Error Source metadata, empty for v1, or a permanent refusal.
+     */
+    public static function admit_restore_plan( object $website, array $plan, string $expected_layout_id = '', bool $pin_layout = false ): array|\WP_Error {
+        $metadata = self::restore_plan_metadata( $plan );
+        if ( is_wp_error( $metadata ) || empty( $metadata ) ) {
+            return $metadata;
+        }
+        $unsupported = new \WP_Error( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT ) );
+        if ( ! self::$layout_v2_enabled ) {
+            return $unsupported;
+        }
+        try {
+            $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, false );
+        } catch ( \Throwable $error ) {
+            $code = $error instanceof MainWP_Exception ? $error->get_message_error_code() : '';
+            if ( in_array( $code, array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED, MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT, MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ), true ) ) {
+                return new \WP_Error( $code, MainWP_Backup_Error_Codes::message( $code ) );
+            }
+            return $unsupported;
+        }
+        $code = '';
+        if ( is_wp_error( $preflight ) ) {
+            $code = $preflight->get_error_code();
+        } elseif ( is_array( $preflight ) ) {
+            $code = $preflight['error_code'] ?? '';
+        }
+        if ( in_array( $code, array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED, MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT, MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ), true ) ) {
+            return new \WP_Error( $code, MainWP_Backup_Error_Codes::message( $code ) );
+        }
+        if ( ! is_array( $preflight ) || isset( $preflight['error'] ) || ! empty( $code )
+            || ! in_array( $preflight['backup_layout_v2'] ?? null, array( 1, '1' ), true )
+            || ! in_array( $preflight['restore_layout_v2'] ?? null, array( 1, '1' ), true )
+            || ! is_string( $preflight['layout_id'] ?? null ) || 1 !== preg_match( '/^[a-f0-9]{64}$/D', $preflight['layout_id'] )
+            || ! is_array( $preflight['layout_roles'] ?? null ) || 'managed_preserve' !== ( $preflight['core_policy'] ?? null ) ) {
+            return $unsupported;
+        }
+        foreach ( $preflight['layout_roles'] as $role ) {
+            if ( ! in_array( $role, array( 'site', 'content', 'uploads', 'plugins', 'mu_plugins', 'config' ), true ) ) {
+                return $unsupported;
+            }
+        }
+        foreach ( $metadata['layout_descriptor']['roots'] as $root ) {
+            if ( ! in_array( $root['role'], $preflight['layout_roles'], true ) ) {
+                return $unsupported;
+            }
+        }
+        if ( $pin_layout ) {
+            $expected_layout_id = $preflight['layout_id'];
+        }
+        if ( '' === $expected_layout_id || ! hash_equals( $expected_layout_id, $preflight['layout_id'] ) ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ) );
+        }
+        if ( $pin_layout ) {
+            $metadata['expected_layout_id'] = $expected_layout_id;
+        }
+        return $metadata;
     }
 
     /**
@@ -221,6 +353,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * a backup. Empty or mainwp_backup_ error codes surface the Child's
      * readiness message unless task-spine support was already confirmed.
      * Other errors return to the task-spine gate without a readiness failure.
+     * Format and layout refusals always stop dispatch.
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks
@@ -240,14 +373,18 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *                                   never claims a switch that did not reach the wire.
      *
      * @return void
-     * @throws MainWP_Exception When the child reports critically low disk space or readiness fails without previously confirmed task-spine support.
+     * @throws MainWP_Exception For low disk space, permanent format/layout refusals, or readiness failures without confirmed task-spine support.
+     * @throws \Exception When a permanent preflight exception is propagated.
      */
     public static function negotiate_backup_preflight( object &$website, string &$archive_ext = '', ?object $task = null, bool $allow_switch = true ): void { // phpcs:ignore -- NOSONAR - complex.
         $diag_task_id = is_object( $task ) && ! empty( $task->id ) ? (int) $task->id : 0;
 
         try {
-            $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array() );
+            $preflight = self::backup_preflight( $website );
         } catch ( \Exception $e ) {
+            if ( $e instanceof MainWP_Exception && in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                throw $e;
+            }
             MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup preflight unavailable: ' . $e->getMessage() );
 
             /**
@@ -261,6 +398,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              */
             do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, array(), 'unavailable' );
             return; // Capability unknown - proceed for backwards compatibility.
+        }
+
+        if ( is_array( $preflight ) && in_array( $preflight['error_code'] ?? '', array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+            throw new MainWP_Exception( MainWP_Backup_Error_Codes::message( $preflight['error_code'] ), null, $preflight['error_code'] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         if ( ! is_array( $preflight ) || isset( $preflight['error'] ) ) {
@@ -471,6 +612,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             try {
                 $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, false );
             } catch ( \Throwable $e ) {
+                if ( $e instanceof MainWP_Exception && in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                    throw $e;
+                }
                 if ( $deadline - static::capability_probe_time() < 20 ) {
                     throw $e;
                 }
@@ -478,6 +622,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, false, null, false, array( 'root_only' => true ) );
             }
         } catch ( \Throwable $e ) {
+            if ( $e instanceof MainWP_Exception && in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                throw $e;
+            }
             MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Capability probe unavailable: ' . $e->getMessage() );
             // An unreachable child says nothing about its capabilities, so the
             // last negotiated flags stand rather than being cleared by a site
@@ -487,6 +634,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             remove_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
         }
 
+        if ( is_array( $preflight ) && in_array( $preflight['error_code'] ?? '', array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+            throw new MainWP_Exception( MainWP_Backup_Error_Codes::message( $preflight['error_code'] ), null, $preflight['error_code'] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry message.
+        }
         if ( ! is_array( $preflight ) || isset( $preflight['error'] ) ) {
             if ( is_array( $preflight ) && isset( $preflight['error_code'] ) && self::CHILD_INCOMPATIBLE_CODE === $preflight['error_code'] ) {
                 static::record_negotiated_capabilities( $website, array() );
@@ -496,6 +646,53 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         static::record_negotiated_capabilities( $website, $preflight );
         return true;
+    }
+
+    /**
+     * Preserve permanent preflight codes before the generic retry wrapper.
+     *
+     * @param object $website Destination website.
+     * @return mixed Child readiness response.
+     * @throws MainWP_Exception When attempts are exhausted or the lease is lost.
+     * @throws \Exception When the Child permanently refuses the request.
+     */
+    private static function backup_preflight( object &$website ): mixed {
+        $last_error = null;
+        for ( $attempt = 1; $attempt <= 3; $attempt++ ) {
+            if ( 1 < $attempt && self::native_lease_lost() ) {
+                throw new MainWP_Exception( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ), null, MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry message.
+            }
+            try {
+                return MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array() );
+            } catch ( \Exception $error ) {
+                if ( $error instanceof MainWP_Exception && in_array( $error->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                    throw $error;
+                }
+                $last_error = $error;
+                if ( self::native_lease_lost() ) {
+                    throw new MainWP_Exception( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ), null, MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry message.
+                }
+                if ( $attempt < 3 ) {
+                    /** This filter is documented in class/class-mainwp-connect.php */
+                    $delay = (int) apply_filters( 'mainwp_backup_retry_delay', 2 ** ( $attempt - 1 ), $attempt, 'backup_preflight' );
+                    if ( $delay > 0 ) {
+                        sleep( $delay );
+                    }
+                }
+            }
+        }
+        // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- escaped message and registry code.
+        throw new MainWP_Exception(
+            sprintf(
+                /* translators: 1: number of attempts, 2: last error message */
+                esc_html__( 'The request to the child site failed after %1$d attempts. Last error: %2$s', 'mainwp' ),
+                3,
+                esc_html( null !== $last_error ? $last_error->getMessage() : '' )
+            ),
+            null,
+            MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED
+        );
+        // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
     /**
@@ -532,7 +729,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // apart: unknown re-probes the child, a recorded '0' refuses. Every reader
         // compares against '1', so the stored '0' behaves exactly as '' did.
         foreach ( self::NEGOTIATED_CAPABILITY_FLAGS as $option => $reported ) {
-            MainWP_DB::instance()->update_website_option( $website, $option, empty( $preflight[ $reported ] ) ? '0' : '1' );
+            $value = empty( $preflight[ $reported ] ) ? '0' : '1';
+            if ( in_array( $option, array( 'backup_layout_v2_support', 'restore_layout_v2_support' ), true ) ) {
+                $value = in_array( $preflight[ $reported ] ?? null, array( 1, '1' ), true ) ? '1' : '0';
+            }
+            MainWP_DB::instance()->update_website_option( $website, $option, $value );
             if ( in_array( $option, array( 'manifest_writer_identity_support', 'reconcile_unarchived_support' ), true ) && ( '' !== $wpdb->last_error || ( empty( $preflight[ $reported ] ) ? '0' : '1' ) !== MainWP_DB::instance()->get_website_option( (int) $website->id, $option ) ) ) {
                 throw new MainWP_Exception( esc_html__( 'Could not save the child manifest capability.', 'mainwp' ) );
             }

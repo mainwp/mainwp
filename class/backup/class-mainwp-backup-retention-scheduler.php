@@ -345,7 +345,16 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
         )
             : MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $site_id, (int) $task->id, $budget_seconds );
 
-        $units  = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, (int) $task->id );
+        $units = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, (int) $task->id );
+        if ( ! $dry_run ) {
+            foreach ( $units as &$unit ) {
+                $ids                     = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
+                $protection              = MainWP_Backup_Retention_Protection::observe_remote_protection( $ids, $now );
+                $unit['protected_until'] = $protection['protected_until'];
+                $unit['unknown_age']     = $protection['unknown_age'];
+            }
+            unset( $unit );
+        }
         $policy = new MainWP_Backup_Retention_Policy( MainWP_Backup_Settings::task_retention_count( $task ), (int) $task->retention_days, (int) $task->retention_storage_mb );
 
         $candidates = $policy->evaluate( $units, $now );

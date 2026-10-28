@@ -285,6 +285,38 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertSame( 1, (int) $store->get_job( (int) $job->id )->attempt_count, 'Attempts count failures, not acquisitions.' );
 	}
 
+	/** A successful JSON round trip normalizes nested objects before confirmation. */
+	public function test_checkpoint_nested_object_is_confirmed_with_live_lease(): void {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98203, array( 7 ) );
+		$job        = $store->acquire_next_job( 'object-holder', 300 );
+		$checkpoint = array( 'metadata' => (object) array( 'cursor' => 4 ) );
+		$this->assertNotNull( $job );
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint, 'object-holder' ) );
+		$this->assertSame( array( 'metadata' => array( 'cursor' => 4 ) ), $store->get_job( (int) $job->id )->checkpoint );
+		$this->assertFalse( $store->save_checkpoint( (int) $job->id, $checkpoint, 'other-holder' ) );
+	}
+
+	/** Invalid JSON cannot be reported as a successfully saved empty checkpoint. */
+	public function test_checkpoint_encoding_failure_preserves_the_saved_checkpoint(): void {
+		global $wpdb;
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98204, array( 7 ) );
+		$job    = $store->acquire_next_job( 'encoding-holder', 300 );
+		$handle = tmpfile();
+		$this->assertNotNull( $job );
+		$this->assertIsResource( $handle );
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$before = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $job->id ) );
+		try {
+			$this->assertFalse( $store->save_checkpoint( (int) $job->id, array( 'metadata' => $handle ), 'encoding-holder' ) );
+			$this->assertSame( array(), $store->get_job( (int) $job->id )->checkpoint );
+			$this->assertEquals( $before, $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $job->id ) ), 'A failed encoding must not replace the raw checkpoint with an empty string.' );
+		} finally {
+			fclose( $handle );
+		}
+	}
+
 	/**
 	 * Checkpoints persist as structured data across re-entries.
 	 *

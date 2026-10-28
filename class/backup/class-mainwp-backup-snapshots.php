@@ -97,7 +97,7 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
             if ( ! is_array( $archive ) || ! array_key_exists( 'backup_format', $archive ) ) {
                 continue;
             }
-            if ( ! in_array( $archive['backup_format'], array( 1, 2, '1', '2' ), true ) ) {
+            if ( ! in_array( $archive['backup_format'], array( 1, 2, '1' ), true ) ) {
                 return new \WP_Error( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT ) );
             }
             if ( 2 === (int) $archive['backup_format'] ) {
@@ -142,32 +142,40 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
         if ( ! array_key_exists( 'backup_format', $metadata ) || in_array( $metadata['backup_format'], array( 1, '1' ), true ) ) {
             return array();
         }
-        if ( ! in_array( $metadata['backup_format'], array( 2, '2' ), true ) ) {
+        if ( 2 !== $metadata['backup_format'] ) {
             return new \WP_Error( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT ) );
         }
         $descriptor = $metadata['layout_descriptor'] ?? null;
         $digest     = $metadata['layout_descriptor_sha256'] ?? null;
         $keys       = array( 'format', 'roots', 'layout_id', 'core_policy', 'list_format', 'path_encoding' );
-        $valid      = is_array( $descriptor ) && count( $descriptor ) === count( $keys ) && ! array_diff( $keys, array_keys( $descriptor ) );
-        $valid      = $valid && 2 === $descriptor['format'] && 2 === $descriptor['list_format'] && 'role-prefix' === $descriptor['path_encoding'] && 'managed_preserve' === $descriptor['core_policy'];
-        $valid      = $valid && is_string( $descriptor['layout_id'] ) && 1 === preg_match( '/^[a-f0-9]{64}$/D', $descriptor['layout_id'] ) && is_array( $descriptor['roots'] ) && ! empty( $descriptor['roots'] );
-        $roots      = array();
-        $seen       = array();
+        if ( is_array( $descriptor ) && ( 2 !== ( $descriptor['format'] ?? null ) || 2 !== ( $descriptor['list_format'] ?? null ) ) ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT ) );
+        }
+        $valid = is_array( $descriptor ) && ! array_diff( $keys, array_keys( $descriptor ) ) && ! array_diff( array_keys( $descriptor ), array_merge( $keys, array( 'core_version' ) ) );
+        $valid = $valid && ( ! array_key_exists( 'core_version', $descriptor ) || is_string( $descriptor['core_version'] ) );
+        $valid = $valid && 'role-prefix' === $descriptor['path_encoding'] && 'managed_preserve' === $descriptor['core_policy'];
+        $valid = $valid && is_string( $descriptor['layout_id'] ) && 1 === preg_match( '/^[a-f0-9]{64}$/D', $descriptor['layout_id'] ) && is_array( $descriptor['roots'] ) && ! empty( $descriptor['roots'] );
+        $roots = array();
+        $seen  = array();
         if ( $valid ) {
             foreach ( $descriptor['roots'] as $root ) {
                 if ( ! is_array( $root ) || count( $root ) !== 2 || ! in_array( $root['role'] ?? null, array( 'site', 'content', 'uploads', 'plugins', 'mu_plugins', 'config' ), true ) || ! in_array( $root['coverage'] ?? null, array( 'restore', 'recovery_only', 'preserved' ), true ) || isset( $seen[ $root['role'] ] ) ) {
                     $valid = false;
                     break;
                 }
-                $seen[ $root['role'] ] = true;
-                $roots[]               = array(
-                    'role'     => $root['role'],
-                    'coverage' => $root['coverage'],
-                );
+                $seen[ $root['role'] ] = $root['coverage'];
             }
         }
         if ( ! $valid || ! is_string( $digest ) || 1 !== preg_match( '/^[a-f0-9]{64}$/D', $digest ) ) {
             return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+        }
+        foreach ( array( 'site', 'content', 'uploads', 'plugins', 'mu_plugins', 'config' ) as $role ) {
+            if ( isset( $seen[ $role ] ) ) {
+                $roots[] = array(
+                    'role'     => $role,
+                    'coverage' => $seen[ $role ],
+                );
+            }
         }
         $canonical = array(
             'format'        => 2,
@@ -177,8 +185,11 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
             'list_format'   => 2,
             'path_encoding' => 'role-prefix',
         );
-        if ( ! hash_equals( $digest, hash( 'sha256', (string) wp_json_encode( $canonical ) ) ) ) {
+        if ( ! hash_equals( $digest, hash( 'sha256', (string) wp_json_encode( $canonical, JSON_UNESCAPED_SLASHES ) ) ) ) {
             return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+        }
+        if ( array_key_exists( 'core_version', $descriptor ) ) {
+            $canonical['core_version'] = $descriptor['core_version'];
         }
         return array(
             'backup_format'            => 2,

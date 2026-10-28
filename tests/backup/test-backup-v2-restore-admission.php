@@ -654,7 +654,11 @@ class MainWP_Backup_V2_Restore_Admission_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( array(), $this->calls );
 	}
 
-	/** @return array Completed-child verification and its retry resume. */
+	/**
+	 * Completed-child verification and its retry resume.
+	 *
+	 * @return array
+	 */
 	public static function verification_phases() {
 		return array( array( 'verifying' ), array( 'failed_retryable' ) );
 	}

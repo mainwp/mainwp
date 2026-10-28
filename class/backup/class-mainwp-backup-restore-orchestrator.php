@@ -630,6 +630,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             ),
             'transfer'               => array(),
         );
+        if ( ! empty( $failed_job->checkpoint['source_site_id'] ) ) {
+            $checkpoint['source_site_id'] = (int) $failed_job->checkpoint['source_site_id'];
+        }
         if ( ! empty( $metadata ) ) {
             // A rollback retains the destination binding of its safety capture.
             $checkpoint['target_layout_id'] = (string) ( $failed_job->checkpoint['target_layout_id'] ?? '' );

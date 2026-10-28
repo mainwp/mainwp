@@ -11,6 +11,7 @@ require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
+use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
@@ -395,5 +396,195 @@ class MainWP_Backup_V2_Cross_Host_Restore_Test extends MainWP_Abilities_Test_Cas
 		$this->assertSame( $this->target_id, (int) $job->site_id );
 		$this->assertSame( 'files', $job->checkpoint['sub_type'] );
 		$this->assertFalse( $job->checkpoint['options']['preserve_orders'] );
+	}
+	/**
+	 * Call the internal operation through real site and granular-right checks.
+	 *
+	 * @param int $snapshot_id Source snapshot.
+	 * @return array|\WP_Error Result.
+	 */
+	private function operations_start( $snapshot_id ) {
+		$this->assertTrue( is_callable( array( MainWP_Backup_Operations::class, 'restore_snapshot_cross_site' ) ), 'Cross-site operations must authorize both sites.' );
+		return MainWP_Backup_Operations::restore_snapshot_cross_site( $this->source_id, $this->target_id, $snapshot_id, array( 'confirm_destructive' => true ), 'ui' );
+	}
+
+	/**
+	 * Seed a finished cross-site job with destination-owned safety artifacts.
+	 *
+	 * @param int $snapshot_id Source snapshot.
+	 * @return int Job id.
+	 */
+	private function finished_cross_site_job( $snapshot_id ) {
+		$store                                = MainWP_Backup_Restore_Job_Store::instance();
+		$job_id                               = $this->start( $snapshot_id, array( 'confirm_destructive' => true ) );
+		$checkpoint                           = $store->get_job( $job_id )->checkpoint;
+		$checkpoint['pre_snapshot_artifacts'] = array(
+			array(
+				'file' => 'destination-safety.zip',
+				'role' => 'full',
+				'size' => 64,
+			),
+		);
+		$this->assertTrue( $store->save_checkpoint( $job_id, $checkpoint ) );
+		$this->assertTrue( $store->set_status( $job_id, 'failed_permanent', array( 'pre_snapshot_task_id' => 'destination-safety' ) ) );
+		return $job_id;
+	}
+
+	/**
+	 * Every entry must enforce each side's site access and distinct operation rights.
+	 *
+	 * @return array Denial and action pairs.
+	 */
+	public static function cross_site_access_denials() {
+		$rows = array();
+		foreach ( array( 'source', 'destination', 'execute_backups', 'download_backups', 'restore_backups' ) as $denial ) {
+			foreach ( array( 'start', 'poll', 'cancel', 'rollback' ) as $action ) {
+				$rows[ $denial . '-' . $action ] = array( $denial, $action );
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * A user with only one side's access cannot start or drive the restore.
+	 *
+	 * @dataProvider cross_site_access_denials
+	 * @param string $denial Site or granular right to deny.
+	 * @param string $action Operation under test.
+	 */
+	public function test_cross_site_operations_require_both_site_access_and_rights( $denial, $action ) {
+		$this->skip_when_capabilities_bypassed();
+		$this->set_current_user_as_admin();
+		$this->enable( true );
+		$id          = $this->snapshot();
+		$job_id      = $this->finished_cross_site_job( $id );
+		$this->calls = array();
+		$denied_site = 'source' === $denial ? $this->source_id : $this->target_id;
+		$scope       = static function ( $allowed, $site_id ) use ( $denial, $denied_site ) {
+			return in_array( $denial, array( 'source', 'destination' ), true ) && (int) $site_id === $denied_site ? false : $allowed;
+		};
+		$rights      = static function ( $allowed, $type, $right ) use ( $denial ) {
+			return 'dashboard' === $type && $right === $denial ? false : $allowed;
+		};
+		add_filter( 'mainwp_check_site_access', $scope, 10, 2 );
+		add_filter( 'mainwp_currentusercan', $rights, 10, 3 );
+		try {
+			if ( 'start' === $action ) {
+				$result = $this->operations_start( $id );
+			} elseif ( 'poll' === $action ) {
+				$result = MainWP_Backup_Operations::authorize_restore_job( $job_id, false, 'ui' );
+			} elseif ( 'cancel' === $action ) {
+				$result = MainWP_Backup_Operations::cancel_restore( $job_id, 'ui' );
+			} else {
+				$result = MainWP_Backup_Operations::rollback_restore( $job_id, 'ui' );
+			}
+			$this->assertWPError( $result, $denial . ' must refuse ' . $action );
+			$this->assertSame( array(), $this->calls );
+			$this->assertSame( 'failed_permanent', MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id )->status );
+			$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->target_id ) );
+		} finally {
+			remove_filter( 'mainwp_check_site_access', $scope, 10 );
+			remove_filter( 'mainwp_currentusercan', $rights, 10 );
+		}
+	}
+
+	/** Authorized rollback retains original source access while adopting destination safety files. */
+	public function test_cross_site_operations_and_rollback_preserve_both_authorization_sides() {
+		$this->set_current_user_as_admin();
+		$this->enable( true );
+		$id     = $this->snapshot();
+		$result = $this->operations_start( $id );
+		$this->assertIsArray( $result );
+		$job_id = $result['job_id'];
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$this->assertSame( $job_id, (int) MainWP_Backup_Operations::authorize_restore_job( $job_id, false, 'ui' )->id );
+		$checkpoint                           = $store->get_job( $job_id )->checkpoint;
+		$checkpoint['pre_snapshot_artifacts'] = array(
+			array(
+				'file' => 'destination-safety.zip',
+				'role' => 'full',
+				'size' => 64,
+			),
+		);
+		$this->assertTrue( $store->save_checkpoint( $job_id, $checkpoint ) );
+		$this->assertTrue( $store->set_status( $job_id, 'failed_permanent', array( 'pre_snapshot_task_id' => 'destination-safety' ) ) );
+		$rollback = MainWP_Backup_Operations::rollback_restore( $job_id, 'ui' );
+		$this->assertIsArray( $rollback );
+		$job = $store->get_job( $rollback['job_id'] );
+		$this->assertSame( $this->source_id, $job->checkpoint['source_site_id'] );
+		$this->assertSame( $this->target_id, (int) $job->site_id );
+		$this->assertSame( 'destination-safety.zip', $job->checkpoint['plan'][0]['file'] );
+		$this->assertSame( 'adopt', $job->checkpoint['plan'][0]['source'] );
+		$this->assertTrue( $job->checkpoint['plan'][0]['adopt_only'] );
+		$this->assertSame( (int) $job->id, (int) MainWP_Backup_Operations::authorize_restore_job( (int) $job->id, false, 'ui' )->id );
+		$deny_source = fn( $allowed, $site_id ) => (int) $site_id === $this->source_id ? false : $allowed;
+		add_filter( 'mainwp_check_site_access', $deny_source, 10, 2 );
+		try {
+			$this->assertWPError( MainWP_Backup_Operations::authorize_restore_job( (int) $job->id, false, 'ui' ) );
+			$this->assertWPError( MainWP_Backup_Operations::cancel_restore( (int) $job->id, 'ui' ) );
+		} finally {
+			remove_filter( 'mainwp_check_site_access', $deny_source, 10 );
+		}
+	}
+
+	/** Same-site reads retain their existing access without restore or download rights. */
+	public function test_same_site_job_poll_keeps_existing_read_rights() {
+		$this->skip_when_capabilities_bypassed();
+		$this->set_current_user_as_admin();
+		$id     = $this->snapshot( false );
+		$job_id = ( new MainWP_Backup_Restore_Orchestrator() )->initiate_restore( $this->source_id, $id, array( 'confirm_destructive' => true ) );
+		$deny   = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && in_array( $right, array( 'download_backups', 'restore_backups' ), true ) ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			$this->assertSame( $job_id, (int) MainWP_Backup_Operations::authorize_restore_job( $job_id, false, 'ui' )->id );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+		}
+	}
+	/** An authorized user can cancel the destination job through the shared operation. */
+	public function test_authorized_cross_site_cancel_succeeds() {
+		$this->set_current_user_as_admin();
+		$this->enable( true );
+		$result = $this->operations_start( $this->snapshot() );
+		$this->assertIsArray( $result );
+		$cancel = MainWP_Backup_Operations::cancel_restore( $result['job_id'], 'ui' );
+		$this->assertIsArray( $cancel );
+		$this->assertSame( 'cancelled', $cancel['status'] );
+	}
+
+	/** Site authorization cannot substitute for the selected snapshot's ownership. */
+	public function test_operations_reject_snapshot_outside_authorized_source() {
+		$this->set_current_user_as_admin();
+		$this->enable( true );
+		$id = $this->snapshot( true, array( 'site_id' => $this->target_id ) );
+		try {
+			$result = $this->operations_start( $id );
+			$this->assertWPError( $result );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND, $result->get_error_code() );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND, $error->get_message_error_code() );
+		}
+		$this->assertSame( array(), $this->calls );
+	}
+
+	/** An explicitly identical destination retains the original same-site rights. */
+	public function test_operations_same_site_does_not_add_download_right() {
+		$this->skip_when_capabilities_bypassed();
+		$this->set_current_user_as_admin();
+		$id = $this->snapshot( false );
+		$this->assertTrue( is_callable( array( MainWP_Backup_Operations::class, 'restore_snapshot_cross_site' ) ) );
+		$deny = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'download_backups' === $right ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			$result = MainWP_Backup_Operations::restore_snapshot_cross_site( $this->source_id, $this->source_id, $id, array( 'confirm_destructive' => true ), 'ui' );
+			$this->assertIsArray( $result );
+			$this->assertArrayNotHasKey( 'source_site_id', MainWP_Backup_Restore_Job_Store::instance()->get_job( $result['job_id'] )->checkpoint );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+		}
 	}
 }

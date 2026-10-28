@@ -592,7 +592,21 @@ class MainWP_Backup_V2_Negotiation_Test extends MainWP_Abilities_Test_Case {
 		}
 		unset( $entry );
 		$this->enable( true );
-		$result = MainWP_Backup_Monitor::admit_restore_plan( $this->website, $plan, str_repeat( 'a', 64 ) );
+		$reads   = array();
+		$observe = static function ( $query ) use ( &$reads ) {
+			if ( preg_match( '/SELECT \* FROM .*wp_backup_snapshot.*WHERE id/i', $query ) ) {
+				$reads[] = $query;
+			}
+			return $query;
+		};
+		add_filter( 'query', $observe );
+		try {
+			$result = MainWP_Backup_Monitor::admit_restore_plan( $this->website, $plan, str_repeat( 'a', 64 ) );
+		} finally {
+			remove_filter( 'query', $observe );
+		}
+		$this->assertNotEmpty( $reads, 'The query observer must see stored snapshot reads.' );
+		$this->assertLessThanOrEqual( 3, count( $reads ), 'Read each stored chain once, plus the database source snapshot.' );
 		if ( $refused ) {
 			$this->assertWPError( $result );
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED, $result->get_error_code() );

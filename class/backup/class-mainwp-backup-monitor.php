@@ -82,6 +82,21 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return array|\WP_Error Source metadata, empty for v1, or a permanent refusal.
      */
     public static function restore_plan_metadata( array $plan ): array|\WP_Error {
+        $checked = array();
+        foreach ( array_reverse( $plan ) as $entry ) {
+            if ( ! is_array( $entry ) || empty( $entry['snapshot_id'] ) || isset( $checked[ (int) $entry['snapshot_id'] ] ) ) {
+                continue;
+            }
+            $chain = MainWP_Backup_Snapshots::instance()->get_chain( (int) $entry['snapshot_id'] );
+            $check = MainWP_Backup_Snapshot_Catalog::validate_chain_formats( $chain );
+            if ( is_wp_error( $check ) ) {
+                return $check;
+            }
+            $checked[ (int) $entry['snapshot_id'] ] = true;
+            foreach ( $chain as $link ) {
+                $checked[ (int) $link->id ] = true;
+            }
+        }
         $metadata    = array();
         $legacy_file = false;
         foreach ( $plan as $entry ) {
@@ -110,12 +125,6 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                             }
                         }
                     }
-                }
-            }
-            if ( ! empty( $entry['snapshot_id'] ) ) {
-                $chain_check = MainWP_Backup_Snapshot_Catalog::validate_chain_formats( MainWP_Backup_Snapshots::instance()->get_chain( (int) $entry['snapshot_id'] ) );
-                if ( is_wp_error( $chain_check ) ) {
-                    return $chain_check;
                 }
             }
             if ( empty( $current ) ) {

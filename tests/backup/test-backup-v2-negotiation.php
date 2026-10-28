@@ -107,12 +107,12 @@ class MainWP_Backup_V2_Negotiation_Test extends MainWP_Abilities_Test_Case {
 			'format'        => 2,
 			'roots'         => array(
 				array(
-					'role'     => 'content',
-					'coverage' => 'restore',
-				),
-				array(
 					'role'     => 'site',
 					'coverage' => 'preserved',
+				),
+				array(
+					'role'     => 'content',
+					'coverage' => 'restore',
 				),
 				array(
 					'role'     => 'config',
@@ -151,7 +151,7 @@ class MainWP_Backup_V2_Negotiation_Test extends MainWP_Abilities_Test_Case {
 		$metadata = array(
 			'backup_format'            => 2,
 			'layout_descriptor'        => $this->descriptor(),
-			'layout_descriptor_sha256' => hash( 'sha256', wp_json_encode( $this->descriptor() ) ),
+			'layout_descriptor_sha256' => hash( 'sha256', wp_json_encode( $this->descriptor(), JSON_UNESCAPED_SLASHES ) ),
 		);
 		return array(
 			array_merge(
@@ -209,7 +209,7 @@ class MainWP_Backup_V2_Negotiation_Test extends MainWP_Abilities_Test_Case {
 		$plan = $this->plan();
 		foreach ( array( 0, 1 ) as $index ) {
 			$plan[ $index ]['layout_descriptor']             = array_reverse( $plan[ $index ]['layout_descriptor'], true );
-			$plan[ $index ]['layout_descriptor']['roots'][0] = array(
+			$plan[ $index ]['layout_descriptor']['roots'][1] = array(
 				'coverage' => 'restore',
 				'role'     => 'content',
 			);
@@ -528,11 +528,93 @@ class MainWP_Backup_V2_Negotiation_Test extends MainWP_Abilities_Test_Case {
 	public function test_different_valid_source_descriptors_are_corrupt() {
 		$plan                                      = $this->plan();
 		$plan[1]['layout_descriptor']['layout_id'] = str_repeat( 'b', 64 );
-		$plan[1]['layout_descriptor_sha256']       = hash( 'sha256', wp_json_encode( $plan[1]['layout_descriptor'] ) );
+		$plan[1]['layout_descriptor_sha256']       = hash( 'sha256', wp_json_encode( $plan[1]['layout_descriptor'], JSON_UNESCAPED_SLASHES ) );
 		$result                                    = MainWP_Backup_Monitor::admit_restore_plan( $this->website, $plan, str_repeat( 'a', 64 ) );
 		$this->assertWPError( $result );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $result->get_error_code() );
 		$this->assertSame( array(), $this->calls );
+	}
+
+	/**
+	 * Resumed plans reuse the catalog's stored-chain format refusal.
+	 *
+	 * @dataProvider stored_chain_formats
+	 * @param string $base_format Base format or layout.
+	 * @param string $leaf_format Leaf format or layout.
+	 * @param bool   $refused     Whether the layouts differ.
+	 */
+	public function test_resumed_plan_uses_catalog_chain_layout_refusal( $base_format, $leaf_format, $refused ) {
+		$plan          = $this->plan();
+		$base_archives = $plan;
+		if ( 'other' === $base_format ) {
+			foreach ( $base_archives as &$entry ) {
+				if ( isset( $entry['layout_descriptor'] ) ) {
+					$entry['layout_descriptor']['layout_id'] = str_repeat( 'b', 64 );
+					$entry['layout_descriptor_sha256']       = hash( 'sha256', wp_json_encode( $entry['layout_descriptor'], JSON_UNESCAPED_SLASHES ) );
+				}
+			}
+			unset( $entry );
+		} elseif ( 'v1' === $base_format ) {
+			$base_archives = array(
+				array(
+					'role' => 'full',
+					'file' => 'legacy.zip',
+				),
+			);
+		}
+		if ( 'v1' === $leaf_format ) {
+			$plan = array(
+				array(
+					'role' => 'full',
+					'file' => 'legacy.zip',
+				),
+			);
+		}
+		$base = MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'site_id'  => (int) $this->website->id,
+				'archives' => $base_archives,
+				'type'     => 'full',
+			)
+		);
+		$this->assertGreaterThan( 0, $base );
+		$leaf = MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'site_id'   => (int) $this->website->id,
+				'archives'  => $plan,
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		$this->assertGreaterThan( 0, $leaf );
+		foreach ( $plan as &$entry ) {
+			$entry['snapshot_id'] = $leaf;
+		}
+		unset( $entry );
+		$this->enable( true );
+		$result = MainWP_Backup_Monitor::admit_restore_plan( $this->website, $plan, str_repeat( 'a', 64 ) );
+		if ( $refused ) {
+			$this->assertWPError( $result );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED, $result->get_error_code() );
+		} else {
+			$this->assertIsArray( $result );
+		}
+		$this->assertCount( ! $refused && 'v2' === $leaf_format ? 1 : 0, $this->calls );
+	}
+
+	/**
+	 * Stored chain combinations and controls.
+	 *
+	 * @return array
+	 */
+	public static function stored_chain_formats() {
+		return array(
+			'different v2 layouts' => array( 'other', 'v2', true ),
+			'v1 then v2'           => array( 'v1', 'v2', true ),
+			'v2 then v1'           => array( 'v2', 'v1', true ),
+			'matching v2'          => array( 'v2', 'v2', false ),
+			'all v1'               => array( 'v1', 'v1', false ),
+		);
 	}
 
 	/** Each entry's digest is validated, not merely compared with its neighbor. */

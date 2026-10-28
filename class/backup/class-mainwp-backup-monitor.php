@@ -112,6 +112,12 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     }
                 }
             }
+            if ( ! empty( $entry['snapshot_id'] ) ) {
+                $chain_check = MainWP_Backup_Snapshot_Catalog::validate_chain_formats( MainWP_Backup_Snapshots::instance()->get_chain( (int) $entry['snapshot_id'] ) );
+                if ( is_wp_error( $chain_check ) ) {
+                    return $chain_check;
+                }
+            }
             if ( empty( $current ) ) {
                 if ( in_array( $entry['role'] ?? '', array( 'full', 'part', 'tombstones', 'manifest' ), true ) ) {
                     $legacy_file = true;

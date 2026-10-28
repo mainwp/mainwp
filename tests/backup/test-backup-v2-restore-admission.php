@@ -194,7 +194,7 @@ class MainWP_Backup_V2_Restore_Admission_Test extends MainWP_Abilities_Test_Case
 				'adopt_only'               => 'adopt' === $source,
 				'backup_format'            => 2,
 				'layout_descriptor'        => $descriptor,
-				'layout_descriptor_sha256' => hash( 'sha256', wp_json_encode( $descriptor ) ),
+				'layout_descriptor_sha256' => hash( 'sha256', wp_json_encode( $descriptor, JSON_UNESCAPED_SLASHES ) ),
 			),
 		);
 	}

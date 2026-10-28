@@ -215,4 +215,96 @@ class MainWP_Backup_V2_List_Admission_Agreement_Test extends MainWP_Abilities_Te
 			'damaged ancestor' => array( true ),
 		);
 	}
+
+	/**
+	 * Removed rows retain the recorded cause while admission refuses them.
+	 *
+	 * @dataProvider removal_cases
+	 * @param string $format Stored format fixture.
+	 * @param string $cause Recorded removal cause.
+	 * @param string $tooltip Existing list message.
+	 */
+	public function test_pruned_rows_keep_removal_tooltip( string $format, string $cause, string $tooltip ) {
+		$healthy = $this->record( $format );
+		$removed = $this->record( $format );
+		$this->assertTrue( MainWP_Backup_Snapshots::instance()->mark_pruned( $removed, $cause ) );
+		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
+		$entries = $catalog->list_snapshots_for_site( 9901 );
+		$this->assertCount( 2, $entries );
+		foreach ( $entries as $entry ) {
+			$id        = (int) $entry['snapshot']->id;
+			$admission = $catalog->resolve_restorable_chain( $id, 9901 );
+			$this->assertSame( $admission['ok'], $entry['restorable'], 'Snapshot ' . $id );
+			if ( $removed === $id ) {
+				$this->assertFalse( $entry['restorable'] );
+				$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_PRUNED, $admission['code'] );
+				$this->assertSame( $cause, $entry['removal_reason'] );
+				$this->assertSame( $tooltip, $entry['restore_reason'] );
+				$this->assertSame( 'unavailable', $entry['source'] );
+			} else {
+				$this->assertSame( $healthy, $id );
+				$this->assertTrue( $entry['restorable'] );
+				$this->assertSame( '', $entry['restore_reason'] );
+			}
+		}
+	}
+
+	/**
+	 * Existing removal causes in both formats.
+	 *
+	 * @return array
+	 */
+	public static function removal_cases(): array {
+		$causes = array(
+			'manual'       => 'Deleted manually; no copy survives locally or in cloud storage.',
+			'retention'    => 'Removed by retention; no copy survives locally or in cloud storage.',
+			'task_deleted' => 'Deleted with its backup task; no copy survives locally or in cloud storage.',
+			'cleanup'      => 'Removed by Clean Up; no copy survives locally or in cloud storage.',
+			''             => 'Removed; no copy survives locally or in cloud storage.',
+		);
+		$cases  = array();
+		foreach ( array( 'v1', 'canonical_control' ) as $format ) {
+			foreach ( $causes as $cause => $tooltip ) {
+				$cases[ $format . '-' . ( '' !== $cause ? $cause : 'unknown' ) ] = array( $format, $cause, $tooltip );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Site refusals retain their shorter list messages for v2 rows.
+	 *
+	 * @dataProvider site_gate_cases
+	 * @param bool   $multisite Whether the site is a multisite network.
+	 * @param string $tooltip Existing list message.
+	 */
+	public function test_v2_site_gate_keeps_list_tooltip( bool $multisite, string $tooltip ) {
+		global $wpdb;
+		$id = $this->record( 'canonical_control' );
+		if ( $multisite ) {
+			$website = MainWP_DB::instance()->get_website_by_id( 9901 );
+			MainWP_DB::instance()->update_website_option( $website, 'child_is_multisite', '1' );
+		} else {
+			$this->assertSame( 1, $wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'type' => 'files' ), array( 'id' => $id ) ) ); // phpcs:ignore WordPress.DB -- stored fixture.
+		}
+		$catalog   = MainWP_Backup_Snapshot_Catalog::instance();
+		$entries   = $catalog->list_snapshots_for_site( 9901 );
+		$admission = $catalog->resolve_restorable_chain( $id, 9901 );
+		$this->assertCount( 1, $entries );
+		$this->assertFalse( $admission['ok'] );
+		$this->assertSame( $admission['ok'], $entries[0]['restorable'] );
+		$this->assertSame( $tooltip, $entries[0]['restore_reason'] );
+	}
+
+	/**
+	 * Site capabilities checked by both list and resolver.
+	 *
+	 * @return array
+	 */
+	public static function site_gate_cases(): array {
+		return array(
+			'files-only' => array( false, 'Update the MainWP Child plugin on the site to restore files-only backups.' ),
+			'multisite'  => array( true, 'This site runs WordPress Multisite. Update the MainWP Child plugin to enable network-wide restore.' ),
+		);
+	}
 }

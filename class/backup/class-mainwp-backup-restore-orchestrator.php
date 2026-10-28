@@ -1144,14 +1144,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param float  $deadline Slice deadline.
      */
     public function run_job( object $job, float $deadline ): void { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- phase dispatch.
-        if ( in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true )
-            && false === $this->admit_restore_dispatch( $job, (array) ( $job->checkpoint['plan'] ?? array() ) ) ) {
-            return;
-        }
         $status = $job->status;
         if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
             // Resume the phase that failed.
             $status = isset( $job->checkpoint['resume_status'] ) ? (string) $job->checkpoint['resume_status'] : MainWP_Backup_Restore_Job_Store::STATUS_PENDING;
+        }
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING !== $status
+            && in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true )
+            && false === $this->admit_restore_dispatch( $job, (array) ( $job->checkpoint['plan'] ?? array() ) ) ) {
+            return;
         }
 
         // An applicable cancel must stop the worker before it advances the restore.

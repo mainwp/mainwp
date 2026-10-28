@@ -654,6 +654,43 @@ class MainWP_Backup_V2_Restore_Admission_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( array(), $this->calls );
 	}
 
+	/** @return array Completed-child verification and its retry resume. */
+	public static function verification_phases() {
+		return array( array( 'verifying' ), array( 'failed_retryable' ) );
+	}
+
+	/**
+	 * Completed Child work must retain the existing reachability retry outcome.
+	 *
+	 * @dataProvider verification_phases
+	 * @param string $phase Effective verification phase.
+	 */
+	public function test_completed_child_verification_needs_no_new_format_admission( $phase ) {
+		$this->enable( true );
+		$this->report                = array();
+		$job                         = $this->job( $this->plan(), $phase, true );
+		$store                       = MainWP_Backup_Restore_Job_Store::instance();
+		$checkpoint                  = $job->checkpoint;
+		$checkpoint['resume_status'] = 'verifying';
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		$orchestrator = new class() extends MainWP_Backup_Restore_Orchestrator {
+			/**
+			 * Keep the existing observational verification retry deterministic.
+			 *
+			 * @param object $website Destination.
+			 * @return bool Reachability.
+			 */
+			protected function site_responds( object $website ): bool {
+				return false;
+			}
+		};
+		$orchestrator->run_job( $store->get_job( (int) $job->id ), microtime( true ) + 1 );
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertSame( 'failed_retryable', $fresh->status );
+		$this->assertSame( 'verifying', $fresh->checkpoint['resume_status'] );
+		$this->assertSame( array(), $this->calls );
+	}
+
 	/** V1 options and artifact JSON stay identical to the start-SHA bytes. */
 	public function test_v1_projection_golden_bytes_with_old_and_new_children() {
 		$plan = $this->plan();

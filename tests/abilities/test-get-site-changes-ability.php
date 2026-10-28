@@ -121,13 +121,12 @@ class Test_GetSiteChanges_Ability extends MainWP_Abilities_Test_Case {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();
 
-        // Expect the doing_it_wrong notice when input validation fails.
-        $this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
-
         $result = $this->execute_ability( 'mainwp/get-site-changes-v1', [
             'site_id_or_domain' => '',
         ] );
 
         $this->assertWPError( $result, 'Invalid input should return WP_Error.' );
+		$this->assertSame( 'mainwp_site_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
     }
 }

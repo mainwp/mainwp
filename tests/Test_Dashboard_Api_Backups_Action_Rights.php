@@ -597,6 +597,8 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
             $envelope = array( 'encrypted_val' => $expected );
             if ( $manage && $accessible && 'replace' === $keys ) {
                 $envelope['file_key'] = 'fixture-key-file';
+            } elseif ( '' !== $expected ) {
+                $envelope['file_key'] = 'fixture_provider_key';
             }
             $this->assertSame( '' === $expected ? '' : wp_json_encode( $envelope ), $stored, $field );
         }

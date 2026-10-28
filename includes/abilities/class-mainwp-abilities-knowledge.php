@@ -86,7 +86,11 @@ class MainWP_Abilities_Knowledge {
                 'input_schema'        => self::input_schema( array( 'site_id' ), array( 'site_id' ) ),
                 'output_schema'       => self::summary_schema( 'site' ),
                 'execute_callback'    => array( self::class, 'execute_get_site_knowledge' ),
-                'permission_callback' => self::permission_callback( 'site' ),
+                'permission_callback' => static function ( $input = null ) {
+                    $permission = self::permission_callback( 'site' );
+                    $result     = $permission( $input );
+                    return is_wp_error( $result ) && 'mainwp_site_not_found' === $result->get_error_code() ? true : $result;
+                },
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(

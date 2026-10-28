@@ -23,6 +23,31 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
 
     private $scope_cost_ids = array();
 
+	/**
+	 * Singleton value to restore after each test.
+	 *
+	 * @var \MainWP_REST_Authentication|null
+	 */
+	private $original_auth_instance;
+
+	/** Use the authenticator attached to WordPress's restored hooks. */
+	public function setUp(): void {
+		parent::setUp();
+		$this->original_auth_instance = \MainWP_REST_Authentication::$instance;
+		$auth                         = null;
+
+		// Core restores callback objects after tests that reset the singleton.
+		foreach ( $GLOBALS['wp_filter']['determine_current_user']->callbacks[15] as $callback ) {
+			$function = $callback['function'];
+			if ( is_array( $function ) && $function[0] instanceof \MainWP_REST_Authentication && 'authenticate' === $function[1] ) {
+				$auth = $function[0];
+				break;
+			}
+		}
+		$this->assertInstanceOf( \MainWP_REST_Authentication::class, $auth );
+		\MainWP_REST_Authentication::$instance = $auth;
+	}
+
     public function tearDown(): void {
         foreach ( $this->scope_cost_ids as $id ) {
             \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance()->delete_cost_tracker( 'id', $id );
@@ -33,6 +58,7 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         }
         $this->scope_filters = array();
         $this->set_machine_context_override( null );
+		\MainWP_REST_Authentication::$instance = $this->original_auth_instance;
         parent::tearDown();
     }
 

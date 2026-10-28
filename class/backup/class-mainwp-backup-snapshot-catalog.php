@@ -99,6 +99,24 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             $by_id[ (int) $entry['snapshot']->id ] = $entry;
         }
         foreach ( $entries as $index => $entry ) {
+            $current = (int) $entry['snapshot']->id;
+            $seen    = array();
+            while ( isset( $by_id[ $current ] ) && ! isset( $seen[ $current ] ) ) {
+                $seen[ $current ] = true;
+                $snapshot         = $by_id[ $current ]['snapshot'];
+                foreach ( (array) $snapshot->archives as $archive ) {
+                    if ( is_array( $archive ) && ( ( array_key_exists( 'backup_format', $archive ) && ! in_array( $archive['backup_format'], array( 1, '1' ), true ) ) || ! empty( $archive['layout_descriptor_sha256'] ) ) ) {
+                        // Keep v1 on its cheap path; the resolver owns format and layout admission.
+                        $admission                           = $this->resolve_restorable_chain( (int) $entry['snapshot']->id, $site_id );
+                        $entries[ $index ]['restorable']     = $admission['ok'];
+                        $entries[ $index ]['restore_reason'] = $admission['ok'] ? '' : (string) $admission['error'];
+                        break 2;
+                    }
+                }
+                $current = (int) $snapshot->parent_id;
+            }
+        }
+        foreach ( $entries as $index => $entry ) {
             if ( 'incremental' !== $entry['snapshot']->type || '' !== $entry['restore_reason'] ) {
                 continue;
             }

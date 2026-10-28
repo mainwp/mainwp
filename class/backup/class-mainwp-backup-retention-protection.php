@@ -345,7 +345,7 @@ class MainWP_Backup_Retention_Protection {
      * @return array Deadline and unknown-age evidence.
      */
     public static function remote_protection( array $snapshot_ids, ?int $now = null, bool $refresh_destinations = true ): array {
-        unset( $now );
+        $now        = null === $now ? time() : $now;
         $protection = array(
             'protected_until' => 0,
             'unknown_age'     => false,
@@ -357,7 +357,7 @@ class MainWP_Backup_Retention_Protection {
                 if ( null === $destination ) {
                     continue;
                 }
-                $age                           = self::upload_age_evidence( $job, $snapshot );
+                $age                           = self::upload_age_evidence( $job, $snapshot, $now );
                 $one                           = self::destination_protection( $destination, $age );
                 $protection['protected_until'] = max( $protection['protected_until'], $one['protected_until'] );
                 $protection['unknown_age']     = $protection['unknown_age'] || $one['unknown_age'];
@@ -371,9 +371,10 @@ class MainWP_Backup_Retention_Protection {
      *
      * @param object      $job Upload job.
      * @param object|null $snapshot Snapshot row.
+     * @param int|null    $now First-observation time.
      * @return array Immutable storage age or an explicit unknown marker.
      */
-    public static function upload_age_evidence( object $job, ?object $snapshot ): array {
+    public static function upload_age_evidence( object $job, ?object $snapshot, ?int $now = null ): array {
         if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE === $job->status ) {
             $uploaded = (int) ( $job->checkpoint['uploaded_at'] ?? 0 );
             if ( $uploaded <= 0 && null !== $snapshot ) {
@@ -388,10 +389,13 @@ class MainWP_Backup_Retention_Protection {
                 'unknown_age' => $uploaded <= 0,
             );
         }
-        // Partial writes may be newer than every durable timestamp in a failed job.
+        // Start unknown-age uploads at their first retention observation. Prune
+        // claims and resumed uploads preserve this floor. An expired worker may
+        // still write later; its lifecycle remains a separate limitation.
+        $floor = MainWP_Backup_Upload_Job_Store::instance()->storage_age_floor( (int) $job->id, null === $now ? time() : $now );
         return array(
-            'uploaded_at' => 0,
-            'unknown_age' => true,
+            'uploaded_at' => $floor,
+            'unknown_age' => $floor <= 0,
         );
     }
 

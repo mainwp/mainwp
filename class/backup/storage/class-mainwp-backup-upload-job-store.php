@@ -496,11 +496,78 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      * @param array       $checkpoint Checkpoint data.
      * @param string|null $lock_token Fence the write on this lease token; null writes unfenced.
      *
-     * @return bool True when the write landed; false when the fence
-     *              refused it because the lease was lost.
+     * @return bool True when persistence is confirmed; false on a changed
+     *              checkpoint, a lost lease or an unconfirmed write.
      */
     public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
-        return $this->update_job( $job_id, array( 'checkpoint' => (string) wp_json_encode( $checkpoint ) ), array( '%s' ), $lock_token );
+        $row = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT kind, checkpoint FROM %i WHERE id = %d', $this->table(), $job_id ) );
+        if ( null === $row ) {
+            return false;
+        }
+        if ( self::KIND_UPLOAD !== $row->kind ) {
+            return $this->update_job( $job_id, array( 'checkpoint' => (string) wp_json_encode( $checkpoint ) ), array( '%s' ), $lock_token );
+        }
+        $current = json_decode( (string) $row->checkpoint, true );
+        if ( (int) ( $current['storage_age_floor'] ?? 0 ) > 0 ) {
+            $checkpoint['storage_age_floor'] = (int) $current['storage_age_floor'];
+        }
+        $encoded = (string) wp_json_encode( $checkpoint );
+        $now     = time();
+        // Compare a digest so the UPDATE only sends one copy of a large checkpoint.
+        $binds = array( $this->table(), $encoded, $now, $job_id, md5( (string) $row->checkpoint ) );
+        $fence = '';
+        if ( null !== $lock_token ) {
+            $fence   = ' AND locked_by = %s AND locked_until >= %d';
+            $binds[] = $lock_token;
+            $binds[] = $now;
+        }
+        $changed = $this->wpdb->query(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- optional fence and bind array grow together.
+                "UPDATE %i SET `checkpoint` = %s, `updated` = %d WHERE id = %d AND MD5(checkpoint) = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence, placeholder values.
+                $binds
+            )
+        );
+        if ( false === $changed ) {
+            return false;
+        }
+        $saved = $this->get_job( $job_id );
+        return null !== $saved && $saved->checkpoint === $checkpoint
+            && ( null === $lock_token || ( $saved->locked_by === $lock_token && (int) $saved->locked_until >= $now ) );
+    }
+
+    /**
+     * Persist an unfinished upload's first retention observation exactly once.
+     *
+     * @param int $job_id Upload identity.
+     * @param int $now Observation time.
+     * @return int Durable floor, or zero when persistence is unconfirmed.
+     */
+    public function storage_age_floor( int $job_id, int $now ): int {
+        $row = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT checkpoint FROM %i WHERE id = %d AND kind = %s', $this->table(), $job_id, self::KIND_UPLOAD ) );
+        if ( null === $row || $now <= 0 ) {
+            return 0;
+        }
+        $checkpoint = json_decode( (string) $row->checkpoint, true );
+        $checkpoint = is_array( $checkpoint ) ? $checkpoint : array();
+        if ( (int) ( $checkpoint['storage_age_floor'] ?? 0 ) > 0 ) {
+            return (int) $checkpoint['storage_age_floor'];
+        }
+        $checkpoint['storage_age_floor'] = $now;
+        $changed                         = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE %i SET checkpoint = %s WHERE id = %d AND kind = %s AND MD5(checkpoint) = %s',
+                $this->table(),
+                (string) wp_json_encode( $checkpoint ),
+                $job_id,
+                self::KIND_UPLOAD,
+                md5( (string) $row->checkpoint )
+            )
+        );
+        if ( false === $changed ) {
+            return 0;
+        }
+        $saved = $this->get_job( $job_id );
+        return (int) ( $saved->checkpoint['storage_age_floor'] ?? 0 );
     }
 
     /**

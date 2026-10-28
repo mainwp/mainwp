@@ -208,6 +208,13 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             }
         }
 
+        foreach ( $chain as $link ) {
+            $metadata = MainWP_Backup_Snapshots::format_metadata( (array) $link->archives );
+            if ( is_wp_error( $metadata ) ) {
+                return $this->refusal( $metadata->get_error_code(), $metadata->get_error_message() );
+            }
+        }
+
         $plan = $this->assemble_plan( $chain );
         if ( empty( $plan ) ) {
             return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_NO_ARTIFACTS, __( 'No artifacts for the selected backup are available locally or in cloud storage.', 'mainwp' ) );
@@ -267,18 +274,25 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         $leaf           = empty( $chain ) ? null : end( $chain );
 
         foreach ( $chain as $snapshot ) {
-            $remote = $this->remote_artifact_index( $snapshot );
+            $remote   = $this->remote_artifact_index( $snapshot );
+            $metadata = MainWP_Backup_Snapshots::format_metadata( (array) $snapshot->archives );
+            if ( is_wp_error( $metadata ) ) {
+                return array();
+            }
 
             foreach ( (array) $snapshot->archives as $archive ) {
                 $role = isset( $archive['role'] ) ? (string) $archive['role'] : '';
                 if ( ! in_array( $role, array( 'full', 'part', 'tombstones', 'db', 'manifest' ), true ) ) {
                     continue;
                 }
-                if ( 'manifest' === $role && ( (int) $snapshot->id !== (int) $leaf->id || ! isset( $archive['walk'] ) || ! is_array( $archive['walk'] ) ) ) {
+                if ( 'manifest' === $role && ( (int) $snapshot->id !== (int) $leaf->id || ( empty( $metadata ) && ( ! isset( $archive['walk'] ) || ! is_array( $archive['walk'] ) ) ) ) ) {
                     continue; // Only the selected point in time can bound reconciliation.
                 }
 
                 $entry = $this->plan_entry( $snapshot, $archive, $remote );
+                if ( ! empty( $metadata ) && ( in_array( $role, array( 'full', 'part', 'tombstones', 'manifest' ), true ) || 2 === (int) ( $archive['backup_format'] ?? 1 ) ) ) {
+                    $entry = array_merge( $entry, $metadata );
+                }
                 if ( 'db' === $role ) {
                     $db_entry = $entry; // Chain-newest dump wins.
                 } elseif ( 'manifest' === $role ) {

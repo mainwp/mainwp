@@ -18,6 +18,7 @@ use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
 /** Exercise real catalog, admission and stored jobs through the Child transport seam. */
 class MainWP_Backup_V2_Cross_Host_Restore_Test extends MainWP_Abilities_Test_Case {
@@ -586,5 +587,145 @@ class MainWP_Backup_V2_Cross_Host_Restore_Test extends MainWP_Abilities_Test_Cas
 		} finally {
 			remove_filter( 'mainwp_currentusercan', $deny, 10 );
 		}
+	}
+	/**
+	 * Call the real restore AJAX handler with a valid nonce and capture its JSON.
+	 *
+	 * @param int   $snapshot_id Selected source.
+	 * @param array $extra Optional request fields.
+	 * @return string Raw response.
+	 */
+	private function restore_ajax( $snapshot_id, $extra = array() ) {
+		$previous_post    = $_POST;
+		$previous_request = $_REQUEST;
+		$_POST            = array_merge(
+			array(
+				'site_id'             => $this->source_id,
+				'snapshot_id'         => $snapshot_id,
+				'confirm_destructive' => '1',
+				'security'            => wp_create_nonce( 'mainwp_restore_initiate' ),
+			),
+			$extra
+		);
+		$_REQUEST         = $_POST;
+		$die              = static function () {
+			return static function () {
+				throw new \RuntimeException( 'cross-host-json-end' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $die );
+		ob_start();
+		try {
+			MainWP_Post_Backup_Handler::instance()->mainwp_restore_initiate();
+		} catch ( \RuntimeException $error ) {
+			$this->assertSame( 'cross-host-json-end', $error->getMessage() );
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			remove_filter( 'wp_die_ajax_handler', $die );
+			$_POST    = $previous_post;
+			$_REQUEST = $previous_request;
+		}
+		return $raw;
+	}
+
+	/**
+	 * Different and malformed destinations must never fall through to the source restore.
+	 *
+	 * @return array Request cases under either switch state.
+	 */
+	public static function refused_ajax_targets() {
+		$cases = array();
+		foreach ( array( false, true ) as $enabled ) {
+			foreach ( array( 'different-int', 'different-string', 'array', 'junk', 'null', 'overflow' ) as $kind ) {
+				$cases[ ( $enabled ? 'on-' : 'off-' ) . $kind ] = array( $enabled, $kind );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Unsupported target input is refused before any restore job or Child request.
+	 *
+	 * @dataProvider refused_ajax_targets
+	 * @param bool   $enabled Existing private switch state.
+	 * @param string $kind Target input shape.
+	 */
+	public function test_ajax_refuses_cross_site_or_malformed_target_before_side_effects( $enabled, $kind ) {
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$this->enable( $enabled );
+		$id     = $this->snapshot( false );
+		$values = array(
+			'different-int'    => $this->target_id,
+			'different-string' => (string) $this->target_id,
+			'array'            => array( $this->source_id ),
+			'junk'             => $this->source_id . 'junk',
+			'null'             => null,
+			'overflow'         => (string) PHP_INT_MAX . '0',
+		);
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$count  = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $table ); // phpcs:ignore WordPress.DB -- side effect count.
+		$result = json_decode( $this->restore_ajax( $id, array( 'target_site_id' => $values[ $kind ] ) ), true );
+		$code   = in_array( $kind, array( 'different-int', 'different-string' ), true ) ? MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE : 'mainwp_invalid_input';
+		$this->assertSame( $code, $result['error_code'] ?? '' );
+		$this->assertSame( $count, (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $table ) ); // phpcs:ignore WordPress.DB -- side effect count.
+		$this->assertSame( array(), $this->calls );
+	}
+
+	/** Absent and equal AJAX destinations retain the same legacy JSON and checkpoint bytes. */
+	public function test_ajax_absent_and_equal_targets_keep_v1_golden_bytes() {
+		$this->set_current_user_as_admin();
+		$id       = $this->snapshot( false );
+		$store    = MainWP_Backup_Restore_Job_Store::instance();
+		$expected = array(
+			'restore_id' => 'fixture-restore',
+			'sub_type'   => 'full',
+			'plan'       => array(
+				array(
+					'role'              => 'full',
+					'file'              => 's' . $id . '-backup.zip',
+					'source_file'       => 'backup.zip',
+					'size'              => 17,
+					'recorded_size'     => 17,
+					'sha256'            => '',
+					'recorded_sha256'   => hash( 'sha256', 'source-backup.zip' ),
+					'damaged'           => false,
+					'expected_sha256'   => '',
+					'snapshot_id'       => $id,
+					'source'            => 'local',
+					'local_path'        => $this->dir . '/backup.zip',
+					'remote_key'        => '',
+					'remote_candidates' => array(),
+					'adopt_only'        => false,
+				),
+			),
+			'options'    => array(
+				'pre_snapshot'    => false,
+				'file_rollback'   => false,
+				'preserve_orders' => false,
+				'woo_order_since' => 0,
+			),
+			'transfer'   => array(),
+		);
+		foreach ( array( false, true ) as $enabled ) {
+			$this->enable( $enabled );
+			foreach ( array( array(), array( 'target_site_id' => $this->source_id ), array( 'target_site_id' => (string) $this->source_id ) ) as $extra ) {
+				$password = static fn() => 'fixture-restore';
+				add_filter( 'random_password', $password );
+				try {
+					$raw = $this->restore_ajax( $id, $extra );
+				} finally {
+					remove_filter( 'random_password', $password );
+				}
+				$job = $store->get_active_job_for_site( $this->source_id );
+				$this->assertNotNull( $job );
+				$this->assertSame( wp_json_encode( array( 'job_id' => (int) $job->id ) ), $raw );
+				$this->assertSame( wp_json_encode( $expected ), wp_json_encode( $job->checkpoint ) );
+				$this->assertTrue( $store->fail_permanent( (int) $job->id, 'Fixture finished.' ) );
+			}
+		}
+		$this->assertSame( array(), $this->calls );
 	}
 }

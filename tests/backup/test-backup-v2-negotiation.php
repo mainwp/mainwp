@@ -270,6 +270,15 @@ class MainWP_Backup_V2_Negotiation_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( '0', MainWP_DB::instance()->get_website_option( $this->website, 'restore_layout_v2_support' ) );
 	}
 
+	/** An unknown extra role must not hide behind the required valid roles. */
+	public function test_preflight_rejects_an_unknown_additional_role() {
+		$this->enable( true );
+		$this->report['layout_roles'][] = 'unexpected';
+		$result = MainWP_Backup_Monitor::admit_restore_plan( $this->website, $this->plan(), str_repeat( 'a', 64 ) );
+		$this->assertWPError( $result );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, $result->get_error_code() );
+	}
+
 	/**
 	 * Invalid fresh reports and the required refusal.
 	 *

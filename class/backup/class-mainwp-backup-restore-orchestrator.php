@@ -136,7 +136,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param int   $snapshot_id Snapshot to restore.
      * @param array $options     Restore flags, including confirm_destructive consent.
      *
-     * @throws MainWP_Exception When the restore cannot start.
+     * @throws MainWP_Exception When the restore cannot start or destination admission fails.
      *
      * @return int Job id.
      */
@@ -252,6 +252,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             ),
             'transfer'   => array(),
         );
+
+        $metadata = MainWP_Backup_Monitor::restore_plan_metadata( (array) $resolved['plan'] );
+        if ( ! empty( $metadata ) ) {
+            $admission = MainWP_Backup_Monitor::admit_restore_plan( MainWP_DB::instance()->get_website_by_id( $site_id ), (array) $resolved['plan'], '', true );
+            if ( is_wp_error( $admission ) ) {
+                throw new MainWP_Exception( MainWP_Backup_Error_Codes::message( $admission->get_error_code() ), null, $admission->get_error_code() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry message.
+            }
+            $checkpoint['target_layout_id'] = $admission['expected_layout_id'];
+        }
 
         $job_id = MainWP_Backup_Restore_Job_Store::instance()->promote_reservation( $reservation, $snapshot_id, $checkpoint );
         if ( $job_id <= 0 ) {
@@ -438,7 +447,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *                           restore job carrying pre_snapshot_artifacts
      *                           in its checkpoint.
      *
-     * @throws MainWP_Exception When the job has no rollback source.
+     * @throws MainWP_Exception When the job has no rollback source or its format metadata is invalid.
      *
      * @return int New job id.
      */
@@ -506,7 +515,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param int    $reservation Reservation id holding the site.
      * @param object $failed_job  Source restore job, freshly read.
      *
-     * @throws MainWP_Exception When the job has no rollback source.
+     * @throws MainWP_Exception When the job has no rollback source or its format metadata is invalid.
      *
      * @return int New job id.
      */
@@ -529,6 +538,18 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'A rollback has already been started for this restore, so it cannot be rolled back again.', 'mainwp' ), null, 'mainwp_restore_rollback_status' );
         }
 
+        $metadata = MainWP_Backup_Snapshots::format_metadata( $artifacts );
+        if ( is_wp_error( $metadata ) ) {
+            throw new MainWP_Exception( MainWP_Backup_Error_Codes::message( $metadata->get_error_code() ), null, $metadata->get_error_code() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry message.
+        }
+        if ( ! empty( $metadata ) ) {
+            foreach ( $artifacts as $artifact ) {
+                if ( 'manifest' === ( $artifact['role'] ?? '' ) && isset( $artifact['layout_descriptor'] ) ) {
+                    $metadata['layout_descriptor'] = $artifact['layout_descriptor'];
+                    break;
+                }
+            }
+        }
         $plan = array();
         foreach ( $artifacts as $artifact ) {
             $plan[] = array(
@@ -542,6 +563,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 'remote_key'  => '',
                 'adopt_only'  => true,
             );
+            if ( ! empty( $metadata ) && 'db' !== ( $artifact['role'] ?? '' ) ) {
+                $plan[ count( $plan ) - 1 ] = array_merge( $plan[ count( $plan ) - 1 ], $metadata );
+            }
         }
 
         $checkpoint = array(
@@ -557,6 +581,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             ),
             'transfer'               => array(),
         );
+        if ( ! empty( $metadata ) ) {
+            // A rollback retains the destination binding of its safety capture.
+            $checkpoint['target_layout_id'] = (string) ( $failed_job->checkpoint['target_layout_id'] ?? '' );
+        }
 
         $job_id = MainWP_Backup_Restore_Job_Store::instance()->promote_reservation( $reservation, (int) $failed_job->snapshot_id, $checkpoint );
         if ( $job_id <= 0 ) {
@@ -1002,7 +1030,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $history_code = MainWP_Backup_Error_Codes::code_for_exception( $e );
             $history_code = MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR === $history_code ? null : $history_code;
             // The site layout does not change between retries.
-            $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT !== $code, $code, $history_code );
+            $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), ! in_array( $code, array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT, MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ), $code, $history_code );
         } finally {
             remove_filter( 'mainwp_fetch_url_site_timeout', $cap_timeout );
             $store->release_lock( $job_id, $token );
@@ -1021,6 +1049,72 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         ) {
             $this->schedule_continuation();
         }
+    }
+
+    /**
+     * Admit each dispatch from its stored plan and a new destination probe.
+     *
+     * @param object $job  Stored job.
+     * @param array  $plan Stored source plan.
+     * @return array|false Source metadata, empty for v1, or false on refusal.
+     */
+    private function admit_restore_dispatch( object $job, array $plan ): array|false {
+        $metadata = MainWP_Backup_Monitor::restore_plan_metadata( $plan );
+        if ( empty( $metadata ) ) {
+            return array();
+        }
+        if ( ! is_wp_error( $metadata ) ) {
+            $metadata = MainWP_Backup_Monitor::admit_restore_plan( $this->website( $job ), $plan, (string) ( $job->checkpoint['target_layout_id'] ?? '' ) );
+        }
+        // Safety capture must use the same format and bindings. Its producer
+        // remains disabled until the negotiated backup lane is available.
+        if ( ! is_wp_error( $metadata ) && ! empty( $job->checkpoint['options']['pre_snapshot'] ) ) {
+            $metadata = new \WP_Error( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT );
+        }
+        if ( is_wp_error( $metadata ) ) {
+            $this->record_admission_refusal( $job, $metadata->get_error_code() );
+            return false;
+        }
+        return $metadata;
+    }
+
+    /**
+     * Stop an incompatible dispatch locally without issuing Child mutations.
+     *
+     * @param object $job  Stored job.
+     * @param string $code Permanent refusal code.
+     * @return void
+     */
+    private function record_admission_refusal( object $job, string $code ): void {
+        $error   = MainWP_Backup_Error_Codes::message( $code );
+        $written = MainWP_Backup_Restore_Job_Store::instance()->finish_with_cancel_confirmation(
+            (int) $job->id,
+            MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
+            $error,
+            $code,
+            null,
+            $this->lock_token
+        );
+        if ( 'written' !== $written ) {
+            return;
+        }
+        MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
+        MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, 'failed', $code );
+        $website = MainWP_DB::instance()->get_website_by_id( (int) $job->site_id );
+        if ( ! empty( $website ) && ! empty( $job->pre_snapshot_task_id ) ) {
+            $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
+        }
+        /** This action is documented in class/backup/class-mainwp-backup-restore-orchestrator.php */
+        do_action(
+            'mainwp_backup_restore_failed',
+            array(
+                'site_id'     => (int) $job->site_id,
+                'snapshot_id' => (int) $job->snapshot_id,
+                'job_id'      => (int) $job->id,
+                'error'       => $error,
+                'error_code'  => $code,
+            )
+        );
     }
 
     /**
@@ -1050,6 +1144,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param float  $deadline Slice deadline.
      */
     public function run_job( object $job, float $deadline ): void { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- phase dispatch.
+        if ( in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true )
+            && false === $this->admit_restore_dispatch( $job, (array) ( $job->checkpoint['plan'] ?? array() ) ) ) {
+            return;
+        }
         $status = $job->status;
         if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
             // Resume the phase that failed.
@@ -1156,6 +1254,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 // The toggle can be turned off between the check above and this call.
                 if ( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED === $e->get_message_error_code() ) {
                     $this->stop_restore_because_native_backups_are_off( $job );
+                    return;
+                }
+                if ( in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                    $this->record_admission_refusal( $job, $e->get_message_error_code() );
                     return;
                 }
                 if ( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT !== $e->get_message_error_code() ) {
@@ -1362,6 +1464,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'failed' === $phase || '' === $phase || ( $reconcile && isset( $payload['error'] ) ) ) {
                 $error      = is_array( $payload ) && isset( $payload['error'] ) ? MainWP_Backup_Error_Codes::sanitize_message( (string) $payload['error'] ) : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
                 $error_code = MainWP_Backup_Error_Codes::code_for_exception( new MainWP_Exception( $error, null, is_array( $payload ) && is_string( $payload['error_code'] ?? null ) ? $payload['error_code'] : '' ) );
+                if ( in_array( $error_code, array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                    $this->record_admission_refusal( $job, $error_code );
+                    return;
+                }
                 if ( 'failed' === $phase ) {
                     MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, 'failed', $error_code );
                     $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
@@ -1771,6 +1877,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 }
             }
 
+            if ( false === $this->admit_restore_dispatch( $job, (array) ( $job->checkpoint['plan'] ?? array() ) ) ) {
+                return;
+            }
             $diag_start = microtime( true );
             $payload    = MainWP_Connect::fetch_url_authed( $website, 'restore_task_run', array( 'task_id' => $job->child_task_id ), false, false, false );
 
@@ -1918,15 +2027,29 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             );
         }
 
-        $website   = $this->website( $job );
-        $options   = array(
+        $metadata = $this->admit_restore_dispatch( $job, $plan );
+        if ( false === $metadata ) {
+            return array(
+                'task_id'       => '',
+                'pull_rejected' => false,
+            );
+        }
+
+        $website = $this->website( $job );
+        $options = array(
             'sub_type'         => (string) $checkpoint['sub_type'],
             'has_foreign_keys' => null,
             'file_rollback'    => ! empty( $checkpoint['options']['file_rollback'] ) || ( empty( $checkpoint['is_rollback'] ) && ! empty( $checkpoint['pre_snapshot_artifacts'] ) ),
             'preserve_orders'  => ! empty( $checkpoint['options']['preserve_orders'] ),
             'woo_order_since'  => isset( $checkpoint['options']['woo_order_since'] ) ? (int) $checkpoint['options']['woo_order_since'] : 0,
         );
+        if ( ! empty( $metadata ) ) {
+            $options['backup_format']      = 2;
+            $options['expected_layout_id'] = (string) $checkpoint['target_layout_id'];
+            $options['layout_descriptor']  = $metadata['layout_descriptor'];
+        }
         $artifacts = array();
+        $reprobed  = false;
         foreach ( $plan as $entry ) {
             $artifacts[] = array(
                 'role'       => $entry['role'],
@@ -1935,8 +2058,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 'sha256'     => (string) $entry['sha256'],
                 'adopt_only' => ! empty( $entry['adopt_only'] ),
             );
+            if ( ! empty( $metadata ) ) {
+                $artifacts[ count( $artifacts ) - 1 ]['backup_format'] = 2;
+            }
             if ( 'db' !== $options['sub_type'] && 'manifest' === $entry['role'] && (int) $entry['snapshot_id'] === (int) $job->snapshot_id && isset( $entry['walk'] ) && is_array( $entry['walk'] ) ) {
                 $needs_unarchived = array_key_exists( 'unarchived', $entry['walk'] ) || array_key_exists( 'unarchived_overflow', $entry['walk'] );
+                $reprobed         = $reprobed || $needs_unarchived;
                 // A failed refresh leaves cached flags intact; only a fresh answer authorizes deletion.
                 if ( $needs_unarchived && ( ! MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website ) || '1' !== (string) MainWP_DB::instance()->get_website_option( $website, 'reconcile_unarchived_support' ) ) ) {
                     unset( $options['reconcile'] );
@@ -1948,6 +2075,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     );
                 }
             }
+        }
+
+        if ( ! empty( $metadata ) && $reprobed && false === $this->admit_restore_dispatch( $job, $plan ) ) {
+            return array(
+                'task_id'       => '',
+                'pull_rejected' => false,
+            );
         }
 
         $params = array(
@@ -2438,6 +2572,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param string|null $history_error_code Classification kept separate from restore-facing errors.
      */
     private function record_failure( object $job, string $error, bool $retryable, string $error_code = '', ?string $history_error_code = null ): void {
+        if ( in_array( $error_code, array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+            $this->record_admission_refusal( $job, $error_code );
+            return;
+        }
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $error = $this->humanize_stored_error( $error );
 

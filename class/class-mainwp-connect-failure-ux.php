@@ -281,15 +281,80 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Preserve fixed Child credential guidance while hiding reflected secrets.
+     *
+     * @param string $message Decoded registration error.
+     * @return string Escaped fixed guidance or conservatively redacted text.
+     */
+    public static function sanitize_registration_error( $message ) {
+        if ( 'Unable to connect to the site. Please verify that your Admin Username and Password are correct and try again.' === $message ) {
+            return esc_html__( 'Unable to connect to the site. Please verify that your Admin Username and Password are correct and try again.', 'mainwp' );
+        }
+        if ( 'Unable to connect to the site. Password Authentication is disabled, so please verify that the Unique Security ID is correct and try again.' === $message ) {
+            return esc_html__( 'Unable to connect to the site. Password Authentication is disabled, so please verify that the Unique Security ID is correct and try again.', 'mainwp' );
+        }
+
+        return self::sanitize_diagnostic_text( $message );
+    }
+
+    /**
+     * Describe a received body without retaining its raw contents.
+     *
+     * @param mixed $body Received response.
+     * @return string Safe description and, where possible, a short excerpt.
+     */
+    public static function describe_received_response( $body ) {
+        $sample = is_string( $body ) ? substr( $body, 0, 4096 ) : '';
+        if ( '' === trim( $sample ) ) {
+            return __( 'Body: the site returned an empty response. Ask the host to check the registration request to wp-admin/admin-ajax.php.', 'mainwp' );
+        }
+        if ( false !== stripos( self::decode_diagnostic_text( $sample ), '<mainwp' ) ) {
+            return __( 'Body: a MainWP response was found but could not be read. Ask the host to check whether a plugin or proxy altered the response.', 'mainwp' );
+        }
+        if ( false !== strpos( $sample, "\0" ) || "\x1f\x8b" === substr( $sample, 0, 2 ) || 1 !== preg_match( '//u', $sample ) ) {
+            return __( 'Body: the site returned binary data, possibly encoded or compressed by the host. Ask the host to check response encoding for wp-admin/admin-ajax.php.', 'mainwp' );
+        }
+
+        // Check the capped raw markup too: stripping tags first would discard
+        // sensitive field names while leaving their values in visible text.
+        $safe = self::sanitize_diagnostic_text( $sample );
+        if ( 0 !== preg_match( '/\b(?:set-)?cookie\s*:/i', self::decode_diagnostic_text( $sample ) ) ) {
+            $safe = self::sensitive_text();
+        }
+        $text      = html_entity_decode( $safe, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        $text      = wp_strip_all_tags( $text, true );
+        $text      = trim( (string) preg_replace( '/\s+/', ' ', $text ) );
+        $html      = false !== strpos( $sample, '<' ) && false !== strpos( $sample, '>' );
+        $challenge = false !== stripos( $sample, 'wp-login' ) || false !== stripos( $sample, 'captcha' ) || false !== stripos( $sample, 'checking your browser' ) || false !== stripos( $sample, 'just a moment' );
+        if ( $challenge ) {
+            $description = __( 'Body: the site returned a login or challenge page instead of the MainWP response. Check the site firewall, security and caching plugins.', 'mainwp' );
+        } elseif ( $html ) {
+            $description = __( 'Body: the site returned an HTML page instead of the MainWP response. A firewall, security or caching plugin may have replaced it. Check those rules for wp-admin/admin-ajax.php.', 'mainwp' );
+        } else {
+            $description = __( 'Body: the site returned text instead of the MainWP response. Ask the host to check the registration request to wp-admin/admin-ajax.php.', 'mainwp' );
+        }
+        if ( $safe === $sample && preg_match( '/<title\b[^>]*>(.*?)<\/title\s*>/is', $sample, $title ) ) {
+            $text = trim( wp_strip_all_tags( html_entity_decode( $title[1], ENT_QUOTES | ENT_HTML5, 'UTF-8' ), true ) );
+        }
+        $excerpt = wp_html_excerpt( $text, 200, '…' );
+        if ( '' !== $excerpt ) {
+            /* translators: %s: short redacted response excerpt. */
+            $description .= "\n" . sprintf( __( 'Excerpt: %s', 'mainwp' ), $excerpt );
+        }
+        return $description;
+    }
+
+    /**
      * Build a readable response block with status and headers.
      *
      * @param int    $http_status HTTP status.
      * @param string $headers     Raw response headers.
      * @param string $body        Raw response body. Only its presence is reported.
+     * @param string $diagnostic  Capped, sanitized description from the transport.
      *
      * @return array<string,string>
      */
-    public static function summarize_response( $http_status, $headers = '', $body = '' ) {
+    public static function summarize_response( $http_status, $headers = '', $body = '', $diagnostic = '' ) {
         $status      = (int) $http_status;
         $status_text = $status > 0 ? (string) $status : '';
         $code_label  = $status > 0 ? MainWP_Utility::get_http_codes( $status ) : '';
@@ -319,7 +384,9 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // The body is never displayed, but saying nothing came back would send
         // someone debugging a WAF or error page in the wrong direction. The
         // hidden-data placeholder does not prove a body arrived.
-        if ( is_string( $body ) && '' !== $body && '[hidden response data]' !== $body ) {
+        if ( is_string( $diagnostic ) && '' !== $diagnostic ) {
+            $lines[] = $diagnostic;
+        } elseif ( is_string( $body ) && '' !== $body && '[hidden response data]' !== $body ) {
             $lines[] = esc_html__( 'Body: received but not shown, because it may contain sensitive data.', 'mainwp' );
         } else {
             $lines[] = esc_html__( 'Body: no readable child response was returned.', 'mainwp' );
@@ -358,7 +425,8 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $headers     = isset( $context['headers'] ) ? (string) $context['headers'] : '';
         $body        = isset( $context['body'] ) ? (string) $context['body'] : '';
         $resolved_ip = self::format_ip_list( isset( $context['resolved_ip'] ) ? $context['resolved_ip'] : '' );
-        $response    = self::summarize_response( $http_status, $headers, $body );
+        $diagnostic  = isset( $context['response_diagnostic'] ) && is_string( $context['response_diagnostic'] ) ? $context['response_diagnostic'] : '';
+        $response    = self::summarize_response( $http_status, $headers, $body, $diagnostic );
         $waf_likely  = self::is_waf_likely( $http_status, $headers . "\n" . $response['headers'], $body . "\n" . $response['body'] );
         $lookup_ip   = empty( $context['skip_outbound_ip'] );
 
@@ -393,11 +461,15 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $resolved_ip         = '';
         $legacy_text         = '';
         $has_response_fields = false;
+        $diagnostic          = '';
 
         if ( $exception instanceof MainWP_Exception ) {
             $data = $exception->get_data();
             if ( is_array( $data ) ) {
                 $has_response_fields = array_key_exists( 'headers', $data ) || array_key_exists( 'body', $data );
+                if ( isset( $data['response_diagnostic'] ) && is_string( $data['response_diagnostic'] ) ) {
+                    $diagnostic = $data['response_diagnostic'];
+                }
                 if ( isset( $data['http_status'] ) ) {
                     $http_status = (int) $data['http_status'];
                 }
@@ -416,6 +488,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             } elseif ( is_string( $data ) ) {
                 $legacy_text = $data;
             }
+        }
+
+        if ( isset( $output['response_diagnostic'] ) && is_string( $output['response_diagnostic'] ) ) {
+            $diagnostic = $output['response_diagnostic'];
         }
 
         if ( isset( $output['http_status'] ) && (int) $output['http_status'] > 0 ) {
@@ -463,11 +539,12 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         return self::build_details(
             array(
-                'http_status' => $http_status,
-                'headers'     => $headers,
-                'body'        => $body,
-                'resolved_ip' => $resolved_ip,
-                'error'       => ( $exception instanceof MainWP_Exception ) ? $exception->getMessage() : '',
+                'http_status'         => $http_status,
+                'response_diagnostic' => $diagnostic,
+                'headers'             => $headers,
+                'body'                => $body,
+                'resolved_ip'         => $resolved_ip,
+                'error'               => ( $exception instanceof MainWP_Exception ) ? $exception->getMessage() : '',
             )
         );
     }
@@ -597,11 +674,14 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $output['resolved_ip']           = $details['resolved_ip'];
         $output['resolved_ip_label']     = $details['resolved_ip_label'];
         $output['waf_likely']            = $details['waf_likely'];
-        $output['response_headers']      = $details['response']['headers'];
-        $output['response_body']         = $details['response']['body'];
-        $output['response_readable']     = $details['response']['text'];
-        $output['failure_ux']            = self::render_html( $details );
-        $output['failure_ux_text']       = self::format_text( $details );
+        if ( isset( $context['response_diagnostic'] ) && is_string( $context['response_diagnostic'] ) ) {
+            $output['response_diagnostic'] = $context['response_diagnostic'];
+        }
+        $output['response_headers']  = $details['response']['headers'];
+        $output['response_body']     = $details['response']['body'];
+        $output['response_readable'] = $details['response']['text'];
+        $output['failure_ux']        = self::render_html( $details );
+        $output['failure_ux_text']   = self::format_text( $details );
 
         return $output;
     }

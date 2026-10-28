@@ -33,8 +33,8 @@ class MainWP_Backup_V2_List_Admission_Agreement_Test extends MainWP_Abilities_Te
 	public function set_up() {
 		parent::set_up();
 		$this->create_test_site( array( 'id' => 9901 ) );
-		$this->dir = sys_get_temp_dir() . '/kevin-jayAM-mwp2043-list-fixture';
-		mkdir( $this->dir );
+		$this->dir = sys_get_temp_dir() . '/mainwp-v2-list-' . uniqid();
+		$this->assertTrue( mkdir( $this->dir ) );
 	}
 
 	/** Remove local artifacts. */
@@ -184,6 +184,7 @@ class MainWP_Backup_V2_List_Admission_Agreement_Test extends MainWP_Abilities_Te
 		$before  = $wpdb->num_queries;
 		$entries = $catalog->list_snapshots_for_site( 9901 );
 		$queries = $wpdb->num_queries - $before;
+		$this->assertSame( $damaged ? 31 : 9, $queries );
 		$this->assertCount( 3, $entries );
 		foreach ( $entries as $entry ) {
 			$id        = (int) $entry['snapshot']->id;
@@ -199,18 +200,6 @@ class MainWP_Backup_V2_List_Admission_Agreement_Test extends MainWP_Abilities_Te
 					'removal_reason' => MainWP_Backup_Snapshots::REMOVAL_REASON_UNKNOWN,
 				),
 				$entry
-			);
-		}
-		$parity = getenv( 'MWP2043_PARITY' );
-		if ( $parity ) {
-			file_put_contents(
-				$parity . '-' . (int) $damaged . '.json',
-				wp_json_encode(
-					array(
-						'queries' => $queries,
-						'entries' => $entries,
-					)
-				)
 			);
 		}
 	}

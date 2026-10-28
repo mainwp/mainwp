@@ -1149,12 +1149,6 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             // Resume the phase that failed.
             $status = isset( $job->checkpoint['resume_status'] ) ? (string) $job->checkpoint['resume_status'] : MainWP_Backup_Restore_Job_Store::STATUS_PENDING;
         }
-        if ( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING !== $status
-            && in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true )
-            && false === $this->admit_restore_dispatch( $job, (array) ( $job->checkpoint['plan'] ?? array() ) ) ) {
-            return;
-        }
-
         // An applicable cancel must stop the worker before it advances the restore.
         if ( self::has_applicable_cancel_intent( $job ) ) {
             if ( self::TERMINAL_OUTCOME_DRIVE_ON !== $this->apply_cancel_intent( $job ) ) {
@@ -1170,6 +1164,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $status = MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $job->status
                 ? ( $job->checkpoint['resume_status'] ?? MainWP_Backup_Restore_Job_Store::STATUS_PENDING )
                 : $job->status;
+        }
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING !== $status
+            && in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true )
+            && false === $this->admit_restore_dispatch( $job, (array) ( $job->checkpoint['plan'] ?? array() ) ) ) {
+            return;
         }
 
         switch ( $status ) {

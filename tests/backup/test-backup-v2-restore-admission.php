@@ -695,6 +695,20 @@ class MainWP_Backup_V2_Restore_Admission_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( array(), $this->calls );
 	}
 
+	/** A queued user cancellation keeps its existing local outcome. */
+	public function test_user_cancel_intent_precedes_new_restore_admission() {
+		$this->enable( true );
+		$this->report                = array();
+		$job                         = $this->job( $this->plan(), 'staging' );
+		$store                       = MainWP_Backup_Restore_Job_Store::instance();
+		$checkpoint                  = $job->checkpoint;
+		$checkpoint['cancel_intent'] = true;
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		( new MainWP_Backup_Restore_Orchestrator() )->run_job( $store->get_job( (int) $job->id ), microtime( true ) + 1 );
+		$this->assertSame( 'cancelled', $store->get_job( (int) $job->id )->status );
+		$this->assertSame( array(), $this->calls );
+	}
+
 	/** V1 options and artifact JSON stay identical to the start-SHA bytes. */
 	public function test_v1_projection_golden_bytes_with_old_and_new_children() {
 		$plan = $this->plan();

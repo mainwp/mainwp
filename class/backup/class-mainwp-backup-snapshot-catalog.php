@@ -208,11 +208,18 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             }
         }
 
+        $chain_digest = null;
         foreach ( $chain as $link ) {
             $metadata = MainWP_Backup_Snapshots::format_metadata( (array) $link->archives );
             if ( is_wp_error( $metadata ) ) {
                 return $this->refusal( $metadata->get_error_code(), $metadata->get_error_message() );
             }
+            // An empty digest identifies v1; all links must share one format/layout.
+            $digest = $metadata['layout_descriptor_sha256'] ?? '';
+            if ( null !== $chain_digest && $digest !== $chain_digest ) {
+                return $this->refusal( MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ) );
+            }
+            $chain_digest = $digest;
         }
 
         $plan = $this->assemble_plan( $chain );

@@ -155,7 +155,7 @@ class MainWP_Backup_V2_Cloud_Metadata_Test extends MainWP_Abilities_Test_Case {
 		$this->metadata       = array(
 			'backup_format'            => 2,
 			'layout_descriptor'        => $descriptor,
-			'layout_descriptor_sha256' => hash( 'sha256', wp_json_encode( $descriptor ) ),
+			'layout_descriptor_sha256' => hash( 'sha256', wp_json_encode( $descriptor, JSON_UNESCAPED_SLASHES ) ),
 		);
 	}
 
@@ -205,8 +205,8 @@ class MainWP_Backup_V2_Cloud_Metadata_Test extends MainWP_Abilities_Test_Case {
 	 * @param bool $encrypted Enable archive encryption.
 	 * @param bool $v2 Supply v2 file metadata.
 	 * @param bool $with_db Include an unchanged database artifact.
-	 * @param bool $string_format Supply the accepted digit-string version.
-	 * @return object Completed upload job.
+	 * @param bool $string_format Supply a digit-string version.
+	 * @return object|null Completed upload job, or null for a refused snapshot.
 	 */
 	private function upload_fixture( $chunked, $encrypted, $v2 = true, $with_db = false, $string_format = false ) {
 		if ( $encrypted ) {
@@ -257,7 +257,11 @@ class MainWP_Backup_V2_Cloud_Metadata_Test extends MainWP_Abilities_Test_Case {
 				'manifest_path' => $this->dir . '/source/manifest.json',
 			)
 		);
-		$store             = MainWP_Backup_Upload_Job_Store::instance();
+		if ( $string_format ) {
+			$this->assertSame( 0, $this->snapshot_id );
+			return null;
+		}
+		$store = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( $this->snapshot_id, array( $this->destination_id ) );
 		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 60 );
 		$job = $store->get_jobs_for_snapshot( $this->snapshot_id )[0];
@@ -393,16 +397,14 @@ class MainWP_Backup_V2_Cloud_Metadata_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Keep metadata supplied with a digit-string format.
+	 * Refuse a digit-string format before storing or uploading the snapshot.
 	 *
 	 * @return void
 	 */
 	public function test_supplied_string_format_keeps_metadata_on_upload() {
-		$job      = $this->upload_fixture( false, false, true, false, true );
-		$manifest = json_decode( file_get_contents( $this->manifest_path() ), true );
-		$this->assertSame( 2, $manifest['format'] );
-		$this->assertSame( 2, $job->checkpoint['artifacts'][0]['backup_format'] );
-		$this->assertSame( $this->metadata['layout_descriptor_sha256'], $manifest['artifacts'][0]['layout_descriptor_sha256'] );
+		$this->assertNull( $this->upload_fixture( false, false, true, false, true ) );
+		$this->assertSame( array(), MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $this->snapshot_id ) );
+		$this->assertFileDoesNotExist( $this->manifest_path() );
 	}
 
 	/**
@@ -528,7 +530,7 @@ class MainWP_Backup_V2_Cloud_Metadata_Test extends MainWP_Abilities_Test_Case {
 			$manifest['layout_descriptor_sha256'] = str_repeat( 'f', 64 );
 		} elseif ( 'descriptor' === $fault ) {
 			$manifest['layout_descriptor']['layout_id'] = hash( 'sha256', 'other layout' );
-			$manifest['layout_descriptor_sha256']       = hash( 'sha256', wp_json_encode( $manifest['layout_descriptor'] ) );
+			$manifest['layout_descriptor_sha256']       = hash( 'sha256', wp_json_encode( $manifest['layout_descriptor'], JSON_UNESCAPED_SLASHES ) );
 			foreach ( $manifest['artifacts'] as &$artifact ) {
 				$artifact['layout_descriptor_sha256'] = $manifest['layout_descriptor_sha256'];
 				if ( 'manifest' === $artifact['role'] ) {

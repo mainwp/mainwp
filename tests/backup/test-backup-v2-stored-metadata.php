@@ -57,16 +57,12 @@ class MainWP_Backup_V2_Stored_Metadata_Test extends MainWP_Abilities_Test_Case {
 			'format'        => 2,
 			'roots'         => array(
 				array(
-					'role'     => 'content',
-					'coverage' => 'restore',
-				),
-				array(
-					'role'     => 'config',
-					'coverage' => 'recovery_only',
-				),
-				array(
 					'role'     => 'site',
 					'coverage' => 'preserved',
+				),
+				array(
+					'role'     => 'content',
+					'coverage' => 'restore',
 				),
 				array(
 					'role'     => 'uploads',
@@ -79,6 +75,10 @@ class MainWP_Backup_V2_Stored_Metadata_Test extends MainWP_Abilities_Test_Case {
 				array(
 					'role'     => 'mu_plugins',
 					'coverage' => 'restore',
+				),
+				array(
+					'role'     => 'config',
+					'coverage' => 'recovery_only',
 				),
 			),
 			'layout_id'     => str_repeat( 'b', 64 ),
@@ -95,7 +95,7 @@ class MainWP_Backup_V2_Stored_Metadata_Test extends MainWP_Abilities_Test_Case {
 	 */
 	private function archives() {
 		$descriptor = $this->descriptor();
-		$digest     = hash( 'sha256', wp_json_encode( $descriptor ) );
+		$digest     = hash( 'sha256', wp_json_encode( $descriptor, JSON_UNESCAPED_SLASHES ) );
 		return array(
 			array(
 				'file'                     => 'backup.mwp2',
@@ -160,7 +160,7 @@ class MainWP_Backup_V2_Stored_Metadata_Test extends MainWP_Abilities_Test_Case {
 		foreach ( $resolved['plan'] as $entry ) {
 			$this->assertSame( 2, $entry['backup_format'] );
 			$this->assertSame( $this->descriptor(), $entry['layout_descriptor'] );
-			$this->assertSame( hash( 'sha256', wp_json_encode( $this->descriptor() ) ), $entry['layout_descriptor_sha256'] );
+			$this->assertSame( hash( 'sha256', wp_json_encode( $this->descriptor(), JSON_UNESCAPED_SLASHES ) ), $entry['layout_descriptor_sha256'] );
 		}
 	}
 
@@ -182,6 +182,63 @@ class MainWP_Backup_V2_Stored_Metadata_Test extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 3, $resolved['plan'] );
 		$this->assertSame( $base, $resolved['plan'][0]['snapshot_id'] );
 		$this->assertSame( $this->descriptor(), $resolved['plan'][0]['layout_descriptor'] );
+	}
+
+	/**
+	 * Reject a format/layout boundary within one chain; keep all-v1 chains.
+	 *
+	 * @dataProvider chain_layout_variants
+	 * @param bool $base_v2 Whether the full base uses v2.
+	 * @param bool $leaf_v2 Whether the incremental leaf uses v2.
+	 * @param bool $changed Whether the leaf has a different descriptor.
+	 */
+	public function test_chain_descriptor_binding( $base_v2, $leaf_v2, $changed ) {
+		$legacy          = array(
+			array(
+				'file' => 'legacy.tar',
+				'role' => 'full',
+			),
+		);
+		$base            = $this->record( $base_v2 ? $this->archives() : $legacy );
+		$next            = $leaf_v2 ? $this->archives() : $legacy;
+		$next[0]['file'] = $leaf_v2 ? 'part001.mwp2' : 'part001.zip';
+		$next[0]['role'] = 'part';
+		if ( $changed ) {
+			$next[1]['layout_descriptor']['layout_id'] = str_repeat( 'c', 64 );
+			$digest                                    = hash( 'sha256', wp_json_encode( $next[1]['layout_descriptor'], JSON_UNESCAPED_SLASHES ) );
+			$next[0]['layout_descriptor_sha256']       = $digest;
+			$next[1]['layout_descriptor_sha256']       = $digest;
+		}
+		$id       = $this->record(
+			$next,
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $id, $this->site_id );
+		if ( ! $base_v2 && ! $leaf_v2 ) {
+			$this->assertTrue( $resolved['ok'], $resolved['error'] ?? '' );
+			$this->assertCount( 2, $resolved['plan'] );
+			return;
+		}
+		$this->assertFalse( $resolved['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED, $resolved['code'] );
+		$this->assertSame( array(), $resolved['plan'] );
+	}
+
+	/**
+	 * Chain format/layout boundaries and the unchanged v1 control.
+	 *
+	 * @return array
+	 */
+	public static function chain_layout_variants() {
+		return array(
+			'different v2 layouts' => array( true, true, true ),
+			'v1 base v2 leaf'      => array( false, true, false ),
+			'v2 base v1 leaf'      => array( true, false, false ),
+			'all v1 control'       => array( false, false, false ),
+		);
 	}
 
 	/** Unknown stored formats fail admission before staging. */
@@ -215,15 +272,15 @@ class MainWP_Backup_V2_Stored_Metadata_Test extends MainWP_Abilities_Test_Case {
 			$archives[1]['layout_descriptor']['layout_id'] = str_repeat( 'd', 64 );
 		} elseif ( 'role' === $corruption ) {
 			$archives[1]['layout_descriptor']['roots'][0]['role'] = 'outside';
-			$archives[1]['layout_descriptor_sha256']              = hash( 'sha256', wp_json_encode( $archives[1]['layout_descriptor'] ) );
+			$archives[1]['layout_descriptor_sha256']              = hash( 'sha256', wp_json_encode( $archives[1]['layout_descriptor'], JSON_UNESCAPED_SLASHES ) );
 			$archives[0]['layout_descriptor_sha256']              = $archives[1]['layout_descriptor_sha256'];
 		} elseif ( 'duplicate' === $corruption ) {
 			$archives[1]['layout_descriptor']['roots'][] = $archives[1]['layout_descriptor']['roots'][0];
-			$archives[1]['layout_descriptor_sha256']     = hash( 'sha256', wp_json_encode( $archives[1]['layout_descriptor'] ) );
+			$archives[1]['layout_descriptor_sha256']     = hash( 'sha256', wp_json_encode( $archives[1]['layout_descriptor'], JSON_UNESCAPED_SLASHES ) );
 			$archives[0]['layout_descriptor_sha256']     = $archives[1]['layout_descriptor_sha256'];
 		} else {
 			$archives[1]['layout_descriptor']['roots'][0]['coverage'] = 'all';
-			$archives[1]['layout_descriptor_sha256']                  = hash( 'sha256', wp_json_encode( $archives[1]['layout_descriptor'] ) );
+			$archives[1]['layout_descriptor_sha256']                  = hash( 'sha256', wp_json_encode( $archives[1]['layout_descriptor'], JSON_UNESCAPED_SLASHES ) );
 			$archives[0]['layout_descriptor_sha256']                  = $archives[1]['layout_descriptor_sha256'];
 		}
 		$id       = $this->record( $archives, array(), true );

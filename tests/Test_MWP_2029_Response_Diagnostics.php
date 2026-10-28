@@ -92,7 +92,7 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 
 	/** Cookie names need no password or token marker to be private. */
 	public function test_cookie_header_excerpts_are_hidden(): void {
-		foreach ( array( 'Cookie: wordpress_logged_in_abc=OBVIOUS_FAKE_VALUE', 'Set-Cookie: wpfoo=OBVIOUS_FAKE_VALUE; Path=/', 'Cookie%3A%20wordpress_logged_in_abc%3DOBVIOUS_FAKE_VALUE' ) as $body ) {
+		foreach ( array( 'Cookie: wordpress_logged_in_abc=OBVIOUS_FAKE_VALUE', 'Set-Cookie: wpfoo=OBVIOUS_FAKE_VALUE; Path=/', 'Cookie%3A%20wordpress_logged_in_abc%3DOBVIOUS_FAKE_VALUE', '{"Cookie":"wordpress_logged_in_abc=OBVIOUS_FAKE_VALUE"}', '<dt>Cookie</dt><dd>wordpress_logged_in_abc=OBVIOUS_FAKE_VALUE</dd>' ) as $body ) {
 			$text = MainWP_Connect_Failure_Ux::describe_received_response( $body );
 			$this->assertStringContainsString( 'hidden', $text );
 			$this->assertStringNotContainsString( 'OBVIOUS_FAKE_VALUE', $text );

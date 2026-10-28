@@ -318,7 +318,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // Check the capped raw markup too: stripping tags first would discard
         // sensitive field names while leaving their values in visible text.
         $safe = self::sanitize_diagnostic_text( $sample );
-        if ( 0 !== preg_match( '/\b(?:set-)?cookie\s*:/i', self::decode_diagnostic_text( $sample ) ) ) {
+        if ( false !== stripos( self::decode_diagnostic_text( $sample ), 'cookie' ) ) {
             $safe = self::sensitive_text();
         }
         $text      = html_entity_decode( $safe, ENT_QUOTES | ENT_HTML5, 'UTF-8' );

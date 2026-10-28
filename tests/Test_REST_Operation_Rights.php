@@ -77,6 +77,66 @@ class Test_REST_Operation_Rights extends TestCase {
 	}
 
 	/**
+	 * The settings tools need both rights, for scoped and unrestricted accounts.
+	 *
+	 * @return array Handler, scope, rights and expected refusal.
+	 */
+	public static function settings_tool_rights(): array {
+		$cases = array();
+		foreach ( array( 'destroy_sessions', 'renew_connections', 'disconnect_all_sites' ) as $method ) {
+			foreach ( array( 'all', array( 1 ) ) as $sites ) {
+				$cases[] = array( $method, $sites, true, false, 'edit_sites' );
+				$cases[] = array( $method, $sites, false, true, 'manage_dashboard_settings' );
+				$cases[] = array( $method, $sites, true, true, null );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Refuse missing rights before reading sites or creating any queued job.
+	 *
+	 * @dataProvider settings_tool_rights
+	 * @param string       $method   Tool handler.
+	 * @param array|string $sites    Account scope.
+	 * @param bool         $settings Settings right.
+	 * @param bool         $edit     Site-edit right.
+	 * @param string|null  $missing  Expected missing right, or null when allowed.
+	 */
+	public function test_settings_tools_require_both_rights( $method, $sites, $settings, $edit, $missing ): void {
+		$result = $this->probe(
+			array(
+				'controller'  => 'MainWP_Rest_Settings_Controller',
+				'method'      => $method,
+				'route_check' => true,
+				'sites'       => $sites,
+				'rights'      => array(
+					'dashboard' => array(
+						'manage_dashboard_settings' => $settings,
+						'edit_sites'                => $edit,
+					),
+				),
+			)
+		);
+		if ( null !== $missing ) {
+			$this->assertIsArray( $result['error'], 'Missing rights must stop before the site-list boundary.' );
+			$this->assertSame( 'mainwp_insufficient_right', $result['error']['code'] );
+			$this->assertSame(
+				array(
+					'status' => 403,
+					'right'  => $missing,
+				),
+				$result['error']['data']
+			);
+			$this->assertNull( $result['boundary'] );
+		} else {
+			$this->assertNull( $result['error'] );
+			$this->assertSame( 'site list', $result['boundary'] );
+			$this->assertSame( array( array( 'dashboard', 'manage_dashboard_settings', 42 ), array( 'dashboard', 'edit_sites', 42 ) ), $result['checks'] );
+		}
+	}
+
+	/**
 	 * Operation-to-right contracts, independent of route dispatch.
 	 *
 	 * @return array

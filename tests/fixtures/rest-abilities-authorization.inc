@@ -32,7 +32,7 @@ namespace {
 	function wp_register_ability( $name, $args ) { $GLOBALS['fixture_abilities'][ $name ] = $args; }
 	function wp_get_ability( $name ) { return new Rest_Rights_Ability( $name, $GLOBALS['fixture_abilities'][ $name ] ); }
 
-	/** Execute the real registered permission callback, then stop before side effects. */
+	/** Run registered permissions and, in ability_execute mode, the execution callback. */
 	class Rest_Rights_Ability {
 		public function __construct( private $name, private $args ) {}
 		public function get_name() { return $this->name; }
@@ -41,6 +41,9 @@ namespace {
 			$result = $this->check_permissions( $input );
 			if ( is_wp_error( $result ) || true !== $result ) {
 				return $result;
+			}
+			if ( 'ability_execute' === $GLOBALS['fixture']['abilities_mode'] ) {
+				return ( $this->args['execute_callback'] )( $input );
 			}
 			throw new Rest_Rights_Boundary( 'ability:' . $this->name );
 		}
@@ -89,7 +92,7 @@ namespace {
 					$states[] = MainWP\Dashboard\MainWP_Abilities_Util::check_rest_api_permission();
 					apply_filters( 'rest_request_after_callbacks', null, array(), $nested );
 					$states[] = MainWP\Dashboard\MainWP_Abilities_Util::check_rest_api_permission();
-				} elseif ( 'ability' === $input['abilities_mode'] ) {
+				} elseif ( in_array( $input['abilities_mode'], array( 'ability', 'ability_execute' ), true ) ) {
 					$result = wp_get_ability( $input['ability'] )->execute( $input['ability_input'] ?? array() );
 				} elseif ( 'gate' === $input['abilities_mode'] ) {
 					$result = MainWP\Dashboard\MainWP_Abilities_Util::check_rest_api_permission();

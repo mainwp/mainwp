@@ -532,6 +532,28 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
         $this->test_missing_owner_right_refuses_write( $method, $route, $body, $right );
     }
 
+	/**
+	 * Tools that modify sites need the site-edit right as well as settings access.
+	 *
+	 * @return array Site-modifying settings routes.
+	 */
+	public static function connection_tools(): array {
+		return array_intersect_key( self::write_routes(), array_flip( array( 'destroy-sessions', 'renew', 'disconnect' ) ) );
+	}
+
+	/**
+	 * Connection tools must also enforce edit_sites before queuing a scoped job.
+	 *
+	 * @dataProvider connection_tools
+	 * @param string $method HTTP method.
+	 * @param string $route  Settings route.
+	 * @param array  $body   Request body.
+	 */
+	public function test_site_tools_without_edit_sites_refused( $method, $route, $body ): void {
+		$this->restricted = true;
+		$this->test_missing_owner_right_refuses_write( $method, $route, $body, 'edit_sites' );
+	}
+
     /**
      * Tag restrictions alone still refuse every global settings write.
      *

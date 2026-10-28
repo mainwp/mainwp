@@ -110,7 +110,7 @@ class Test_REST_Abilities_Authorization extends TestCase {
 		}
 		$result = $this->probe(
 			array(
-				'abilities_mode' => 'ability',
+				'abilities_mode' => 'ability_execute',
 				'ability'        => 'mainwp/get-site-v1',
 				'ability_input'  => array( 'site_id_or_domain' => 2 ),
 				'sites'          => array( 1 ),

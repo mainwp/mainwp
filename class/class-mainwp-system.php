@@ -192,19 +192,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             define( 'MAINWP_DEMO_MODE', true );
         }
 
-        $ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
-        if ( empty( $ssl_api_verifyhost ) ) {
-            add_filter(
-                'http_request_args',
-                array(
-                    MainWP_Extensions_Handler::get_class_name(),
-                    'no_ssl_filter_extension_upgrade',
-                ),
-                99,
-                2
-            );
-        }
-
         MainWP_Extensions::init();
         MainWP_Extensions_Groups::init();
 
@@ -377,7 +364,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_upgradeVersionInfo',
                 'mainwp_extensions',
                 'mainwp_activated',
-                'mainwp_api_sslVerifyCertificate',
                 'mainwp_automaticDailyUpdate',
                 'mainwp_pluginAutomaticDailyUpdate',
                 'mainwp_themeAutomaticDailyUpdate',

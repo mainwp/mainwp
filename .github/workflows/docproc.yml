@@ -8,6 +8,12 @@ on:
   push:
     branches: [ documentation ]
 
+# Pushes are not cancelled once they start. A newer push replaces one that
+# is still waiting, so two documentation builds cannot overlap on the server.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"

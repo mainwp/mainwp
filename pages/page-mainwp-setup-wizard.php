@@ -838,7 +838,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <input type="hidden" name="qsw_nonce[mainwp_checkwp]" value="<?php echo esc_attr( wp_create_nonce( 'mainwp_checkwp' ) ); ?>">
 
 
-                        <div class="ui divider"></div>
+                        <div class="ui hidden divider"></div>
                         <div class="ui stackable grid">
                             <div class="ten wide column">
                                 <a href="<?php echo esc_url( $this->get_back_step_link( 'welcome' ) ); ?>" class="ui basic button"><i class="arrow left icon"></i> <?php esc_html_e( 'Back to Welcome', 'mainwp' ); ?></a>

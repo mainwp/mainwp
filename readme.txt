@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.3
 Requires PHP: 8.3
-Stable tag: 6.4-rc.3
+Stable tag: 6.4-rc.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -153,6 +153,41 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.4-rc.4 - 10-28-2026 =
+
+* Fixed: Preserved existing API Backups credentials when replacements cannot be saved, in both Settings and per-site settings.
+* Fixed: Prevented imported post images from overwriting existing files.
+* Fixed: Corrected site counts in multi-user mode.
+* Fixed: Corrected Updates pagination to prevent extra empty pages.
+* Fixed: Preserved the selected SSL version when adding sites through APIs and automation tools.
+* Fixed: Ensured APIs and automation tools respect the Ignore Translation Updates setting.
+* Fixed: Corrected bulk site reconnection, connection check results, and progress reporting for Dashboard tools.
+* Fixed: Improved cleanup of deleted-site backups, including failed and partial backups, and corrected cleanup previews.
+* Fixed: Corrected retention counts for damaged archives to better protect intact backups.
+* Fixed: Added complete totals and clearer limits to backup deletion previews.
+* Fixed: Preserved more helpful error details in completed backup history.
+* Fixed: Removed an unnecessary delay after Add-on update checks.
+* Fixed: Prevented repeated scheduled site syncs after moving the Dashboard timezone backward.
+* Fixed: Restored bulk post and page management for Team Control staff with the required permissions.
+* Fixed: Kept site deletion details visible in Logs and Insights.
+* Fixed: Prevented generated credential key files from overwriting existing keys.
+* Updated: Strengthened site and tag ownership checks across Dashboard actions, widgets, and APIs.
+* Updated: Tightened site access checks for CSV user imports.
+* Updated: Strengthened Team Control permissions for Cost Tracker, log cleanup, and plugin and theme actions.
+* Updated: Restricted legacy API-key creation and editing to unrestricted administrators.
+* Updated: Improved compatibility with restricted Team Control roles to prevent server errors.
+* Updated: Strengthened credential storage and key file protection, and removed sensitive GridPane logging.
+* Updated: Strengthened protection of private site information in API responses.
+* Updated: Strengthened API request validation and handling of site information in notification emails.
+* Updated: Improved security when displaying CSV imports, plugin details, Cost Tracker icons, and activity logs.
+* Updated: Improved certificate verification when adding and importing sites, and strengthened verification for Vultr connections.
+* Updated: Expanded backup retention with remote-only storage, minimum remote storage periods, and unlimited retention options.
+* Updated: Improved backup cleanup performance, storage destination settings reliability, and cleanup warnings.
+* Updated: Strengthened permissions for deleting plugins and themes through the legacy REST API.
+* Updated: Added administrator-password support when connecting sites through WP-CLI, with verified HTTPS by default.
+* Updated: Strengthened Add-on response validation and enforced SSL certificate verification for licensing and downloads.
+* Updated: Tightened permissions for reconnecting sites, disconnecting sites, and ending user sessions.
 
 = 6.4-rc.3 - 10-23-2026 =
 

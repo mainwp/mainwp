@@ -653,8 +653,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'httpVersion'    => $http_version,
         );
 
-        $hidden_data = '[hidden response data]';
-        $hide_raw    = (bool) apply_filters( 'mainwp_hide_raw_connection_response_data', true );
+        $response_diagnostic = $http_status > 0 ? MainWP_Connect_Failure_Ux::describe_received_response( $data ) : '';
+        $hidden_data         = '[hidden response data]';
+        $hide_raw            = (bool) apply_filters( 'mainwp_hide_raw_connection_response_data', true );
 
         if ( ( false === $ip || $ip === $host || ! static::validate_ip( $ip ) ) && $hide_raw ) { // Failed to resolve hostname.
             $data = $hidden_data;
@@ -678,12 +679,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $out = MainWP_Connect_Failure_Ux::enrich_output(
             $out,
             array(
-                'http_status'      => $http_status,
-                'headers'          => $resp_headers,
-                'body'             => $response_body,
-                'resolved_ip'      => $ip,
-                'error'            => $out['error'],
-                'skip_outbound_ip' => ( '' === $out['error'] && 200 === (int) $http_status ),
+                'http_status'         => $http_status,
+                'headers'             => $resp_headers,
+                'body'                => $response_body,
+                'resolved_ip'         => $ip,
+                'error'               => $out['error'],
+                'skip_outbound_ip'    => ( '' === $out['error'] && 200 === (int) $http_status ),
+                'response_diagnostic' => $response_diagnostic,
             )
         );
 
@@ -2587,11 +2589,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $failure_context = array(
-            'http_status' => $http_status,
-            'headers'     => $resp_headers,
-            'body'        => $response_body,
-            'resolved_ip' => $resolved_ip,
-            'error'       => $err,
+            'http_status'         => $http_status,
+            'headers'             => $resp_headers,
+            'body'                => $response_body,
+            'response_diagnostic' => $http_status > 0 ? MainWP_Connect_Failure_Ux::describe_received_response( $data ) : '',
+            'resolved_ip'         => $resolved_ip,
+            'error'               => $err,
         );
 
         MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . ']' );
@@ -2662,6 +2665,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] decoded response: [OK]' );
             }
 
+            if ( is_array( $information ) && ! empty( $information['error'] ) ) {
+                $failure_context['response_diagnostic'] = __( 'Body: the site returned a MainWP error response. Follow the specific error message to complete the connection.', 'mainwp' );
+                $output                                 = MainWP_Connect_Failure_Ux::enrich_output( $output, $failure_context );
+            } elseif ( ! is_array( $information ) || ( 'register' === $what && ( ! isset( $information['register'] ) || 'OK' !== $information['register'] ) ) ) {
+                $output = MainWP_Connect_Failure_Ux::enrich_output( $output, $failure_context );
+            }
             return $information;
         } elseif ( 200 === (int) $http_status && ! empty( $err ) ) {
             if ( '' !== $timeout_kind ) {
@@ -2706,11 +2715,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $readable = ! empty( $output['response_readable'] ) ? $output['response_readable'] : $hidden_data;
             $thr_error->set_data(
                 array(
-                    'text'        => $readable,
-                    'http_status' => (int) $http_status,
-                    'headers'     => isset( $output['response_headers'] ) ? $output['response_headers'] : '',
-                    'body'        => isset( $output['response_body'] ) ? $output['response_body'] : '',
-                    'resolved_ip' => $resolved_ip,
+                    'text'                => $readable,
+                    'http_status'         => (int) $http_status,
+                    'headers'             => isset( $output['response_headers'] ) ? $output['response_headers'] : '',
+                    'body'                => isset( $output['response_body'] ) ? $output['response_body'] : '',
+                    'response_diagnostic' => isset( $output['response_diagnostic'] ) ? $output['response_diagnostic'] : '',
+                    'resolved_ip'         => $resolved_ip,
                 )
             );
             throw $thr_error;

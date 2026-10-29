@@ -295,7 +295,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         // URL redaction can decode markup, so reapply the HTML allowlist afterward.
-        return MainWP_Utility::esc_content( self::sanitize_diagnostic_text( $message, true ) );
+        return MainWP_Utility::esc_content( self::sanitize_diagnostic_text_for_context( $message, true ) );
     }
 
     /**
@@ -837,11 +837,21 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * be trusted in an exception or other free-form diagnostic string.
      *
      * @param string $text Diagnostic text.
-     * @param bool   $html Escape decoded URL values for an HTML context.
      *
      * @return string
      */
-    public static function sanitize_diagnostic_text( $text, $html = false ) {
+    public static function sanitize_diagnostic_text( $text ) {
+        return self::sanitize_diagnostic_text_for_context( $text, false );
+    }
+
+    /**
+     * Redact diagnostics for plain text or allowlisted HTML.
+     *
+     * @param string $text Diagnostic text.
+     * @param bool   $html Escape decoded URL values for an HTML context.
+     * @return string
+     */
+    private static function sanitize_diagnostic_text_for_context( $text, $html ) {
         if ( ! is_string( $text ) || '' === $text ) {
             return '';
         }

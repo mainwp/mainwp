@@ -1849,7 +1849,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             }
                     endforeach;
                         ?>
-                        <span style="display:none" class="lastest-version-hidden" lastest-version="<?php echo esc_html( $lastest_version ); ?>"></span>
+                        <span style="display:none" class="lastest-version-hidden" lastest-version="<?php echo esc_attr( $lastest_version ); ?>"></span>
                         <?php
                 endforeach;
                     ?>
@@ -1890,7 +1890,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             jQuery(function($) {
                 $( '.lastest-version-hidden' ).each(function(){
-                    $(this).closest('.mainwp-manage-plugin-item').find('.lastest-version-info').html( $(this).attr('lastest-version') );
+                    $(this).closest('.mainwp-manage-plugin-item').find('.lastest-version-info').text( $(this).attr('lastest-version') );
                 });
                 mainwp_master_checkbox_init($);
                 mainwp_get_icon_start();

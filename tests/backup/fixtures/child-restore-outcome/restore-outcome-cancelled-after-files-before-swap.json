@@ -1,0 +1,16 @@
+{
+    "result": "ok",
+    "phase": "failed",
+    "verification": {
+        "outcome": {
+            "files": "applied",
+            "database": "not_started",
+            "files_copy_taken": false,
+            "phase_reached": "replaying_db"
+        }
+    },
+    "failure": {
+        "message": "The restore was cancelled from the dashboard. Any tables already replaced were kept aside for rollback.",
+        "code": "mainwp_restore_cancelled"
+    }
+}

@@ -128,6 +128,20 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         'adminname',
         'securekey',
         'uniqueId',
+        'register_verify_key',
+        'mainwp_cloudflair_key',
+        'mainwp_cloudflare_bearer_token',
+        'mainwp_cloudflair_email',
+        'mainwp_api_backups_vultr_api_key',
+        'mainwp_api_backups_gridpane_api_key',
+        'mainwp_api_backups_linode_api_key',
+        'mainwp_api_backups_digitalocean_api_key',
+        'mainwp_api_backups_cloudways_api_key',
+        'mainwp_api_backups_cpanel_api_key',
+        'mainwp_api_backups_plesk_api_key',
+        'mainwp_api_backups_kinsta_api_key',
+        'cpanel_account_username',
+        'mainwp_3rd_party_kinsta_downloadable_backups',
         // Projected onto the row for the health_score fast-path (not a schema field);
         // reserve it so ?custom_fields=health_site_status cannot surface the raw value.
         'health_site_status',
@@ -141,13 +155,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return mixed The same item with credential fields removed.
      */
     private function strip_never_in_response_fields( $prepared ) {
-        if ( is_array( $prepared ) ) {
-            foreach ( static::$never_in_response_fields as $field ) {
-                unset( $prepared[ $field ] );
-            }
-        } elseif ( is_object( $prepared ) ) {
-            foreach ( static::$never_in_response_fields as $field ) {
-                unset( $prepared->{$field} );
+        if ( ! is_array( $prepared ) && ! is_object( $prepared ) ) {
+            return $prepared;
+        }
+
+        $fields = is_array( $prepared ) ? array_keys( $prepared ) : array_keys( get_object_vars( $prepared ) );
+
+        // Option lookups can ignore case while the response alias keeps the caller's spelling.
+        foreach ( $fields as $field ) {
+            foreach ( static::$never_in_response_fields as $secret_field ) {
+                if ( 0 === strcasecmp( (string) $field, $secret_field ) ) {
+                    if ( is_array( $prepared ) ) {
+                        unset( $prepared[ $field ] );
+                    } else {
+                        unset( $prepared->{$field} );
+                    }
+                    break;
+                }
             }
         }
         return $prepared;
@@ -1375,6 +1399,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function activate_plugins_of_site( $request ) {
+        $permission = $this->check_operation_right( 'activate_deactivate_plugins' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1407,6 +1436,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function deactivate_plugins_of_site( $request ) {
+        $permission = $this->check_operation_right( 'activate_deactivate_plugins' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1438,6 +1472,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function delete_plugins_of_site( $request ) {
+        $permission = $this->check_operation_right( 'delete_plugins' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1707,6 +1746,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function activate_themes_of_site( $request ) {
+        $permission = $this->check_operation_right( 'activate_themes' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1740,6 +1784,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function delete_themes_of_site( $request ) {
+        $permission = $this->check_operation_right( 'delete_themes' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -2003,6 +2051,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function reconnect_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -2029,6 +2082,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function reconnect_items( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $args   = $this->prepare_objects_query( $request );
         $params = array(
@@ -2047,7 +2104,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'no', $params ) );
-        while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) && '' !== $website->sync_errors ) {
+        while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+            if ( '' === $website->sync_errors ) {
+                continue;
+            }
             $ret = false;
             try {
                 $ret = MainWP_Manage_Sites_View::m_reconnect_site( $website );
@@ -2074,6 +2134,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array|mixed Response data, ready for insertion into collection data.
      */
     public function disconnect_site( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -2111,6 +2175,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array|mixed Response data, ready for insertion into collection data.
      */
     public function suspend_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -2151,6 +2220,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array|mixed Response data, ready for insertion into collection data.
      */
     public function unsuspend_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -2188,6 +2262,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function disconnect_sites( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $args   = $this->prepare_objects_query( $request );
         $params = array(
@@ -2236,6 +2314,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function check_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -2254,14 +2336,14 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $new_code  = is_array( $ret ) && isset( $ret['httpCode'] ) ? $ret['httpCode'] : false;
 
         if ( ! empty( $error ) ) {
-            $resp_data ['error'] = esc_html( $result );
+            $resp_data ['error'] = esc_html( $error );
         }
 
         $data = $this->filter_response_data_by_allowed_fields( $website, 'simple_view' );
 
         if ( false !== $new_code ) {
-            if ( is_array( $result ) && isset( $result['new_uptime_status'] ) ) {
-                $data['status'] = $result['new_uptime_status'];
+            if ( is_array( $ret ) && isset( $ret['new_uptime_status'] ) ) {
+                $data['status'] = $ret['new_uptime_status'];
             } else {
                 $data['status'] = MainWP_Monitoring_Handler::get_site_checking_status( $new_code );
             }
@@ -2281,6 +2363,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function check_items( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $args   = $this->prepare_objects_query( $request );
         $params = array(
             'exclude' => isset( $args['exclude'] ) && ! empty( $args['exclude'] ) ? $args['exclude'] : array(),
@@ -2323,6 +2410,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function delete_item( $request ) {
+        $permission = $this->check_operation_right( 'delete_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
 
@@ -3028,13 +3119,14 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array
      */
     protected function prepare_object_for_database( $request ) {
-        $item_fields               = array();
-        $item_fields['url']        = isset( $request['url'] ) ? sanitize_text_field( $request['url'] ) : '';
-        $item_fields['name']       = isset( $request['name'] ) ? sanitize_text_field( $request['name'] ) : '';
-        $item_fields['wpadmin']    = isset( $request['admin'] ) ? sanitize_text_field( $request['admin'] ) : '';
-        $item_fields['adminpwd']   = isset( $request['adminpassword'] ) ? (string) $request['adminpassword'] : ''; // Cast only; sanitize_text_field() strips characters a password may legitimately hold.
-        $item_fields['unique_id']  = sanitize_text_field( $request['uniqueid'] ?? $request['uniqueId'] ?? '' ); // uniqueid is the documented input spelling, uniqueId is what the item schema registers on this route.
-        $item_fields['ssl_verify'] = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
+        $item_fields                = array();
+        $item_fields['url']         = isset( $request['url'] ) ? sanitize_text_field( $request['url'] ) : '';
+        $item_fields['name']        = isset( $request['name'] ) ? sanitize_text_field( $request['name'] ) : '';
+        $item_fields['wpadmin']     = isset( $request['admin'] ) ? sanitize_text_field( $request['admin'] ) : '';
+        $item_fields['adminpwd']    = isset( $request['adminpassword'] ) ? (string) $request['adminpassword'] : ''; // Cast only; sanitize_text_field() strips characters a password may legitimately hold.
+        $item_fields['unique_id']   = sanitize_text_field( $request['uniqueid'] ?? $request['uniqueId'] ?? '' ); // uniqueid is the documented input spelling, uniqueId is what the item schema registers on this route.
+        $item_fields['ssl_verify']  = MainWP_Manage_Sites_View::normalize_ssl_verify( $request['ssl_verify'] );
+        $item_fields['ssl_version'] = empty( $request['ssl_version'] ) ? false : intval( $request['ssl_version'] );
         // Omitted stays null: fetch_url() then reads the global mainwp_forceUseIPv4 option
         // for the handshake, the same as the UI and the v1 add handler send, and
         // add_website() leaves the column at its default.
@@ -3383,6 +3475,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function create_item( $request ) {  //phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'add_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $resp_data            = array();
         $resp_data['success'] = 0;
         $site_id              = 0;
@@ -3543,6 +3640,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function update_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;

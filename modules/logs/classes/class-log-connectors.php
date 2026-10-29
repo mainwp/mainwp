@@ -84,6 +84,7 @@ class Log_Connectors {
                     'user',
                     'non-mainwp-changes',
                     'changes-logs',
+                    'backup',
                 )
             );
         }

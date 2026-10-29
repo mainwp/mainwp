@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Isolated config for the live "Integration" suite (real-server testing).
+
+    Deliberately separate from phpunit.xml.dist:
+      - its own minimal bootstrap (no WordPress harness, no database),
+      - relaxed strictness (real network calls can emit warnings/output that the
+        main config would convert to failures),
+      - never globbed by the default offline run.
+
+    Run:  ./vendor/bin/phpunit -c phpunit.integration.xml.dist
+    or:   ~/.claude/skills/run-mainwp-testbed/run.sh test-live
+
+    The suite skips itself when REMOTE_DASH_URL is unset.
+-->
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.6/phpunit.xsd"
+    bootstrap="tests/integration/bootstrap.php"
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="false"
+    convertWarningsToExceptions="false"
+    processIsolation="false"
+    stopOnFailure="false"
+    beStrictAboutTestsThatDoNotTestAnything="false"
+    beStrictAboutOutputDuringTests="false"
+    verbose="true"
+>
+    <testsuites>
+        <testsuite name="Integration">
+            <directory suffix=".php">tests/integration</directory>
+            <exclude>tests/integration/bootstrap.php</exclude>
+            <exclude>tests/integration/class-mainwp-live-test-case.php</exclude>
+        </testsuite>
+    </testsuites>
+</phpunit>

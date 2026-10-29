@@ -24,11 +24,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
-     * Maximum readable body characters shown in failure UI.
-     */
-    const BODY_LIMIT = 1200;
-
-    /**
      * Response headers that help identify WAF / proxy / auth blocks.
      *
      * @var array<int,string>
@@ -248,10 +243,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
-        $lines   = preg_split( '/\r\n|\n|\r/', $raw_headers );
-        $kept    = array();
-        $wanted  = array_map( 'strtolower', self::NOTICE_HEADERS );
-        $status  = '';
+        $lines  = preg_split( '/\r\n|\n|\r/', $raw_headers );
+        $kept   = array();
+        $wanted = array_map( 'strtolower', self::NOTICE_HEADERS );
+        $status = '';
 
         foreach ( (array) $lines as $line ) {
             $line = trim( (string) $line );
@@ -286,66 +281,101 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Extract a short, safe body excerpt.
+     * Preserve fixed Child credential guidance while hiding reflected secrets.
      *
-     * @param string $body Raw response body.
-     *
-     * @return string
+     * @param string $message Decoded registration error.
+     * @return string Escaped fixed guidance or redacted, allowlisted HTML.
      */
-    public static function summarize_body( $body ) {
-        if ( ! is_string( $body ) || '' === $body ) {
-            return '';
+    public static function sanitize_registration_error( $message ) {
+        if ( 'Unable to connect to the site. Please verify that your Admin Username and Password are correct and try again.' === $message ) {
+            return esc_html__( 'Unable to connect to the site. Please verify that your Admin Username and Password are correct and try again.', 'mainwp' );
+        }
+        if ( 'Unable to connect to the site. Password Authentication is disabled, so please verify that the Unique Security ID is correct and try again.' === $message ) {
+            return esc_html__( 'Unable to connect to the site. Password Authentication is disabled, so please verify that the Unique Security ID is correct and try again.', 'mainwp' );
         }
 
-        if ( '[hidden response data]' === $body ) {
-            return '';
-        }
-
-        // wp_strip_all_tags() deletes tags without whitespace, so
-        // </title><p>password= becomes Requiredpassword and misses the name check.
-        $text = str_replace( '<', ' <', $body );
-        $text = wp_strip_all_tags( $text );
-        $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
-        $text = preg_replace( '/\s+/u', ' ', $text );
-        if ( ! is_string( $text ) ) {
-            return self::unredactable_text();
-        }
-        $text = trim( $text );
-
-        // Arbitrary remote text has too many encodings and boundary forms for
-        // field-by-field redaction to be reliable. Scan the complete excerpt
-        // plus enough lookahead for a name crossing its display boundary.
-        $scan_text = mb_substr( $text, 0, self::BODY_LIMIT + 64, 'UTF-8' );
-        if ( self::mentions_sensitive_name( $scan_text ) ) {
-            return self::sensitive_text();
-        }
-
-        $text = self::redact_secrets( $text );
-        // Removing a long URL query can pull later text into the excerpt.
-        // Recheck the exact prefix that can now become visible.
-        $scan_text = mb_substr( $text, 0, self::BODY_LIMIT + 64, 'UTF-8' );
-        if ( self::mentions_sensitive_name( $scan_text ) ) {
-            return self::sensitive_text();
-        }
-
-        if ( mb_strlen( $text, 'UTF-8' ) > self::BODY_LIMIT ) {
-            // Cut on a character boundary: a split UTF-8 sequence makes esc_html() return ''.
-            $text = mb_substr( $text, 0, self::BODY_LIMIT, 'UTF-8' ) . '...';
-        }
-
-        return $text;
+        // URL redaction can decode markup, so reapply the HTML allowlist afterward.
+        return MainWP_Utility::esc_content( self::sanitize_diagnostic_text_for_context( $message, true ) );
     }
 
     /**
-     * Build a readable response block (status, headers snippet, body when safe).
+     * Describe a received body without retaining its raw contents.
+     *
+     * @param mixed $body Received response.
+     * @return string Safe description and, where possible, a short excerpt.
+     */
+    public static function describe_received_response( $body ) {
+        if ( ! is_string( $body ) ) {
+            return '';
+        }
+        $sample = substr( $body, 0, 4096 );
+        if ( strlen( $body ) > 4096 && 1 !== preg_match( '//u', $sample ) ) {
+            // Validate at most three more bytes, then keep only complete
+            // characters inside the original cap. Invalid data stays binary.
+            for ( $extra = 1; $extra <= 3; $extra++ ) {
+                if ( 1 !== preg_match( '//u', substr( $body, 0, 4096 + $extra ) ) ) {
+                    continue;
+                }
+                for ( $trim = 1; $trim <= 3; $trim++ ) {
+                    $prefix = substr( $sample, 0, -$trim );
+                    if ( 1 === preg_match( '//u', $prefix ) ) {
+                        $sample = $prefix;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        if ( '' === trim( $sample ) ) {
+            return __( 'Body: the site returned an empty response. Ask the host to check the registration request to wp-admin/admin-ajax.php.', 'mainwp' );
+        }
+        if ( false !== stripos( self::decode_diagnostic_text( $sample ), '<mainwp' ) ) {
+            return __( 'Body: a MainWP response was found but could not be read. Ask the host to check whether a plugin or proxy altered the response.', 'mainwp' );
+        }
+        if ( false !== strpos( $sample, "\0" ) || "\x1f\x8b" === substr( $sample, 0, 2 ) || 1 !== preg_match( '//u', $sample ) ) {
+            return __( 'Body: the site returned binary data, possibly encoded or compressed by the host. Ask the host to check response encoding for wp-admin/admin-ajax.php.', 'mainwp' );
+        }
+
+        // Check the capped raw markup too: stripping tags first would discard
+        // sensitive field names while leaving their values in visible text.
+        $safe = self::sanitize_diagnostic_text( $sample );
+        if ( false !== stripos( self::decode_diagnostic_text( $sample ), 'cookie' ) ) {
+            $safe = self::sensitive_text();
+        }
+        $text      = html_entity_decode( $safe, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        $text      = wp_strip_all_tags( $text, true );
+        $text      = trim( (string) preg_replace( '/\s+/', ' ', $text ) );
+        $html      = false !== strpos( $sample, '<' ) && false !== strpos( $sample, '>' );
+        $challenge = false !== stripos( $sample, 'wp-login' ) || false !== stripos( $sample, 'captcha' ) || false !== stripos( $sample, 'checking your browser' ) || false !== stripos( $sample, 'just a moment' );
+        if ( $challenge ) {
+            $description = __( 'Body: the site returned a login or challenge page instead of the MainWP response. Check the site firewall, security and caching plugins.', 'mainwp' );
+        } elseif ( $html ) {
+            $description = __( 'Body: the site returned an HTML page instead of the MainWP response. A firewall, security or caching plugin may have replaced it. Check those rules for wp-admin/admin-ajax.php.', 'mainwp' );
+        } else {
+            $description = __( 'Body: the site returned text instead of the MainWP response. Ask the host to check the registration request to wp-admin/admin-ajax.php.', 'mainwp' );
+        }
+        if ( $safe === $sample && preg_match( '/<title\b[^>]*>(.*?)<\/title\s*>/is', $sample, $title ) ) {
+            $text = trim( wp_strip_all_tags( html_entity_decode( $title[1], ENT_QUOTES | ENT_HTML5, 'UTF-8' ), true ) );
+        }
+        $excerpt = wp_html_excerpt( $text, 200, '…' );
+        if ( '' !== $excerpt ) {
+            /* translators: %s: short redacted response excerpt. */
+            $description .= "\n" . sprintf( __( 'Excerpt: %s', 'mainwp' ), $excerpt );
+        }
+        return $description;
+    }
+
+    /**
+     * Build a readable response block with status and headers.
      *
      * @param int    $http_status HTTP status.
      * @param string $headers     Raw response headers.
-     * @param string $body        Raw response body.
+     * @param string $body        Raw body; used only for the legacy presence check.
+     * @param string $diagnostic  Capped, sanitized description from the transport.
      *
      * @return array<string,string>
      */
-    public static function summarize_response( $http_status, $headers = '', $body = '' ) {
+    public static function summarize_response( $http_status, $headers = '', $body = '', $diagnostic = '' ) {
         $status      = (int) $http_status;
         $status_text = $status > 0 ? (string) $status : '';
         $code_label  = $status > 0 ? MainWP_Utility::get_http_codes( $status ) : '';
@@ -357,7 +387,6 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         $header_snip = self::summarize_headers( $headers );
-        $body_snip   = self::summarize_body( $body );
 
         $lines = array(
             sprintf(
@@ -373,8 +402,13 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $lines[] = esc_html__( 'Headers: none captured.', 'mainwp' );
         }
 
-        if ( '' !== $body_snip ) {
-            $lines[] = esc_html__( 'Body:', 'mainwp' ) . "\n" . $body_snip;
+        // The full body is never displayed, but saying nothing came back would send
+        // someone debugging a WAF or error page in the wrong direction. The
+        // hidden-data placeholder does not prove a body arrived.
+        if ( is_string( $diagnostic ) && '' !== $diagnostic ) {
+            $lines[] = $diagnostic;
+        } elseif ( is_string( $body ) && '' !== $body && '[hidden response data]' !== $body ) {
+            $lines[] = esc_html__( 'Body: received but not shown, because it may contain sensitive data.', 'mainwp' );
         } else {
             $lines[] = esc_html__( 'Body: no readable child response was returned.', 'mainwp' );
         }
@@ -383,7 +417,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'status'      => $status_text,
             'http_status' => $status,
             'headers'     => $header_snip,
-            'body'        => $body_snip,
+            'body'        => '',
             'text'        => implode( "\n\n", $lines ),
         );
     }
@@ -412,7 +446,8 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $headers     = isset( $context['headers'] ) ? (string) $context['headers'] : '';
         $body        = isset( $context['body'] ) ? (string) $context['body'] : '';
         $resolved_ip = self::format_ip_list( isset( $context['resolved_ip'] ) ? $context['resolved_ip'] : '' );
-        $response    = self::summarize_response( $http_status, $headers, $body );
+        $diagnostic  = isset( $context['response_diagnostic'] ) && is_string( $context['response_diagnostic'] ) ? $context['response_diagnostic'] : '';
+        $response    = self::summarize_response( $http_status, $headers, $body, $diagnostic );
         $waf_likely  = self::is_waf_likely( $http_status, $headers . "\n" . $response['headers'], $body . "\n" . $response['body'] );
         $lookup_ip   = empty( $context['skip_outbound_ip'] );
 
@@ -447,11 +482,15 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $resolved_ip         = '';
         $legacy_text         = '';
         $has_response_fields = false;
+        $diagnostic          = '';
 
         if ( $exception instanceof MainWP_Exception ) {
             $data = $exception->get_data();
             if ( is_array( $data ) ) {
                 $has_response_fields = array_key_exists( 'headers', $data ) || array_key_exists( 'body', $data );
+                if ( isset( $data['response_diagnostic'] ) && is_string( $data['response_diagnostic'] ) ) {
+                    $diagnostic = $data['response_diagnostic'];
+                }
                 if ( isset( $data['http_status'] ) ) {
                     $http_status = (int) $data['http_status'];
                 }
@@ -470,6 +509,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             } elseif ( is_string( $data ) ) {
                 $legacy_text = $data;
             }
+        }
+
+        if ( isset( $output['response_diagnostic'] ) && is_string( $output['response_diagnostic'] ) ) {
+            $diagnostic = $output['response_diagnostic'];
         }
 
         if ( isset( $output['http_status'] ) && (int) $output['http_status'] > 0 ) {
@@ -517,11 +560,12 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         return self::build_details(
             array(
-                'http_status' => $http_status,
-                'headers'     => $headers,
-                'body'        => $body,
-                'resolved_ip' => $resolved_ip,
-                'error'       => ( $exception instanceof MainWP_Exception ) ? $exception->getMessage() : '',
+                'http_status'         => $http_status,
+                'response_diagnostic' => $diagnostic,
+                'headers'             => $headers,
+                'body'                => $body,
+                'resolved_ip'         => $resolved_ip,
+                'error'               => ( $exception instanceof MainWP_Exception ) ? $exception->getMessage() : '',
             )
         );
     }
@@ -651,11 +695,14 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $output['resolved_ip']           = $details['resolved_ip'];
         $output['resolved_ip_label']     = $details['resolved_ip_label'];
         $output['waf_likely']            = $details['waf_likely'];
-        $output['response_headers']      = $details['response']['headers'];
-        $output['response_body']         = $details['response']['body'];
-        $output['response_readable']     = $details['response']['text'];
-        $output['failure_ux']            = self::render_html( $details );
-        $output['failure_ux_text']       = self::format_text( $details );
+        if ( isset( $context['response_diagnostic'] ) && is_string( $context['response_diagnostic'] ) ) {
+            $output['response_diagnostic'] = $context['response_diagnostic'];
+        }
+        $output['response_headers']  = $details['response']['headers'];
+        $output['response_body']     = $details['response']['body'];
+        $output['response_readable'] = $details['response']['text'];
+        $output['failure_ux']        = self::render_html( $details );
+        $output['failure_ux_text']   = self::format_text( $details );
 
         return $output;
     }
@@ -743,7 +790,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
-        $parts = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url ) : parse_url( $url );
+        $parts = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url ) : parse_url( $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- fallback for when wp_parse_url() is not loaded yet.
         if ( ! is_array( $parts ) ) {
             return '';
         }
@@ -783,93 +830,6 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Redact likely secrets from diagnostic text.
-     *
-     * Quoted values keep their closer so commas, spaces, and similar
-     * characters stay inside the secret. Unquoted values include those
-     * characters and stop at the next name= / name: pair. If any pattern
-     * fails (a PCRE backtrack limit, for example), the whole text is replaced
-     * with a fixed placeholder, because a skipped pass would leave its
-     * secrets in place.
-     *
-     * @param string $text Text.
-     *
-     * @return string
-     */
-    public static function redact_secrets( $text ) {
-        if ( ! is_string( $text ) || '' === $text ) {
-            return '';
-        }
-
-        $text = self::redact_dump_tail( $text );
-
-        $with_urls = self::redact_urls_in_text( $text );
-        if ( ! is_string( $with_urls ) ) {
-            return self::unredactable_text();
-        }
-        $text = $with_urls;
-
-        // The tag split in summarize_body() turns pass<b></b>word= into "pass word=".
-        // Rejoin up to 19 words before = or : (or before a closing quote and
-        // = or :) when their tail forms a sensitive name. Every sensitive name
-        // ends in a sensitive name of at most 19 characters (mainwpsignature_adv),
-        // so even one tag per character is covered. The repeat is bounded and
-        // possessive so large bodies stay linear.
-        $split_failed = false;
-        $rejoined     = preg_replace_callback(
-            '/(?<![A-Za-z0-9_\-])((?:[A-Za-z0-9_\-]++\s++){1,18}[A-Za-z0-9_\-]++)\s*+([\'"]?\s*+[:=])/',
-            static function ( $found ) use ( &$split_failed ) {
-                $parts = preg_split( '/\s+/', $found[1] );
-                if ( ! is_array( $parts ) ) {
-                    $split_failed = true;
-                    return $found[0];
-                }
-                for ( $start = count( $parts ) - 1; $start >= 0; --$start ) {
-                    $candidate = implode( '', array_slice( $parts, $start ) );
-                    if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $candidate ) ) {
-                        $prefix = implode( ' ', array_slice( $parts, 0, $start ) );
-                        return ( '' !== $prefix ? $prefix . ' ' : '' ) . $candidate . $found[2];
-                    }
-                }
-                return $found[0];
-            },
-            $text
-        );
-        if ( ! is_string( $rejoined ) || $split_failed ) {
-            return self::unredactable_text();
-        }
-        $text = $rejoined;
-
-        $quoted = preg_replace_callback(
-            '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"])((?:\\\\.|(?!\3).)*)\3/',
-            static function ( $match ) {
-                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[2] ) ) {
-                    return $match[1] . $match[2] . $match[1] . '=[redacted]';
-                }
-                return $match[0];
-            },
-            $text
-        );
-        if ( ! is_string( $quoted ) ) {
-            return self::unredactable_text();
-        }
-        $text = $quoted;
-
-        $unquoted = preg_replace_callback(
-            '/(?<![A-Za-z0-9_\-])([A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*(?![\'"])(.+?)(?=(?:\s+|&|;|#)[A-Za-z_][A-Za-z0-9_\-]*\s*[:=]|$)/s',
-            static function ( $match ) {
-                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[1] ) ) {
-                    return $match[1] . '=[redacted]';
-                }
-                return $match[0];
-            },
-            $text
-        );
-
-        return is_string( $unquoted ) ? $unquoted : self::unredactable_text();
-    }
-
-    /**
      * Make arbitrary diagnostic text safe without changing benign text.
      *
      * URLs lose userinfo, query strings, and fragments. Text that names a
@@ -881,11 +841,22 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string
      */
     public static function sanitize_diagnostic_text( $text ) {
+        return self::sanitize_diagnostic_text_for_context( $text, false );
+    }
+
+    /**
+     * Redact diagnostics for plain text or allowlisted HTML.
+     *
+     * @param string $text Diagnostic text.
+     * @param bool   $html Escape decoded URL values for an HTML context.
+     * @return string
+     */
+    private static function sanitize_diagnostic_text_for_context( $text, $html ) {
         if ( ! is_string( $text ) || '' === $text ) {
             return '';
         }
 
-        $with_urls = self::redact_urls_in_text( $text );
+        $with_urls = self::redact_urls_in_text( $text, $html );
         if ( ! is_string( $with_urls ) ) {
             return self::unredactable_text();
         }
@@ -900,14 +871,16 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Strip unknown secrets from URLs embedded in text.
      *
      * @param string $text Text that may contain absolute or relative URLs.
+     * @param bool   $html Escape decoded URL values for an HTML context.
      *
      * @return string|null
      */
-    private static function redact_urls_in_text( $text ) {
+    private static function redact_urls_in_text( $text, $html = false ) {
         $with_urls = preg_replace_callback(
             '#(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}+://[^\s\'"<>]++|//[^\s\'"<>]++|/[^\s\'"<>]*+\?[^\s\'"<>]++)#',
-            static function ( $found ) {
-                return MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
+            static function ( $found ) use ( $html ) {
+                $url = MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
+                return $html ? esc_attr( $url ) : $url;
             },
             $text
         );
@@ -919,20 +892,24 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // only the whitespace-delimited token, then replace its URL portion.
         return preg_replace_callback(
             '#[^\s\'"<>]+#u',
-            static function ( $found ) {
+            static function ( $found ) use ( $html ) {
                 $decoded = MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] );
                 if ( $decoded === $found[0] ) {
                     return $found[0];
                 }
                 if ( preg_match( '/(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}:\/\//', $decoded, $scheme, PREG_OFFSET_CAPTURE ) ) {
                     $offset = $scheme[0][1];
-                    return substr( $decoded, 0, $offset ) . MainWP_Connect_Failure_Ux::redact_url( substr( $decoded, $offset ) );
+                    $prefix = substr( $decoded, 0, $offset );
+                    $url    = MainWP_Connect_Failure_Ux::redact_url( substr( $decoded, $offset ) );
+                    return $html ? esc_html( $prefix ) . esc_attr( $url ) : $prefix . $url;
                 }
                 if ( 0 === strpos( $decoded, '//' ) ) {
-                    return MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                    $url = MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                    return $html ? esc_attr( $url ) : $url;
                 }
                 if ( 0 === strpos( $decoded, '/' ) && false !== strpos( $decoded, '?' ) ) {
-                    return MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                    $url = MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                    return $html ? esc_attr( $url ) : $url;
                 }
                 return $found[0];
             },
@@ -958,75 +935,6 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         return $decoded;
-    }
-
-    /**
-     * Hide everything after the first sensitive print_r() or var_dump() key.
-     *
-     * A dumped value can contain "[x] =>", ")" or a quote, so no delimiter can
-     * be trusted to end it. Cutting to the end of the text over-redacts on
-     * purpose, including any page text that followed the dump. The scan uses
-     * strpos() rather than a pattern so it stays linear and cannot hit a PCRE
-     * limit.
-     *
-     * @param string $text Text.
-     *
-     * @return string
-     */
-    private static function redact_dump_tail( $text ) {
-        $from  = 0;
-        $close = strpos( $text, ']' );
-        while ( false !== $close ) {
-            $open = strrpos( substr( $text, $from, $close - $from ), '[' );
-            if ( false !== $open ) {
-                $key    = substr( $text, $from + $open + 1, $close - $from - $open - 1 );
-                $equals = $close + 1 + strspn( $text, " \t\r\n", $close + 1 );
-                // Tag stripping turns =<b></b>> into "= >", so space is allowed inside the arrow.
-                $arrow = $equals + 1 + strspn( $text, " \t\r\n", $equals + 1 );
-                if ( '=' === substr( $text, $equals, 1 ) && '>' === substr( $text, $arrow, 1 ) && self::is_sensitive_dump_key( $key ) ) {
-                    return substr( $text, 0, $arrow + 1 ) . ' [redacted]';
-                }
-            }
-            $from  = $close + 1;
-            $close = strpos( $text, ']', $from );
-        }
-
-        return $text;
-    }
-
-    /**
-     * Whether a print_r() / var_dump() array key names a secret.
-     *
-     * Tag splitting in summarize_body() leaves spaces inside a key such as
-     * [pass word], so the key is also tried with spaces removed and with
-     * spaces as underscores. Object dumps append the visibility to the
-     * property name ([pwd:protected], ["pwd":"Some\Class":private]), and
-     * only the name before the first colon is classified. Zero-width and
-     * other format characters are invisible on screen but break the name
-     * match, so they are dropped, and Unicode spaces such as U+00A0 count as
-     * spaces. A key that cannot be normalized counts as sensitive.
-     *
-     * @param string $key Text between the brackets.
-     *
-     * @return bool
-     */
-    private static function is_sensitive_dump_key( $key ) {
-        $key = preg_replace( '/\p{Cf}+/u', '', $key );
-        if ( is_string( $key ) ) {
-            $key = preg_replace( '/[\s\p{Zs}]+/u', ' ', $key );
-        }
-        if ( ! is_string( $key ) ) {
-            return true;
-        }
-
-        $key     = trim( $key );
-        $compact = strtolower( str_replace( ' ', '', $key ) );
-        if ( ':protected' === substr( $compact, -10 ) || ':private' === substr( $compact, -8 ) ) {
-            $key = substr( $key, 0, strpos( $key, ':' ) );
-        }
-        $key = trim( trim( $key ), '\'"' );
-
-        return self::is_sensitive_param( str_replace( ' ', '', $key ) ) || self::is_sensitive_param( str_replace( ' ', '_', $key ) );
     }
 
     /**

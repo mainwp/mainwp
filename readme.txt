@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 7.1.3
-Requires PHP: 7.4
-Stable tag: 6.3
+Tested up to: 7.1.4
+Requires PHP: 8.3
+Stable tag: 6.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -135,6 +135,9 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 = Where do I report security bugs found in this plugin? =
 Please report security bugs found in the source code of the MainWP plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/9e5fb39c-dd7e-4c6b-a871-c6a046430f0f). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
+= Why do large backups take a long time to finish? =
+The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron only runs when the Dashboard gets visits. On a Dashboard with little traffic, set DISABLE_WP_CRON in wp-config.php and add a system cron that requests wp-cron.php every minute. Server Information shows when the slice job last ran.
+
 == Screenshots ==
 
 1. Sites - Operations
@@ -150,6 +153,52 @@ Please report security bugs found in the source code of the MainWP plugin throug
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.4 - 10-29-2026 =
+
+* Important: MainWP Dashboard now requires PHP 8.3 or newer.
+* Important: Built-In Backups requires the matching MainWP Child release. File backups and restores are currently unavailable on hosting configurations where `wp-content` is outside the WordPress core folder; database-only backups and restores remain supported.
+* Added: Built-In Backups (beta) - back up and restore WordPress sites directly from MainWP without an additional backup plugin. Schedule full, database-only, files-only, or incremental backups; store copies locally or offsite using S3-compatible storage, Google Cloud Storage, Dropbox, or SFTP; and restore snapshots with optional safety backups and rollback. Includes encryption, flexible retention policies, backup health monitoring, and management through the Abilities API.
+* Fixed: Invalid site tag updates through the REST API could remove existing tag assignments.
+* Fixed: Invalid client-note values could overwrite existing notes instead of being rejected.
+* Fixed: Uptime Monitor settings now preserve disabled down confirmations and correctly clear repair attempts after a successful save.
+* Fixed: Advanced Settings now displays a validation message when the Child request timeout is invalid.
+* Fixed: Improved Add Site success notices and connection error messages.
+* Fixed: Improved handling of quotes, commas, backslashes, and failed-row retries in Users CSV imports.
+* Fixed: Connectivity charts now display accurate proportions for Connected, Disconnected, and Suspended sites.
+* Fixed: Resolved PHP compatibility warnings in REST settings handling.
+* Fixed: Sites filters and totals now refresh correctly when connection status changes after syncing or reconnecting.
+* Fixed: Preserved existing API Backups credentials when replacements cannot be saved, in both Settings and per-site settings.
+* Fixed: Prevented imported post images from overwriting existing files.
+* Fixed: Corrected site counts in multi-user mode.
+* Fixed: Corrected Updates pagination to prevent extra empty pages.
+* Fixed: Preserved the selected SSL version when adding sites through APIs and automation tools.
+* Fixed: Ensured APIs and automation tools respect the Ignore Translation Updates setting.
+* Fixed: Corrected bulk site reconnection, connection check results, and progress reporting for Dashboard tools.
+* Fixed: Removed an unnecessary delay after Add-on update checks.
+* Fixed: Prevented repeated scheduled site syncs after moving the Dashboard timezone backward.
+* Fixed: Restored bulk post and page management for Team Control staff with the required permissions.
+* Fixed: Kept site deletion details visible in Logs and Insights.
+* Fixed: Prevented generated credential key files from overwriting existing keys.
+* Updated: Strengthened Team Control permissions and site access enforcement across Dashboard actions, widgets, APIs, background tasks, Cost Tracker, and plugin and theme management.
+* Updated: Restricted legacy API-key creation and editing to unrestricted administrators.
+* Updated: Strengthened permissions for legacy REST API plugin and theme deletion, site reconnection, disconnection, and user session management.
+* Updated: Improved compatibility with restricted Team Control roles to prevent server errors.
+* Updated: Strengthened handling, storage, and protection of HTTP authentication details, extension license keys, and other credentials, including generated key files.
+* Updated: Strengthened protection of private site information in API responses, connection errors, and notification emails.
+* Updated: Improved security and validation of API requests, CSV imports, plugin details, Cost Tracker icons, and activity logs.
+* Updated: Imported user passwords are excluded from import logs and failed-row CSV downloads.
+* Updated: Improved handling of site names, messages, custom fields, and remote requests across the Dashboard.
+* Updated: Improved SSL certificate verification when adding and importing sites, connecting to Vultr, and communicating with licensing and download services.
+* Updated: Strengthened Add-on response validation and download security.
+* Updated: Added administrator-password support when connecting sites through WP-CLI, with verified HTTPS by default.
+* Updated: Site Hardening now checks PHP versions against supported branches and security releases using cached PHP.net data.
+* Updated: Server Information and Quick Setup now consistently display the PHP 8.3 requirement, replacing obsolete PHP upgrade notices.
+* Updated: Simplified the Quick Setup wizard for a faster, more streamlined setup experience.
+* Updated: Renamed the backup extensions navigation group to Backup Integrations.
+* Updated: Clarified Knowledge help text and standardized knowledge modal title capitalization.
+* Dev: Added the `mainwp_get_sql_where_allow_access_sites` hook for retrieving existing site-access query conditions.
+* Dev: Added the `mainwp_developer_generate_tweaked_request_params` hook for configuring outgoing request parameter mappings, with matching MainWP Child support.
 
 = 6.3 - 10-13-2026 =
 

@@ -91,8 +91,8 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <div class="ui small header">
                             <?php esc_html_e( 'PHP Version', 'mainwp' ); ?>
                             <div class="sub header">
-                                <div id="phpversion_matched-status-nok" style="display: none;"><?php esc_html_e( 'PHP version older than 8.0 reached end of development and no longer receive security updates.', 'mainwp' ); ?></div>
-                                <div id="phpversion_matched-status-ok" style="display: none;"><?php esc_html_e( 'PHP version is up to date.', 'mainwp' ); ?></div>
+                                <div id="phpversion_matched-status-nok" style="display: none;"><?php esc_html_e( 'PHP security release status could not be verified.', 'mainwp' ); ?></div>
+                                <div id="phpversion_matched-status-ok" style="display: none;"><?php esc_html_e( 'PHP security release status could not be verified.', 'mainwp' ); ?></div>
                             </div>
                         </div>
                     </td>
@@ -263,7 +263,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         <input type="hidden" id="securityIssueSite" value="<?php echo intval( $website->id ); ?>"/>
         <div id="wp_upgrades">
-            <div updated="-1" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( $website->name ); ?>" ></div>
+            <div updated="-1" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" ></div>
         </div>
         <?php
     }
@@ -290,6 +290,8 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         $information = MainWP_Connect::fetch_url_authed( $website, 'security' );
+        $version     = MainWP_DB::instance()->get_website_option( $website, 'phpversion' );
+        $information = MainWP_PHP_Security::apply_to_stats( $information, $version );
 
         /**
          * Filters security issues
@@ -306,6 +308,16 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $filterStats = apply_filters( 'mainwp_security_issues_stats', false, $information, $website );
         if ( false !== $filterStats && is_array( $filterStats ) ) {
             $information = array_merge( $information, $filterStats );
+        }
+        if ( is_array( $information ) && isset( $information['phpversion_matched'] ) ) {
+            $issues = array_filter(
+                $information,
+                static function ( $value ) {
+                    return 'N' === $value;
+                }
+            );
+            MainWP_DB::instance()->update_website_option( $website, 'security_stats', wp_json_encode( $information ) );
+            MainWP_DB::instance()->update_website_values( $website->id, array( 'securityIssues' => count( $issues ) ) );
         }
         return $information;
     }

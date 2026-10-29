@@ -10,7 +10,12 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Utility;
 
-/** Tests authenticated REST writes after the process-wide REST constant is set. */
+/**
+ * Tests authenticated REST writes after the process-wide REST constant is set.
+ *
+ * Runs in its own "REST Key Authentication" suite after the others (phpunit.xml.dist):
+ * the constant cannot be undefined and turns off site scoping for every later test.
+ */
 class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
 
     /**
@@ -276,13 +281,13 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
                 1,
             ),
             'emails'           => array( 'PUT', 'emails/daily_digest/edit', array( 'subject' => 'Updated subject' ), 'manage_dashboard_settings', 'mainwp_settings_notification_emails', array( 'daily_digest', 'subject' ), 'Updated subject' ),
-            'cost-settings'    => array( 'PUT', 'cost-tracker/edit', array( 'currency' => 'EUR' ), 'manage_dashboard_settings', 'mainwp_module_cost_tracker_options', array( 'currency' ), 'EUR' ),
-            'product-add'      => array( 'POST', 'cost-tracker/product-types/add', array( 'title' => 'New product' ), 'manage_dashboard_settings', 'mainwp_module_cost_tracker_options', array( 'custom_product_types', 'new-product' ), 'New product' ),
-            'product-edit'     => array( 'PUT', 'cost-tracker/product-types/held-product/edit', array( 'title' => 'Updated product' ), 'manage_dashboard_settings', 'mainwp_module_cost_tracker_options', array( 'custom_product_types', 'held-product' ), 'Updated product' ),
-            'product-delete'   => array( 'DELETE', 'cost-tracker/product-types/held-product/delete', array(), 'manage_dashboard_settings', 'mainwp_module_cost_tracker_options', array( 'custom_product_types' ), array() ),
-            'payment-add'      => array( 'POST', 'cost-tracker/payment-methods/add', array( 'title' => 'New payment' ), 'manage_dashboard_settings', 'mainwp_module_cost_tracker_options', array( 'custom_payment_methods', 'new-payment' ), 'New payment' ),
-            'payment-edit'     => array( 'PUT', 'cost-tracker/payment-methods/held-payment/edit', array( 'title' => 'Updated payment' ), 'manage_dashboard_settings', 'mainwp_module_cost_tracker_options', array( 'custom_payment_methods', 'held-payment' ), 'Updated payment' ),
-            'payment-delete'   => array( 'DELETE', 'cost-tracker/payment-methods/held-payment/delete', array(), 'manage_dashboard_settings', 'mainwp_module_cost_tracker_options', array( 'custom_payment_methods' ), array() ),
+            'cost-settings'    => array( 'PUT', 'cost-tracker/edit', array( 'currency' => 'EUR' ), 'manage_costs_settings', 'mainwp_module_cost_tracker_options', array( 'currency' ), 'EUR' ),
+            'product-add'      => array( 'POST', 'cost-tracker/product-types/add', array( 'title' => 'New product' ), 'manage_costs_settings', 'mainwp_module_cost_tracker_options', array( 'custom_product_types', 'new-product' ), 'New product' ),
+            'product-edit'     => array( 'PUT', 'cost-tracker/product-types/held-product/edit', array( 'title' => 'Updated product' ), 'manage_costs_settings', 'mainwp_module_cost_tracker_options', array( 'custom_product_types', 'held-product' ), 'Updated product' ),
+            'product-delete'   => array( 'DELETE', 'cost-tracker/product-types/held-product/delete', array(), 'manage_costs_settings', 'mainwp_module_cost_tracker_options', array( 'custom_product_types' ), array() ),
+            'payment-add'      => array( 'POST', 'cost-tracker/payment-methods/add', array( 'title' => 'New payment' ), 'manage_costs_settings', 'mainwp_module_cost_tracker_options', array( 'custom_payment_methods', 'new-payment' ), 'New payment' ),
+            'payment-edit'     => array( 'PUT', 'cost-tracker/payment-methods/held-payment/edit', array( 'title' => 'Updated payment' ), 'manage_costs_settings', 'mainwp_module_cost_tracker_options', array( 'custom_payment_methods', 'held-payment' ), 'Updated payment' ),
+            'payment-delete'   => array( 'DELETE', 'cost-tracker/payment-methods/held-payment/delete', array(), 'manage_costs_settings', 'mainwp_module_cost_tracker_options', array( 'custom_payment_methods' ), array() ),
             'insights'         => array( 'PUT', 'dashboard-insights/edit', array( 'enable_insights_logging' => 1 ), 'manage_dashboard_settings', 'mainwp_module_log_settings', array( 'enabled' ), 1 ),
             'api-backups'      => array(
                 'PUT',
@@ -429,8 +434,8 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
      * @param mixed  $expected Expected saved value.
      */
     public function test_granted_owner_right_preserves_write( $method, $route, $body, $right, $option, $path, $expected ): void {
-        // Withhold the other settings right to prove the two gates are independent.
-        $this->denied_right = 'manage_api_backups' === $right ? 'manage_dashboard_settings' : 'manage_api_backups';
+        // Domain-specific settings rights must not also require the general settings right.
+        $this->denied_right = in_array( $right, array( 'manage_api_backups', 'manage_costs_settings' ), true ) ? 'manage_dashboard_settings' : 'manage_api_backups';
         $response           = $this->dispatch_write( $method, $route, $body );
         $this->assert_write_result( $response, $option, $path, $expected );
     }
@@ -526,6 +531,28 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
         $this->restricted = true;
         $this->test_missing_owner_right_refuses_write( $method, $route, $body, $right );
     }
+
+	/**
+	 * Tools that modify sites need the site-edit right as well as settings access.
+	 *
+	 * @return array Site-modifying settings routes.
+	 */
+	public static function connection_tools(): array {
+		return array_intersect_key( self::write_routes(), array_flip( array( 'destroy-sessions', 'renew', 'disconnect' ) ) );
+	}
+
+	/**
+	 * Connection tools must also enforce edit_sites before queuing a scoped job.
+	 *
+	 * @dataProvider connection_tools
+	 * @param string $method HTTP method.
+	 * @param string $route  Settings route.
+	 * @param array  $body   Request body.
+	 */
+	public function test_site_tools_without_edit_sites_refused( $method, $route, $body ): void {
+		$this->restricted = true;
+		$this->test_missing_owner_right_refuses_write( $method, $route, $body, 'edit_sites' );
+	}
 
     /**
      * Tag restrictions alone still refuse every global settings write.

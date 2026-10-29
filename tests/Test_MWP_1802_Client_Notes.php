@@ -148,40 +148,39 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'click', $stored );
 	}
 
-	/**
-	 * A non-string note is stored as an empty string and does not raise a notice.
-	 *
-	 * @return void
-	 */
-	public function test_array_note_is_stored_as_empty_string(): void {
+	/** Invalid REST notes leave the existing note intact. */
+	public function test_array_note_is_refused_and_stored_note_is_unchanged(): void {
 		$client_id = $this->create_client( 'original note' );
-		$note      = array( 'not', 'a string' );
+		$result = MainWP_Client_Handler::rest_api_add_client( array( 'client_id' => $client_id, 'note' => array( 'not', 'a string' ) ), true );
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 'original note', $this->read_note( $client_id ) );
+	}
 
-		$edited = MainWP_Client_Handler::rest_api_add_client(
-			array(
-				'client_id' => $client_id,
-				'note'      => $note,
-			),
-			true
-		);
-		$this->assertTrue( ! empty( $edited['success'] ) );
-		$this->assertSame( '', $this->read_note( $client_id ) );
+	/** The edit form must not replace a note with an array. */
+	public function test_edit_form_refuses_array_note_and_keeps_stored_note(): void {
+		$client_id = $this->create_client( 'original note' );
+		$this->save_note_through_edit_form( $client_id, array( 'not', 'a string' ), false );
+		$this->assertSame( 'original note', $this->read_note( $client_id ) );
+	}
 
-		$this->save_note_through_edit_form( $client_id, $note );
-		$this->assertSame( '', $this->read_note( $client_id ) );
+	/** The modal returns its existing error shape for invalid note types. */
+	public function test_modal_refuses_array_note_and_keeps_stored_note(): void {
+		$client_id = $this->create_client( 'original note' );
+		$result = $this->dispatch_notes_save( $client_id, array( 'not', 'a string' ) );
+		$this->assertSame( array( 'undefined_error' => true ), $result );
+		$this->assertSame( 'original note', $this->read_note( $client_id ) );
+	}
 
-		$added = MainWP_Client_Handler::rest_api_add_client(
-			array(
-				'name'         => 'Test Client MWP-1802 array ' . wp_generate_password( 6, false ),
-				'client_email' => 'test-mwp1802-array-' . wp_generate_password( 8, false ) . '@example.com',
-				'note'         => $note,
-			),
+	/** Invalid notes refuse creation before a client row is inserted. */
+	public function test_rest_add_refuses_array_note_without_creating_client(): void {
+		global $wpdb;
+		$before = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}mainwp_wp_clients ORDER BY client_id", ARRAY_A );
+		$result = MainWP_Client_Handler::rest_api_add_client(
+			array( 'name' => 'Invalid note client', 'client_email' => 'invalid-note@example.com', 'note' => array( 'not', 'a string' ) ),
 			false
 		);
-		$this->assertTrue( ! empty( $added['success'] ) );
-		$added_id           = (int) $added['client_id'];
-		$this->client_ids[] = $added_id;
-		$this->assertSame( '', $this->read_note( $added_id ) );
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( $before, $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}mainwp_wp_clients ORDER BY client_id", ARRAY_A ) );
 	}
 
 	/**
@@ -1506,9 +1505,10 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	 *
 	 * @param int   $client_id Client ID.
 	 * @param mixed $note      Note field.
+	 * @param bool  $expect_success Whether the form should accept the note.
 	 * @return void
 	 */
-	private function save_note_through_edit_form( $client_id, $note ) {
+	private function save_note_through_edit_form( $client_id, $note, $expect_success = true ) {
 		$_POST = array(
 			'nonce_client_id' => wp_create_nonce( 'editing-client-' . $client_id ),
 			'client_fields'   => array(
@@ -1526,6 +1526,10 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 
 		$decoded = json_decode( $body, true );
 		$this->assertIsArray( $decoded, 'edit form should return JSON, got: ' . $body );
-		$this->assertSame( 'yes', $decoded['success'] );
+		if ( $expect_success ) {
+			$this->assertSame( 'yes', $decoded['success'] );
+		} else {
+			$this->assertArrayHasKey( 'error', $decoded );
+		}
 	}
 }

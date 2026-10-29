@@ -238,6 +238,11 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function list_pages( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_pages' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $page_data = array();
         $utility   = MainWP_Utility::instance();
         // Get params.
@@ -321,6 +326,11 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function get_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_pages' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -334,7 +344,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
         }
 
         // Check page id exist.
-        $page = $this->get_request_post_page_id( $website, $request, 'page' );
+        $page = $this->get_request_page_id( $website, $request );
         if ( is_wp_error( $page ) ) {
             return $page;
         }
@@ -376,6 +386,11 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function update_status_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_pages' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -389,7 +404,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
         }
 
         // Check page id exist.
-        $page = $this->get_request_post_page_id( $website, $request, 'page' );
+        $page = $this->get_request_page_id( $website, $request );
         if ( is_wp_error( $page ) ) {
             return $page;
         }
@@ -415,13 +430,19 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
                 $website,
                 'post_action',
                 array(
-                    'action' => $status,
-                    'id'     => $page_id,
+                    'action'             => $status,
+                    'id'                 => $page_id,
+                    'expected_post_type' => 'page',
                 )
             );
 
         } catch ( MainWP_Exception $e ) {
             return new WP_Error( 'update_page_status_error', MainWP_Error_Helper::get_error_message( $e ) );
+        }
+
+        $type_error = MainWP_Rest_Posts_Controller::get_child_type_error( $information );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
         }
 
         if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
@@ -447,6 +468,11 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function edit_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_pages' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -460,7 +486,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
         }
 
         // Check page id exist.
-        $page = $this->get_request_post_page_id( $website, $request, 'page' );
+        $page = $this->get_request_page_id( $website, $request );
         if ( is_wp_error( $page ) ) {
             return $page;
         }
@@ -497,6 +523,8 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
         );
         $page_data = $this->prepare_post_page_data( $new_page, $post_custom, $post_featured_image, $featured_image_data );
 
+        $page_data['expected_post_type'] = 'page';
+
         // Send edit request to child site.
         try {
             $information = MainWP_Connect::fetch_url_authed(
@@ -506,6 +534,11 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
             );
         } catch ( MainWP_Exception $e ) {
             return new WP_Error( 'edit_page_error', MainWP_Error_Helper::get_error_message( $e ) );
+        }
+
+        $type_error = MainWP_Rest_Posts_Controller::get_child_type_error( $information );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
         }
 
         if ( empty( $information['added'] ) ) {
@@ -531,6 +564,11 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function create_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_pages' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -603,6 +641,11 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function delete_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_pages' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -616,7 +659,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
         }
 
         // Check page id exist.
-        $page = $this->get_request_post_page_id( $website, $request, 'page' );
+        $page = $this->get_request_page_id( $website, $request );
         if ( is_wp_error( $page ) ) {
             return $page;
         }
@@ -628,14 +671,20 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
                 $website,
                 'post_action',
                 array(
-                    'action'    => 'delete',
-                    'id'        => $page_id,
-                    'post_type' => 'page',
+                    'action'             => 'delete',
+                    'id'                 => $page_id,
+                    'post_type'          => 'page',
+                    'expected_post_type' => 'page',
                 )
             );
 
         } catch ( MainWP_Exception $e ) {
             return new WP_Error( 'delete_page_error', MainWP_Error_Helper::get_error_message( $e ) );
+        }
+
+        $type_error = MainWP_Rest_Posts_Controller::get_child_type_error( $information );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
         }
 
         if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
@@ -651,6 +700,107 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
                 'message' => __( 'Delete page successfully.', 'mainwp' ),
             )
         );
+    }
+
+    /**
+     * Get the page ID and remote edit data.
+     *
+     * @param object          $website Website.
+     * @param WP_REST_Request $request Full details about the request.
+     * @return array|WP_Error
+     */
+    private function get_request_page_id( $website, $request ) {
+        $id = $request->get_param( 'id_page' );
+        if ( empty( $id ) ) {
+            return new WP_Error( 'post_id_not_found', __( 'Page id not found.', 'mainwp' ) );
+        }
+
+        $type_error = $this->get_preflight_type_error( $website, $id );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
+        }
+
+        try {
+            $information = MainWP_Connect::fetch_url_authed(
+                $website,
+                'post_action',
+                array(
+                    'action'             => 'get_edit',
+                    'id'                 => $id,
+                    'post_type'          => 'page',
+                    'expected_post_type' => 'page',
+                )
+            );
+        } catch ( MainWP_Exception $e ) {
+            return new WP_Error( 'get_post_error', MainWP_Error_Helper::get_error_message( $e ) );
+        }
+
+        $type_error = MainWP_Rest_Posts_Controller::get_child_type_error( $information );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
+        }
+
+        if ( ! is_array( $information ) || empty( $information['status'] ) || 'SUCCESS' !== $information['status'] || empty( $information['my_post'] ) ) {
+            return new WP_Error( 'post_not_exist', __( 'Page not exist.', 'mainwp' ) );
+        }
+
+        $encoded_post = is_array( $information['my_post'] ) ? ( $information['my_post']['new_post'] ?? null ) : null;
+        if ( is_string( $encoded_post ) ) {
+            $post_data = $this->decode_post_page_data( array( 'new_post' => $encoded_post ) );
+            $new_post  = $post_data['new_post'];
+            if ( is_array( $new_post ) && array_key_exists( 'post_type', $new_post ) && 'page' !== $new_post['post_type'] ) {
+                $message = 'post' === $new_post['post_type'] ? __( 'This item is a post, not a page.', 'mainwp' ) : __( 'This item is not a page.', 'mainwp' );
+                return new WP_Error( 'post_not_exist', $message, array( 'status' => 404 ) );
+            }
+        }
+
+        return array(
+            'data'      => $information,
+            'post_id'   => $id,
+            'post_type' => 'page',
+        );
+    }
+
+    /**
+     * Check the actual type before an edit lookup can write a Child edit lock.
+     *
+     * @param object     $website Website.
+     * @param int|string $post_id Existing item ID.
+     * @return WP_Error|null
+     */
+    private function get_preflight_type_error( $website, $post_id ) {
+        try {
+            $posts = MainWP_Connect::fetch_url_authed(
+                $website,
+                'get_all_posts',
+                array(
+                    'post_type'  => 'any',
+                    'status'     => 'any,trash,auto-draft,inherit',
+                    'maxRecords' => 1,
+                    'postId'     => $post_id,
+                )
+            );
+        } catch ( MainWP_Exception $e ) {
+            // An unavailable listing retains the legacy edit lookup.
+            return null;
+        }
+
+        if ( ! is_array( $posts ) ) {
+            return null;
+        }
+
+        foreach ( $posts as $post ) {
+            if ( ! is_array( $post ) || ! isset( $post['id'], $post['post_type'] ) || ( ! is_int( $post['id'] ) && ! is_string( $post['id'] ) ) || (string) $post_id !== (string) $post['id'] || ! is_string( $post['post_type'] ) || '' === trim( $post['post_type'] ) ) {
+                continue;
+            }
+
+            if ( 'page' !== $post['post_type'] ) {
+                $message = 'post' === $post['post_type'] ? __( 'This item is a post, not a page.', 'mainwp' ) : __( 'This item is not a page.', 'mainwp' );
+                return new WP_Error( 'post_not_exist', $message, array( 'status' => 404 ) );
+            }
+            return null;
+        }
+        return null;
     }
 
     /**

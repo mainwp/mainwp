@@ -1,0 +1,95 @@
+{
+    "task_id": "<task_id>",
+    "phase": "completed",
+    "type": "files",
+    "sub_state": {
+        "params": {
+            "ext": "tar",
+            "emit_manifest": true
+        },
+        "archive_file": "<archive>",
+        "archive_started": true,
+        "failed_add_paths": [],
+        "failed_add_checked": 0,
+        "artifact": {
+            "file": "<archive>",
+            "size": "<size>",
+            "sha256": "<sha256>"
+        },
+        "archive_done": true,
+        "walk_done": true,
+        "manifest": {
+            "sha256": "<sha256>",
+            "file": "files.list",
+            "size": "<size>",
+            "total_files": 4,
+            "total_bytes": "<size>"
+        },
+        "artifacts": [
+            {
+                "file": "<archive>",
+                "size": "<size>",
+                "sha256": "<sha256>",
+                "role": "full"
+            },
+            {
+                "file": "files.list",
+                "size": "<size>",
+                "role": "manifest",
+                "sha256": "<sha256>",
+                "walk": {
+                    "excludes": [],
+                    "excludenonwp": 0,
+                    "excludezip": 0,
+                    "skipped_count": 0,
+                    "skipped_paths": [],
+                    "skipped_by_reason": []
+                }
+            }
+        ],
+        "upload_accepted": true,
+        "submit_accepted": true,
+        "content_status": "complete",
+        "progress": {
+            "current_file": "<archive>",
+            "bytes_done": "<size>",
+            "bytes_total": "<size>"
+        }
+    },
+    "started_at": "<started_at>",
+    "last_progress_at": "<last_progress_at>",
+    "max_wall_clock_at": "<max_wall_clock_at>",
+    "resume_count": 0,
+    "max_resumes": 6,
+    "file": "<archive>",
+    "size": "<size>",
+    "content_status": "complete",
+    "progress": {
+        "current_file": "<archive>",
+        "bytes_done": "<size>",
+        "bytes_total": "<size>"
+    },
+    "sha256": "<sha256>",
+    "artifacts": [
+        {
+            "file": "<archive>",
+            "size": "<size>",
+            "sha256": "<sha256>",
+            "role": "full"
+        },
+        {
+            "file": "files.list",
+            "size": "<size>",
+            "role": "manifest",
+            "sha256": "<sha256>",
+            "walk": {
+                "excludes": [],
+                "excludenonwp": 0,
+                "excludezip": 0,
+                "skipped_count": 0,
+                "skipped_paths": [],
+                "skipped_by_reason": []
+            }
+        }
+    ]
+}

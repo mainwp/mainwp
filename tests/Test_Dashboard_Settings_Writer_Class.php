@@ -229,40 +229,39 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
      *
      * @return array Writer, right, and independently missing WP capability.
      */
-    public static function writers(): array {
-        $writers = array(
-            'C1 active'        => 'plugin_active',
-            'C1 disable'       => 'plugin_disable',
-            'C1 remove'        => 'plugin_remove',
-            'H1 updates'       => 'updates',
-            'H2 delete'        => 'template_delete',
-            'H2 copy'          => 'template_copy',
-            'H2 save route'    => 'template_save',
-            'H2 save direct'   => 'template_direct',
-            'H5 introduction'  => 'wizard_introduction',
-            'H5 system'        => 'wizard_system',
-            'H5 monitoring'    => 'wizard_monitoring',
-            'M6 archive'       => 'archive',
-            'M6 cancel'        => 'cancel',
-            'M8 health on'     => 'monitoring_checked',
-            'M8 health off'    => 'monitoring_cleared',
-            'M9 manage sites'  => 'manage_sites',
-            'D1 email'         => 'email',
-            'D2 tools'         => 'tools',
-            'D3 activation'    => 'activation',
-            'D4 truncate'      => 'truncate',
-            'D5 logs settings' => 'logs_settings',
-        );
-        $rows    = array();
-        foreach ( $writers as $label => $writer ) {
-            $rows[ $label . ' refused' ] = array( $writer, false, '' );
-            $rows[ $label . ' allowed' ] = array( $writer, true, '' );
-        }
-        foreach ( array( 'active', 'disable', 'remove' ) as $action ) {
-            $rows[ 'C1 ' . $action . ' WP capability refused' ] = array( 'plugin_' . $action, true, 'remove' === $action ? 'delete_plugins' : 'activate_plugins' );
-        }
-        return $rows;
-    }
+	public static function writers(): array {
+		$writers = array(
+			'C1 active'        => 'plugin_active',
+			'C1 disable'       => 'plugin_disable',
+			'C1 remove'        => 'plugin_remove',
+			'H1 updates'       => 'updates',
+			'H2 delete'        => 'template_delete',
+			'H2 copy'          => 'template_copy',
+			'H2 save route'    => 'template_save',
+			'H2 save direct'   => 'template_direct',
+			'H5 summary tours' => 'wizard_ready',
+			'H5 system'        => 'wizard_system',
+			'M6 archive'       => 'archive',
+			'M6 cancel'        => 'cancel',
+			'M8 health on'     => 'monitoring_checked',
+			'M8 health off'    => 'monitoring_cleared',
+			'M9 manage sites'  => 'manage_sites',
+			'D1 email'         => 'email',
+			'D2 tools'         => 'tools',
+			'D3 activation'    => 'activation',
+			'D4 truncate'      => 'truncate',
+			'D5 logs settings' => 'logs_settings',
+		);
+		$rows    = array();
+		foreach ( $writers as $label => $writer ) {
+			$rows[ $label . ' refused' ] = array( $writer, false, '' );
+			$rows[ $label . ' allowed' ] = array( $writer, true, '' );
+		}
+		foreach ( array( 'active', 'disable', 'remove' ) as $action ) {
+			$rows[ 'C1 ' . $action . ' WP capability refused' ] = array( 'plugin_' . $action, true, 'remove' === $action ? 'delete_plugins' : 'activate_plugins' );
+		}
+		return $rows;
+	}
 
     /**
      * Missing checks must fail through changed state, not source-text assertions.
@@ -479,63 +478,55 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
      * @param string $step Wizard step.
      * @param bool   $allowed Settings grant.
      */
-    private function wizard( string $step, bool $allowed ): void {
-        $wizard = ( new \ReflectionClass( Writer_Class_Setup_Wizard::class ) )->newInstanceWithoutConstructor();
-        foreach ( array(
-            'step'  => 'first',
-            'steps' => array(
-                'first'  => array(),
-                'second' => array(),
-            ),
-        ) as $name => $value ) {
-            $property = new \ReflectionProperty( $wizard, $name );
-            $property->setAccessible( true );
-            $property->setValue( $wizard, $value );
-        }
-        $_REQUEST = array( '_wpnonce' => wp_create_nonce( 'mwp-setup' ) );
-        if ( 'introduction' === $step ) {
-            $_POST  = array( 'mainwp-guided-tours-option' => '1' );
-            $before = array( 'mainwp_enable_guided_tours' => 0 );
-            $after  = array( 'mainwp_enable_guided_tours' => 1 );
-        } elseif ( 'system' === $step ) {
-            $_POST  = array( 'mwp_setup_openssl_lib_location' => '/fixture/openssl' );
-            $before = array( 'mainwp_opensslLibLocation' => '/original/openssl' );
-            $after  = array( 'mainwp_opensslLibLocation' => '/fixture/openssl' );
-        } else {
-            $_POST  = array(
-                'mainwp_setup_enableUptimeMonitoring'  => '1',
-                'mainwp_setup_monitor_interval_hidden' => '120',
-                'mainwp_setup_site_healthThreshold'    => '100',
-            );
-            $before = array(
-                'mainwp_global_uptime_monitoring_settings' => array(
-                    'active'   => 0,
-                    'interval' => 60,
-                ),
-                'mainwp_disableSitesHealthMonitoring'      => 0,
-                'mainwp_sitehealthThreshold'               => 80,
-            );
-            $after  = array(
-                'mainwp_global_uptime_monitoring_settings' => array(
-                    'active'           => 1,
-                    'interval'         => 120,
-                    'retention_limits' => 0,
-                    'bypass_cache'     => 0,
-                ),
-                'mainwp_disableSitesHealthMonitoring'      => 1,
-                'mainwp_sitehealthThreshold'               => 100,
-            );
-        }
-        $method = 'mwp_setup_' . ( 'system' === $step ? 'system_requirements' : $step ) . '_save';
-        $this->options(
-            $allowed,
-            $before,
-            $after,
-            static function () use ( $wizard, $method ) {
-                $wizard->$method();
-            }
-        );
-    }
+	private function wizard( string $step, bool $allowed ): void {
+		$wizard = ( new \ReflectionClass( Writer_Class_Setup_Wizard::class ) )->newInstanceWithoutConstructor();
+		foreach ( array(
+			'step'  => 'first',
+			'steps' => array(
+				'first'  => array(),
+				'second' => array(),
+			),
+		) as $name => $value ) {
+			$property = new \ReflectionProperty( $wizard, $name );
+			$property->setAccessible( true );
+			$property->setValue( $wizard, $value );
+		}
+		$_REQUEST = array( '_wpnonce' => wp_create_nonce( 'mwp-setup' ) );
+		if ( 'system' === $step ) {
+			$_POST  = array( 'mwp_setup_openssl_lib_location' => '/fixture/openssl' );
+			$before = array( 'mainwp_opensslLibLocation' => '/original/openssl' );
+			$after  = array( 'mainwp_opensslLibLocation' => '/fixture/openssl' );
+		} else {
+			$_POST = array(
+				'mainwp-guided-tours-option'          => '1',
+				'mainwp_setup_enableUptimeMonitoring' => '1',
+			);
+			// The summary saves only the tour choice; a stale monitoring field must not reach the setting.
+			$settings = array(
+				'active'           => 0,
+				'interval'         => 120,
+				'retention_limits' => 180,
+				'bypass_cache'     => 0,
+			);
+			$before   = array(
+				'mainwp_enable_guided_tours'               => 0,
+				'mainwp_global_uptime_monitoring_settings' => $settings,
+			);
+			$after    = array(
+				'mainwp_enable_guided_tours'               => 1,
+				'mainwp_global_uptime_monitoring_settings' => $settings,
+			);
+		}
+		$method = 'system' === $step ? 'mwp_setup_system_requirements_save' : 'mwp_setup_ready_save';
+		$this->options(
+			$allowed,
+			$before,
+			$after,
+			static function () use ( $wizard, $method ) {
+				$wizard->$method();
+			}
+		);
+	}
 
     /**
      * Refused archive runs preserve the source logs and metadata too.

@@ -1,0 +1,37 @@
+{
+    "status": "completed_with_errors",
+    "run_state": "closed",
+    "stale_sites": [],
+    "started": 1700000000,
+    "click": 0,
+    "baseline": null,
+    "run_open": false,
+    "errors": "[mainwp_backup_disk_full] Disk & space error.",
+    "notices": "ZIP & archive notice.",
+    "sites": [
+        {
+            "id": 987670,
+            "name": "Parity Site",
+            "url": "https://parity.example.org/",
+            "status": "completed",
+            "phase": "failed",
+            "label": "Failed",
+            "percent": null,
+            "current_file": "",
+            "error": "",
+            "snapshot": {
+                "id": 987673,
+                "type": "full",
+                "parent_id": null,
+                "created": 2000000000
+            },
+            "uploads": {
+                "total": 1,
+                "complete": 0,
+                "failed": 1,
+                "pending": 0
+            }
+        }
+    ],
+    "lane": "idle"
+}

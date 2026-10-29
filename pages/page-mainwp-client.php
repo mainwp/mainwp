@@ -1593,6 +1593,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         $posted_note = isset( $client_fields['default_field']['client.note'] ) ? $client_fields['default_field']['client.note'] : null;
+        if ( isset( $client_fields['default_field']['client.note'] ) && ! is_string( $posted_note ) ) {
+            echo wp_json_encode( array( 'error' => esc_html__( 'Invalid request data. Please try again.', 'mainwp' ) ) );
+            return;
+        }
         if ( MainWP_Utility::client_note_exceeds_limit( $posted_note ) ) {
             echo wp_json_encode( array( 'error' => MainWP_Utility::client_note_length_error() ) );
             return;
@@ -1605,9 +1609,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         foreach ( $default_client_fields as $field_name => $item ) {
             if ( ! empty( $item['db_field'] ) && isset( $client_fields['default_field'][ $field_name ] ) ) {
                 if ( 'note' === $item['db_field'] ) {
-                    // client_fields is already unslashed. A non-string note is stored as empty.
+                    // client_fields is already unslashed.
                     $field_value                        = $client_fields['default_field'][ $field_name ];
-                    $client_to_add[ $item['db_field'] ] = is_string( $field_value ) ? MainWP_Utility::sanitize_client_note( $field_value ) : '';
+                    $client_to_add[ $item['db_field'] ] = MainWP_Utility::sanitize_client_note( $field_value );
                 } else {
                     $field_value                        = wp_unslash( $client_fields['default_field'][ $field_name ] );
                     $client_to_add[ $item['db_field'] ] = sanitize_text_field( $field_value );
@@ -2828,7 +2832,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( isset( $_POST['clientid'] ) && ! empty( $_POST['clientid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $note = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( ! is_string( $note ) ) {
-                $note = '';
+                self::exit_json( array( 'undefined_error' => true ) );
             }
             if ( MainWP_Utility::client_note_exceeds_limit( $note ) ) {
                 self::exit_json(

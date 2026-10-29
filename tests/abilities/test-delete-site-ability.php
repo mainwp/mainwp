@@ -740,8 +740,9 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
     /**
      * Test that a delete matching no row still fires both hooks.
      *
-     * Zero rows is not a database error. The ability path treats only false
-     * as failure, and removed_site stays unset because that flag is truthy-only.
+     * Zero rows is not a database error: the row is already gone. The ability
+     * path treats only false as failure, and removed_site is set so the Sites
+     * table drops the row instead of reporting an undefined error.
      *
      * @return void
      */
@@ -757,24 +758,25 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
         );
         $site     = $this->assert_handler_live_site( $site_id );
 
-        $remote_calls                     = [];
-        $this->site_row_deletes_rewritten = 0;
+        $remote_calls = [];
         $this->record_deletion_hooks();
         $stub = $this->stub_live_site_deactivate( $remote_calls );
-        add_filter( 'query', [ $this, 'zero_site_row_delete' ] );
+
+        // Another request removed the row after this one loaded the site.
+        global $wpdb;
+        $this->assertSame( 1, $wpdb->delete( $wpdb->prefix . 'mainwp_wp', [ 'id' => $site_id ] ) );
+        $this->assertSame( 0, $this->count_site_rows( $site_id ) );
 
         try {
             $information = \MainWP\Dashboard\MainWP_Manage_Sites_Handler::remove_website( $site );
         } finally {
-            remove_filter( 'query', [ $this, 'zero_site_row_delete' ] );
             remove_filter( 'mainwp_fetch_url_authed_pre', $stub, 10 );
             $this->remove_deletion_hook_recorders();
         }
 
-        $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The zero-row filter rewrites exactly one site-row DELETE.' );
         $this->assertIsArray( $information );
-        $this->assertArrayNotHasKey( 'removed_site', $information, 'Zero rows does not set removed_site.' );
-        $this->assertSame( 1, $this->count_site_rows( $site_id ), 'A zero-row delete must leave the site row in place.' );
+        $this->assertTrue( $information['removed_site'] ?? false, 'A delete that finds the row already gone sets removed_site.' );
+        $this->assertSame( 0, $this->count_site_rows( $site_id ) );
         $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
         $this->assert_deletion_hook_argument_is( $site );
     }

@@ -104,14 +104,13 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $icons = static::type_icons();
 
         $context_help = __( 'Facts an AI agent should know before it acts: hosting, stack, preferences, constraints, and known quirks.', 'mainwp' );
-        $skill_help   = __( 'Procedures and rules to follow: how to deploy, what to check first, and what never to touch.', 'mainwp' );
+        $skill_help   = __( 'Procedures for specific tasks, such as deployments and checks before updates. Store standing rules and restrictions in Context.', 'mainwp' );
         if ( 'client' === $scope_type ) {
             $context_help = __( 'Facts an AI agent should know before it acts for this client: hosting, agreements, preferences, constraints.', 'mainwp' );
         } elseif ( 'site' === $scope_type ) {
             $context_help = __( 'Facts an AI agent should know before it acts on this site: hosting, stack, constraints, known quirks.', 'mainwp' );
         } elseif ( 'agency' === $scope_type ) {
             $context_help = __( 'Facts an AI agent should know before it acts on any site: your agency\'s standards, tools, contacts and policies.', 'mainwp' );
-            $skill_help   = __( 'Procedures and rules to follow on any site: how to deploy, what to check first, what never to touch.', 'mainwp' );
         }
 
         return array(
@@ -131,7 +130,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'title' => __( 'Memory', 'mainwp' ),
                 'icon'  => $icons['memory'],
                 'add'   => __( 'Add Memory', 'mainwp' ),
-                'help'  => __( 'Outcomes and observations recorded over time. Read them as history, not as the current state.', 'mainwp' ),
+                'help'  => __( 'A dated history of completed work, outcomes, and observations. Store lasting facts in Context.', 'mainwp' ),
             ),
         );
     }
@@ -974,8 +973,8 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <div class="ui small modal" id="mainwp-knowledge-modal">
             <i class="close icon"></i>
-            <div class="header" data-add="<?php esc_attr_e( 'Add knowledge record', 'mainwp' ); ?>" data-edit="<?php esc_attr_e( 'Edit knowledge record', 'mainwp' ); ?>" data-view="<?php esc_attr_e( 'View knowledge record', 'mainwp' ); ?>">
-                <span id="mainwp-knowledge-modal-title"><?php esc_html_e( 'Add knowledge record', 'mainwp' ); ?></span>
+            <div class="header" data-add="<?php esc_attr_e( 'Add Knowledge Record', 'mainwp' ); ?>" data-edit="<?php esc_attr_e( 'Edit Knowledge Record', 'mainwp' ); ?>" data-view="<?php esc_attr_e( 'View Knowledge Record', 'mainwp' ); ?>">
+                <span id="mainwp-knowledge-modal-title"><?php esc_html_e( 'Add Knowledge Record', 'mainwp' ); ?></span>
                 <span class="ui mini label" id="mainwp-knowledge-modal-level" style="display:none"></span>
                 <span class="ui mini yellow label" id="mainwp-knowledge-modal-unverified" style="display:none" data-tooltip="<?php echo esc_attr( $strings['unverifiedHint'] ); ?>" data-inverted=""><?php esc_html_e( 'Unverified', 'mainwp' ); ?></span>
             </div>

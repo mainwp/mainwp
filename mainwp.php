@@ -9,7 +9,8 @@
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
  * Requires at least: 6.2
- * Version:  6.3
+ * Version:  6.4
+ * Requires PHP: 8.3
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
@@ -116,9 +117,12 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
         }
 
         $autoload_types = array(
-            'class'   => 'class',
-            'pages'   => 'page',
-            'widgets' => 'widget',
+            'class'                                  => 'class',
+            'class' . DIRECTORY_SEPARATOR . 'backup' => 'class',
+            'class' . DIRECTORY_SEPARATOR . 'backup' . DIRECTORY_SEPARATOR . 'storage' => 'class',
+            'pages'                                  => 'page',
+            'pages' . DIRECTORY_SEPARATOR . 'backup' => 'page',
+            'widgets'                                => 'widget',
         );
 
         foreach ( $autoload_types as $type => $prefix ) {
@@ -149,6 +153,7 @@ require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' 
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-batch.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-cron.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-knowledge.php'; // NOSONAR -- WP compatible.
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-backups.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities.php'; // NOSONAR -- WP compatible.
 
 // Initialize Abilities API integration (does nothing if Abilities API not available).

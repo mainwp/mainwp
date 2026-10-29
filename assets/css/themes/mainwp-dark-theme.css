@@ -48,6 +48,21 @@
   --border-color: rgba(255, 255, 255, .1);
 }
 
+:root {
+  --mainwp-onboarding-text: var(--font-color);
+  --mainwp-onboarding-muted: var(--font-light-color);
+  --mainwp-onboarding-surface: var(--background-color-3);
+  --mainwp-onboarding-surface-secondary: var(--background-color-3);
+  --mainwp-onboarding-border: var(--border-color);
+  --mainwp-onboarding-link: color-mix(in srgb, var(--blue-color) 60%, #fff);
+  --mainwp-onboarding-info-accent: var(--blue-color);
+  --mainwp-onboarding-success: var(--green-color);
+  --mainwp-onboarding-warning: var(--yellow-color);
+  --mainwp-onboarding-danger: color-mix(in srgb, var(--red-color) 45%, #fff);
+  --mainwp-onboarding-info-surface: color-mix(in srgb, var(--mainwp-onboarding-info-accent) 10%, var(--mainwp-onboarding-surface));
+  --mainwp-onboarding-icon-foreground: #fff;
+}
+
 /* Fix Colors */
 
 .mainwp-ui.mainwp-custom-theme a:not(.ui.button),

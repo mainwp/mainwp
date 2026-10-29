@@ -93,21 +93,22 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_menu() {
-        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . esc_html__( 'Pages', 'mainwp' ) . '</span>', 'manage_options', 'PageBulkManage', array( static::get_class_name(), 'render' ) );
+        // phpcs:disable WordPress.WP.Capabilities.Unknown -- Granted per request by MainWP_Bulk_Post.
+        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . esc_html__( 'Pages', 'mainwp' ) . '</span>', 'mainwp_manage_bulk_pages', 'PageBulkManage', array( static::get_class_name(), 'render' ) );
         add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_page' ) );
         add_filter( 'manage_' . $_page . '_columns', array( static::get_class_name(), 'get_manage_columns' ) );
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PageBulkAdd' ) ) {
-            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'manage_options', 'PageBulkAdd', array( static::get_class_name(), 'render_bulk_add' ) );
+            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'mainwp_manage_bulk_pages', 'PageBulkAdd', array( static::get_class_name(), 'render_bulk_add' ) );
             add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
         }
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PageBulkEdit' ) ) {
-            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Page', 'mainwp' ) . '</div>', 'manage_options', 'PageBulkEdit', array( static::get_class_name(), 'render_bulk_edit' ) );
+            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Page', 'mainwp' ) . '</div>', 'mainwp_manage_bulk_pages', 'PageBulkEdit', array( static::get_class_name(), 'render_bulk_edit' ) );
             add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
         }
 
-        add_submenu_page( 'mainwp_tab', esc_html__( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New Page', 'mainwp' ) . '</div>', 'manage_options', 'PostingBulkPage', array( static::get_class_name(), 'posting' ), ); // removed from menu afterwards.
+        add_submenu_page( 'mainwp_tab', esc_html__( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New Page', 'mainwp' ) . '</div>', 'mainwp_manage_bulk_pages', 'PostingBulkPage', array( static::get_class_name(), 'posting' ), ); // removed from menu afterwards.
 
         /**
          * Pages Subpages
@@ -128,10 +129,11 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Page' . $subPage['slug'] ) ) {
                     continue;
                 }
-                add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'manage_options', 'Page' . $subPage['slug'], $subPage['callback'] );
+                add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'mainwp_manage_bulk_pages', 'Page' . $subPage['slug'], $subPage['callback'] );
             }
         }
         static::init_left_menu( static::$subPages );
+        // phpcs:enable WordPress.WP.Capabilities.Unknown
     }
 
     /**
@@ -179,6 +181,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_left_menu( $subPages = array() ) {
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpage' ) ) {
+            return;
+        }
         $init_sub_subleftmenu = array(
             array(
                 'title'                => esc_html__( 'Manage Pages', 'mainwp' ),
@@ -344,7 +349,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $renderItems = array();
 
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+        if ( MainWP_Bulk_Post::can_access( 'bulkpage' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Manage Pages', 'mainwp' ),
                 'href'   => 'admin.php?page=PageBulkManage',
@@ -406,7 +411,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
      */
     public static function render() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpage' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
             return;
         }
@@ -959,6 +964,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      */
     public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all', $clients = '' ) { // phpcs:ignore -- NOSONAR - complex function.
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpage' ) ) {
+            wp_die( -1 );
+        }
 
         MainWP_Cache::init_cache( 'Page' );
 
@@ -969,6 +977,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             foreach ( $sites as $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
                     $website = MainWP_DB::instance()->get_website_by_id( $v );
+                    if ( ! $website ) {
+                        continue;
+                    }
                     if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
                         $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
                     }
@@ -1317,7 +1328,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return void
      */
     public static function render_bulk_add() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpage' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
             return;
         }
@@ -1342,7 +1353,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return void
      */
     public static function render_bulk_edit() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpage' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'manage pages', 'mainwp' ) );
             return;
         }
@@ -1392,6 +1403,10 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         if ( ! isset( $_GET['posting_nonce'] ) || ( isset( $_GET['posting_nonce'] ) && ! wp_verify_nonce( sanitize_key( $_GET['posting_nonce'] ), 'posting_nonce_' . $post_id ) ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
             wp_die( 'Invalid request!' );
+        }
+
+        if ( ! current_user_can( 'manage_options' ) && ( ! MainWP_Bulk_Post::can_access_post( $post_id, 'bulkpage' ) || ! current_user_can( 'edit_post', $post_id ) ) ) {
+            wp_die( -1 );
         }
 
         $edit_id = 0;
@@ -1521,6 +1536,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             foreach ( $selected_sites as $k ) {
                                 if ( MainWP_Utility::ctype_digit( $k ) ) {
                                     $website = MainWP_DB::instance()->get_website_by_id( $k );
+                                    if ( ! $website ) {
+                                        continue;
+                                    }
                                     if ( '' === $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
                                         $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
                                     }
@@ -1570,7 +1588,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 $new_meta_values = array();
                                 foreach ( $meta_values as $key_value => $meta_value ) {
                                     if ( is_serialized( $meta_value ) ) {
-                                        $meta_value = unserialize( $meta_value ); // phpcs:ignore -- internal value safe.
+                                        // Any plugin can write an object to this page's meta; waking it here would run its class code in the admin's request.
+                                        // nosemgrep: AIK_unserialize-use -- allowed_classes false: objects come back incomplete and no class code runs.
+                                        $meta_value = unserialize( $meta_value, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- arrays and scalars only; allowed_classes false blocks object instantiation.
                                     }
                                     $new_meta_values[ $key_value ] = $meta_value;
                                 }

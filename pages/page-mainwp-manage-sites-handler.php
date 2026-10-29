@@ -64,7 +64,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 MainWP_Logger::instance()->log_execution_sync( 'init', '', $website );
 
-                $verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
+                $verify_cert    = MainWP_Manage_Sites_View::normalize_ssl_verify( wp_unslash( $_POST['verify_certificate'] ?? null ), ! isset( $_POST['check_me'] ), wp_unslash( $_POST['ssl_verify_explicit'] ?? null ) );
                 $ssl_version    = empty( $_POST['ssl_version'] ) ? 0 : intval( $_POST['ssl_version'] );
                 $force_use_ipv4 = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $url );
                 $http_user      = ( isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '' );
@@ -95,10 +95,15 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';
+                    foreach ( array( 'connection_window_minutes', 'connection_window_remaining' ) as $field ) {
+                        if ( isset( $information[ $field ] ) && is_int( $information[ $field ] ) ) {
+                            $ret[ $field ] = (int) $information[ $field ];
+                        }
+                    }
                 } elseif ( isset( $information['error'] ) ) {
-                    $ret['response']    = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
-                    $ret['resp_data']   = MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
-                    $ret['failure_ux']  = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
+                    $ret['response']   = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
+                    $ret['resp_data']  = MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+                    $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 } else {
                     $ret['response']   = 'ERROR';
                     $ret['resp_data']  = isset( $output['fetch_data'] ) ? $output['fetch_data'] : MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
@@ -236,10 +241,6 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         }
         // phpcs:enable
 
-        if ( 1 === MainWP_DB::instance()->get_websites_count() ) {
-            $ret['redirectUrl'] = esc_url( admin_url( 'admin.php?page=managesites' ) );
-        }
-
         die( wp_json_encode( $ret ) );
     }
 
@@ -271,7 +272,8 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         $params['wpadmin']                 = isset( $data['admin'] ) ? sanitize_text_field( wp_unslash( $data['admin'] ) ) : '';
         $params['adminpwd']                = isset( $data['adminpassword'] ) ? wp_unslash( $data['adminpassword'] ) : '';
         $params['unique_id']               = isset( $data['uniqueid'] ) ? sanitize_text_field( wp_unslash( $data['uniqueid'] ) ) : '';
-        $params['ssl_verify']              = empty( $data['ssl_verify'] ) ? false : intval( $data['ssl_verify'] );
+        $params['ssl_verify']              = MainWP_Manage_Sites_View::normalize_ssl_verify( $data['ssl_verify'] ?? null );
+        $params['ssl_version']             = empty( $data['ssl_version'] ) ? false : intval( $data['ssl_version'] );
         $params['force_use_ipv4']          = ( ! isset( $data['force_use_ipv4'] ) || ( empty( $data['force_use_ipv4'] ) && ( '0' !== $data['force_use_ipv4'] ) ) ? null : intval( $data['force_use_ipv4'] ) );
         $params['http_user']               = isset( $data['http_user'] ) ? sanitize_text_field( wp_unslash( $data['http_user'] ) ) : '';
         $params['http_pass']               = isset( $data['http_pass'] ) ? wp_unslash( $data['http_pass'] ) : '';
@@ -481,14 +483,13 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             // Remove from DB.
             $removed = MainWP_DB::instance()->remove_website( $website->id );
 
-            if ( $removed ) {
-                $information['removed_site'] = true;
-            }
-
             // Same success test as execute_delete_site(): false is a database
             // error and fires nothing. Zero rows (the site was already gone)
-            // still fires the hooks, so this path and the ability path agree.
+            // still counts as removed and fires the hooks, so this path and
+            // the ability path agree and the Sites table drops the row.
             if ( false !== $removed ) {
+                $information['removed_site'] = true;
+
                 /**
                  * Delete Child Sites
                  *

@@ -501,17 +501,22 @@ class Test_REST_V2_Registration_Fixes extends \WP_Test_REST_TestCase {
 	 * Fix 4: pre_page still sizes the page, per_page wins when both are sent.
 	 */
 	public function test_client_fields_pre_page_aliases_per_page(): void {
+		$this->authenticate_as_admin();
 		$controller = \MainWP_Rest_Clients_Controller::instance();
 
 		$request = new WP_REST_Request( 'GET', '/mainwp/v2/clients/fields' );
 		$request->set_param( 'pre_page', 5 );
-		$controller->client_fields( $request );
+		$response = $controller->client_fields( $request );
+		$this->assertNotWPError( $response );
+		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 5, (int) $request->get_param( 'per_page' ) );
 
 		$request = new WP_REST_Request( 'GET', '/mainwp/v2/clients/fields' );
 		$request->set_param( 'pre_page', 5 );
 		$request->set_param( 'per_page', 7 );
-		$controller->client_fields( $request );
+		$response = $controller->client_fields( $request );
+		$this->assertNotWPError( $response );
+		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 7, (int) $request->get_param( 'per_page' ) );
 	}
 

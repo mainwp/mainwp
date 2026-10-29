@@ -385,7 +385,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$html  = ob_get_clean();
 			$xpath = $this->html_xpath( $html );
 			$this->assertSame( 1, $xpath->query( '//div[@class="ui padded segment"]' )->length, $view );
-			$footer = '//div[@class="ui divider"]/following-sibling::div[1][@class="ui stackable grid"]';
+			$footer = '//div[contains(concat(" ", normalize-space(@class), " "), " ui ") and contains(concat(" ", normalize-space(@class), " "), " divider ")]/following-sibling::div[1][@class="ui stackable grid"]';
 			$this->assertSame( 1, $xpath->query( $footer . '/div[@class="ten wide column"]' )->length, $view );
 			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-qsw-exit-links"]' )->length, $view );
 			$this->assertSame( 0, $xpath->query( $footer . '//*[@id="mainwp-qsw-exit-links"]' )->length, $view );

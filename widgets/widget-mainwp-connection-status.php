@@ -96,7 +96,22 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_widget_content() { // phpcs:ignore -- NOSONAR - current complexity required to achieve desired results. Pull request solutions appreciated.
 
-        $counts = MainWP_DB::instance()->get_sites_connections_status();
+        if ( MainWP_System::instance()->is_multi_user() ) {
+            $params                       = array(
+                'count_sql'     => true,
+                'where'         => 'wp.userid = ' . get_current_user_id(),
+                'connected'     => 'yes',
+                'view'          => 'custom_view',
+                'others_fields' => array(),
+            );
+            $counts                       = array(
+                'connected_sites' => MainWP_DB::instance()->get_var_field( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) ),
+            );
+            $params['connected']          = 'no';
+            $counts['disconnected_sites'] = MainWP_DB::instance()->get_var_field( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
+        } else {
+            $counts = MainWP_DB::instance()->get_sites_connections_status();
+        }
 
         if ( ! is_array( $counts ) ) {
             $counts = array();
@@ -481,6 +496,10 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'view'               => 'custom_view',
             'others_fields'      => array(),
         );
+
+        if ( MainWP_System::instance()->is_multi_user() ) {
+            $args['where'] = 'wp.userid = ' . get_current_user_id();
+        }
 
         $results = MainWP_DB::instance()->query(
             MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(

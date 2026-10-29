@@ -70,6 +70,10 @@ class MainWP_MCP {
             return;
         }
 
+        if ( get_option( 'mainwp_onboarding_fresh_install' ) ) {
+            update_option( 'mainwp_onboarding_mcp_visited', 1 );
+        }
+
         $current_user  = wp_get_current_user();
         $dashboard_url = untrailingslashit( home_url( '/' ) );
         $config        = array(

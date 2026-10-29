@@ -30,6 +30,8 @@ let managesites_update_all_next_step = function () {
 let mainwp_update_get_selected_sitesids = function (selectedSitesIds, allSitesIds) {
     let selectedIds = [], excludeIds = [];
     if (Array.isArray(selectedSitesIds)) {
+        // Earlier runs on this page may have hidden rows.
+        dashboard_update_site_show_all();
         jQuery.grep(allSitesIds, function (el) {
             if (jQuery.inArray(el, selectedSitesIds) > -1) {
                 selectedIds.push(el);
@@ -40,6 +42,12 @@ let mainwp_update_get_selected_sitesids = function (selectedSitesIds, allSitesId
         for (let id of excludeIds) {
             dashboard_update_site_hide(id);
         }
+        jQuery('.dashboard_wp_id[error-status=1]').each(function () {
+            let id = jQuery(this).val();
+            if (jQuery.inArray(id, selectedSitesIds) === -1) {
+                dashboard_update_site_hide(id);
+            }
+        });
         allSitesIds = selectedIds;
     }
     return allSitesIds;
@@ -340,9 +348,9 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                 }
 
                 if (siteFeedback != undefined) {
-                    mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
+                    let title = mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
                     mainwpPopup('#managesites-backup-box').init({
-                        title: MainWP.I18n.t("Full backup required!"), callback: function () {
+                        title: title, callback: function () {
                             managesitesContinueAfterBackup = undefined;
                         },
                         allowMultiple: true
@@ -438,7 +446,7 @@ let managesites_backup_run_next = function () {
     }
 
     let siteName = managesitesBackupSites[0]['name'];
-    appendToDiv(backupContentEl, '[' + siteName + '] ' + MainWP.I18n.t('Creating backup file...'));
+    appendToDiv(backupContentEl, '[' + jQuery('<span>').text(siteName).html() + '] ' + MainWP.I18n.t('Creating backup file...'));
 
     let siteId = managesitesBackupSites[0]['id'];
     managesitesBackupSites.shift();
@@ -450,11 +458,11 @@ let managesites_backup_run_next = function () {
     jQuery.post(ajaxurl, data, function (pSiteId, pSiteName) {
         return function (response) {
             if (response.error) {
-                appendToDiv(backupContentEl, '[' + pSiteName + '] <span class="mainwp-red">Error: ' + getErrorMessage(response.error) + '</span>');
+                appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] <span class="mainwp-red">Error: ' + jQuery('<span>').text(getErrorMessage(response.error)).html() + '</span>');
                 managesitesBackupError = true;
                 managesites_backup_run_next();
             } else {
-                appendToDiv(backupContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Backup file created successfully!'));
+                appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] ' + MainWP.I18n.t('Backup file created successfully!'));
 
                 managesites_backupnow_download_file({ 'id': pSiteId, 'name': pSiteName }, response.result.type, response.result.url, response.result.local, response.result.size);
             }
@@ -467,11 +475,12 @@ let managesites_backupnow_download_file = function (siteInfo, type, url, file, s
     let pSiteId = siteInfo['id'];
     let pSiteName = siteInfo['name'];
     let backupContentEl = mainwpPopup('#managesites-backup-box').getContentEl();
-    appendToDiv(backupContentEl, '[' + pSiteName + '] Downloading the file. <div id="managesites-backupnow-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
+    appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] Downloading the file. <div id="managesites-backupnow-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
     jQuery('#managesites-backupnow-status-progress[siteId="' + pSiteId + '"]').progress({ value: 0, total: size });
     let interVal = setInterval(function () {
         let data = mainwp_secure_data({
             action: 'mainwp_backup_getfilesize',
+            site_id: pSiteId,
             local: file
         });
         jQuery.post(ajaxurl, data, function (pSiteId) {
@@ -503,8 +512,8 @@ let managesites_backupnow_download_file = function (siteInfo, type, url, file, s
             clearInterval(pInterVal);
 
             if (response.error) {
-                appendToDiv(backupContentEl, '[' + pSiteName + '] <span class="error">' + getErrorMessage(response.error) + '</span>');
-                appendToDiv(backupContentEl, '[' + pSiteName + '] <span class="error">' + MainWP.I18n.t('Backup failed') + '</span>');
+                appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] <span class="error">' + jQuery('<span>').text(getErrorMessage(response.error)).html() + '</span>');
+                appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] <span class="error">' + MainWP.I18n.t('Backup failed') + '</span>');
 
                 managesitesBackupError = true;
                 managesites_backup_run_next();
@@ -512,8 +521,8 @@ let managesites_backupnow_download_file = function (siteInfo, type, url, file, s
             }
 
             jQuery('#managesites-backupnow-status-progress[siteId="' + pSiteId + '"]').progress('set progress', pSize);
-            appendToDiv(backupContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Download from the child site completed.'));
-            appendToDiv(backupContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Backup completed.'));
+            appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] ' + MainWP.I18n.t('Download from the child site completed.'));
+            appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] ' + MainWP.I18n.t('Backup completed.'));
 
             let newData = mainwp_secure_data({
                 action: 'mainwp_backup_delete_file',
@@ -661,29 +670,74 @@ let managesites_wordpress_upgrade_int = function (websiteId) {
     return false;
 };
 
-globalThis.mainwp_managesites_prepare_backup_popup = function (response, pSiteNames, siteFeedback) {
+globalThis.mainwp_managesites_prepare_backup_popup = function (response, pSiteNames, siteFeedback, popupPrefix = 'managesites') {
     let backupPrimary = '';
     if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
         backupPrimary = response['result']['primary_backup'];
 
-    if (backupPrimary == '') {
-        jQuery('#managesites-backup-all').show();
-        jQuery('#managesites-backup-ignore').show();
-    } else {
-        let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
-        jQuery('#managesites-backup-now').attr('href', backupLink).show();
-        jQuery('#managesites-backup-ignore').val(MainWP.I18n.t('Proceed with Updates')).show();
+    let verdicts = response['result']['gate_verdicts'] || {};
+    let missingSites = [];
+    let offsiteSites = [];
+    let nativeMissing = false;
+    let pluginMissing = false;
+    for (let id of siteFeedback) {
+        // Only a site whose recent backup lacks a verified offsite copy is
+        // past what Backup all can fix; a site with no recent backup needs
+        // one even under the offsite policy.
+        if (verdicts[id] === 'pending_offsite') {
+            offsiteSites.push(id);
+            continue;
+        }
+        // primary_backup is one value for the whole reply, set by any
+        // selected site that uses a backup plugin. A verdict marks a site on
+        // the Dashboard's own backups, which Backup all can still run.
+        let native = backupPrimary == '' || verdicts[id] !== undefined;
+        missingSites.push({ id: id, native: native });
+        if (native)
+            nativeMissing = true;
+        else
+            pluginMissing = true;
     }
 
-    let output = '<span class="mainwp-red">' + MainWP.I18n.t('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
-    if (backupPrimary == '') { // default backup feature
-        for (let id of siteFeedback) {
-            output += '<span class="managesites-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
-        }
+    // The box is reused on the same page, so every button is set for this
+    // reply rather than left as the last box had it. An <input type="button">
+    // writes .val() through to its value attribute, so the markup label is
+    // kept before the first change; defaultValue would return the last one.
+    let ignoreButton = jQuery('#' + popupPrefix + '-backup-ignore');
+    if (ignoreButton.data('mainwp-label') === undefined)
+        ignoreButton.data('mainwp-label', ignoreButton.val());
+    jQuery('#' + popupPrefix + '-backup-all').hide();
+    if (nativeMissing)
+        jQuery('#' + popupPrefix + '-backup-all').show();
+    if (pluginMissing) {
+        let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
+        jQuery('#' + popupPrefix + '-backup-now').attr('href', backupLink).show();
+        ignoreButton.val(MainWP.I18n.t('Proceed with Updates')).show();
     } else {
-        for (let id of siteFeedback) {
-            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+        jQuery('#' + popupPrefix + '-backup-now').hide();
+        ignoreButton.val(ignoreButton.data('mainwp-label')).show();
+    }
+
+    let output = '';
+    if (missingSites.length > 0) {
+        output += '<span class="mainwp-red">' + MainWP.I18n.t('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
+        for (let site of missingSites) {
+            if (site.native) {
+                output += '<span class="' + popupPrefix + '-backup-site" siteid="' + site.id + '">' + mainwp_site_name_html(pSiteNames[site.id]) + '</span><br />';
+            } else {
+                output += '<span>' + mainwp_site_name_html(pSiteNames[site.id]) + '</span><br />';
+            }
         }
     }
-    mainwpPopup('#managesites-backup-box').getContentEl().html(output);
+    if (offsiteSites.length > 0) {
+        if (output != '')
+            output += '<br />';
+        output += '<span class="mainwp-red">' + MainWP.I18n.t('No backup from the last days has a verified offsite copy for the following sites:') + '</span><br /><br />';
+        for (let id of offsiteSites) {
+            output += '<span>' + mainwp_site_name_html(pSiteNames[id]) + '</span><br />';
+        }
+        output += '<br />' + MainWP.I18n.t("Backup all cannot add an offsite copy. Check each site's storage destination on the Snapshots & Restore page.");
+    }
+    mainwpPopup('#' + popupPrefix + '-backup-box').getContentEl().html(output);
+    return offsiteSites.length > 0 ? MainWP.I18n.t('Offsite backup required!') : MainWP.I18n.t('Full backup required!');
 }

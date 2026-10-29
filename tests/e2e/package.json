@@ -1,0 +1,14 @@
+{
+  "name": "mainwp-remote-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Opt-in Playwright browser E2E against the remote MainWP testbed (dev.mainwps.com + disposable children). Reads REMOTE_* env vars sourced from network-testbed/.env.",
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report",
+    "install:browser": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

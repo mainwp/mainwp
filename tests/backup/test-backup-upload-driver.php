@@ -1,0 +1,3080 @@
+<?php
+/**
+ * MainWP Backup Upload Driver Tests
+ *
+ * Verifies the resumable upload driver end to end against a real Local
+ * destination: jobs enqueue when snapshots record, a full run lands
+ * chunk objects, whole files, and the manifest at the destination,
+ * checkpoints survive across cron ticks, re-entry verifies before it
+ * skips, auth rejections park the destination, network errors schedule
+ * backoff, and exhausted attempts go permanent.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
+use MainWP\Dashboard\MainWP_Backup_Archive_Cipher;
+use MainWP\Dashboard\MainWP_Backup_Chunker;
+use MainWP\Dashboard\MainWP_Backup_Encryption;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
+use MainWP\Dashboard\MainWP_Backup_Upload_Driver;
+use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
+use MainWP\Dashboard\MainWP_Keys_Manager;
+use MainWP\Dashboard\MainWP_DB;
+
+/**
+ * Class MainWP_Backup_Upload_Driver_Test
+ */
+class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Private_Root_Fixture;
+
+	/**
+	 * Neither whole nor chunked uploads may hash replacement bytes.
+	 *
+	 * @dataProvider n1_upload_sizes
+	 * @param int  $size Recorded size.
+	 * @param bool $resumed Resume with a cached hash.
+	 */
+	public function test_n1_upload_refuses_size_mismatch_before_hashing( $size, $resumed ) {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$id                     = $this->make_snapshot(
+			array(
+				'archive.bin' => array(
+					'size' => $size,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot               = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$driver                 = MainWP_Backup_Upload_Driver::instance();
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		if ( $resumed ) {
+			$job                                  = $store->get_jobs_for_snapshot( $id )[0];
+			$build                                = new \ReflectionMethod( $driver, 'new_checkpoint' );
+			$checkpoint                           = $build->invoke( $driver, $snapshot );
+			$checkpoint['artifacts'][0]['sha256'] = hash_file( 'sha256', $snapshot->archives[0]['path'] );
+			$store->save_checkpoint( (int) $job->id, $checkpoint );
+			$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+		}
+		file_put_contents( $snapshot->archives[0]['path'], 'replacement' );
+		$driver->process_pending_jobs( 240 );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertStringContainsString( 'was changed or replaced after this backup finished', $job->last_error );
+		$this->assertEmpty( glob( $base . '/*' ) );
+		if ( ! $resumed ) {
+			$this->assertEmpty( $job->checkpoint['artifacts'][0]['sha256'] ?? '' );
+			$this->assertNull( $job->checkpoint['artifacts'][0]['chunks'] );
+		}
+	}
+
+	/**
+	 * Upload cases.
+	 *
+	 * @return array Upload cases.
+	 */
+	public static function n1_upload_sizes() {
+		return array(
+			'whole'       => array( 100, false ),
+			'chunked'     => array( 3000, false ),
+			'cached hash' => array( 100, true ),
+		);
+	}
+
+	/**
+	 * Empty and malformed artifact lists must never verify an offsite copy.
+	 */
+	public function test_empty_or_scalar_archives_fail_permanently() {
+		global $wpdb;
+		list( $dest_id ) = $this->make_local_destination();
+		$driver          = MainWP_Backup_Upload_Driver::instance();
+		$build           = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		foreach ( array( array(), 'x' ) as $archives ) {
+			$this->assertSame( array(), $build->invoke( $driver, (object) array( 'archives' => $archives ) )['artifacts'] );
+			$snapshot_id = $this->record_bare_snapshot();
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'archives' => wp_json_encode( $archives ) ), array( 'id' => $snapshot_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- malformed persisted fixture.
+			$store = MainWP_Backup_Upload_Job_Store::instance();
+			$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			$driver->process_pending_jobs( 240 );
+			$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $jobs[0]->status );
+			$this->assertStringContainsString( 'no eligible artifacts', $jobs[0]->last_error );
+			$this->assertNotSame( 'verified', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+		}
+	}
+
+	/**
+	 * Temp dirs created during a test, removed in tear_down.
+	 *
+	 * @var string[]
+	 */
+	private $temp_dirs = array();
+
+	/**
+	 * Small chunk and whole-file thresholds so tests stay tiny.
+	 *
+	 * @return void
+	 */
+	public function set_up() {
+		parent::set_up();
+		$this->set_up_private_root();
+		remove_all_actions( 'mainwp_backup_snapshot_recorded' );
+		remove_all_actions( 'mainwp_backup_upload_job_settled' );
+		remove_all_actions( 'mainwp_backup_snapshot_offsite_verified' );
+		add_filter(
+			'mainwp_backup_upload_chunk_size',
+			function () {
+				return 1024;
+			}
+		);
+		add_filter(
+			'mainwp_backup_upload_whole_file_threshold',
+			function () {
+				return 2000;
+			}
+		);
+	}
+
+	/**
+	 * Remove temp fixtures and any leftover staging dirs.
+	 *
+	 * @return void
+	 */
+	public function tear_down() {
+		foreach ( $this->temp_dirs as $dir ) {
+			$this->remove_dir( $dir );
+		}
+		$this->temp_dirs = array();
+
+		$upload = wp_upload_dir();
+		$this->remove_dir( $this->private_root . '/upload-staging' );
+
+		// Encryption state lives in a filesystem KEK file and options that
+		// outlive the per-test DB rollback; clear it so an armed test does not
+		// silently arm a later plaintext one.
+		$enc = MainWP_Backup_Encryption::instance();
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		delete_option( MainWP_Backup_Encryption::ENABLED_OPTION );
+		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
+
+		$this->tear_down_private_root();
+		parent::tear_down();
+	}
+
+	/**
+	 * Arm encryption: turn the toggle on and set a recovery passphrase, which
+	 * creates the dashboard KEK. Returns the encryption singleton.
+	 *
+	 * @return MainWP_Backup_Encryption
+	 */
+	private function arm_encryption() {
+		$enc = MainWP_Backup_Encryption::instance();
+		update_option( MainWP_Backup_Encryption::ENABLED_OPTION, '1' );
+		$enc->set_recovery_passphrase( 'upload driver encryption passphrase' );
+		return $enc;
+	}
+
+	/**
+	 * Recursively remove a directory.
+	 *
+	 * @param string $dir Directory path.
+	 *
+	 * @return void
+	 */
+	private function remove_dir( $dir ) {
+		if ( is_link( $dir ) ) {
+			unlink( $dir );
+			return;
+		}
+		if ( ! is_dir( $dir ) ) {
+			return;
+		}
+		foreach ( scandir( $dir ) as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+			$path = $dir . DIRECTORY_SEPARATOR . $entry;
+			if ( is_link( $path ) ) {
+				unlink( $path );
+			} elseif ( is_dir( $path ) ) {
+				$this->remove_dir( $path );
+			} else {
+				unlink( $path );
+			}
+		}
+		rmdir( $dir );
+	}
+
+	/**
+	 * Create a temp working dir.
+	 *
+	 * @return string
+	 */
+	private function make_temp_dir() {
+		$dir = get_temp_dir() . 'mainwp-upload-driver-' . uniqid();
+		mkdir( $dir, 0755, true );
+		$this->temp_dirs[] = $dir;
+		return $dir;
+	}
+
+	/**
+	 * Register a Local destination over a fresh temp dir.
+	 *
+	 * @return array{0: int, 1: string} Destination id and its base path.
+	 */
+	private function make_local_destination() {
+		$base = $this->make_temp_dir();
+		$id   = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Driver test ' . uniqid(),
+				'settings' => array( 'base_path' => $base ),
+			)
+		);
+		return array( $id, $base );
+	}
+
+	/**
+	 * Insert a backup task row carrying destination ids.
+	 *
+	 * @param array $destination_ids Destination ids for the destinations column.
+	 *
+	 * @return int Task id.
+	 */
+	private function insert_task( array $destination_ids ) {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array(
+				'userid'            => 1,
+				'name'              => 'Upload driver task',
+				'schedule'          => 'daily',
+				'type'              => 'incremental',
+				'exclude'           => '',
+				'sites'             => '',
+				'groups'            => '',
+				'last'              => 0,
+				'last_run'          => 0,
+				'last_run_manually' => 0,
+				'completed_sites'   => '',
+				'completed'         => 0,
+				'backup_errors'     => '',
+				'subfolder'         => '',
+				'filename'          => '',
+				'paused'            => 0,
+				'archiveFormat'     => 'global',
+				'destinations'      => wp_json_encode( array_map( 'intval', $destination_ids ) ),
+			)
+		);
+
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * Write artifact fixtures and record a snapshot over them.
+	 *
+	 * @param array $files   Map of filename => array{size: int, role: string}.
+	 * @param int   $task_id Task id for the snapshot row.
+	 * @param int   $site_id Site id for the snapshot row.
+	 *
+	 * @return int Snapshot id.
+	 */
+	private function make_snapshot( array $files, $task_id = 0, $site_id = 4 ) {
+		$src      = $this->make_temp_dir();
+		$archives = array();
+
+		foreach ( $files as $name => $spec ) {
+			$path = $src . DIRECTORY_SEPARATOR . $name;
+
+			// Position-unique content so no two chunks dedupe to one object.
+			$content = '';
+			$block   = 0;
+			$length  = 0;
+			while ( $length < $spec['size'] ) {
+				$content .= md5( $name . '-' . $block, true );
+				$length  += 16; // Raw md5 appends 16 bytes.
+				++$block;
+			}
+			$content = substr( $content, 0, $spec['size'] );
+			file_put_contents( $path, $content );
+			$archives[] = array(
+				'file' => $name,
+				'size' => $spec['size'],
+				'role' => $spec['role'],
+				'path' => $path,
+			);
+		}
+
+		return MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'       => $task_id,
+				'site_id'       => $site_id,
+				'type'          => 'full',
+				'parent_id'     => null,
+				'archives'      => $archives,
+				'manifest_path' => '',
+			)
+		);
+	}
+
+	/**
+	 * Record a snapshot row with no artifacts, for state-machine tests that
+	 * do not drive a real upload.
+	 *
+	 * @param int $site_id Site id for the snapshot row.
+	 *
+	 * @return int Snapshot id.
+	 */
+	private function record_bare_snapshot( $site_id = 4 ) {
+		return MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'       => 0,
+				'site_id'       => $site_id,
+				'type'          => 'full',
+				'parent_id'     => null,
+				'archives'      => array(),
+				'manifest_path' => '',
+			)
+		);
+	}
+
+	/**
+	 * Insert an upload-job row directly with a chosen provider and status,
+	 * for resolver tests that exercise the rollup buckets.
+	 *
+	 * @param int    $snapshot_id    Snapshot id.
+	 * @param int    $destination_id Destination id.
+	 * @param string $provider       Denormalized provider slug.
+	 * @param string $status         Job status.
+	 *
+	 * @return void
+	 */
+	private function seed_upload_job( $snapshot_id, $destination_id, $provider, $status ) {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array(
+				'snapshot_id'    => $snapshot_id,
+				'destination_id' => $destination_id,
+				'kind'           => 'upload',
+				'provider'       => $provider,
+				'status'         => $status,
+				'checkpoint'     => '',
+				'created'        => time(),
+				'updated'        => time(),
+			)
+		);
+	}
+
+	/**
+	 * The standard artifact set: one chunked, one whole, one manifest.
+	 *
+	 * @return array
+	 */
+	private function standard_files() {
+		return array(
+			'big.bin'    => array(
+				'size' => 3000,
+				'role' => 'part',
+			),
+			'small.txt'  => array(
+				'size' => 100,
+				'role' => 'db',
+			),
+			'files.list' => array(
+				'size' => 50,
+				'role' => 'manifest',
+			),
+		);
+	}
+
+	/**
+	 * Recording a snapshot enqueues one job per task destination through
+	 * the driver's listener.
+	 *
+	 * @return void
+	 */
+	public function test_snapshot_recording_enqueues_jobs_for_task_destinations() {
+		list( $dest_a ) = $this->make_local_destination();
+		list( $dest_b ) = $this->make_local_destination();
+		$task_id        = $this->insert_task( array( $dest_a, $dest_b ) );
+
+		MainWP_Backup_Upload_Driver::instance()->init();
+
+		$snapshot_id = $this->make_snapshot( $this->standard_files(), $task_id );
+
+		$jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertCount( 2, $jobs );
+		$this->assertSame( array( $dest_a, $dest_b ), array_map( 'intval', array_column( $jobs, 'destination_id' ) ) );
+	}
+
+	/**
+	 * A scheduled snapshot reaches both local destinations in one tick.
+	 */
+	public function test_two_local_destinations_complete_in_one_tick() {
+		list( $dest_a, $base_a ) = $this->make_local_destination();
+		list( $dest_b, $base_b ) = $this->make_local_destination();
+		$task_id                 = $this->insert_task( array( $dest_a, $dest_b ) );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$snapshot_id = $this->make_snapshot( $this->standard_files(), $task_id );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertSame( array( 'complete', 'complete' ), array_column( $jobs, 'status' ) );
+		$this->assertFileExists( $base_a . '/4/' . $snapshot_id . '/manifest.json' );
+		$this->assertFileExists( $base_b . '/4/' . $snapshot_id . '/manifest.json' );
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * An expired budget permits one checkpoint attempt, leaving later jobs pending.
+	 */
+	public function test_zero_budget_attempts_only_one_job() {
+		list( $dest_a ) = $this->make_local_destination();
+		list( $dest_b ) = $this->make_local_destination();
+		$snapshot_id    = $this->make_snapshot( $this->standard_files() );
+		$store          = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_a, $dest_b ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 0, time() );
+
+		$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertSame( array( 'chunking', 'pending' ), array_column( $jobs, 'status' ) );
+		$this->assertNotEmpty( $jobs[0]->checkpoint['artifacts'] );
+		$this->assertEmpty( $jobs[1]->checkpoint );
+		$this->assertSame( array( '', '' ), array_column( $jobs, 'locked_by' ) );
+	}
+
+	/**
+	 * A large queue cannot monopolize the continuation lane.
+	 */
+	public function test_tick_stops_after_maximum_jobs() {
+		list( $dest_id ) = $this->make_local_destination();
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$snapshots       = array();
+		for ( $i = 0; $i <= MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK; ++$i ) {
+			$snapshot_id = $this->make_snapshot( $this->standard_files() );
+			$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			$snapshots[] = $snapshot_id;
+		}
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		foreach ( $snapshots as $index => $snapshot_id ) {
+			$expected = $index < MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK ? 'complete' : 'pending';
+			$this->assertSame( $expected, $store->get_jobs_for_snapshot( $snapshot_id )[0]->status, 'Unexpected status for queued job ' . $index );
+		}
+	}
+
+	/**
+	 * A task without destinations enqueues nothing.
+	 *
+	 * @return void
+	 */
+	public function test_snapshot_without_destinations_enqueues_nothing() {
+		$task_id = $this->insert_task( array() );
+
+		MainWP_Backup_Upload_Driver::instance()->init();
+
+		$snapshot_id = $this->make_snapshot( $this->standard_files(), $task_id );
+
+		$this->assertSame( array(), MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id ) );
+	}
+
+	/**
+	 * A full run lands chunks, whole files, and the manifest at the
+	 * destination, cleans its staging, completes the job, and announces
+	 * itself.
+	 *
+	 * @return void
+	 */
+	public function test_full_run_uploads_snapshot_to_destination() {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$snapshot_id            = $this->make_snapshot( $this->standard_files(), 0, 4 );
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		$events = array();
+		add_action(
+			'mainwp_backup_uploaded',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $jobs[0]->status );
+
+		$prefix  = $base . '/4/' . $snapshot_id;
+		$big     = file_get_contents( $this->temp_dirs[1] . '/big.bin' );
+		$algo    = \MainWP\Dashboard\MainWP_Backup_Chunker::hash_algo();
+		$offsets = array( 0, 1024, 2048 );
+		foreach ( $offsets as $i => $offset ) {
+			$slice = substr( $big, $offset, 1024 );
+			$hash  = hash( $algo, $slice );
+			$this->assertFileExists( $prefix . '/chunks/' . $hash . '.bin', "Chunk {$i} must land at the destination." );
+			$this->assertSame( $slice, file_get_contents( $prefix . '/chunks/' . $hash . '.bin' ) );
+		}
+
+		$this->assertFileExists( $prefix . '/files/small.txt' );
+		$this->assertFileExists( $prefix . '/files/files.list' );
+
+		$this->assertFileExists( $prefix . '/manifest.json' );
+		$manifest = json_decode( file_get_contents( $prefix . '/manifest.json' ), true );
+		$this->assertSame( $snapshot_id, $manifest['snapshot_id'] );
+		$this->assertCount( 3, $manifest['artifacts'] );
+		$by_file = array_column( $manifest['artifacts'], null, 'file' );
+		$this->assertSame( 'chunked', $by_file['big.bin']['mode'] );
+		$this->assertCount( 3, $by_file['big.bin']['chunks'] );
+		$this->assertSame( 'whole', $by_file['small.txt']['mode'] );
+
+		// Every artifact records its whole-file hash, in the manifest and
+		// on the job checkpoint, so restores can verify end to end.
+		$big_sha   = hash_file( 'sha256', $this->temp_dirs[1] . '/big.bin' );
+		$small_sha = hash_file( 'sha256', $this->temp_dirs[1] . '/small.txt' );
+		$this->assertSame( $big_sha, $by_file['big.bin']['sha256'] );
+		$this->assertSame( $small_sha, $by_file['small.txt']['sha256'] );
+
+		$by_checkpoint = array_column( $jobs[0]->checkpoint['artifacts'], null, 'file' );
+		$this->assertSame( $big_sha, $by_checkpoint['big.bin']['sha256'] );
+		$this->assertSame( $small_sha, $by_checkpoint['small.txt']['sha256'] );
+
+		$upload = wp_upload_dir();
+		$this->assertDirectoryDoesNotExist( $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id );
+
+		$this->assertCount( 1, $events );
+		$this->assertSame( 4, $events[0]['site_id'] );
+		$this->assertSame( $snapshot_id, $events[0]['snapshot_id'] );
+		$this->assertSame( $dest_id, $events[0]['destination_id'] );
+		$this->assertSame( 'local', $events[0]['provider'] );
+	}
+
+	/**
+	 * Hosts can recreate web-served staging trees without their deny files.
+	 *
+	 * @return void
+	 */
+	public function test_chunking_protects_staging_after_creation_and_recreation() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job      = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver   = MainWP_Backup_Upload_Driver::instance();
+		$build    = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$base     = $this->make_temp_dir();
+		$root     = $this->private_root . '/upload-staging';
+		$upload   = static function ( $dirs ) use ( $base ) {
+			$dirs['basedir'] = $base;
+			return $dirs;
+		};
+		$filtered = static function ( $dirs ) use ( $base ) {
+			$dirs['basedir'] = $base . '/filtered';
+			return $dirs;
+		};
+		add_filter( 'upload_dir', $upload );
+		add_filter( 'mainwp_get_wp_upload_dir', $filtered );
+		try {
+			for ( $pass = 0; $pass < 3; ++$pass ) {
+				if ( 1 === $pass ) {
+					$this->remove_dir( $root );
+					$this->assertDirectoryDoesNotExist( $root );
+				} elseif ( 2 === $pass ) {
+					unlink( $root . '/.htaccess' );
+					unlink( $root . '/index.php' );
+				}
+				$checkpoint = $build->invoke( $driver, $snapshot );
+				$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+				$this->assertTrue( $chunking->invokeArgs( $driver, $args ) );
+				$this->assertNotEmpty( glob( $root . '/' . $snapshot_id . '-' . $dest_id . '/*.bin' ), 'Chunking must write staging bytes.' );
+				if ( 2 === $pass ) {
+					$this->assertFileDoesNotExist( $root . '/.htaccess' );
+					$this->assertFileDoesNotExist( $root . '/index.php' );
+					continue;
+				}
+				$this->assertFileExists( $root . '/.htaccess' );
+				$this->assertSame( 'deny from all', file_get_contents( $root . '/.htaccess' ) );
+				$this->assertFileExists( $root . '/index.php' );
+				$this->assertSame( '', file_get_contents( $root . '/index.php' ) );
+				$this->assertDirectoryDoesNotExist( $base . '/filtered/mainwp/upload-staging' );
+			}
+			$cleanup = new \ReflectionMethod( $driver, 'cleanup_staging' );
+			$cleanup->invoke( $driver, $job );
+			$this->assertDirectoryDoesNotExist( $root . '/' . $snapshot_id . '-' . $dest_id );
+			$this->assertFileDoesNotExist( $root . '/.htaccess' );
+			$this->assertFileDoesNotExist( $root . '/index.php' );
+		} finally {
+			remove_filter( 'upload_dir', $upload );
+			remove_filter( 'mainwp_get_wp_upload_dir', $filtered );
+		}
+	}
+
+	/**
+	 * A zero-budget tick still checkpoints, and the next tick finishes
+	 * from the checkpoint.
+	 *
+	 * @return void
+	 */
+	public function test_checkpoint_survives_across_ticks() {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$snapshot_id            = $this->make_snapshot( $this->standard_files() );
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		$now = time();
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 0, $now );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING, $job->status, 'A zero-budget tick must still advance into chunking.' );
+		$this->assertNotEmpty( $job->checkpoint['artifacts'], 'The checkpoint must persist.' );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now + 301 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status );
+		$this->assertFileExists( $base . '/4/' . $snapshot_id . '/manifest.json' );
+	}
+
+	/**
+	 * Re-entry verifies remote objects before skipping them: a torn remote
+	 * chunk re-uploads, an intact one is left alone.
+	 *
+	 * @return void
+	 */
+	public function test_reentry_reuploads_torn_remote_chunk_only() {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$snapshot_id            = $this->make_snapshot( $this->standard_files() );
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status );
+
+		$prefix = $base . '/4/' . $snapshot_id;
+		$chunks = glob( $prefix . '/chunks/*.bin' );
+		$this->assertCount( 3, $chunks );
+
+		// Tear one remote chunk, backdate another to detect rewrites.
+		$torn   = $chunks[0];
+		$intact = $chunks[1];
+		file_put_contents( $torn, 'short' );
+		$past = time() - 3600;
+		touch( $intact, $past );
+
+		// Rewind the job to the upload phase distrusting all prior work.
+		$checkpoint = $job->checkpoint;
+		foreach ( $checkpoint['artifacts'] as &$artifact ) {
+			$artifact['chunks_cursor'] = 0;
+			$artifact['done']          = false;
+			if ( is_array( $artifact['chunks'] ) ) {
+				foreach ( $artifact['chunks'] as &$chunk ) {
+					$chunk['remote_present'] = false;
+				}
+				unset( $chunk );
+			}
+		}
+		unset( $artifact );
+		$checkpoint['manifest_submitted'] = false;
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		clearstatcache();
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_jobs_for_snapshot( $snapshot_id )[0]->status );
+		$this->assertSame( 1024, strlen( file_get_contents( $torn ) ), 'The torn remote chunk must be re-uploaded.' );
+		$this->assertSame( $past, filemtime( $intact ), 'The intact remote chunk must be skipped, not rewritten.' );
+	}
+
+	/**
+	 * An auth rejection parks the job as credentials_invalid instead of
+	 * retrying forever.
+	 *
+	 * @return void
+	 */
+	public function test_auth_rejection_parks_credentials_invalid() {
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Locked out',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		add_filter(
+			'pre_http_request',
+			function () {
+				return array(
+					'headers'  => array(),
+					'body'     => 'AccessDenied',
+					'response' => array(
+						'code'    => 403,
+						'message' => 'Forbidden',
+					),
+				);
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID, $job->status );
+		$this->assertStringContainsString( '403', $job->last_error );
+	}
+
+	/**
+	 * A network failure schedules a retry with backoff.
+	 *
+	 * @return void
+	 */
+	public function test_network_failure_schedules_retry() {
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Unreachable',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		add_filter(
+			'pre_http_request',
+			function () {
+				return new \WP_Error( 'http_request_failed', 'timed out' );
+			}
+		);
+
+		$now = time();
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at, 'First retry must back off five minutes.' );
+		$this->assertStringContainsString( 'timed out', $job->last_error );
+	}
+
+	/**
+	 * Tooltips escape at output, so a Local refusal must retain its quotes in storage.
+	 *
+	 * @return void
+	 */
+	public function test_refused_local_destination_stores_plain_text_error() {
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Refused Local destination',
+				'settings' => array( 'base_path' => WP_CONTENT_DIR . '/mainwp-refused-upload-' . uniqid() ),
+			)
+		);
+		$this->assertGreaterThan( 0, $dest_id );
+
+		$snapshot_id = $this->make_snapshot( $this->standard_files() );
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertCount( 1, $jobs );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $jobs[0]->status );
+		$this->assertStringContainsString( 'Backup directory "', $jobs[0]->last_error );
+		$this->assertStringNotContainsString( '&quot;', $jobs[0]->last_error );
+	}
+
+	/**
+	 * Existing artifacts must stay retryable when chunk staging fails.
+	 *
+	 * @return void
+	 */
+	public function test_chunk_staging_failure_schedules_retry() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$artifact        = $snapshot->archives[0];
+		$hash            = hash( MainWP_Backup_Chunker::hash_algo(), substr( file_get_contents( $artifact['path'] ), 0, 1024 ) );
+		$staging         = $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id;
+		$blocked         = $staging . '/' . $hash . '.bin';
+		mkdir( $blocked, 0755, true );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		$warnings = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The expected filesystem warning must not interrupt the failure-state assertion.
+			static function ( $severity, $message ) use ( $blocked, &$warnings ) {
+				if ( E_WARNING === $severity && false !== strpos( $message, 'rename(' ) && false !== strpos( $message, $blocked ) ) {
+					$warnings[] = $message;
+					return true;
+				}
+				return false;
+			}
+		);
+		$now = time();
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		} finally {
+			restore_error_handler();
+		}
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertCount( 1, $warnings, 'The fixture must fail while promoting a staged chunk.' );
+		$this->assertFileExists( $artifact['path'] );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'could not be read or prepared for upload: large.zip', $job->last_error );
+		$this->assertStringNotContainsString( $artifact['path'], $job->last_error );
+		$this->assertStringNotContainsString( 'is missing from this Dashboard', $job->last_error );
+	}
+
+	/**
+	 * Space must be reserved before even the first chunk is written.
+	 *
+	 * @dataProvider staging_space_shortfalls
+	 * @param int $free Available staging bytes.
+	 */
+	public function test_chunking_disk_preflight_refuses_before_any_chunk_is_written( $free ) {
+		list( $dest_id ) = $this->make_local_destination();
+		$id              = $this->make_snapshot(
+			array(
+				'archive.zip' => array(
+					'size' => 2 * MB_IN_BYTES,
+					'role' => 'full',
+				),
+			)
+		);
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$staging = $this->private_root . '/upload-staging/' . $id . '-' . $dest_id;
+		add_filter(
+			'mainwp_backup_upload_chunk_size',
+			static function () {
+				return 64 * KB_IN_BYTES;
+			}
+		);
+		add_filter(
+			'mainwp_backup_upload_staging_free_space',
+			static function () use ( $free ) {
+				return $free;
+			}
+		);
+		$written = array();
+		add_filter(
+			'wp_delete_file',
+			static function ( $path ) use ( &$written, $staging ) {
+				if ( str_starts_with( $path, $staging . '/' ) ) {
+					$written[] = $path;
+				}
+				return $path;
+			}
+		);
+
+		$now = time();
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertStringContainsString( '[' . MainWP_Backup_Error_Codes::ERR_DISK_FULL . ']', $job->last_error );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at );
+		$this->assertSame( array(), $written, 'Refusal must precede staging, rather than write chunks and then delete them.' );
+		$this->assertSame( array(), glob( $staging . '/*.bin' ) );
+	}
+
+	/**
+	 * The safety margin is part of the required space.
+	 *
+	 * @return array
+	 */
+	public static function staging_space_shortfalls() {
+		return array(
+			'below artifact size' => array( 2 * MB_IN_BYTES - 1 ),
+			'below margin'        => array( 102 * MB_IN_BYTES - 1 ),
+		);
+	}
+
+	/**
+	 * A failed fifth write must release space while this lane still owns it.
+	 *
+	 * @dataProvider staging_failure_leases
+	 * @param string $lease Lease state at the failed write.
+	 */
+	public function test_chunking_write_failure_cleans_only_owned_destination_staging( $lease ) {
+		global $wpdb;
+		list( $dest_id )  = $this->make_local_destination();
+		list( $other_id ) = $this->make_local_destination();
+		$id               = $this->make_snapshot(
+			array(
+				'archive.zip' => array(
+					'size' => 2 * MB_IN_BYTES,
+					'role' => 'full',
+				),
+			)
+		);
+		$store            = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id, $other_id ) );
+		$jobs    = $store->get_jobs_for_snapshot( $id );
+		$job_id  = (int) $jobs[0]->id;
+		$other   = $this->private_root . '/upload-staging/' . $id . '-' . $other_id;
+		$staging = $this->private_root . '/upload-staging/' . $id . '-' . $dest_id;
+		mkdir( $other, 0755, true );
+		file_put_contents( $other . '/sentinel.bin', 'other destination' );
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Keep the other destination in its own lane.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array(
+				'locked_by'    => 'other-lane',
+				'locked_until' => time() + 3600,
+			),
+			array( 'id' => (int) $jobs[1]->id )
+		);
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$content  = file_get_contents( $snapshot->archives[0]['path'] );
+		$hash     = hash( MainWP_Backup_Chunker::hash_algo(), substr( $content, 4 * 64 * KB_IN_BYTES, 64 * KB_IN_BYTES ) );
+		$blocked  = $staging . '/' . $hash . '.bin';
+		mkdir( $blocked, 0755, true );
+		add_filter(
+			'mainwp_backup_upload_chunk_size',
+			static function () {
+				return 64 * KB_IN_BYTES;
+			}
+		);
+		$failed_after = null;
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The real rename failure must reach the driver's failure handler.
+			static function ( $severity, $message ) use ( $blocked, $staging, $lease, $wpdb, $job_id, &$failed_after ) {
+				if ( E_WARNING !== $severity || ! str_contains( $message, 'rename(' ) || ! str_contains( $message, $blocked ) ) {
+					return false;
+				}
+				$failed_after = count( glob( $staging . '/*.bin' ) ) - 1;
+				rmdir( $blocked );
+				if ( 'owned' !== $lease ) {
+					$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Simulate lease loss during the filesystem write.
+						MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+						'expired' === $lease ? array( 'locked_until' => 1 ) : array(
+							'locked_by'    => 'new-lane',
+							'locked_until' => time() + 300,
+						),
+						array( 'id' => $job_id )
+					);
+				}
+				return true;
+			}
+		);
+		$clean_before_retry = null;
+		add_filter(
+			'query',
+			static function ( $query ) use ( $staging, &$clean_before_retry ) {
+				if ( str_contains( $query, "SET status = 'failed_retryable'" ) ) {
+					$clean_before_retry = ! is_dir( $staging );
+				}
+				return $query;
+			}
+		);
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		} finally {
+			restore_error_handler();
+		}
+		$job = $store->get_job( $job_id );
+		$this->assertSame( 4, $failed_after, 'Four chunks must exist before the fifth write fails.' );
+		$this->assertSame( 'other destination', file_get_contents( $other . '/sentinel.bin' ) );
+		if ( 'owned' === $lease ) {
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+			$this->assertDirectoryDoesNotExist( $staging );
+			$this->assertTrue( $clean_before_retry, 'Cleanup must precede the retry transition that releases the lease.' );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, (int) $job->next_retry_at + 1 );
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_job( $job_id )->status, 'The retry must re-stage after cleanup.' );
+			$this->assertSame( 'other destination', file_get_contents( $other . '/sentinel.bin' ) );
+		} else {
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING, $job->status );
+			$this->assertCount( 4, glob( $staging . '/*.bin' ) );
+			$this->assertSame( 0, (int) $job->attempt_count );
+		}
+	}
+
+	/**
+	 * A reclaimed or expired lease cannot authorize cleanup.
+	 *
+	 * @return array
+	 */
+	public static function staging_failure_leases() {
+		return array(
+			'owned'   => array( 'owned' ),
+			'expired' => array( 'expired' ),
+			'stolen'  => array( 'stolen' ),
+		);
+	}
+
+	/**
+	 * A crash before checkpointing must not charge already staged bytes again.
+	 */
+	public function test_chunking_resumes_unrecorded_staging_with_only_remaining_space() {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$id                     = $this->make_snapshot(
+			array(
+				'archive.zip' => array(
+					'size' => 2 * MB_IN_BYTES,
+					'role' => 'full',
+				),
+			)
+		);
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$content  = file_get_contents( $snapshot->archives[0]['path'] );
+		$staging  = $this->private_root . '/upload-staging/' . $id . '-' . $dest_id;
+		mkdir( $staging, 0755, true );
+		for ( $index = 0; $index < 30; ++$index ) {
+			$bytes = substr( $content, $index * 64 * KB_IN_BYTES, 64 * KB_IN_BYTES );
+			$hash  = hash( MainWP_Backup_Chunker::hash_algo(), $bytes );
+			file_put_contents( $staging . '/' . $hash . '.bin', $bytes );
+		}
+		$checked       = array();
+		$reported_free = 100 * MB_IN_BYTES + 2 * 64 * KB_IN_BYTES;
+		add_filter(
+			'mainwp_backup_upload_chunk_size',
+			static function () {
+				return 64 * KB_IN_BYTES;
+			}
+		);
+		add_filter(
+			'mainwp_backup_upload_staging_free_space',
+			static function ( $free, $dir ) use ( &$checked, &$reported_free ) {
+				$checked[] = $dir;
+				return $reported_free;
+			},
+			10,
+			2
+		);
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_jobs_for_snapshot( $id )[0]->status );
+		$this->assertSame( array( $staging ), $checked, 'Check the staging filesystem once before writing the remainder.' );
+		$this->assertCount( 32, glob( $base . '/4/' . $id . '/chunks/*.bin' ) );
+		$reported_free = false;
+		$this->assertCount( 32, MainWP_Backup_Chunker::plan_artifact( $snapshot->archives[0]['path'], $staging, 64 * KB_IN_BYTES ), 'An unavailable free-space report must still permit staging.' );
+		$this->assertSame( array( $staging, $staging ), $checked );
+	}
+
+	/**
+	 * Missing source files still fail permanently without scheduling retries.
+	 *
+	 * @return void
+	 */
+	public function test_missing_chunked_artifact_fails_permanent_with_410() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		unlink( $snapshot->archives[0]['path'] );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver     = MainWP_Backup_Upload_Driver::instance();
+		$build      = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking   = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$checkpoint = $build->invoke( $driver, $snapshot );
+		$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+		try {
+			$chunking->invokeArgs( $driver, $args );
+			$this->fail( 'A missing artifact must throw before upload.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 410, $e->getCode() );
+		}
+
+		$driver->process_pending_jobs( 240 );
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 0, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'is missing from this Dashboard: large.zip', $job->last_error );
+	}
+
+	/**
+	 * A whole-file artifact that exists but cannot be read stays retryable.
+	 *
+	 * @return void
+	 */
+	public function test_unreadable_whole_artifact_schedules_retry() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root ignores file permissions, so the artifact cannot be made unreadable.' );
+		}
+
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$path            = $snapshot->archives[0]['path'];
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		$warnings = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The expected filesystem warning must not interrupt the failure-state assertion.
+			static function ( $severity, $message ) use ( $path, &$warnings ) {
+				// The whole-file hash runs first and trips over the same permission error.
+				if ( E_WARNING === $severity && false !== strpos( $message, $path ) && ( 0 === strpos( $message, 'file_get_contents(' ) || 0 === strpos( $message, 'hash_file(' ) ) ) {
+					$warnings[] = $message;
+					return true;
+				}
+				return false;
+			}
+		);
+		$now = time();
+		chmod( $path, 0000 );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		} finally {
+			chmod( $path, 0644 );
+			restore_error_handler();
+		}
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertNotEmpty(
+			array_filter(
+				$warnings,
+				static function ( $message ) {
+					return 0 === strpos( $message, 'file_get_contents(' );
+				}
+			),
+			'The fixture must fail while reading the whole artifact.'
+		);
+		$this->assertFileExists( $path );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'Could not read backup artifact for upload', $job->last_error );
+	}
+
+	/**
+	 * A chunk whose staged copy is gone and whose source still covers it but
+	 * cannot be read stays retryable.
+	 *
+	 * @return void
+	 */
+	public function test_unreadable_chunk_source_schedules_retry() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root ignores file permissions, so the artifact cannot be made unreadable.' );
+		}
+
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$path            = $snapshot->archives[0]['path'];
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver     = MainWP_Backup_Upload_Driver::instance();
+		$build      = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking   = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$checkpoint = $build->invoke( $driver, $snapshot );
+		$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+		$this->assertTrue( $chunking->invokeArgs( $driver, $args ) );
+
+		// Hash up front so the permission error lands on the chunk read alone.
+		$checkpoint['artifacts'][0]['sha256'] = hash_file( 'sha256', $path );
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		$staged = glob( $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id . '/*.bin' );
+		$this->assertNotEmpty( $staged, 'Chunking must stage chunk bytes.' );
+		foreach ( $staged as $file ) {
+			unlink( $file );
+		}
+
+		$warnings = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The expected filesystem warning must not interrupt the failure-state assertion.
+			static function ( $severity, $message ) use ( $path, &$warnings ) {
+				if ( E_WARNING === $severity && 0 === strpos( $message, 'fopen(' ) && false !== strpos( $message, $path ) ) {
+					$warnings[] = $message;
+					return true;
+				}
+				return false;
+			}
+		);
+		$now = time();
+		chmod( $path, 0000 );
+		try {
+			$driver->process_pending_jobs( 240, $now );
+		} finally {
+			chmod( $path, 0644 );
+			restore_error_handler();
+		}
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertCount( 1, $warnings, 'The fixture must fail while opening the source slice.' );
+		$this->assertFileExists( $path );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'Chunk bytes are unavailable locally', $job->last_error );
+	}
+
+	/**
+	 * A complete staged copy must survive a read failure after the original is gone.
+	 *
+	 * @dataProvider staged_chunk_sources
+	 * @param string $staged_state Staged copy condition.
+	 * @param int    $expected_code Failure classification.
+	 */
+	public function test_missing_original_classifies_staged_chunk( string $staged_state, int $expected_code ) {
+		if ( 'unreadable' === $staged_state && function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root ignores file permissions, so the chunk cannot be made unreadable.' );
+		}
+		mkdir( $this->private_root );
+		$staged   = $this->private_root . '/chunk.bin';
+		$artifact = array(
+			'path' => $this->private_root . '/missing.zip',
+			'file' => 'missing.zip',
+		);
+		$chunk    = array(
+			'offset' => 1024,
+			'length' => 4,
+		);
+		if ( 'absent' !== $staged_state ) {
+			file_put_contents( $staged, 'unreadable' === $staged_state ? 'data' : 'bad' );
+		}
+		$warnings = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The expected read warning must not replace the classified exception.
+			static function ( $severity, $message ) use ( $staged, &$warnings ) {
+				if ( E_WARNING === $severity && str_starts_with( $message, 'file_get_contents(' ) && str_contains( $message, $staged ) ) {
+					$warnings[] = $message;
+					return true;
+				}
+				return false;
+			}
+		);
+		if ( 'unreadable' === $staged_state ) {
+			chmod( $staged, 0000 );
+		}
+		$code = null;
+		try {
+			$driver = MainWP_Backup_Upload_Driver::instance();
+			$read   = new \ReflectionMethod( $driver, 'read_chunk_bytes' );
+			try {
+				$read->invoke( $driver, $artifact, $chunk, $staged );
+			} catch ( \RuntimeException $e ) {
+				$code = $e->getCode();
+			}
+		} finally {
+			if ( 'unreadable' === $staged_state ) {
+				chmod( $staged, 0644 );
+			}
+			restore_error_handler();
+		}
+		$this->assertCount( 'unreadable' === $staged_state ? 1 : 0, $warnings );
+		$this->assertSame( $expected_code, $code, 'A complete staged chunk must remain retryable when its read fails.' );
+		if ( 'unreadable' === $staged_state ) {
+			$this->assertSame( 'data', file_get_contents( $staged ) );
+		}
+	}
+
+	/**
+	 * Missing or short staged copies cannot replace the lost original.
+	 *
+	 * @return array
+	 */
+	public static function staged_chunk_sources() {
+		return array(
+			'unreadable complete copy' => array( 'unreadable', 0 ),
+			'absent copy'              => array( 'absent', 410 ),
+			'wrong size copy'          => array( 'wrong-size', 410 ),
+		);
+	}
+
+	/**
+	 * A truncated source must fail the recorded-size check before upload.
+	 *
+	 * @return void
+	 */
+	public function test_truncated_chunk_source_fails_recorded_size_check() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$path            = $snapshot->archives[0]['path'];
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver     = MainWP_Backup_Upload_Driver::instance();
+		$build      = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking   = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$checkpoint = $build->invoke( $driver, $snapshot );
+		$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+		$this->assertTrue( $chunking->invokeArgs( $driver, $args ) );
+
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		$staged = glob( $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id . '/*.bin' );
+		$this->assertNotEmpty( $staged, 'Chunking must stage chunk bytes.' );
+		foreach ( $staged as $file ) {
+			unlink( $file );
+		}
+
+		// Shorter than the first chunk's offset plus length (0 + 1024).
+		file_put_contents( $path, substr( file_get_contents( $path ), 0, 500 ) );
+		clearstatcache();
+
+		$driver->process_pending_jobs( 240, time() );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 0, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'was changed or replaced after this backup finished', $job->last_error );
+	}
+
+	/** A matching archive size cannot supply a checkpoint range beyond EOF. */
+	public function test_same_size_source_with_missing_chunk_range_fails_permanent() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$path            = $snapshot->archives[0]['path'];
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver     = MainWP_Backup_Upload_Driver::instance();
+		$build      = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking   = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$checkpoint = $build->invoke( $driver, $snapshot );
+		$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+		$this->assertTrue( $chunking->invokeArgs( $driver, $args ) );
+		$this->assertSame( $snapshot->archives[0]['size'], filesize( $path ) );
+
+		// Keep the size check satisfied while the saved range cannot be rebuilt.
+		$checkpoint['artifacts'][0]['chunks'][0]['offset'] = filesize( $path );
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+		$staged = glob( $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id . '/*.bin' );
+		$this->assertNotEmpty( $staged, 'Chunking must stage chunk bytes.' );
+		foreach ( $staged as $file ) {
+			unlink( $file );
+		}
+
+		$driver->process_pending_jobs( 240, time() );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 0, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'Chunk bytes are unavailable locally', $job->last_error );
+		$this->assertSame( $snapshot->archives[0]['size'], filesize( $path ) );
+	}
+
+	/**
+	 * Exhausted attempts go permanent.
+	 *
+	 * @return void
+	 */
+	public function test_exhausted_attempts_fail_permanent() {
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Hopeless',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		add_filter(
+			'pre_http_request',
+			function () {
+				return new \WP_Error( 'http_request_failed', 'still down' );
+			}
+		);
+
+		$now = time();
+		for ( $i = 0; $i < 7; $i++ ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+			$now += 20000;
+		}
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+	}
+
+	/**
+	 * A deleted destination fails the job permanently.
+	 *
+	 * @return void
+	 */
+	public function test_deleted_destination_fails_permanent() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Storage_Destinations::instance()->delete_destination( $dest_id );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertStringContainsString( 'destination', strtolower( $job->last_error ) );
+	}
+
+	/**
+	 * A job whose snapshot record vanished announces the terminal failure
+	 * so the activity log records it, with site unattributed and the
+	 * destination taken from the job row.
+	 *
+	 * @return void
+	 */
+	public function test_missing_snapshot_fires_upload_failed() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		global $wpdb;
+		$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array( 'id' => $snapshot_id ),
+			array( '%d' )
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 0, $events[0]['site_id'] );
+		$this->assertSame( $dest_id, $events[0]['destination_id'] );
+		$this->assertSame( 'local', $events[0]['provider'] );
+		$this->assertStringContainsString( 'Snapshot record is gone', $events[0]['error'] );
+	}
+
+	/**
+	 * A job whose destination row was deleted announces the terminal
+	 * failure with the destination id and provider preserved from the
+	 * job row.
+	 *
+	 * @return void
+	 */
+	public function test_deleted_destination_fires_upload_failed() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Storage_Destinations::instance()->delete_destination( $dest_id );
+
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$this->assertCount( 1, $events );
+		$this->assertSame( 4, $events[0]['site_id'] );
+		$this->assertSame( $dest_id, $events[0]['destination_id'] );
+		$this->assertSame( 'local', $events[0]['provider'] );
+		$this->assertStringContainsString( 'destination', strtolower( $events[0]['error'] ) );
+	}
+
+	/**
+	 * A destination whose stored credentials no longer decrypt announces
+	 * the terminal failure when its job parks credentials-invalid.
+	 *
+	 * @return void
+	 */
+	public function test_undecryptable_credentials_fire_upload_failed() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ),
+			array( 'settings' => 'not-a-credential-envelope' ),
+			array( 'id' => $dest_id )
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID, $job->status );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 4, $events[0]['site_id'] );
+		$this->assertSame( $dest_id, $events[0]['destination_id'] );
+		$this->assertStringContainsString( 'credentials', strtolower( $events[0]['error'] ) );
+	}
+
+	/**
+	 * A destination whose provider slug no longer constructs announces
+	 * the terminal failure when provider construction throws.
+	 *
+	 * @return void
+	 */
+	public function test_unknown_provider_fires_upload_failed() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ),
+			array( 'provider' => 'bogus' ),
+			array( 'id' => $dest_id )
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 4, $events[0]['site_id'] );
+		$this->assertSame( $dest_id, $events[0]['destination_id'] );
+		$this->assertStringContainsString( 'Unknown storage provider', $events[0]['error'] );
+	}
+
+	/**
+	 * Enqueue stamps each job with its destination's provider so the
+	 * offsite rollup can tell local from cloud even if the destination is
+	 * later deleted.
+	 *
+	 * @return void
+	 */
+	public function test_enqueue_stamps_destination_provider() {
+		$s3_id            = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Stamp test',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+		list( $local_id ) = $this->make_local_destination();
+		$snapshot_id      = $this->record_bare_snapshot();
+
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $s3_id, $local_id ) );
+
+		$by_dest = array_column( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id ), null, 'destination_id' );
+		$this->assertSame( 's3', $by_dest[ $s3_id ]->provider );
+		$this->assertSame( 'local', $by_dest[ $local_id ]->provider );
+	}
+
+	/**
+	 * A snapshot whose non-local copies all completed resolves to
+	 * verified, stamps verified_at, and announces itself.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_verified_when_all_nonlocal_complete() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 's3', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+		$this->seed_upload_job( $snapshot_id, 2, 'gcs', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+
+		$verified = array();
+		add_action(
+			'mainwp_backup_snapshot_offsite_verified',
+			function ( $id ) use ( &$verified ) {
+				$verified[] = $id;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( 'verified', $snapshot->offsite_state );
+		$this->assertGreaterThan( 0, (int) $snapshot->verified_at );
+		$this->assertSame( array( $snapshot_id ), $verified );
+	}
+
+	/**
+	 * A local-only snapshot never reaches verified: local uploads are off
+	 * the dashboard's own disk, not offsite.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_local_only_stays_empty() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 'local', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * A snapshot with no upload jobs at all stays unset.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_no_destinations_stays_empty() {
+		$snapshot_id = $this->record_bare_snapshot();
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * A legacy upload row with a blank provider is treated as unknown and
+	 * can never grant verified.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_blank_provider_never_verifies() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, '', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * One non-local copy complete and another failed resolves to partial.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_partial_on_mixed_outcome() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 's3', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+		$this->seed_upload_job( $snapshot_id, 2, 'gcs', MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( 'partial', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * All non-local copies terminal-failed resolves to failed, not stuck
+	 * pending - the rollup runs on the terminal-failure transition.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_failed_when_all_terminal_failed() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 's3', MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT );
+		$this->seed_upload_job( $snapshot_id, 2, 'gcs', MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( 'failed', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * Any non-terminal non-local job keeps the snapshot pending.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_pending_while_in_flight() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 's3', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+		$this->seed_upload_job( $snapshot_id, 2, 'gcs', MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( 'pending', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * Completing a real local-destination upload drives the rollup through
+	 * the settle signal: the job reaches complete and the snapshot, being
+	 * local-only, settles to empty (never verified).
+	 *
+	 * @return void
+	 */
+	public function test_terminal_transition_drives_rollup_local_stays_empty() {
+		MainWP_Backup_Upload_Driver::instance()->init();
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0]->status );
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * A post-write HEAD whose size does not match keeps the job retryable
+	 * and the snapshot out of verified: complete must imply a remotely
+	 * present object.
+	 *
+	 * @return void
+	 */
+	public function test_head_size_mismatch_keeps_job_retryable() {
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$dest_id     = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Torn writer',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		// PUTs succeed; every HEAD reports a size that never matches what
+		// was written, so the post-write confirmation always fails.
+		add_filter(
+			'pre_http_request',
+			function ( $pre, $args ) {
+				$method = isset( $args['method'] ) ? strtoupper( $args['method'] ) : 'GET';
+				if ( 'HEAD' === $method ) {
+					return array(
+						'headers'  => array( 'content-length' => '1' ),
+						'body'     => '',
+						'response' => array(
+							'code'    => 200,
+							'message' => 'OK',
+						),
+					);
+				}
+				return array(
+					'headers'  => array(),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			},
+			10,
+			2
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status, 'A HEAD size mismatch must keep the job retryable.' );
+		$this->assertNotSame( 'verified', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * An armed run lands ciphertext objects, not the source bytes: each chunk
+	 * and whole file is sealed (plaintext + 28), decrypts back under the
+	 * snapshot DEK, and the manifest carries the encryption block, the recovery
+	 * blob, and a sibling HMAC over its exact bytes.
+	 *
+	 * @return void
+	 */
+	public function test_armed_run_uploads_ciphertext_and_signed_manifest() {
+		$enc                    = $this->arm_encryption();
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$snapshot_id            = $this->make_snapshot( $this->standard_files(), 0, 4 );
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $jobs[0]->status, 'Sealed upload must complete; the +28 confirm-size must match.' );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$paths    = array_column( $snapshot->archives, 'path', 'file' );
+		$kek      = $enc->load_kek();
+		$dek      = $enc->dek_from_meta( $snapshot->encryption, $snapshot_id, $kek );
+		$prefix   = $base . '/4/' . $snapshot_id;
+
+		// Each chunk object is ciphertext (plaintext + 28) and opens to the
+		// source slice under the snapshot DEK and the chunk-hash AAD.
+		$big  = file_get_contents( $paths['big.bin'] );
+		$algo = MainWP_Backup_Chunker::hash_algo();
+		foreach ( array( 0, 1024, 2048 ) as $offset ) {
+			$slice = substr( $big, $offset, 1024 );
+			$hash  = hash( $algo, $slice );
+			$blob  = file_get_contents( $prefix . '/chunks/' . $hash . '.bin' );
+			$this->assertSame( strlen( $slice ) + 28, strlen( $blob ), 'Chunk object must be ciphertext + framing.' );
+			$this->assertNotSame( $slice, $blob, 'Chunk object must not be plaintext.' );
+			$this->assertSame( $slice, MainWP_Backup_Archive_Cipher::open( $blob, $dek, 'snapshot:' . $snapshot_id . ':chunk:' . $hash ) );
+		}
+
+		// The whole small file is sealed too and opens under its whole AAD.
+		$small      = file_get_contents( $paths['small.txt'] );
+		$small_blob = file_get_contents( $prefix . '/files/small.txt' );
+		$this->assertSame( strlen( $small ) + 28, strlen( $small_blob ) );
+		$this->assertSame( $small, MainWP_Backup_Archive_Cipher::open( $small_blob, $dek, 'snapshot:' . $snapshot_id . ':whole:small.txt' ) );
+
+		// The manifest stays readable JSON and carries the keying material.
+		$json     = file_get_contents( $prefix . '/manifest.json' );
+		$manifest = json_decode( $json, true );
+		$this->assertSame( 'aes-256-gcm', $manifest['encryption']['cipher'] );
+		$this->assertSame( 28, $manifest['encryption']['overhead'] );
+		$this->assertNotEmpty( $manifest['encryption']['wrapped_dek'] );
+		$this->assertNotEmpty( $manifest['recovery']['wrapped_kek'] );
+
+		// The sibling HMAC authenticates the exact manifest bytes under the KEK.
+		$this->assertFileExists( $prefix . '/manifest.json.hmac' );
+		$this->assertSame( $enc->manifest_hmac( $json, $kek ), file_get_contents( $prefix . '/manifest.json.hmac' ) );
+
+		$new_blob = $enc->set_recovery_passphrase( 'replacement upload passphrase', 'upload driver encryption passphrase' );
+		$this->assertNotSame( $manifest['recovery'], $new_blob );
+		$this->assertSame( $manifest['recovery']['kek_version_id'], $new_blob['kek_version_id'] );
+		$recovered = $enc->recover_kek( 'upload driver encryption passphrase', $manifest['recovery'] );
+		$this->assertSame( $enc->load_kek(), $recovered );
+		$this->assertSame( $dek, $enc->dek_from_meta( $manifest['encryption'], $snapshot_id, $recovered ) );
+		$this->assertSame( $small, MainWP_Backup_Archive_Cipher::open( $small_blob, $dek, 'snapshot:' . $snapshot_id . ':whole:small.txt' ) );
+		$this->assertSame( $enc->manifest_hmac( $json, $enc->load_kek() ), file_get_contents( $prefix . '/manifest.json.hmac' ) );
+		$this->assertSame( $json, file_get_contents( $prefix . '/manifest.json' ) );
+	}
+
+	/**
+	 * Creation-time encryption intent controls uploads even after key repair
+	 * or a setting change. Count every provider PUT, including the manifest.
+	 *
+	 * @dataProvider encryption_creation_states
+	 * @param string $state Encryption state at creation and before upload.
+	 * @param string $outcome Expected upload outcome.
+	 * @param string $mutation Metadata or key damage before upload.
+	 */
+	public function test_b151_encryption_intent_controls_provider_writes( $state, $outcome, $mutation = '' ) {
+		$enc = MainWP_Backup_Encryption::instance();
+		update_option( MainWP_Backup_Encryption::ENABLED_OPTION, 'disabled' === $state ? '' : '1' );
+		if ( 'armed' === $state ) {
+			$this->arm_encryption();
+		}
+
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Encryption intent target',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+		$task_id = $this->insert_task( array( $dest_id ) );
+		$driver  = MainWP_Backup_Upload_Driver::instance();
+		$driver->init();
+		$snapshot_id = $this->make_snapshot( $this->standard_files(), $task_id );
+		$this->assertGreaterThan( 0, $snapshot_id );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+
+		if ( 'repaired' === $state ) {
+			$enc->set_recovery_passphrase( 'repaired upload encryption passphrase' );
+			$this->assertTrue( $enc->is_armed() );
+		} elseif ( 'toggle-off' === $state ) {
+			update_option( MainWP_Backup_Encryption::ENABLED_OPTION, '' );
+		}
+		if ( '' !== $mutation ) {
+			global $wpdb;
+			$meta             = $snapshot->encryption;
+			$meta['required'] = 1;
+			if ( 'missing-key' === $mutation ) {
+				MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+			} elseif ( 'key-version' === $mutation ) {
+				$meta['kek_version_id'] = 'different-key-version';
+			} elseif ( 'corrupt-dek' === $mutation ) {
+				$meta['wrapped_dek'] = 'not-valid-base64!';
+			} else {
+				unset( $meta[ $mutation ] );
+			}
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'encryption' => wp_json_encode( $meta ) ), array( 'id' => $snapshot_id ) );
+			$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		}
+
+		$staging = $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id;
+		if ( in_array( $mutation, array( 'missing-key', 'key-version' ), true ) ) {
+			wp_mkdir_p( $staging );
+			file_put_contents( $staging . '/partial.bin', 'existing staged chunk' );
+			$this->assertFileExists( $staging . '/partial.bin' );
+			if ( 'missing-key' === $mutation ) {
+				$this->assertNull( $enc->load_kek(), 'The key must be unreadable at upload time.' );
+			} else {
+				$this->assertNotNull( $enc->load_kek() );
+				$this->assertNotSame( $snapshot->encryption['kek_version_id'], $enc->kek_version_id( $enc->load_kek() ) );
+			}
+		}
+
+		$writes  = array();
+		$objects = array();
+		add_filter(
+			'pre_http_request',
+			function ( $pre, $args, $url ) use ( &$writes, &$objects ) {
+				$key    = wp_parse_url( $url, PHP_URL_PATH );
+				$method = strtoupper( $args['method'] );
+				if ( 'PUT' === $method ) {
+					$writes[]        = $key;
+					$objects[ $key ] = $args['body'];
+				}
+				$present = isset( $objects[ $key ] );
+				return array(
+					'headers'  => $present ? array( 'content-length' => (string) strlen( $objects[ $key ] ) ) : array(),
+					'body'     => '',
+					'response' => array(
+						'code'    => $present ? 200 : 404,
+						'message' => $present ? 'OK' : 'Not Found',
+					),
+				);
+			},
+			10,
+			3
+		);
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		$driver->process_pending_jobs( 240 );
+		$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
+		if ( 'refused' === $outcome || 'retryable' === $outcome ) {
+			$this->assertCount( 0, $writes, 'Encryption-required snapshots must refuse before any provider write.' );
+			$this->assertStringContainsString( '[mainwp_backup_encryption_required]', $job->last_error );
+			if ( 'retryable' === $outcome ) {
+				$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+				$this->assertGreaterThan( time(), (int) $job->next_retry_at );
+				$this->assertSame( 'existing staged chunk', file_get_contents( $staging . '/partial.bin' ) );
+				$this->assertSame( array(), $events );
+			} else {
+				$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+				$this->assertDirectoryDoesNotExist( $staging );
+				$this->assertCount( 1, $events );
+				$this->assertSame( $job->last_error, $events[0]['error'] );
+				$this->assertSame( $snapshot_id, $events[0]['snapshot_id'] );
+				$this->assertSame( 'failed', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+			}
+			$this->assertSame( 1, $snapshot->encryption['required'] ?? null );
+			$this->assertSame( $snapshot->encryption, MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->encryption );
+			return;
+		}
+
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status );
+		$this->assertCount( 'encrypted' === $outcome ? 7 : 6, $writes );
+		$this->assertSame( array(), $events );
+		$prefix   = '/4/' . $snapshot_id . '/';
+		$paths    = array_column( $snapshot->archives, 'path', 'file' );
+		$manifest = json_decode( $objects[ $prefix . 'manifest.json' ], true );
+		if ( 'encrypted' === $outcome ) {
+			$this->assertSame( 1, $snapshot->encryption['required'] ?? null );
+			$this->assertSame( 1, $manifest['encryption']['enc'] );
+			$dek = $enc->dek_from_meta( $snapshot->encryption, $snapshot_id, $enc->load_kek() );
+			$this->assertSame( $enc->manifest_hmac( $objects[ $prefix . 'manifest.json' ], $enc->load_kek() ), $objects[ $prefix . 'manifest.json.hmac' ] );
+		} else {
+			$this->assertSame( array(), $snapshot->encryption );
+			$this->assertArrayNotHasKey( 'encryption', $manifest );
+		}
+		foreach ( array( 'small.txt', 'files.list' ) as $file ) {
+			$body = $objects[ $prefix . 'files/' . $file ];
+			if ( 'encrypted' === $outcome ) {
+				$this->assertNotSame( file_get_contents( $paths[ $file ] ), $body );
+				$body = MainWP_Backup_Archive_Cipher::open( $body, $dek, 'snapshot:' . $snapshot_id . ':whole:' . $file );
+			}
+			$this->assertSame( file_get_contents( $paths[ $file ] ), $body );
+		}
+		foreach ( array( 0, 1024, 2048 ) as $offset ) {
+			$slice = substr( file_get_contents( $paths['big.bin'] ), $offset, 1024 );
+			$hash  = hash( MainWP_Backup_Chunker::hash_algo(), $slice );
+			$body  = $objects[ $prefix . 'chunks/' . $hash . '.bin' ];
+			if ( 'encrypted' === $outcome ) {
+				$this->assertNotSame( $slice, $body );
+				$body = MainWP_Backup_Archive_Cipher::open( $body, $dek, 'snapshot:' . $snapshot_id . ':chunk:' . $hash );
+			}
+			$this->assertSame( $slice, $body );
+		}
+	}
+
+	/**
+	 * Encryption state changes must not erase a snapshot's requirement.
+	 *
+	 * @return array Creation states and upload outcomes.
+	 */
+	public static function encryption_creation_states() {
+		return array(
+			'enabled and armed'              => array( 'armed', 'encrypted' ),
+			'enabled and unarmed'            => array( 'unarmed', 'refused' ),
+			'key repaired after creation'    => array( 'repaired', 'refused' ),
+			'disabled at creation'           => array( 'disabled', 'plaintext' ),
+			'toggle disabled after creation' => array( 'toggle-off', 'refused' ),
+			'missing encryption flag'        => array( 'armed', 'refused', 'enc' ),
+			'missing wrapped DEK'            => array( 'armed', 'refused', 'wrapped_dek' ),
+			'corrupt wrapped DEK'            => array( 'armed', 'refused', 'corrupt-dek' ),
+			'key unreadable before upload'   => array( 'armed', 'retryable', 'missing-key' ),
+			'key version mismatch'           => array( 'armed', 'refused', 'key-version' ),
+		);
+	}
+
+	/**
+	 * Two destinations for one snapshot seal under the same per-snapshot DEK,
+	 * so one key recovers the bytes from either copy. The DEK is minted once at
+	 * record time, not per upload job, so the destinations cannot diverge.
+	 *
+	 * @return void
+	 */
+	public function test_armed_multi_destination_shares_one_dek() {
+		$enc                     = $this->arm_encryption();
+		list( $dest_a, $base_a ) = $this->make_local_destination();
+		list( $dest_b, $base_b ) = $this->make_local_destination();
+		$snapshot_id             = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			),
+			0,
+			4
+		);
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_a, $dest_b ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$paths    = array_column( $snapshot->archives, 'path', 'file' );
+		$dek      = $enc->dek_from_meta( $snapshot->encryption, $snapshot_id, $enc->load_kek() );
+		$small    = file_get_contents( $paths['small.txt'] );
+		$aad      = 'snapshot:' . $snapshot_id . ':whole:small.txt';
+
+		$blob_a = file_get_contents( $base_a . '/4/' . $snapshot_id . '/files/small.txt' );
+		$blob_b = file_get_contents( $base_b . '/4/' . $snapshot_id . '/files/small.txt' );
+
+		$this->assertNotSame( $blob_a, $blob_b, 'Independent seals use fresh nonces, so the ciphertexts differ.' );
+		$this->assertSame( $small, MainWP_Backup_Archive_Cipher::open( $blob_a, $dek, $aad ) );
+		$this->assertSame( $small, MainWP_Backup_Archive_Cipher::open( $blob_b, $dek, $aad ) );
+	}
+
+	/**
+	 * Re-entry over an encrypted destination skips intact ciphertext objects
+	 * instead of re-uploading: the already-present check accounts for the
+	 * cipher framing overhead.
+	 *
+	 * @return void
+	 */
+	public function test_armed_reentry_skips_intact_ciphertext() {
+		$this->arm_encryption();
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$snapshot_id            = $this->make_snapshot( $this->standard_files() );
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$prefix = $base . '/4/' . $snapshot_id;
+		$chunks = glob( $prefix . '/chunks/*.bin' );
+		$this->assertNotEmpty( $chunks );
+		$intact = $chunks[0];
+		$past   = time() - 3600;
+		touch( $intact, $past );
+
+		// Rewind to the upload phase distrusting prior work, then run again.
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$checkpoint = $job->checkpoint;
+		foreach ( $checkpoint['artifacts'] as &$artifact ) {
+			$artifact['chunks_cursor'] = 0;
+			$artifact['done']          = false;
+			if ( is_array( $artifact['chunks'] ) ) {
+				foreach ( $artifact['chunks'] as &$chunk ) {
+					$chunk['remote_present'] = false;
+				}
+				unset( $chunk );
+			}
+		}
+		unset( $artifact );
+		$checkpoint['manifest_submitted'] = false;
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		clearstatcache();
+		$this->assertSame( $past, filemtime( $intact ), 'An intact ciphertext chunk must be skipped, not rewritten.' );
+	}
+
+	/**
+	 * A lease lost mid-run - a second lane reclaims it between the
+	 * pre-upload presence check and the confirming write - stops the
+	 * zombie cold: its post-reclaim checkpoint and status writes are
+	 * fenced-refused, it never fires the uploaded event, and its own
+	 * finally-block release_lock() must not clear the new holder's lock.
+	 *
+	 * @return void
+	 */
+	public function test_lease_loss_mid_run_stops_writes_and_fires_no_events() {
+		$dest_id     = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Lease loss target',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job_id = (int) $store->get_jobs_for_snapshot( $snapshot_id )[0]->id;
+
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+
+		// The first HEAD is the pre-upload presence check. It simulates a
+		// second lane winning the reclaim while this request is in flight:
+		// force-expire the lease, then win it under a second token, before
+		// answering "not present" so the run proceeds to upload as normal.
+		$reclaimed = false;
+		add_filter(
+			'pre_http_request',
+			function ( $pre, $args ) use ( &$reclaimed, $job_id, $store, $wpdb, $table ) {
+				$method = isset( $args['method'] ) ? strtoupper( $args['method'] ) : 'GET';
+				if ( 'HEAD' !== $method ) {
+					return array(
+						'headers'  => array(),
+						'body'     => '',
+						'response' => array(
+							'code'    => 200,
+							'message' => 'OK',
+						),
+					);
+				}
+
+				if ( ! $reclaimed ) {
+					$reclaimed = true;
+					$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture forcing lease expiry mid-run.
+						$table,
+						array( 'locked_until' => 1 ),
+						array( 'id' => $job_id )
+					);
+					$store->acquire_next_job( 'token-thief', 300, time() );
+					return array(
+						'headers'  => array(),
+						'body'     => '',
+						'response' => array(
+							'code'    => 404,
+							'message' => 'Not Found',
+						),
+					);
+				}
+
+				// The post-write confirming HEAD: report the exact size just
+				// written so the zombie's upload does not throw and the run
+				// proceeds to its natural fenced refusal instead.
+				return array(
+					'headers'  => array( 'content-length' => '100' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			},
+			10,
+			2
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_uploaded',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_job( $job_id );
+		$this->assertSame( 'token-thief', $job->locked_by, "The zombie's own finally-block release must not clear the new holder's lock." );
+		$this->assertNotSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status, 'The zombie must not complete a job it no longer owns.' );
+		$this->assertSame( array(), $events, 'No uploaded event may fire for a run whose lease was lost mid-flight.' );
+		$this->assertTrue( empty( $job->checkpoint['artifacts'][0]['done'] ), "The zombie's post-reclaim checkpoint write must not land." );
+	}
+
+	/**
+	 * A transient DB error on the initial artifact-index checkpoint must park
+	 * the job for the next tick, never complete it over an empty checkpoint.
+	 *
+	 * The index built at process_one_job's first save is what a later restore
+	 * reads to locate the offsite artifacts. If that write is silently ignored
+	 * the job can still reach COMPLETE with an empty persisted checkpoint, and
+	 * the "offsite-verified" snapshot becomes unrestorable once retention
+	 * prunes the local copy.
+	 *
+	 * @return void
+	 */
+	public function test_initial_checkpoint_save_failure_parks_job() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+
+		$failing = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Fail the first checkpoint write (the artifact index), then behave.
+			 *
+			 * @var int
+			 */
+			public $calls = 0;
+
+			/**
+			 * Model a transient DB error on the initial index checkpoint.
+			 *
+			 * @param int         $job_id     Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 *
+			 * @return bool
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				++$this->calls;
+				if ( 1 === $this->calls ) {
+					return false;
+				}
+				return parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+
+		$prop = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$saved = $prop->getValue();
+		$prop->setValue( null, $failing );
+
+		try {
+			MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
+		} finally {
+			$prop->setValue( null, $saved );
+		}
+
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $job->status, 'A failed initial index save must leave the job pending for the next tick, not complete it.' );
+		$this->assertSame( 1, $failing->calls, 'A parked job must not be attempted twice within one tick.' );
+		$this->assertSame( '', $job->locked_by, 'The repeated acquisition must release its lock.' );
+		$this->assertEmpty( $job->checkpoint['artifacts'] ?? array(), 'The unpersisted checkpoint must stay empty; the job must not have completed over it.' );
+	}
+
+	/**
+	 * A transient DB error on the terminal manifest checkpoint must not let the
+	 * job reach COMPLETE over an unpersisted terminal state. The remote
+	 * manifest re-PUT on the next tick is idempotent by construction, so the
+	 * job resumes and completes only once its checkpoint has actually landed.
+	 *
+	 * @return void
+	 */
+	public function test_manifest_checkpoint_save_failure_does_not_complete_job() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+
+		$failing = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Fail only the terminal manifest_submitted checkpoint write.
+			 *
+			 * @param int         $job_id     Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 *
+			 * @return bool
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				if ( ! empty( $checkpoint['manifest_submitted'] ) ) {
+					return false;
+				}
+				return parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+
+		$prop = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$saved = $prop->getValue();
+		$prop->setValue( null, $failing );
+
+		try {
+			MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
+		} finally {
+			$prop->setValue( null, $saved );
+		}
+
+		$this->assertNotSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status, 'A failed terminal manifest checkpoint must not complete the job.' );
+		$this->assertNotEmpty( $job->checkpoint['artifacts'], 'The artifact index persisted earlier must survive; only the terminal write failed.' );
+	}
+
+	/**
+	 * Operators can repair private storage while the upload waits in backoff.
+	 */
+	public function test_private_staging_failure_is_retryable_and_cleans_legacy() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
+		\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+		$now = time();
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertGreaterThan( $now, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'Private backup directory', $job->last_error );
+		$this->assertStringStartsWith( '[' . \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE . '] ', $job->last_error );
+		$base   = $this->make_temp_dir();
+		$filter = static function ( $dirs ) use ( $base ) {
+			$dirs['basedir'] = $base;
+			return $dirs;
+		};
+		add_filter( 'mainwp_get_wp_upload_dir', $filter );
+		$upload = apply_filters( 'mainwp_get_wp_upload_dir', wp_upload_dir( null, false ), null, false );
+		$legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging/' . $snapshot_id . '-' . $dest_id . '/';
+		wp_mkdir_p( $legacy );
+		file_put_contents( $legacy . 'partial.bin', 'partial' );
+		$cleanup = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'cleanup_staging' );
+		$cleanup->invoke( MainWP_Backup_Upload_Driver::instance(), $job );
+		remove_filter( 'mainwp_get_wp_upload_dir', $filter );
+		$this->assertDirectoryDoesNotExist( $legacy );
+	}
+	/** Storage age is persisted only after the real remote manifest verifies. */
+	public function test_verified_upload_persists_storage_age() {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$id                     = $this->make_snapshot(
+			array(
+				'archive.bin' => array(
+					'size' => 100,
+					'role' => 'full',
+				),
+			)
+		);
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$started = time();
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( 'complete', $job->status );
+		$this->assertGreaterThanOrEqual( $started, $job->checkpoint['uploaded_at'] ?? 0 );
+	}
+
+	/** Required destinations are captured before a partial enqueue and survive task edits. */
+	public function test_remote_only_captures_before_partial_enqueue_and_keeps_remote_restore_plan() {
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection     = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		list( $first )  = $this->make_local_destination();
+		list( $second ) = $this->make_local_destination();
+		foreach ( array( $first, $second ) as $destination ) {
+			MainWP_Backup_Storage_Destinations::instance()->update_destination(
+				$destination,
+				array(
+					'provider' => 's3',
+					'settings' => array(
+						'bucket'     => 'retention-' . $destination,
+						'region'     => 'us-east-1',
+						'access_key' => 'k',
+						'secret_key' => 's',
+					),
+				)
+			);
+		}
+		$remote = array();
+		add_filter(
+			'pre_http_request',
+			static function ( $pre, $args, $url ) use ( &$remote ) {
+				if ( 'PUT' === $args['method'] ) {
+					$remote[ $url ] = (string) $args['body'];
+				}
+				$exists = isset( $remote[ $url ] );
+				return array(
+					'headers'  => array( 'content-length' => $exists ? (string) strlen( $remote[ $url ] ) : '0' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => $exists ? 200 : 404,
+						'message' => $exists ? 'OK' : 'Not Found',
+					),
+				);
+			},
+			10,
+			3
+		);
+
+		$task = $this->insert_task( array( $first, $second ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		$failing  = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Model one destination failing to enqueue.
+			 *
+			 * @param int   $snapshot_id Snapshot identity.
+			 * @param array $destinations Required destination identities.
+			 * @return int Inserted jobs.
+			 */
+			public function enqueue_for_snapshot( int $snapshot_id, array $destinations ): int {
+				return parent::enqueue_for_snapshot( $snapshot_id, array_slice( $destinations, 0, 1 ) );
+			}
+		};
+		$property = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$saved    = $property->getValue();
+		$property->setValue( null, $failing );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		try {
+			$id = $this->make_snapshot( $this->standard_files(), $task );
+		} finally {
+			$property->setValue( null, $saved );
+		}
+		$this->assertSame( array( $first, $second ), get_option( $protection::REQUIRED_OPTION_PREFIX . $id ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ) );
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'destinations' => wp_json_encode( array( $first ) ) ), array( 'id' => $task ) );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$dir      = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( 4 ) . 'snapshot-retention-' . $id . '/';
+		wp_mkdir_p( $dir );
+		$this->temp_dirs[] = $dir;
+		$archives          = $snapshot->archives;
+		foreach ( $archives as &$archive ) {
+			rename( $archive['path'], $dir . $archive['file'] );
+			$archive['path'] = $dir . $archive['file'];
+		}
+		unset( $archive );
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'archives'      => wp_json_encode( $archives ),
+				'manifest_path' => $dir . 'files.list',
+			),
+			array( 'id' => $id )
+		);
+		$manifest = file_get_contents( $dir . 'files.list' );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$executor = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance();
+		$executor->evict_local_archives_for_pair( 4, $task );
+		$this->assertFileExists( $dir . 'big.bin' );
+		$store->enqueue_for_snapshot( $id, array( $second ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$this->assertNotEmpty( $remote, 'The real S3 driver verified the fixture PUTs with HEAD requests.' );
+		$before = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$executor->evict_local_archives_for_pair( 4, $task );
+		$this->assertFileDoesNotExist( $dir . 'big.bin' );
+		$this->assertFileDoesNotExist( $dir . 'small.txt' );
+		$this->assertSame( $manifest, file_get_contents( $dir . 'files.list' ) );
+		$this->assertEquals( $before, MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id ) );
+		$plan = \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog::instance()->assemble_plan( array( $before ) );
+		$this->assertCount( 2, $plan );
+		$this->assertSame( array( 'remote_chunked', 'remote' ), array_column( $plan, 'source' ) );
+		foreach ( $plan as $entry ) {
+			$this->assertCount( 2, $entry['remote_candidates'] );
+		}
+		$push = new \ReflectionMethod( '\MainWP\Dashboard\MainWP_Backup_Executor', 'pushable_manifest' );
+		$this->assertSame( base64_encode( $manifest ), $push->invoke( null, $before ) );
+	}
+
+	/** Failed retention evidence still queues uploads and preserves the local source. */
+	public function test_mwp_1963_capture_failure_uploads_with_warning_and_keeps_source() {
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection          = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		list( $destination ) = $this->make_local_destination();
+		$this->configure_mwp_1964_s3_destination( $destination, false );
+		$this->install_mwp_1964_s3_transport();
+		$warnings = array();
+		$capture  = static function ( $message, $site_id, $task_id ) use ( &$warnings ) {
+			$warnings[] = array( $message, $site_id, $task_id );
+		};
+		add_action( 'mainwp_log_warning', $capture, 10, 3 );
+		$task = $this->insert_task( array( $destination ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$refuse = static function ( $sql ) {
+			return 0 === strpos( $sql, 'INSERT' ) && false !== strpos( $sql, 'mainwp_backup_required_uploads_' ) ? 'SELECT 1 WHERE 0=1' : $sql;
+		};
+		add_filter( 'query', $refuse );
+		try {
+			$id = $this->make_snapshot( $this->standard_files(), $task );
+		} finally {
+			remove_filter( 'query', $refuse );
+			remove_action( 'mainwp_log_warning', $capture );
+		}
+		$this->assertFalse( get_option( $protection::REQUIRED_OPTION_PREFIX . $id, false ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ), 'Capture failure must not suppress the configured offsite upload.' );
+		$this->assertSame( 'pending', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->offsite_state );
+		$this->assertCount( 1, $warnings );
+		$this->assertSame( array( 'Could not save the required backup destinations. Uploads will continue, and local archives will be kept.', 4, $task ), $warnings[0] );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status );
+		$this->assertSame( 'verified', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->offsite_state );
+		\MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( 4, $task );
+		$this->assertFalse( $protection::required_uploads_verified( $id ) );
+		$this->assertTrue( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives[0]['retention_requires_uploads'] ?? false );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ) ) );
+		foreach ( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives as $archive ) {
+			$this->assertFileExists( $archive['path'] );
+		}
+	}
+	/**
+	 * Stored bindings survive S3 address-style changes during and after upload.
+	 *
+	 * @dataProvider mwp_1964_binding_cases
+	 * @param bool $legacy Whether to use the stored pre-fix binding format.
+	 * @param bool $path_style Original S3 addressing style.
+	 * @param bool $complete Whether upload completed before the edit.
+	 */
+	public function test_mwp_1964_path_style_keeps_inflight_upload_and_eviction( bool $legacy, bool $path_style, bool $complete ) {
+		list( $destination ) = $this->make_local_destination();
+		$this->configure_mwp_1964_s3_destination( $destination, $path_style );
+		$this->install_mwp_1964_s3_transport();
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$task       = $this->insert_task( array( $destination ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$id       = $this->make_snapshot( $this->standard_files(), $task );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$dir      = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( 4 ) . 'snapshot-style-' . $id . '/';
+		wp_mkdir_p( $dir );
+		$this->temp_dirs[] = $dir;
+		$archives          = $snapshot->archives;
+		foreach ( $archives as &$archive ) {
+			rename( $archive['path'], $dir . $archive['file'] );
+			$archive['path'] = $dir . $archive['file'];
+		}
+		unset( $archive );
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'archives'      => wp_json_encode( $archives ),
+				'manifest_path' => $dir . 'files.list',
+			),
+			array( 'id' => $id )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- private archive fixture.
+		$snapshot                          = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$build                             = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+		$checkpoint                        = $build->invoke( MainWP_Backup_Upload_Driver::instance(), $snapshot );
+		$destination_row                   = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination );
+		$canonical                         = $protection::destination_binding( $destination_row );
+		$checkpoint['destination_binding'] = $legacy ? $this->mwp_1964_legacy_binding( $destination_row ) : $canonical;
+		$store                             = MainWP_Backup_Upload_Job_Store::instance();
+		$job                               = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		if ( $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status );
+		}
+		$this->configure_mwp_1964_s3_destination( $destination, ! $path_style );
+		if ( ! $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		}
+		$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status, 'Changing the request addressing style must not invalidate an in-flight target.' );
+		$this->assertSame( $canonical, $protection::destination_binding( MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ) );
+		$this->assertTrue( $protection::required_uploads_verified( $id ) );
+		$this->assertFalse( $protection::holds_automatic_removal( array( $id ) ) );
+		\MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( 4, $task );
+		$this->assertFileDoesNotExist( $dir . 'big.bin' );
+		$this->assertFileDoesNotExist( $dir . 'small.txt' );
+		$this->assertFileExists( $dir . 'files.list' );
+	}
+
+	/**
+	 * Stored and newly generated bindings at both upload stages.
+	 *
+	 * @return array
+	 */
+	public static function mwp_1964_binding_cases(): array {
+		return array(
+			'legacy virtual in flight' => array( true, false, false ),
+			'legacy path in flight'    => array( true, true, false ),
+			'legacy virtual complete'  => array( true, false, true ),
+			'legacy path complete'     => array( true, true, true ),
+			'canonical in flight'      => array( false, false, false ),
+			'canonical complete'       => array( false, true, true ),
+		);
+	}
+
+	/**
+	 * Legacy compatibility must still reject a changed storage location.
+	 *
+	 * @dataProvider mwp_1964_changed_targets
+	 * @param array $changes Changed S3 location fields.
+	 * @param bool  $complete Whether the original upload completed.
+	 */
+	public function test_mwp_1964_changed_target_still_refuses_upload_and_eviction( array $changes, bool $complete ) {
+		list( $destination ) = $this->make_local_destination();
+		$this->configure_mwp_1964_s3_destination( $destination, false );
+		$this->install_mwp_1964_s3_transport();
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$task       = $this->insert_task( array( $destination ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$id                                = $this->make_snapshot( $this->standard_files(), $task );
+		$build                             = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+		$checkpoint                        = $build->invoke( MainWP_Backup_Upload_Driver::instance(), MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id ) );
+		$checkpoint['destination_binding'] = $this->mwp_1964_legacy_binding( MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) );
+		$store                             = MainWP_Backup_Upload_Job_Store::instance();
+		$job                               = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		if ( $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status );
+		}
+		$requests = 0;
+		add_filter(
+			'pre_http_request',
+			static function () use ( &$requests ) {
+				++$requests;
+				return new \WP_Error( 'unexpected_request' );
+			},
+			11
+		);
+		$this->configure_mwp_1964_s3_destination( $destination, true, $changes );
+		if ( ! $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		}
+		$this->assertSame( $complete ? 'complete' : 'failed_permanent', $store->get_jobs_for_snapshot( $id )[0]->status );
+		$this->assertSame( 0, $requests );
+		$this->assertFalse( $protection::required_uploads_verified( $id ) );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ) ) );
+	}
+
+	/**
+	 * Location fields that must remain in the binding.
+	 *
+	 * @return array
+	 */
+	public static function mwp_1964_changed_targets(): array {
+		return array(
+			'bucket in flight'   => array( array( 'bucket' => 'different-backups' ), false ),
+			'endpoint in flight' => array( array( 'endpoint' => 'https://other.example.test' ), false ),
+			'region in flight'   => array( array( 'region' => 'eu-west-1' ), false ),
+			'bucket complete'    => array( array( 'bucket' => 'different-backups' ), true ),
+			'endpoint complete'  => array( array( 'endpoint' => 'https://other.example.test' ), true ),
+			'region complete'    => array( array( 'region' => 'eu-west-1' ), true ),
+		);
+	}
+
+	/**
+	 * Configure the real S3 adapter without provider traffic.
+	 *
+	 * @param int   $destination Destination id.
+	 * @param bool  $path_style Addressing style.
+	 * @param array $changes Extra location changes.
+	 */
+	private function configure_mwp_1964_s3_destination( int $destination, bool $path_style, array $changes = array() ): void {
+		$this->assertTrue(
+			MainWP_Backup_Storage_Destinations::instance()->update_destination(
+				$destination,
+				array(
+					'provider' => 's3',
+					'settings' => array_merge(
+						array(
+							'bucket'     => 'retention-backups',
+							'endpoint'   => 'https://storage.example.test',
+							'region'     => 'us-east-1',
+							'path_style' => $path_style,
+							'access_key' => 'k',
+							'secret_key' => 's',
+						),
+						$changes
+					),
+				)
+			)
+		);
+	}
+
+	/**
+	 * Preserve the old ordered binding input as a compatibility fixture.
+	 *
+	 * @param object $destination Original decrypted destination.
+	 * @return string
+	 */
+	private function mwp_1964_legacy_binding( object $destination ): string {
+		$settings = $destination->settings;
+		$values   = array(
+			'version'  => 2,
+			'provider' => 's3',
+			'location' => array(
+				'endpoint'   => $settings['endpoint'],
+				'bucket'     => $settings['bucket'],
+				'path_style' => ! empty( $settings['path_style'] ),
+				'region'     => $settings['region'],
+			),
+		);
+		return hash_hmac( 'sha256', 'mainwp-backup-retention:' . wp_json_encode( $values ), wp_salt( 'auth' ) );
+	}
+
+	/** Keep fixture objects addressable through either S3 request style. */
+	private function install_mwp_1964_s3_transport(): void {
+		$objects = array();
+		add_filter(
+			'pre_http_request',
+			static function ( $pre, $args, $url ) use ( &$objects ) {
+				unset( $pre );
+				$key = preg_replace( '#^/retention-backups/#', '/', wp_parse_url( $url, PHP_URL_PATH ) );
+				if ( 'PUT' === $args['method'] ) {
+					$objects[ $key ] = (string) $args['body'];
+				}
+				$exists = isset( $objects[ $key ] );
+				return array(
+					'headers'  => array( 'content-length' => $exists ? (string) strlen( $objects[ $key ] ) : '0' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => $exists ? 200 : 404,
+						'message' => $exists ? 'OK' : 'Not Found',
+					),
+				);
+			},
+			10,
+			3
+		);
+	}
+	/** A resumed upload keeps its original target proof and refuses a changed base path. */
+	public function test_changed_destination_target_cannot_rebind_completed_artifacts() {
+		list( $destination, $old_base ) = $this->make_local_destination();
+		$new_base                       = $this->make_temp_dir();
+		$task                           = $this->insert_task( array( $destination ) );
+		\MainWP\Dashboard\MainWP_Backup_Retention_Protection::save_task_remove_local_archives( $task, true );
+		$id       = $this->make_snapshot( $this->standard_files(), $task );
+		$failing  = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Interrupt after actual remote artifacts and manifest were verified.
+			 *
+			 * @param int         $job_id Job identity.
+			 * @param array       $checkpoint Checkpoint.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Persisted state.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				return ! empty( $checkpoint['manifest_submitted'] ) ? false : parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$property = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$saved    = $property->getValue();
+		$property->setValue( null, $failing );
+		try {
+			$failing->enqueue_for_snapshot( $id, array( $destination ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$before = $failing->get_jobs_for_snapshot( $id )[0];
+		} finally {
+			$property->setValue( null, $saved );
+		}
+		$this->assertSame( 'submitting', $before->status );
+		$this->assertNotEmpty( $before->checkpoint['destination_binding'] ?? '' );
+		$this->assertSame( array( true, true, true ), array_column( $before->checkpoint['artifacts'], 'done' ) );
+		MainWP_Backup_Storage_Destinations::instance()->update_destination( $destination, array( 'settings' => array( 'base_path' => $new_base ) ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$after = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $after->status );
+		$this->assertSame( $before->checkpoint['destination_binding'], $after->checkpoint['destination_binding'] );
+		$this->assertEmpty( glob( $new_base . '/*' ) );
+		$this->assertFileExists( $old_base . '/4/' . $id . '/manifest.json' );
+		foreach ( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives as $archive ) {
+			$this->assertFileExists( $archive['path'] );
+		}
+	}
+	/**
+	 * Dropbox rotation preserves both ordinary resumes and opted-in namespace proof.
+	 *
+	 * @dataProvider retention_dropbox_opt_in
+	 * @param bool $opt_in Whether this snapshot requires upload proof.
+	 */
+	public function test_retention_default_off_dropbox_resume_after_token_rotation( bool $opt_in ) {
+		$objects   = array();
+		$requests  = array();
+		$transport = static function ( $pre, $args, $url ) use ( &$objects, &$requests ) {
+			unset( $pre );
+			$requests[] = array( $url, $args );
+			$status     = 200;
+			if ( str_ends_with( $url, '/oauth2/token' ) ) {
+				$data = array( 'access_token' => 'same-account' );
+			} else {
+				$arg  = json_decode( $args['headers']['Dropbox-API-Arg'] ?? $args['body'], true );
+				$path = $arg['path'];
+				if ( str_ends_with( $url, '/upload' ) ) {
+					$objects[ $path ] = array(
+						'.tag' => 'file',
+						'id'   => 'id:file' . count( $requests ),
+						'size' => strlen( $args['body'] ),
+					);
+				}
+				$data   = $objects[ $path ] ?? array( 'error_summary' => 'path/not_found/..' );
+				$status = isset( $objects[ $path ] ) ? 200 : 409;
+			}
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode( $data ),
+				'response' => array(
+					'code'    => $status,
+					'message' => '',
+				),
+			);
+		};
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		$store       = MainWP_Backup_Storage_Destinations::instance();
+		$settings    = array(
+			'app_key'       => 'app',
+			'app_secret'    => 'secret',
+			'refresh_token' => 'old-token',
+		);
+		$destination = $store->add_destination(
+			array(
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox',
+				'settings' => $settings,
+			)
+		);
+		$task        = $this->insert_task( array( $destination ) );
+		$protection  = '\\MainWP\\Dashboard\\MainWP_Backup_Retention_Protection';
+		$protection::save_task_remove_local_archives( $task, $opt_in );
+		$id = $this->make_snapshot( $this->standard_files(), $task );
+		if ( $opt_in ) {
+			$protection::capture_required_destinations( $id, array( $destination ) );
+		}
+		$failing  = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Refuse terminal persistence to exercise a later resume.
+			 *
+			 * @param int         $job_id Job identity.
+			 * @param array       $checkpoint Checkpoint.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				return ! empty( $checkpoint['manifest_submitted'] ) ? false : parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$instance = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$original = MainWP_Backup_Upload_Job_Store::instance();
+		try {
+			$instance->setValue( null, $failing );
+			$failing->enqueue_for_snapshot( $id, array( $destination ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = $failing->get_jobs_for_snapshot( $id )[0];
+			$this->assertSame( 'submitting', $job->status );
+			if ( $opt_in ) {
+				$this->assertNotEmpty( $job->checkpoint['destination_binding'] ?? '' );
+			} else {
+				$this->assertArrayNotHasKey( 'destination_binding', $job->checkpoint );
+			}
+			$instance->setValue( null, $original );
+			$settings['refresh_token'] = 'rotated-token';
+			if ( $opt_in ) {
+				$result = \MainWP\Dashboard\MainWP_Backup_Storage_Handler::save_destination(
+					array(
+						'id'       => $destination,
+						'provider' => 'dropbox',
+						'name'     => 'Dropbox',
+						'settings' => $settings,
+					)
+				);
+				$this->assertArrayHasKey( 'id', $result );
+			} else {
+				$this->assertTrue( $store->update_destination( $destination, array( 'settings' => $settings ) ) );
+			}
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertSame( 'complete', $original->get_jobs_for_snapshot( $id )[0]->status );
+			if ( $opt_in ) {
+				$this->assertTrue( $protection::required_uploads_verified( $id ) );
+				$objects_before = count( $requests );
+				$this->assertTrue( $protection::required_uploads_verified( $id ) );
+				$this->assertCount( $objects_before, $requests, 'Retention checks must use local receipts without provider calls.' );
+			} else {
+				$this->assertStringNotContainsString( '.mainwp-retention-', wp_json_encode( $requests ) );
+				$this->assertArrayNotHasKey( '_mainwp_retention_identity', $store->get_destination( $destination )->settings );
+			}
+		} finally {
+			$instance->setValue( null, $original );
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
+
+	/**
+	 * Ordinary and opted-in upload cases.
+	 *
+	 * @return array
+	 */
+	public static function retention_dropbox_opt_in() {
+		return array(
+			'default off' => array( false ),
+			'opted in'    => array( true ),
+		);
+	}
+	/** A failed namespace lookup cannot write archives or capture eviction evidence. */
+	public function test_retention_dropbox_identity_failure_keeps_local_archive_and_retries() {
+		$requests  = array();
+		$transport = static function ( $pre, $args, $url ) use ( &$requests ) {
+			unset( $pre );
+			$requests[] = $url;
+			$mint       = str_ends_with( $url, '/oauth2/token' );
+			return array(
+				'headers'  => array(),
+				'body'     => $mint ? '{"access_token":"test-token"}' : '{}',
+				'response' => array(
+					'code'    => $mint ? 200 : 503,
+					'message' => '',
+				),
+			);
+		};
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$store       = MainWP_Backup_Storage_Destinations::instance();
+			$destination = $store->add_destination(
+				array(
+					'provider' => 'dropbox',
+					'name'     => 'Dropbox',
+					'settings' => array(
+						'app_key'       => 'app',
+						'app_secret'    => 'secret',
+						'refresh_token' => 'token',
+					),
+				)
+			);
+			$task        = $this->insert_task( array( $destination ) );
+			$protection  = '\\MainWP\\Dashboard\\MainWP_Backup_Retention_Protection';
+			$protection::save_task_remove_local_archives( $task, true );
+			$id = $this->make_snapshot( $this->standard_files(), $task );
+			$this->assertTrue( $protection::capture_required_destinations( $id, array( $destination ) ) );
+			$jobs = MainWP_Backup_Upload_Job_Store::instance();
+			$jobs->enqueue_for_snapshot( $id, array( $destination ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = $jobs->get_jobs_for_snapshot( $id )[0];
+			$this->assertSame( 'failed_retryable', $job->status );
+			$this->assertEmpty( $job->checkpoint['artifacts'] ?? array() );
+			$this->assertFalse( $protection::required_uploads_verified( $id ) );
+			$this->assertCount( 2, $requests );
+			$this->assertStringEndsWith( '/2/files/get_metadata', $requests[1] );
+			foreach ( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives as $archive ) {
+				$this->assertFileExists( $archive['path'] );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
+}

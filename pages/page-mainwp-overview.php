@@ -36,6 +36,31 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     protected static $instance = null;
 
     /**
+     * Keep the decision after the visit receipt is saved, including for later menu renders.
+     *
+     * @var array
+     */
+    private static $first_onboarding_overview = array();
+
+    /**
+     * Whether this request is the user's first global Overview on a fresh Dashboard.
+     *
+     * @return bool
+     */
+    public static function is_first_onboarding_overview() {
+        $screen  = get_current_screen();
+        $user_id = get_current_user_id();
+        if ( ! $user_id || ! $screen || 'toplevel_page_mainwp_tab' !== $screen->id || MainWP_System_Utility::get_current_wpid() || ! get_option( 'mainwp_onboarding_fresh_install' ) || ! \mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
+            return false;
+        }
+
+        if ( ! array_key_exists( $user_id, static::$first_onboarding_overview ) ) {
+            static::$first_onboarding_overview[ $user_id ] = ! get_user_meta( $user_id, 'mainwp_onboarding_overview_seen', true );
+        }
+        return static::$first_onboarding_overview[ $user_id ];
+    }
+
+    /**
      * Screen dashdoard ID value.
      *
      * @var int $dashBoard default 0.
@@ -55,6 +80,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         'recent_pages'             => true,
         'security_issues'          => true,
         'backup_tasks'             => true,
+        'backup_fleet_health'      => true,
         'non_mainwp_changes'       => true,
         'clients'                  => true,
         'get-started'              => true,
@@ -186,6 +212,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Run on page load.
      */
     public function on_load_page() {
+        wp_enqueue_style( 'mainwp-onboarding', MAINWP_PLUGIN_URL . 'assets/css/mainwp-onboarding.css', array(), MAINWP_VERSION );
         wp_enqueue_script( 'common' );
         wp_enqueue_script( 'wp-lists' );
         wp_enqueue_script( 'postbox' );
@@ -250,6 +277,10 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 0, 0, 12, 20 ) );
         }
 
+        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['get-started'] && MainWP_Get_Started::is_visible() ) {
+            MainWP_UI::add_widget_box( 'get-started', array( MainWP_Get_Started::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
         // Load the Clients widget.
         if ( static::$enable_widgets['clients'] && \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
             MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
@@ -263,6 +294,11 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         // Load the Connection Status widget.
         if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['connection_status'] ) {
             MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Backup Fleet Health widget.
+        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['backup_fleet_health'] && MainWP_Backup_Fleet_Health::is_visible() ) {
+            MainWP_UI::add_widget_box( 'backup_fleet_health', array( MainWP_Backup_Fleet_Health::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
         }
 
         // Load the Connection Status widget.
@@ -343,6 +379,39 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
 
     /**
+     * Skipping setup leaves fresh Dashboards without the summary's monitoring defaults.
+     */
+    private static function render_onboarding_monitoring_notice() {
+        if ( ! get_option( 'mainwp_onboarding_fresh_install' ) || get_option( 'mainwp_onboarding_defaults_applied' ) || ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) || ! MainWP_Utility::show_mainwp_message( 'notice', 'onboarding-monitoring' ) || 1 > MainWP_Manage_Sites::get_total_sites() ) {
+            return;
+        }
+        $settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        if ( ! empty( $settings['active'] ) ) {
+            return;
+        }
+        $email = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
+        ?>
+        <div class="ui message" id="mainwp-onboarding-monitoring-notice" aria-live="polite" style="margin: 1em;">
+            <p>
+            <?php
+            // An empty recipient list sends nothing, so it gets the same copy as disabled alerts.
+            if ( ! empty( $email['disable'] ) || '' === trim( (string) $email['recipients'] ) ) {
+                esc_html_e( 'Uptime monitoring is off. Turn it on to check your sites for downtime.', 'mainwp' );
+            } else {
+                /* translators: %s: notification recipients. */
+                printf( esc_html__( 'Uptime monitoring is off. Turn it on and MainWP emails %s when a site goes down.', 'mainwp' ), esc_html( $email['recipients'] ) );
+            }
+            ?>
+            </p>
+            <i class="close icon mainwp-notice-dismiss" notice-id="onboarding-monitoring"></i>
+            <button type="button" class="ui mini green button" id="mainwp-onboarding-enable-monitoring" data-nonce="<?php echo esc_attr( wp_create_nonce( 'mainwp_onboarding_enable_monitoring' ) ); ?>" data-error="<?php esc_attr_e( 'Unable to turn on uptime monitoring. Please try again.', 'mainwp' ); ?>"><?php esc_html_e( 'Turn on uptime monitoring', 'mainwp' ); ?></button>
+            <a class="ui mini basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSettings' ) ); ?>"><?php esc_html_e( 'Monitoring settings', 'mainwp' ); ?></a>
+            <p class="mainwp-onboarding-monitoring-error" role="alert" hidden></p>
+        </div>
+        <?php
+    }
+
+    /**
      * Method render_dashboard_body()
      *
      * Render the Dashboard Body content.
@@ -355,6 +424,9 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
      */
     public static function render_dashboard_body( $websites = array() ) {
+        if ( static::is_first_onboarding_overview() ) {
+            update_user_meta( get_current_user_id(), 'mainwp_onboarding_overview_seen', 1 );
+        }
         $current_wp_id = MainWP_System_Utility::get_current_wpid();
         $website       = null;
         if ( ! empty( $current_wp_id ) ) {
@@ -373,7 +445,12 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </div>
                 <?php endif; ?>
                 <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
+                <?php
+                if ( empty( $current_wp_id ) ) {
+                    static::render_onboarding_monitoring_notice();
+                }
+                ?>
+                <?php if ( ! static::is_first_onboarding_overview() && MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
                     <div class="ui message" style="margin: 1em;">
                         <i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
                         <?php /* translators: 1: bulb emoji, 2: cog icon, 3: layout icon */ printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard, use Page Settings (%2$s) to show or hide widgets, and use Layout (%3$s) in the header to save and load your widget layouts.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>', '<i class="all border fitted icon"></i>' ); ?>

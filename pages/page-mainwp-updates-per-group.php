@@ -273,6 +273,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     <tr>
                                         <th scope="col" class="collapsing no-sort"></th>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting" data-key="website"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                                        <?php if ( MainWP_Backup_Settings::is_native_backups_enabled() ) : ?>
+                                        <th scope="col" class="collapsing no-sort"><?php esc_html_e( 'Backup Status', 'mainwp' ); ?></th>
+                                        <?php endif; ?>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting" data-key="updates"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                                         <?php if ( $user_can_see_client ) { ?>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting" data-key="client"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
@@ -358,6 +361,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                 </div>
                                                 <?php MainWP_Utility::mainwp_display_site( $website, true, true ); ?>
                                             </td>
+                                            <?php if ( MainWP_Backup_Settings::is_native_backups_enabled() ) : ?>
+                                            <td class="collapsing"><?php echo MainWP_Updates::get_native_backup_indicator( $website ); // phpcs:ignore WordPress.Security.EscapeOutput -- markup built from escaped parts. ?></td>
+                                            <?php endif; ?>
                                             <td sort-value="<?php echo count( $plugin_upgrades ); ?>"><strong class="mainwp-768-show"><?php echo esc_html__( 'Updates: ', 'mainwp' ); ?></strong> <?php echo count( $plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ) ); ?></td>
                                             <?php if ( $user_can_see_client ) { ?>
                                             <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
@@ -372,7 +378,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                             </td>
                                         </tr>
                                         <tr  class="child-checkbox content">
-                                            <td colspan="5">
+                                            <td colspan="<?php echo 4 + ( $user_can_see_client ? 1 : 0 ) + ( MainWP_Backup_Settings::is_native_backups_enabled() ? 1 : 0 ); ?>">
                                                 <table id="mainwp-wordpress-updates-plugins-inner-table" class="ui table mainwp-manage-updates-table mainwp-updates-list">
                                                     <thead class="mainwp-768-hide">
                                                         <tr>
@@ -405,7 +411,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                         $compatible_wp  = isset( $plugin_upgrade['php_compatible'] ) ? $plugin_upgrade['php_compatible'] : true;
 
                                                         ?>
-                                                        <tr class="mainwp-plugin-update" plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" plugin_name="<?php echo esc_attr( $plugin_upgrade['Name'] ); ?>" version="<?php echo esc_attr( rawurlencode( $plugin_upgrade['Version'] ) ); ?>" site_name="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
+                                                        <tr class="mainwp-plugin-update" plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" plugin_name="<?php echo esc_attr( $plugin_upgrade['Name'] ); ?>" version="<?php echo esc_attr( rawurlencode( $plugin_upgrade['Version'] ) ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" premium="<?php echo isset( $plugin_upgrade['premium'] ) && ! empty( $plugin_upgrade['premium'] ) ? 1 : 0; ?>" updated="0">
                                                             <?php
                                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;
@@ -534,6 +540,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                     <tr>
                                         <th scope="col" class="collapsing no-sort"></th>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting" data-key="website"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+                                        <?php if ( MainWP_Backup_Settings::is_native_backups_enabled() ) : ?>
+                                        <th scope="col" class="collapsing no-sort"><?php esc_html_e( 'Backup Status', 'mainwp' ); ?></th>
+                                        <?php endif; ?>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting" data-key="updates"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
                                         <?php if ( $user_can_see_client ) { ?>
                                         <th scope="col" class="indicator-accordion-sorting handle-accordion-sorting" data-key="client"><?php echo esc_html__( 'Client', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
@@ -614,6 +623,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                 </div>
                                                 <?php MainWP_Utility::mainwp_display_site( $website, true, true ); ?>
                                             </td>
+                                            <?php if ( MainWP_Backup_Settings::is_native_backups_enabled() ) : ?>
+                                            <td class="collapsing"><?php echo MainWP_Updates::get_native_backup_indicator( $website ); // phpcs:ignore WordPress.Security.EscapeOutput -- markup built from escaped parts. ?></td>
+                                            <?php endif; ?>
                                             <td sort-value="<?php echo count( $theme_upgrades ); ?>"><strong class="mainwp-768-show"><?php esc_html_e( 'Updates:', 'mainwp' ); ?></strong> <?php echo count( $theme_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ) ); ?></td>
                                             <?php if ( $user_can_see_client ) { ?>
                                             <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
@@ -628,7 +640,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                             </td>
                                         </tr>
                                         <tr class="child-checkbox content">
-                                            <td colspan="5">
+                                            <td colspan="<?php echo 4 + ( $user_can_see_client ? 1 : 0 ) + ( MainWP_Backup_Settings::is_native_backups_enabled() ? 1 : 0 ); ?>">
                                                 <table id="mainwp-wordpress-updates-themes-inner-table" class="ui table mainwp-manage-updates-table mainwp-updates-list">
                                                     <thead class="mainwp-768-hide">
                                                         <tr>

@@ -73,6 +73,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             $this->add_action( 'mainwp_security_issues_unfix', array( &$this, 'mainwp_security_issues_unfix' ) );
         }
 
+        $this->add_action( 'mainwp_onboarding_enable_monitoring', array( &$this, 'ajax_onboarding_enable_monitoring' ) );
+        $this->add_action( 'mainwp_onboarding_disable_monitoring', array( &$this, 'ajax_onboarding_disable_monitoring' ) );
         $this->add_action( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
         $this->add_action( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
         $this->add_action( 'mainwp_status_saving', array( &$this, 'mainwp_status_saving' ) );
@@ -527,10 +529,53 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     }
 
     /**
+     * Turn off global monitoring without changing the guided-tour choice.
+     */
+    public function ajax_onboarding_disable_monitoring() {
+        if ( ! $this->check_security( 'mainwp_onboarding_disable_monitoring', 'security', false ) ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid request. Please reload the page and try again.', 'mainwp' ) ) );
+            return;
+        }
+        if ( ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Error - insufficient permissions!', 'mainwp' ) ) );
+            return;
+        }
+        $settings           = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        $settings['active'] = 0;
+        MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $settings );
+        wp_send_json_success();
+    }
+
+    /**
+     * The notice is an explicit confirmation; applying defaults alone is not.
+     */
+    public function ajax_onboarding_enable_monitoring() {
+        if ( ! $this->check_security( 'mainwp_onboarding_enable_monitoring', 'security', false ) ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid request. Please reload the page and try again.', 'mainwp' ) ) );
+            return;
+        }
+        if ( ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Error - insufficient permissions!', 'mainwp' ) ) );
+            return;
+        }
+        if ( ! get_option( 'mainwp_onboarding_fresh_install' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Monitoring settings are no longer available from this notice.', 'mainwp' ) ) );
+            return;
+        }
+        MainWP_Setup_Wizard::apply_monitoring_defaults();
+        $settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        if ( empty( $settings['active'] ) ) {
+            wp_send_json_error( array( 'message' => __( 'Unable to turn on uptime monitoring. Please use Monitoring settings.', 'mainwp' ) ) );
+            return;
+        }
+        update_option( 'mainwp_onboarding_uptime_confirmed', 1 );
+        wp_send_json_success( array( 'message' => __( 'Uptime monitoring is on.', 'mainwp' ) ) );
+    }
+
+    /**
      * Method mainwp_notice_status_update()
      *
-     * Hide after installation notices,
-     * (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning).
+     * Hide dismissible Dashboard notices.
      *
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
@@ -555,10 +600,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         if ( 'mail_failed' === $no_id ) {
             MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
             die( 'ok' );
-        }
-
-        if ( 'phpver_8_0' === $no_id ) {
-            MainWP_Utility::update_user_option( 'lasttime_hidden_phpver_8_0', time() );
         }
 
         $time_set = isset( $_POST['time_set'] ) && 1 === intval( $_POST['time_set'] ) ? true : false;
@@ -729,8 +770,34 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             MainWP_Client::exit_json( $ret );
         }
         $this->secure_request( 'mainwp_save_settings' );
+        // Arbitrary mainwp_ options include backup settings protected by the settings right.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            $ret           = array( 'success' => false );
+            $ret['result'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+            $ret['error']  = $ret['result'];
+            MainWP_Client::exit_json( $ret );
+        }
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+        // MySQL collations can treat non-ASCII aliases as the protected option name.
+        if ( ! preg_match( '/^[A-Za-z0-9_-]+$/', $name ) ) {
+            $ret           = array( 'success' => false );
+            $ret['result'] = esc_html__( 'This setting name is not valid.', 'mainwp' );
+            $ret['error']  = $ret['result'];
+            MainWP_Client::exit_json( $ret );
+        }
+        if ( MainWP_System_Utility::is_team_control_staff() && MainWP_Backup_Settings::is_backup_option( 'mainwp_' . $name ) ) {
+            $ret           = array( 'success' => false );
+            $ret['result'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+            $ret['error']  = $ret['result'];
+            MainWP_Client::exit_json( $ret );
+        }
+        if ( 0 === strcasecmp( 'mainwp_' . $name, MainWP_Backup_Encryption::RECOVERY_OPTION ) ) {
+            $ret           = array( 'success' => false );
+            $ret['result'] = esc_html__( 'The recovery passphrase cannot be saved here. Change it in the backup settings.', 'mainwp' );
+            $ret['error']  = $ret['result'];
+            MainWP_Client::exit_json( $ret );
+        }
         if ( ! empty( $name ) ) {
             $option_name = 'mainwp_' . $name;
             $val         = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '';
@@ -846,7 +913,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->secure_request( 'mainwp_security_issues_request' );
 
         try {
-            wp_send_json( array( 'result' => MainWP_Security_Issues::fetch_security_issues() ) );
+            $result = MainWP_Security_Issues::fetch_security_issues();
+            wp_send_json(
+                array(
+                    'result'             => $result,
+                    'phpversion_message' => MainWP_PHP_Security::get_message(),
+                )
+            );
         } catch ( MainWP_Exception $e ) {
             die(
                 wp_json_encode(
@@ -1782,7 +1855,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 'security_id'        => $this->mainwp_get_sanitized_post( 'security_id' ),
                 'http_username'      => $this->mainwp_get_sanitized_post( 'http_username' ),
                 'http_password'      => $this->mainwp_get_sanitized_post( 'http_password' ),
-                'verify_certificate' => $this->mainwp_get_sanitized_post( 'verify_certificate', 'intval' ) ?? 1,
+                'verify_certificate' => MainWP_Manage_Sites_View::normalize_ssl_verify( $this->mainwp_get_sanitized_post( 'verify_certificate' ) ),
                 'ssl_version'        => $this->mainwp_get_sanitized_post( 'ssl_version' ) ?? 'auto',
             );
 

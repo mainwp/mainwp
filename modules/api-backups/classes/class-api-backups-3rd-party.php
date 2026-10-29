@@ -1711,6 +1711,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $method );
         curl_setopt( $ch, CURLOPT_URL, self::CLOUDWAYS_API_URL . $url );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 30 );
+        curl_setopt( $ch, CURLOPT_TIMEOUT, 300 );
 
         curl_setopt(
             $ch,
@@ -1767,6 +1769,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $method );
         curl_setopt( $ch, CURLOPT_URL, $baseURL . $url );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 30 );
+        curl_setopt( $ch, CURLOPT_TIMEOUT, 300 );
 
         // Set Authorization Header.
         if ( $accessToken ) {
@@ -2263,6 +2267,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         curl_setopt( $curl, CURLOPT_URL, $baseurl . $url );
         curl_setopt( $curl, CURLOPT_POST, true );
         curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $curl, CURLOPT_CONNECTTIMEOUT, 30 );
+        curl_setopt( $curl, CURLOPT_TIMEOUT, 300 );
 
         $headers = array(
             "Authorization: Bearer $accessToken",
@@ -2271,7 +2277,12 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         curl_setopt( $curl, CURLOPT_HTTPHEADER, $headers );
         curl_setopt( $curl, CURLOPT_POSTFIELDS, $data );
 
-        $ssl_verifyhost = ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) );
+        /**
+         * Allow integrations to disable Vultr TLS verification for a local CA issue.
+         *
+         * @param bool $verify_ssl Whether to verify the provider certificate. Default true.
+         */
+        $ssl_verifyhost = (bool) apply_filters( 'mainwp_api_backups_verify_ssl', true );
 
         if ( $ssl_verifyhost ) {
             curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, 2 );
@@ -2686,7 +2697,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
-                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_TIMEOUT        => 300,
+                CURLOPT_CONNECTTIMEOUT => 30,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST  => $method,
@@ -2717,7 +2729,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Grab Sites List.
         $grid_response = (array) static::call_gridpane_api( 'GET', '/site?per_page=' . $sites_count, $accessToken );
-        Api_Backups_Utility::log_debug( 'GridPane API get sites :: [response=' . ( is_array( $grid_response ) ? print_r( $grid_response, true ) : 'INVALID' ). '] :: '  . $accessToken  ); // phpcs:ignore -- NOSONAR - for debugging.
+        Api_Backups_Utility::log_debug( 'GridPane API get sites' );
         $grid_response_decoded = json_decode( $grid_response[0] );
         if ( is_object( $grid_response_decoded ) && property_exists( $grid_response_decoded, 'data' ) ) {
             return $grid_response_decoded->data;
@@ -3118,7 +3130,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
-                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_TIMEOUT        => 300,
+                CURLOPT_CONNECTTIMEOUT => 30,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST  => $method,
@@ -3425,7 +3438,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
-                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_TIMEOUT        => 300,
+                CURLOPT_CONNECTTIMEOUT => 30,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST  => $method,
@@ -3697,7 +3711,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
-                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_TIMEOUT        => 300,
+                CURLOPT_CONNECTTIMEOUT => 30,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST  => $method,
@@ -4094,7 +4109,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
-                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_TIMEOUT        => 300,
+                CURLOPT_CONNECTTIMEOUT => 30,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST  => $method,
@@ -4147,7 +4163,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
-                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_TIMEOUT        => 300,
+                CURLOPT_CONNECTTIMEOUT => 30,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST  => $method,
@@ -5262,7 +5279,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
-                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_TIMEOUT        => 300,
+                CURLOPT_CONNECTTIMEOUT => 30,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST  => $method,

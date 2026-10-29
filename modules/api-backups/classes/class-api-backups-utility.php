@@ -625,6 +625,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
      * @param string $name name data.
      * @param string $value value data.
      * @param string $opt_name Option name.
+     * @throws \Throwable When an encryption filter throws.
      */
     public function update_api_key( $name, $value, $opt_name = '' ) {
 
@@ -641,6 +642,10 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( ! in_array( $name, $names ) ) {
             return false;
+        }
+
+        if ( ! is_string( $value ) ) {
+            return true;
         }
 
         // MWP-1543: settings forms render the sentinel ('••••••••') in the
@@ -672,11 +677,78 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return true;
         }
 
-        $encrypted = $this->encrypt_api_keys( $value, false, $key_file, $name );
-        if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) ) {
-            return update_option( $opt_name, $encrypted );
+        $staged_key_file = '';
+        $capture_key     = static function ( $envelope ) use ( &$staged_key_file ) {
+            if ( empty( $staged_key_file ) && is_array( $envelope ) && ! empty( $envelope['file_key'] ) && is_string( $envelope['file_key'] ) ) {
+                $staged_key_file = $envelope['file_key'];
+            }
+            return $envelope;
+        };
+        // Retain the staged filename if a later encryption filter rejects the envelope.
+        add_filter( 'mainwp_encrypt_key_value', $capture_key, 10 );
+        try {
+            $encrypted = $this->encrypt_api_keys( $value, false, false, $name );
+        } catch ( \Throwable $error ) {
+            if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file ) {
+                do_action( 'mainwp_delete_key_file', $staged_key_file );
+            }
+            throw $error;
+        } finally {
+            remove_filter( 'mainwp_encrypt_key_value', $capture_key, 10 );
+        }
+        if ( ! is_array( $encrypted ) || empty( $encrypted['encrypted_val'] ) || ! is_string( $encrypted['encrypted_val'] ) || empty( $encrypted['file_key'] ) || ! is_string( $encrypted['file_key'] ) ) {
+            if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file ) {
+                do_action( 'mainwp_delete_key_file', $staged_key_file );
+            }
+            return false;
         }
 
+        $new_key_file    = $encrypted['file_key'];
+        $persisted       = null;
+        $capture_updated = static function ( $option, $old_value, $value ) use ( &$persisted, $opt_name ) {
+            if ( $option === $opt_name ) {
+                $persisted = $value;
+            }
+        };
+        $capture_added   = static function ( $option, $value ) use ( &$persisted, $opt_name ) {
+            if ( $option === $opt_name ) {
+                $persisted = $value;
+            }
+        };
+        // Read filters may hide the stored key, so retain the successful write's value.
+        add_action( 'updated_option', $capture_updated, 10, 3 );
+        add_action( 'added_option', $capture_added, 10, 2 );
+        try {
+            update_option( $opt_name, $encrypted );
+        } finally {
+            remove_action( 'updated_option', $capture_updated, 10 );
+            remove_action( 'added_option', $capture_added, 10 );
+        }
+        // An unchanged option also returns false, so confirm the stored envelope.
+        $stored = get_option( $opt_name );
+        if (
+            $stored === $encrypted
+            && (
+                $persisted === $encrypted
+                || ( null === $persisted && $new_key_file === $key_file && $encrypted === $current )
+            )
+        ) {
+            if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file && $staged_key_file !== $new_key_file ) {
+                do_action( 'mainwp_delete_key_file', $staged_key_file );
+            }
+            if ( ! empty( $key_file ) && $key_file !== $new_key_file ) {
+                do_action( 'mainwp_delete_key_file', $key_file );
+            }
+            return true;
+        }
+
+        $stored_key_file = '';
+        if ( is_array( $persisted ) && isset( $persisted['file_key'] ) && is_string( $persisted['file_key'] ) ) {
+            $stored_key_file = $persisted['file_key'];
+        }
+        if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file && $staged_key_file !== $stored_key_file ) {
+            do_action( 'mainwp_delete_key_file', $staged_key_file );
+        }
         return false;
     }
 
@@ -750,6 +822,10 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return false;
         }
 
+        if ( ! is_string( $value ) ) {
+            return true;
+        }
+
         // MWP-1543: same sentinel short-circuit as update_api_key(); the
         // per-site Edit Site form renders the sentinel placeholder when a
         // value already exists, and an unchanged submission must not
@@ -780,12 +856,48 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return true;
         }
 
-        $encrypted = wp_json_encode( $this->encrypt_api_keys( $value, $website_id, $key_file, $name ) );
-
-        if ( ! empty( $encrypted ) ) {
-            return Api_Backups_Helper::update_website_option( $website_id, $opt_name, $encrypted );
+        $new_key_file = '';
+        $capture_key  = static function ( $envelope ) use ( &$new_key_file ) {
+            if ( is_array( $envelope ) && ! empty( $envelope['file_key'] ) && is_string( $envelope['file_key'] ) ) {
+                $new_key_file = $envelope['file_key'];
+            }
+            return $envelope;
+        };
+        // Retain the staged filename if a later encryption filter rejects the envelope.
+        add_filter( 'mainwp_encrypt_key_value', $capture_key, 10 );
+        try {
+            $encrypted = $this->encrypt_api_keys( $value, $website_id, false, $name );
+        } finally {
+            remove_filter( 'mainwp_encrypt_key_value', $capture_key, 10 );
+        }
+        if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) && is_string( $encrypted['file_key'] ) ) {
+            $new_key_file = $encrypted['file_key'];
         }
 
+        if ( ! is_array( $encrypted ) || empty( $encrypted['encrypted_val'] ) || ! is_string( $encrypted['encrypted_val'] ) || empty( $encrypted['file_key'] ) || ! is_string( $encrypted['file_key'] ) ) {
+            if ( ! empty( $new_key_file ) && $new_key_file !== $key_file ) {
+                do_action( 'mainwp_delete_key_file', $new_key_file );
+            }
+            return false;
+        }
+
+        $encrypted = wp_json_encode( $encrypted );
+
+        if ( ! empty( $encrypted ) ) {
+            Api_Backups_Helper::update_website_option( $website_id, $opt_name, $encrypted );
+            // The native option writer returns null on both success and failure.
+            $saved = Api_Backups_Helper::get_website_options( $website_id, array( $opt_name ) );
+            if ( isset( $saved[ $opt_name ] ) && $encrypted === $saved[ $opt_name ] ) {
+                if ( ! empty( $key_file ) && $key_file !== $new_key_file ) {
+                    do_action( 'mainwp_delete_key_file', $key_file );
+                }
+                return true;
+            }
+        }
+
+        if ( ! empty( $new_key_file ) && $new_key_file !== $key_file ) {
+            do_action( 'mainwp_delete_key_file', $new_key_file );
+        }
         return false;
     }
 }

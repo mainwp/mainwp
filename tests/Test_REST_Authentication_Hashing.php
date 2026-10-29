@@ -28,6 +28,7 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 	 */
 	private function invoke_auth_method( string $method, array $args ) {
 		\MainWP_REST_Authentication::$instance = null;
+
 		$auth = \MainWP_REST_Authentication::get_instance();
 		$ref  = new \ReflectionMethod( $auth, $method );
 		$ref->setAccessible( true );
@@ -35,10 +36,27 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * $_SERVER before the test.
+	 *
+	 * @var array
+	 */
+	private $server = array();
+
+	/**
+	 * Snapshot $_SERVER before each test.
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		$this->server = $_SERVER;
+	}
+
+	/**
 	 * Clean up after each test.
 	 */
 	public function tearDown(): void {
 		\MainWP_REST_Authentication::$instance = null;
+		// The test bootstrap sets REQUEST_METHOD once; later cookie-auth tests read it in wp_validate_auth_cookie().
+		$_SERVER = $this->server;
 		parent::tearDown();
 	}
 
@@ -46,6 +64,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 	// is_legacy_plaintext_secret()
 	// ---------------------------------------------------------------------
 
+	/**
+	 * A legacy cs_ key with 40 hex characters is recognized as plaintext.
+	 */
 	public function test_is_legacy_plaintext_secret_recognizes_cs_prefix_with_40_hex(): void {
 		$legacy = 'cs_' . str_repeat( '0123456789abcdef', 2 ) . '01234567'; // 'cs_' + 40 hex chars.
 		$this->assertTrue(
@@ -54,6 +75,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * A phpass password hash is not mistaken for a legacy plaintext secret.
+	 */
 	public function test_is_legacy_plaintext_secret_rejects_phpass_hash(): void {
 		// Realistic phpass hash output length 34, starts with $P$.
 		$hashed = '$P$BLh4yOYg8VW6nYTLZRKzVLxf12dW.A0';
@@ -63,6 +87,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * A WordPress argon2 style password hash is not mistaken for a legacy plaintext secret.
+	 */
 	public function test_is_legacy_plaintext_secret_rejects_argon2_hash(): void {
 		// Realistic argon2id output (WP 6.5+ may produce this format).
 		$hashed = '$wp$2y$10$abcdefghijklmnopqrstuv.WXYZ0123456789abcdefghijkl';
@@ -72,6 +99,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * An empty string, null, a number, and an array are all rejected as legacy plaintext secrets.
+	 */
 	public function test_is_legacy_plaintext_secret_rejects_empty_and_non_string(): void {
 		$this->assertFalse( $this->invoke_auth_method( 'is_legacy_plaintext_secret', array( '' ) ) );
 		$this->assertFalse( $this->invoke_auth_method( 'is_legacy_plaintext_secret', array( null ) ) );
@@ -79,6 +109,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		$this->assertFalse( $this->invoke_auth_method( 'is_legacy_plaintext_secret', array( array() ) ) );
 	}
 
+	/**
+	 * A ck_ prefixed value with 40 hex characters is not a legacy plaintext secret.
+	 */
 	public function test_is_legacy_plaintext_secret_rejects_wrong_prefix(): void {
 		$wrong_prefix = 'ck_' . str_repeat( '0123456789abcdef', 2 ) . '01234567';
 		$this->assertFalse(
@@ -86,20 +119,29 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * Legacy secrets with 40 or 32 hex characters are both recognized as plaintext.
+	 */
 	public function test_is_legacy_plaintext_secret_accepts_common_legacy_lengths(): void {
 		// Production uses bin2hex(openssl_random_pseudo_bytes(20)) = 40 hex chars.
 		// Older fixtures use bin2hex(random_bytes(16)) = 32 hex chars. Both are
 		// valid plaintext formats and must be detected.
-		$forty = 'cs_' . str_repeat( 'a', 40 );
+		$forty      = 'cs_' . str_repeat( 'a', 40 );
 		$thirty_two = 'cs_' . str_repeat( 'b', 32 );
 		$this->assertTrue( $this->invoke_auth_method( 'is_legacy_plaintext_secret', array( $forty ) ) );
 		$this->assertTrue( $this->invoke_auth_method( 'is_legacy_plaintext_secret', array( $thirty_two ) ) );
 	}
 
+	/**
+	 * A bare cs_ prefix with no characters after it is rejected as a legacy plaintext secret.
+	 */
 	public function test_is_legacy_plaintext_secret_rejects_empty_body(): void {
 		$this->assertFalse( $this->invoke_auth_method( 'is_legacy_plaintext_secret', array( 'cs_' ) ) );
 	}
 
+	/**
+	 * A cs_ value whose body contains non-hex characters is rejected as a legacy plaintext secret.
+	 */
 	public function test_is_legacy_plaintext_secret_rejects_non_hex_body(): void {
 		$non_hex = 'cs_' . str_repeat( 'g', 40 ); // 'g' is outside hex.
 		$this->assertFalse(
@@ -111,6 +153,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 	// verify_consumer_secret()
 	// ---------------------------------------------------------------------
 
+	/**
+	 * A stored legacy plaintext secret verifies against the identical submitted secret.
+	 */
 	public function test_verify_consumer_secret_matches_legacy_plaintext(): void {
 		$legacy = 'cs_' . str_repeat( '0123456789abcdef', 2 ) . '01234567';
 		$this->assertTrue(
@@ -118,6 +163,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * A stored legacy plaintext secret does not verify against a different submitted secret.
+	 */
 	public function test_verify_consumer_secret_rejects_legacy_mismatch(): void {
 		$legacy_a = 'cs_' . str_repeat( 'a', 40 );
 		$legacy_b = 'cs_' . str_repeat( 'b', 40 );
@@ -126,6 +174,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * A hashed stored secret verifies against the plaintext it was hashed from.
+	 */
 	public function test_verify_consumer_secret_matches_hashed_against_original_plaintext(): void {
 		$plaintext = 'cs_' . str_repeat( 'a', 40 );
 		$hashed    = wp_hash_password( $plaintext );
@@ -134,6 +185,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * A hashed stored secret does not verify against a different plaintext.
+	 */
 	public function test_verify_consumer_secret_rejects_hashed_against_wrong_plaintext(): void {
 		$correct = 'cs_' . str_repeat( 'a', 40 );
 		$wrong   = 'cs_' . str_repeat( 'b', 40 );
@@ -153,10 +207,10 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 	 * secret on the server side. The refusal must not reveal whether the key exists.
 	 */
 	public function test_oauth_signature_rejects_hashed_secret(): void {
-		$hashed_user = (object) array(
+		$hashed_user               = (object) array(
 			'consumer_secret' => wp_hash_password( 'cs_' . str_repeat( 'a', 40 ) ),
 		);
-		$params      = array(
+		$params                    = array(
 			'oauth_signature_method' => 'HMAC-SHA256',
 			'oauth_signature'        => 'placeholder',
 		);
@@ -169,14 +223,15 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		$this->assertSame( 'mainwp_rest_authentication_disabled_key', $result->get_error_code() );
 		$this->assertSame( __( 'The REST API Key are disabled.', 'mainwp' ), $result->get_error_message() );
 		$this->assertSame( array( 'status' => 401 ), $result->get_error_data() );
-
-		unset( $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'] );
 	}
 
 	// ---------------------------------------------------------------------
 	// insert_rest_api_key writes hashed values
 	// ---------------------------------------------------------------------
 
+	/**
+	 * Inserting an API key stores a hashed consumer secret and returns the plaintext to the caller.
+	 */
 	public function test_insert_rest_api_key_stores_hashed_consumer_secret(): void {
 		// Need a current user for insert_rest_api_key to populate user_id.
 		$user_id = $this->factory()->user->create( array( 'role' => 'administrator' ) );
@@ -214,6 +269,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		$this->assertTrue( wp_check_password( $plaintext_secret, $stored ), 'Stored secret must verify against the plaintext via wp_check_password' );
 	}
 
+	/**
+	 * Inserting an API key never leaves the stored secret in the legacy cs_ plaintext format.
+	 */
 	public function test_insert_rest_api_key_does_not_persist_legacy_plaintext_format(): void {
 		$user_id = $this->factory()->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $user_id );
@@ -279,23 +337,32 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		return $plain_ck;
 	}
 
+	/**
+	 * A legacy key_type=1 row authenticates when the request carries the matching passphrase.
+	 */
 	public function test_legacy_keytype1_accepts_matching_passphrase(): void {
-		$plain_ck = $this->seed_legacy_keytype1_row( 'correct-pass' );
+		$plain_ck             = $this->seed_legacy_keytype1_row( 'correct-pass' );
 		$_REQUEST['key_pass'] = 'correct-pass';
-		$result = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
+		$result               = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
 		$this->assertNotEmpty( $result );
 		$this->assertNotFalse( $result );
 		unset( $_REQUEST['key_pass'] );
 	}
 
+	/**
+	 * A legacy key_type=1 row fails authentication when the request carries the wrong passphrase.
+	 */
 	public function test_legacy_keytype1_rejects_wrong_passphrase(): void {
-		$plain_ck = $this->seed_legacy_keytype1_row( 'correct-pass' );
+		$plain_ck             = $this->seed_legacy_keytype1_row( 'correct-pass' );
 		$_REQUEST['key_pass'] = 'wrong-pass';
-		$result = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
+		$result               = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
 		$this->assertFalse( $result, 'Wrong passphrase must fail authentication' );
 		unset( $_REQUEST['key_pass'] );
 	}
 
+	/**
+	 * A legacy key_type=1 row fails authentication when the request carries no passphrase.
+	 */
 	public function test_legacy_keytype1_rejects_missing_passphrase(): void {
 		$plain_ck = $this->seed_legacy_keytype1_row( 'correct-pass' );
 		// $_REQUEST['key_pass'] intentionally not set.
@@ -303,13 +370,16 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		$this->assertFalse( $result, 'Missing passphrase must fail authentication' );
 	}
 
+	/**
+	 * A legacy key_type=1 row with an empty stored passphrase fails authentication even when the request sends an empty one.
+	 */
 	public function test_legacy_keytype1_rejects_when_stored_passphrase_is_empty(): void {
 		// Defensive: if a row somehow has key_type=1 with an empty key_pass,
 		// auth must NOT succeed regardless of what the caller submits (no
 		// hash_equals('','')==true bypass).
-		$plain_ck = $this->seed_legacy_keytype1_row( '' );
+		$plain_ck             = $this->seed_legacy_keytype1_row( '' );
 		$_REQUEST['key_pass'] = '';
-		$result = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
+		$result               = $this->invoke_auth_method( 'get_user_data_by_consumer_key', array( $plain_ck ) );
 		$this->assertFalse( $result, 'Empty stored passphrase must not allow empty submission' );
 		unset( $_REQUEST['key_pass'] );
 	}

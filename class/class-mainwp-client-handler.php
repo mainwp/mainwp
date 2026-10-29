@@ -335,13 +335,16 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
 
                 if ( isset( $data['note'] ) ) {
-                    $posted_note = is_string( $data['note'] ) ? wp_unslash( $data['note'] ) : '';
+                    if ( ! is_string( $data['note'] ) ) {
+                        return array( 'error' => esc_html__( 'Invalid request data. Please try again.', 'mainwp' ) );
+                    }
+                    $posted_note = wp_unslash( $data['note'] );
                     if ( MainWP_Utility::client_note_exceeds_limit( $posted_note ) ) {
                         return array(
                             'error' => MainWP_Utility::client_note_length_error(),
                         );
                     }
-                    $params['note'] = is_string( $data['note'] ) ? MainWP_Utility::sanitize_client_note( $posted_note ) : '';
+                    $params['note'] = MainWP_Utility::sanitize_client_note( $posted_note );
                 }
 
                 if ( isset( $data['client_email'] ) ) {
@@ -433,6 +436,9 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     );
                 }
 
+                if ( isset( $data['note'] ) && ! is_string( $data['note'] ) ) {
+                    return array( 'error' => esc_html__( 'Invalid request data. Please try again.', 'mainwp' ) );
+                }
                 $posted_note = ( isset( $data['note'] ) && is_string( $data['note'] ) ) ? wp_unslash( $data['note'] ) : '';
                 if ( MainWP_Utility::client_note_exceeds_limit( $posted_note ) ) {
                     return array(

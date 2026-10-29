@@ -341,7 +341,7 @@ class Test_REST_V2_Cleanup_Round_3 extends \WP_Test_REST_TestCase {
 			}
 		}
 		$this->assertNotNull( $query, 'backup progress schema not found in install SQL' );
-		$this->assertStringNotContainsString( 'UNIQUE', $query, 'progress rows are per task and site, so task_id must not be unique' );
+		$this->assertSame( 0, preg_match( '/UNIQUE\s*(?:KEY|INDEX)?\s*`?\w*`?\s*\(\s*`?task_id`?\s*\)/i', $query ), 'progress rows are per task and site, so task_id alone must not be unique; the composite uniq_task_wp (task_id, wp_id) is the intended key' );
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 

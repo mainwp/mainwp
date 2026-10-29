@@ -1,0 +1,169 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+
+# A new commit on a pull request cancels the run it replaces. A push to
+# main does not cancel the run already in progress; an older push that is
+# still waiting is dropped so merge bursts do not stack full matrices.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft != true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Pull requests run 8.3 only. Pushes to main keep 8.3 and 8.4.
+        php: ${{ fromJSON(github.event_name == 'pull_request' && '["8.3"]' || '["8.3", "8.4"]') }}
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      WP_TESTS_DIR: /tmp/wordpress-tests-lib
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2 (2.37.2)
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, mbstring, intl, zip
+          coverage: none
+          tools: composer
+
+      - name: Install Subversion (required by bin/install-wp-tests.sh)
+        run: sudo apt-get update && sudo apt-get install -y subversion
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      # composer.lock is gitignored, so each leg resolves dependencies fresh
+      # for its own PHP version; the cache key therefore hashes composer.json.
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php${{ matrix.php }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+
+      # Parse-lints every plugin file at this leg's exact PHP version, so any
+      # syntax below the 8.3 floor (or a stray parse error) fails here even in
+      # files no test loads.
+      - name: PHP syntax lint
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -not -path './tests/e2e/*' -print0 \
+            | xargs -0 -n 50 -P 4 php -l > /dev/null
+
+      - name: Install WordPress test library
+        id: wordpress_tests
+        run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1:3306 latest
+
+      - name: Run PHPUnit - MainWP Dashboard Test Suite
+        run: ./vendor/bin/phpunit --testsuite="MainWP Dashboard Test Suite"
+
+      - name: Run PHPUnit - Abilities
+        # Report every suite's failures even when an earlier suite fails.
+        if: ${{ !cancelled() && steps.wordpress_tests.outcome == 'success' }}
+        run: ./vendor/bin/phpunit --testsuite=Abilities
+
+      - name: Run PHPUnit - Backup
+        if: ${{ !cancelled() && steps.wordpress_tests.outcome == 'success' }}
+        run: ./vendor/bin/phpunit --testsuite=Backup
+
+      - name: Run PHPUnit - REST Key Authentication
+        if: ${{ !cancelled() && steps.wordpress_tests.outcome == 'success' }}
+        run: ./vendor/bin/phpunit --testsuite="REST Key Authentication"
+
+  phpcs:
+    name: PHPCS
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft != true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2 (2.37.2)
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, zip
+          coverage: none
+          tools: composer
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php8.4-composer-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php8.4-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+
+      # Scoped to the native-backups surface, which is phpcs-clean today.
+      # The wider legacy codebase carries pre-existing violations; broaden
+      # this to the whole repo once that debt is paid down. Test suites run
+      # under their own ruleset below: phpcs.xml excludes */tests/*, which
+      # silently zeroes any tests/ path passed here.
+      - name: Run PHPCS (native-backups surface)
+        run: >-
+          ./vendor/bin/phpcs --standard=phpcs.xml
+          class/backup/
+          pages/backup/
+          class/class-mainwp-post-backup-handler.php
+          class/class-mainwp-db-backup.php
+          pages/page-mainwp-manage-backups-handler.php
+          pages/page-mainwp-manage-backups.php
+          modules/logs/connectors/class-connector-backup.php
+
+      - name: Run PHPCS (backup test suites)
+        run: ./vendor/bin/phpcs --standard=phpcs-tests.xml

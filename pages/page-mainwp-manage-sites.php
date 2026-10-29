@@ -1214,6 +1214,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 });
 
                 mainwp_ui_state_init('addsite-adminpwd', function(state){
+                    if (jQuery('#mainwp_connect_first_site_form').length) {
+                        chkbx1.checkbox('set checked');
+                        jQuery('#mainwp-administrator-password-field').show();
+                        return;
+                    }
                     if( '1' === state || '0' === state ){
                         chkbx1.checkbox('set unchecked');
                         jQuery('#mainwp-administrator-password-field').fadeOut(500);
@@ -1225,6 +1230,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
 
                 mainwp_ui_state_init('addsite-uniqueid', function(state){
+                    if (jQuery('#mainwp_connect_first_site_form').length) {
+                        chkbx2.checkbox('set unchecked');
+                        jQuery('#mainwp-unique-security-id-field').hide();
+                        return;
+                    }
                     if( '1' === state || '0' === state ){
                         chkbx2.checkbox('set unchecked');
                         jQuery('#mainwp-unique-security-id-field').fadeOut(500);
@@ -1785,8 +1795,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param mixed $website Child Site.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_sql_file()
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+     * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::is_sql_file()
+     * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::is_archive()
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Backup_View::show_backups()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
@@ -1797,20 +1807,22 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $dbBackups   = array();
         $fullBackups = array();
-        if ( file_exists( $dir ) ) {
-            $dh = opendir( $dir );
-            if ( $dh ) {
-                while ( false !== ( $file = readdir( $dh ) ) ) {
-                    if ( '.' !== $file && '..' !== $file ) {
-                        $theFile = $dir . $file;
-                        if ( MainWP_Backup_Handler::is_sql_file( $file ) ) {
-                            $dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
-                        } elseif ( MainWP_Backup_Handler::is_archive( $file ) ) {
-                            $fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+        foreach ( array( MainWP_Backup_Private_Root::site_path( (int) $website->id ), $dir ) as $dir ) {
+            if ( ! is_wp_error( $dir ) && file_exists( $dir ) ) {
+                $dh = opendir( $dir );
+                if ( $dh ) {
+                    while ( false !== ( $file = readdir( $dh ) ) ) {
+                        if ( '.' !== $file && '..' !== $file && ! str_ends_with( $file, '.downloading.reclaim' ) ) {
+                            $theFile = $dir . $file;
+                            if ( MainWP_Backup_File_Manager::is_sql_file( $file ) ) {
+                                $dbBackups[ filemtime( $theFile ) . $file . $dir ] = $theFile;
+                            } elseif ( MainWP_Backup_File_Manager::is_archive( $file ) ) {
+                                $fullBackups[ filemtime( $theFile ) . $file . $dir ] = $theFile;
+                            }
                         }
                     }
+                    closedir( $dh );
                 }
-                closedir( $dh );
             }
         }
         krsort( $dbBackups );
@@ -1893,7 +1905,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             return;
         }
 
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) && ! empty( $_GET['backupid'] ) ) {
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() && ! empty( $_GET['backupid'] ) ) {
             $websiteid     = ! empty( $_GET['backupid'] ) ? intval( $_GET['backupid'] ) : false;
             $backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $backupwebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
@@ -2377,7 +2389,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="item"><?php esc_html_e( 'If needed, you can tag your sites in the Tag field.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. If Require Unique Security ID is enabled on the child site (Settings > MainWP Child), enter the Unique Security ID. Generate or create a new ID there by enabling Require Unique Security ID and clicking Save Settings.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'If the website you are trying to connect is protected with HTTP Basic Auth, enter the HTTP Username & Password. If not, leave it blank.', 'mainwp' ); ?></div>
-            <div class="item"><?php esc_html_e( 'Keep the default value of "1" to verify the SSL certificate for your sites, or change it if you prefer not to verify.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Leave SSL Verification blank to use the global setting. Enter "1" to verify the SSL certificate or "0" to disable verification.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Leave the SSL Version as "auto" unless you know the specific version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Repeat this process for all sites you want to add.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Use the Add New Row button to add additional rows if you need to connect more sites at once.', 'mainwp' ); ?></div>
@@ -2528,7 +2540,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'verify_certificate' => array(
                     'label'      => 'Verify Certificate',
                     'input_type' => 'number',
-                    'default'    => 1,
+                    'default'    => '',
                     'class'      => 'mini ' . $default_class . '-verify-certificate',
                     'id'         => $default_class . '-verify-certificate',
                 ),
@@ -2657,9 +2669,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string|null $title_page modal title.
      */
     public static function render_import_sites_modal( $url, $title_page = null ) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check for wizard navigation.
+        $is_wizard = isset( $_GET['page'] ) && 'mainwp-setup' === sanitize_key( wp_unslash( $_GET['page'] ) );
         ?>
-        <div class="ui large modal <?php echo ( 'Import Sites' === $title_page ) ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" data-page-url="<?php echo esc_url( $url ); ?>" >
-            <i class="close icon" <?php echo 'Import Sites' === $title_page ? 'style="display:none"' : ''; ?> ></i>
+        <div class="ui large modal <?php echo $is_wizard ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" data-page-url="<?php echo esc_url( $url ); ?>" >
+            <i class="close icon" <?php echo $is_wizard ? 'style="display:none"' : ''; ?> ></i>
             <div class="header"><?php echo esc_html( $title_page ); ?></div>
             <div class="scrolling content">
         <?php MainWP_Manage_Sites_View::render_import_sites(); ?>
@@ -2668,12 +2682,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui two column grid">
                     <div class="left aligned middle aligned column">
                         <input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
-                    <?php if ( 'Import Sites' === $title_page ) : ?>
-                            <a class="ui green button" id="mainwp-import-sites-modal-try-again" href="admin.php?page=mainwp-setup&step=connect_first_site" style="display:none"><?php esc_html_e( 'Try Again', 'mainwp' ); ?></a>
+                    <?php if ( $is_wizard ) : ?>
+                            <a class="ui basic green button" id="mainwp-import-sites-modal-try-again" href="admin.php?page=mainwp-setup&step=connect_first_site" style="display:none"><?php esc_html_e( 'Try Again', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>
                     <div class="right aligned middle aligned column">
-                    <?php if ( 'Import Sites' === $title_page ) : ?>
+                    <?php if ( $is_wizard ) : ?>
                             <a class="ui basic green button" id="mainwp-import-sites-modal-continue" href="<?php echo esc_url( $url ); ?>" style="display:none"><?php esc_html_e( 'Continue', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>

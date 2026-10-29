@@ -257,17 +257,14 @@ class Test_Dashboard_Legacy_Backup_Rights extends \WP_UnitTestCase {
      */
     public static function action_rights(): array {
         $actions = array(
-            'mainwp_addbackup'                 => 'add_backup_tasks',
-            'mainwp_pausebackup'               => 'pause_resume_backup_tasks',
-            'mainwp_resumebackup'              => 'pause_resume_backup_tasks',
-            'mainwp_backuptask_get_sites'      => 'run_backup_tasks',
-            'mainwp_backup_checkpid'           => 'execute_backups',
-            'mainwp_createbackup_getfilesize'  => 'execute_backups',
-            'mainwp_backup_download_file'      => 'execute_backups',
-            'mainwp_backup_delete_file'        => 'execute_backups',
-            'mainwp_backup_getfilesize'        => 'execute_backups',
-            'mainwp_backup_upload_getprogress' => 'execute_backups',
-            'mainwp_backup_upload_checkstatus' => 'execute_backups',
+            'mainwp_addbackup'                => 'add_backup_tasks',
+            'mainwp_pausebackup'              => 'pause_resume_backup_tasks',
+            'mainwp_resumebackup'             => 'pause_resume_backup_tasks',
+            'mainwp_backup_checkpid'          => 'execute_backups',
+            'mainwp_createbackup_getfilesize' => 'execute_backups',
+            'mainwp_backup_download_file'     => 'execute_backups',
+            'mainwp_backup_delete_file'       => 'execute_backups',
+            'mainwp_backup_getfilesize'       => 'execute_backups',
         );
         $cases   = array();
         foreach ( $actions as $action => $right ) {
@@ -275,7 +272,8 @@ class Test_Dashboard_Legacy_Backup_Rights extends \WP_UnitTestCase {
             $cases[ $action . ' unrelated' ] = array( $action, array( 'manage_dashboard_settings' ), false );
             $cases[ $action . ' allowed' ]   = array( $action, array( $right ), true );
             if ( 'execute_backups' === $right ) {
-                $cases[ $action . ' task only' ] = array( $action, array( 'run_backup_tasks' ), 'mainwp_backup_checkpid' !== $action );
+                // Native backups removed the browser-driven task run, so run_backup_tasks alone admits none of these.
+                $cases[ $action . ' task only' ] = array( $action, array( 'run_backup_tasks' ), false );
             }
         }
         return $cases;
@@ -304,6 +302,8 @@ class Test_Dashboard_Legacy_Backup_Rights extends \WP_UnitTestCase {
                 ),
             )
         );
+        // Task writes go through native backups, which need the toggle on.
+        update_option( 'mainwp_enableNativeBackups', 1 );
         $this->rights( $rights );
         $this->register_actions();
         $_POST    = array(
@@ -347,22 +347,14 @@ class Test_Dashboard_Legacy_Backup_Rights extends \WP_UnitTestCase {
         } elseif ( in_array( $action, array( 'mainwp_pausebackup', 'mainwp_resumebackup' ), true ) ) {
             $this->assertSame( 'mainwp_pausebackup' === $action ? 1 : 0, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->paused );
             $this->assertSame( array( 'result' => 'SUCCESS' ), $response );
-        } elseif ( 'mainwp_backuptask_get_sites' === $action ) {
-            $this->assertGreaterThan( 0, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_run_manually );
-            $this->assertSame( (string) $site, (string) $response['result']['sites'][0]['id'] );
         } elseif ( 'mainwp_backup_delete_file' === $action ) {
             $this->assertSame( array( array( (string) $site, 'delete_backup', array( 'del' => 'fixture-backup.zip' ) ) ), $this->requests );
             $this->assertSame( array( 'result' => true ), $response );
         } elseif ( 'mainwp_backup_checkpid' === $action || 'mainwp_backup_download_file' === $action ) {
             $this->assertSame( 'Site ID not found. Please reload the page and try again.', $response['error']['message'] );
-        } elseif ( 'mainwp_createbackup_getfilesize' === $action ) {
-            $this->assertSame( 'No site selected!', $response['error'] );
-        } elseif ( 'mainwp_backup_getfilesize' === $action ) {
-            $this->assertSame( array( 'result' => 0 ), $response );
-        } elseif ( 'mainwp_backup_upload_checkstatus' === $action ) {
-            $this->assertSame( 'done', $response['status'] );
         } else {
-            $this->assertSame( 'finished...', $response['error']['message'] );
+            // Native backups authorize the posted site (0 here) before reading any file size.
+            $this->assertSame( array( 'error' => 'You are not allowed to manage backups for this site.' ), $response );
         }
     }
 

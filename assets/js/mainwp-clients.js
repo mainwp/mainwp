@@ -490,7 +490,7 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
     });
     jQuery.post(ajaxurl, data, function (response) {
       if (response?.success) {
-        mainwp_forceReload('admin.php?page=mainwp-setup&step=monitoring&message=1');
+        mainwp_forceReload(jQuery('#mainwp_qsw_add_client_continue_button').attr('href'));
       } else {
         const error = typeof response?.data === 'string' && response.data.trim() !== '' ? response.data : response?.error || MainWP.I18n.t('Undefined error. Please try again.');
         // The handler escapes its messages and strips tags in its catch; escaping again would show translated quotes as entities.
@@ -594,9 +594,9 @@ let mainwp_createclient = function (currPage) {
         if ('add-new' == currPage) {
           mainwp_forceReload("admin.php?page=ManageClients");
         } else if ('qsw-add' == currPage) {
-            mainwp_set_message_zone('#mainwp-message-zone', '<a href="admin.php?page=mainwp-setup&step=monitoring" class="ui mini basic green right floated button">Continue</a><div class="ui header">Congratulations! You have added your first client.</div> After finishing the Quick Setup Wizard, you can add more clients from the Add New Client page. Proceeding to the next step in 3 seconds...', 'green');
+            mainwp_set_message_zone('#mainwp-message-zone', '<a href="' + jQuery('#mainwp_qsw_add_client_continue_button').attr('href') + '" class="ui mini basic green right floated button">Continue</a><div class="ui header">Congratulations! You have added your first client.</div> After finishing the Quick Setup Wizard, you can add more clients from the Add New Client page. Proceeding to the next step in 3 seconds...', 'green');
             setTimeout(function () {
-              mainwp_forceReload('admin.php?page=mainwp-setup&step=monitoring&message=1');
+              mainwp_forceReload(jQuery('#mainwp_qsw_add_client_continue_button').attr('href'));
             }, 3000);
         } else {
             mainwp_forceReload();

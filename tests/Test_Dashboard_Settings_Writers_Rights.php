@@ -199,12 +199,14 @@ class Test_Dashboard_Settings_Writers_Rights extends \WP_UnitTestCase {
         update_option( 'mainwp_backupsOnServer', 2 );
         $_POST = array(
             'submit'                        => '1',
-            'wp_nonce'                      => wp_create_nonce( 'Settings' ),
+            'wp_nonce'                      => wp_create_nonce( 'BackupSettings' ),
             'mainwp_options_backupOnServer' => '7',
         );
         $this->settings_right( $allowed );
         $before = $this->snapshot();
-        $saved  = MainWP_Backup_Handler::handle_settings_post();
+        // Deprecated shim over MainWP_Backup_Settings::handle_settings_post().
+        $this->setExpectedDeprecated( 'MainWP\Dashboard\MainWP_Backup_Handler::handle_settings_post' );
+        $saved = MainWP_Backup_Handler::handle_settings_post();
         if ( $allowed ) {
             $this->assertSame( 7, (int) get_option( 'mainwp_backupsOnServer' ) );
             $this->assertTrue( $saved );

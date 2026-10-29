@@ -223,7 +223,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         </div>
                         <div class="middle aligned content">
                             <?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
-                            <a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ) ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $actived_plugins[ $i ]['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
+                            <a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ) ) ); ?>" target="_blank" class="open-plugin-details-modal" title="<?php echo esc_attr( 'More information about ' . wp_strip_all_tags( $actived_plugins[ $i ]['name'] ) ); ?>">
                                 <?php echo esc_html( $plugin_title ); ?>
                             </a>
                             </div>
@@ -289,7 +289,7 @@ class MainWP_Widget_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         </div>
                         <div class="middle aligned content">
                             <?php echo MainWP_System_Utility::get_plugin_icon( $plugin_directory ); // phpcs:ignore WordPress.Security.EscapeOutput ?>&nbsp;&nbsp;&nbsp;&nbsp;
-                            <a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( $inactive_plugins[ $i ]['slug'] ) ) ); ?>" target="_blank" class="open-plugin-details-modal" title="More information about <?php echo wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>">
+                            <a href="<?php echo esc_url( admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_html( dirname( $inactive_plugins[ $i ]['slug'] ) ) ); ?>" target="_blank" class="open-plugin-details-modal" title="<?php echo esc_attr( 'More information about ' . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) ); ?>">
                                 <?php echo esc_html( $plugin_title ); ?>
                             </a>
                         </div>

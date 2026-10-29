@@ -97,6 +97,21 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		return $html;
 	}
 
+	/** Only an authorized visit on a fresh Dashboard completes the MCP item. */
+	public function test_mcp_visit_marks_only_fresh_authorized_install(): void {
+		delete_option( 'mainwp_onboarding_fresh_install' );
+		delete_option( 'mainwp_onboarding_mcp_visited' );
+		$this->render_mcp();
+		$this->assertFalse( get_option( 'mainwp_onboarding_mcp_visited' ) );
+		update_option( 'mainwp_onboarding_fresh_install', time() );
+		$this->render_mcp();
+		$this->assertSame( 1, (int) get_option( 'mainwp_onboarding_mcp_visited' ) );
+		delete_option( 'mainwp_onboarding_mcp_visited' );
+		wp_set_current_user( 0 );
+		$this->render_mcp();
+		$this->assertFalse( get_option( 'mainwp_onboarding_mcp_visited' ) );
+	}
+
 	private function render_mcp(): string {
 		ob_start();
 		try {
@@ -141,7 +156,8 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 
 	public function test_ai_feature_pages_render(): void {
 		$this->assert_menu();
-		$html = $this->render_ai();
+		// render_top_header() also prints the help sidebar and left menu, with their own docs links and icons.
+		$html = (string) strstr( $this->render_ai(), '<div id="mainwp-ai-page"' );
 		$this->assertStringContainsString( 'id="mainwp-ai-page" class="ui padded segment"', $html );
 		$this->assertStringNotContainsString( 'AI tools for your MainWP workflows', $html );
 		$this->assertStringContainsString( 'id="mainwp-ai-feature-cards" class="ui four stackable cards"', $html );
@@ -163,7 +179,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		}
 		$this->assertStringNotContainsString( 'mainwp-knowledge-page', $html );
 
-		$mcp = $this->render_mcp();
+		$mcp = (string) strstr( $this->render_mcp(), '<div id="mainwp-mcp-page"' );
 		$this->assertStringContainsString( 'id="mainwp-mcp-page" class="ui padded segment"', $mcp );
 		foreach ( array( 'Manage MainWP with your AI assistant', 'Credentials', 'Connect', 'Test', 'Finish', 'Create Application Password', 'List all my sites', 'You are ready to use MainWP MCP', 'What you can do', 'Built-in safeguards' ) as $copy ) {
 			$this->assertStringContainsString( $copy, $mcp );
@@ -208,7 +224,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( 'Follow the full quickstart', $mcp );
 		$this->assertStringNotContainsString( 'external alternate icon', $mcp );
 		foreach ( array( '"command": "npx"', '"@mainwp/mcp"', '"MAINWP_URL"', '"MAINWP_USER"', '"MAINWP_APP_PASSWORD"' ) as $config ) {
-			$this->assertStringContainsString( $config, $mcp );
+			$this->assertStringContainsString( esc_textarea( $config ), $mcp );
 		}
 		$this->assertStringContainsString( 'id="rest-application-passwords-settings" class="mainwp-inline-application-password-creator"', $mcp );
 		$this->assertStringContainsString( 'data-default-name="MainWP MCP"', $mcp );
@@ -220,7 +236,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'https://github.com/mainwp/mainwp-mcp', $mcp );
 		$this->assertStringNotContainsString( 'git clone', $mcp );
 
-		$control = $this->render_control();
+		$control = (string) strstr( $this->render_control(), '<div id="mainwp-control-page"' );
 		$this->assertStringContainsString( 'id="mainwp-control-page" class="ui padded segment"', $control );
 		foreach ( array( 'Automate MainWP from the command line', 'Credentials', 'Install', 'Test', 'Finish', 'Create Application Password', 'Discover abilities and run your first command', 'You are ready to use MainWP Control', 'Why use MainWP Control', 'Built-in safeguards' ) as $copy ) {
 			$this->assertStringContainsString( $copy, $control );

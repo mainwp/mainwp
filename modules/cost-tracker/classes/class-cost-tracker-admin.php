@@ -721,6 +721,11 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             return;
         }
 
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_costs_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker settings', 'mainwp' ) );
+            return;
+        }
+
         $old_settings = MainWP_Settings::get_all_settings_values();
 
         $all_opts        = Cost_Tracker_Utility::get_instance()->get_all_options();
@@ -1405,7 +1410,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             $icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><i style="' . $color_style . '" class="' . esc_attr( $def_icon ) . ' large icon"></i></div>';
         } elseif ( false !== strpos( $prod_icon, 'deficon:' ) ) {
             $icon_wrapper_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" ' : 'class="' . esc_attr( $default_cls ) . '"';
-            $icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><i class="' . str_replace( 'deficon:', '', $prod_icon ) . ' large icon" style="' . $color_style . '" ></i></div>';
+            $icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><i class="' . esc_attr( str_replace( 'deficon:', '', $prod_icon ) . ' large icon' ) . '" style="' . $color_style . '" ></i></div>';
         } else {
             if ( ! empty( $upload_icon ) ) {
                 $dirs      = MainWP_System_Utility::get_mainwp_dir( Cost_Tracker_Settings::$icon_sub_dir, true );
@@ -1415,7 +1420,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                 $scr = '';
             }
             $icon_wrapper_attr = ! empty( $img_id_attr ) ? 'id="' . esc_attr( $img_id_attr ) . '" class="ui circular image" ' : 'class="' . esc_attr( $default_cls ) . ' ui circular image "';
-            $icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" alt="' . esc_attr__( 'Product icon', 'mainwp' ) . '" src="' . esc_attr( $scr ) . '"/></div>';
+            $icon              = '<div style="display:inline-block;" ' . $icon_wrapper_attr . '><img style="' . $style . '" alt="' . esc_attr__( 'Product icon', 'mainwp' ) . '" src="' . esc_url( $scr ) . '"/></div>';
         }
         return $icon;
     }

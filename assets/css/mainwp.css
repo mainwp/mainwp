@@ -141,12 +141,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     background: none !important;
 }
 
-#mainwp-qsw-exit-links {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-}
-
 /* Content Wrap */
 
 .mainwp-content-wrap {
@@ -161,6 +155,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.toplevel_page_mainwp_tab.mainwp-ui-leftmenu .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_Settings .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_SettingsAdvanced .mainwp-content-wrap,
+.mainwp-ui.mainwp_page_BackupSettings .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_MonitoringSettings .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_SettingsEmail .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_PremiumUpdates .mainwp-content-wrap,
@@ -593,6 +588,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.toplevel_page_mainwp_tab #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_Settings #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-main-navigation-container,
+.mainwp-ui.mainwp_page_BackupSettings #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_MonitoringSettings #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_PremiumUpdates #mainwp-main-navigation-container,
@@ -613,6 +609,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.toplevel_page_mainwp_tab #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_Settings #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-second-level-navigation,
+.mainwp-ui.mainwp_page_BackupSettings #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_MonitoringSettings #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_PremiumUpdates #mainwp-second-level-navigation,
@@ -632,6 +629,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.mainwp-hidden-second-level-navigation #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_Settings #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-divider-handle,
+.mainwp-ui.mainwp_page_BackupSettings #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_MonitoringSettings #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_PremiumUpdates #mainwp-divider-handle,
@@ -650,6 +648,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.mainwp-hidden-second-level-navigation #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_Settings #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-divider-handle:hover,
+.mainwp-ui.mainwp_page_BackupSettings #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_MonitoringSettings #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_PremiumUpdates #mainwp-divider-handle:hover,
@@ -2227,6 +2226,11 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
     word-break: break-all;
 }
 
+/* WordPress core gives .card a 255px min-width, which pushes the two-per-row Backup Health cards onto four rows in a one-third widget. */
+.mainwp-ui #mainwp-backup-health-counts.ui.cards > .card {
+    min-width: 0;
+}
+
 .mainwp-ai-client-setup {
     margin-top: 1.5em;
 }
@@ -2255,4 +2259,13 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
     background: var(--mainwp-element-background-secondary, var(--background-color-3, rgba(0, 0, 0, .03)));
     border: 1px solid var(--mainwp-border, var(--border-color, rgba(34, 36, 38, .15)));
     border-radius: var(--input-radius, 5px);
+}
+
+#mainwp-onboarding-tour-help {
+    display: block;
+    margin-top: 0.5em;
+}
+
+#mainwp-onboarding-uptime {
+    margin-top: 1em;
 }

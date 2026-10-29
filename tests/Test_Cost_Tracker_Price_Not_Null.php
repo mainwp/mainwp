@@ -23,12 +23,22 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
     }
 
     /**
-     * Remove rows this class inserted.
+     * Remove rows this class inserted and put the module back to a current install.
+     *
+     * The DROP and ALTER statements in these tests commit the test transaction, so the
+     * rollback in parent::tear_down() cannot undo rows, version options or schema written
+     * before them. Leaked cost rows changed the counts of later cost-scope tests.
      */
     public function tear_down() {
         global $wpdb;
         $table = $this->cost_table();
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE slug LIKE %s", $wpdb->esc_like( 'mwp-1792-' ) . '%' ) );
+        delete_option( 'mainwp_module_cost_tracker_db_version' );
+        delete_site_option( 'mainwp_module_cost_tracker_db_version' );
+        Cost_Tracker_DB::get_instance()->install();
+        delete_option( Cost_Tracker_DB::PRICE_NOT_NULL_OPTION );
+        delete_option( Cost_Tracker_DB::PRICE_NOT_NULL_RETRY_OPTION );
+        $wpdb->query( 'COMMIT' );
         parent::tear_down();
     }
 
@@ -239,6 +249,7 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
             protected function cost_tracker_null_price_ids( $table ) {
                 $ids = parent::cost_tracker_null_price_ids( $table );
                 global $wpdb;
+                // nosemgrep: AIK_tainted-sql-string -- test-only race write; $table is the cost tracker table the code under test passes in, and both values bind through prepare().
                 $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET price = %f WHERE id = %d", 9.99, $this->race_id ) );
                 return $ids;
             }
@@ -278,6 +289,7 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
              */
             protected function apply_cost_tracker_price_not_null( $table ) {
                 global $wpdb;
+                // nosemgrep: AIK_tainted-sql-string -- test-only race write; $table is the cost tracker table the code under test passes in, and both values bind through prepare().
                 $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET price = %f WHERE id = %d", 15, $this->race_id ) );
             }
         };
@@ -531,7 +543,7 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
         $args[] = $clients;
 
         $sql = "INSERT INTO {$table}
-            (name, url, type, product_type, slug, license_type, cost_status, payment_method, price, renewal_type, last_renewal, next_renewal, next_renewal_today, last_alert, sites, groups, clients, note)
+            (name, url, type, product_type, slug, license_type, cost_status, payment_method, price, renewal_type, last_renewal, next_renewal, next_renewal_today, last_alert, sites, `groups`, clients, note)
             VALUES (%s, 'https://example.com', 'subscription', 'plugin', %s, 'single', 'active', 'paypal', {$price_sql}, 'monthly', 0, 0, 0, 0, %s, '', %s, '')";
 
         $wpdb->query( $wpdb->prepare( $sql, $args ) );

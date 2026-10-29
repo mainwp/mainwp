@@ -178,7 +178,7 @@ jQuery(function () {
                 if (response == 'OK') {
                     mainwp_forceReload();
                 } else if (response.indexOf('ERROR ') === 0) {
-                    feedback('mainwp-message-zone', jQuery('<div>').text(response.substring(6)).html(), 'ui red message');
+                    feedback('mainwp-message-zone', response.substring(6), 'ui red message');
                 }
             });
         };
@@ -303,7 +303,7 @@ jQuery(function () {
                     jQuery('#mainwp-message-zone').fadeOut();
                 }, 5000);
             } else if (response?.error) {
-                feedback('mainwp-message-zone', jQuery('<div>').text(response.error).html(), 'ui red message');
+                feedback('mainwp-message-zone', response.error, 'ui red message');
             } else {
                 feedback('mainwp-message-zone', 'Undefined error occurred. Please try again.', 'ui green message');
             }

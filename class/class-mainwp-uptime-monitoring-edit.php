@@ -218,11 +218,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 $update = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update, $site_id, $bypass_cache_opt );
 
-                MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update, $output );
-
-                // This save does not capture the monitor write result. An undefined
-                // $success was always falsy here, so the repair-attempt option stays.
-                $success = false;
+                $success = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update, $output );
+                if ( is_array( $output ) && isset( $output['saved'] ) && false === $output['saved'] ) {
+                    $success = false;
+                }
                 if ( $site_id && empty( $update['issub'] ) ) {
                     $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site_id;
                     if ( $success ) {
@@ -260,6 +259,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 $update['retention_limits'] = isset( $_POST['mainwp_edit_monitor_retention_days'] ) ? intval( $_POST['mainwp_edit_monitor_retention_days'] ) : 180;
                 $update['bypass_cache']     = ( isset( $_POST['mainwp_edit_monitor_bypass_cache'] ) ? 1 : 0 );
                 MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $update );
+                $saved = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+                if ( get_option( 'mainwp_onboarding_fresh_install' ) && 1 === (int) $update['active'] && 1 === (int) $saved['active'] ) {
+                    update_option( 'mainwp_onboarding_uptime_confirmed', 1 );
+                }
                 MainWP_Utility::update_option( 'mainwp_uptime_monitor_cleanup_heartbeat_at', 0 ); // reset cleanup heartbeat to process on next run.
                 MainWP_Utility::update_option( 'mainwp_check_http_response', $check_http_response );
                 MainWP_Utility::update_option( 'mainwp_check_http_response_method', $chk_http_method );
@@ -618,7 +621,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                         $maxretries_val = ! empty( $mo_settings['maxretries'] ) && 1 <= intval( $mo_settings['maxretries'] ) ? intval( $mo_settings['maxretries'] ) : 1;
                         ?>
                         <option value="<?php echo intval( $maxretries_val ); ?>" <?php echo (int) $mo_settings['maxretries'] === (int) $maxretries_val ? 'selected' : ''; ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
-                        <option value="0" <?php echo 0 === $maxretries_val ? 'selected' : ''; ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
+                        <option value="0" <?php echo 0 === (int) $mo_settings['maxretries'] ? 'selected' : ''; ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
                     </select>
                 </div>
             </div>

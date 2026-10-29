@@ -35,6 +35,13 @@ class Api_Backups_Settings {
     public static $instance = null;
 
     /**
+     * Whether a backup credential failed to save in this request.
+     *
+     * @var bool
+     */
+    private $credential_save_failed = false;
+
+    /**
      * Get Instance
      *
      * Creates public static instance.
@@ -70,6 +77,32 @@ class Api_Backups_Settings {
         add_action( 'admin_init', array( &$this, 'admin_init' ) );
         add_action( 'mainwp_manage_sites_edit', array( &$this, 'hook_render_mainwp_manage_sites_edit' ), 10, 2 );
         add_action( 'mainwp_update_site', array( &$this, 'hook_mainwp_update_site' ), 10, 2 );
+        add_action( 'mainwp_after_header', array( &$this, 'hook_render_credential_save_error' ) );
+    }
+
+    /**
+     * Whether the current site save left a previous credential in place.
+     *
+     * @return bool
+     */
+    public function has_credential_save_failed() {
+        return $this->credential_save_failed;
+    }
+
+    /**
+     * Show a failed credential save in the page notice area.
+     *
+     * @return void
+     */
+    public function hook_render_credential_save_error() {
+        if ( ! $this->credential_save_failed ) {
+            return;
+        }
+        ?>
+        <div class="ui red message">
+            <?php esc_html_e( 'Some backup credentials could not be saved. Their previous values were kept.', 'mainwp' ); ?>
+        </div>
+        <?php
     }
 
     /**
@@ -993,6 +1026,8 @@ class Api_Backups_Settings {
             return;
         }
 
+        $this->credential_save_failed = false;
+
         $api_backup_provider      = isset( $_POST['mainwp_managesites_edit_module_api_backups_provider'] ) && ! empty( $_POST['mainwp_managesites_edit_module_api_backups_provider'] ) ? intval( $_POST['mainwp_managesites_edit_module_api_backups_provider'] ) : '';
         $api_backup_provider_name = '';
 
@@ -1037,7 +1072,9 @@ class Api_Backups_Settings {
 
         // Store cPanel Individual Account Password.
         $cpanel_account_password = isset( $_POST['mainwp_cpanel_account_password'] ) ? wp_unslash( $_POST['mainwp_cpanel_account_password'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Utility::get_instance()->update_child_api_key( $website_id, 'cpanel', $cpanel_account_password );
+        if ( false === Api_Backups_Utility::get_instance()->update_child_api_key( $website_id, 'cpanel', $cpanel_account_password ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store cPanel Individual Site Path.
         $cpanel_site_path = isset( $_POST['cpanel_site_path'] ) ? wp_unslash( $_POST['cpanel_site_path'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1057,7 +1094,9 @@ class Api_Backups_Settings {
 
         // Store Plesk Individual API Key.
         $plesk_api_key = isset( $_POST['mainwp_plesk_api_key'] ) ? wp_unslash( $_POST['mainwp_plesk_api_key'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Utility::get_instance()->update_child_api_key( $website_id, 'plesk', $plesk_api_key );
+        if ( false === Api_Backups_Utility::get_instance()->update_child_api_key( $website_id, 'plesk', $plesk_api_key ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store Kinsta Individual or Global toggle.
         $enable_kinsta_individual = isset( $_POST['mainwp_enable_kinsta_individual'] ) ? wp_unslash( $_POST['mainwp_enable_kinsta_individual'] ) : '0';
@@ -1077,7 +1116,9 @@ class Api_Backups_Settings {
 
         // Store Kinsta Individual API Key.
         $kinsta_api_key = isset( $_POST['mainwp_kinsta_api_key'] ) ? wp_unslash( $_POST['mainwp_kinsta_api_key'] ) : '';
-        Api_Backups_Utility::get_instance()->update_child_api_key( $website_id, 'kinsta', $kinsta_api_key );
+        if ( false === Api_Backups_Utility::get_instance()->update_child_api_key( $website_id, 'kinsta', $kinsta_api_key ) ) {
+            $this->credential_save_failed = true;
+        }
         //phpcs:enable
     }
 

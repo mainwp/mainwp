@@ -80,6 +80,40 @@ class Test_Child_Request_Timeout extends \WP_UnitTestCase {
 		$this->assertSame( 300, MainWP_Connect::save_child_request_timeout_setting( 300 ) );
 	}
 
+	/** @dataProvider advanced_timeout_inputs */
+	public function test_advanced_save_reports_timeout_validation_result( $input, $saved, $error ): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, 600 );
+		$previous_post = $_POST;
+		$_POST = array( 'submit' => '1', 'wp_nonce' => wp_create_nonce( 'SettingsAdvanced' ), 'mainwp_child_request_timeout' => $input );
+		ob_start();
+		try {
+			\MainWP\Dashboard\MainWP_Settings::render_advanced();
+		} finally {
+			$html = ob_get_clean();
+			$_POST = $previous_post;
+		}
+		$actual = get_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, false );
+		$this->assertSame( $saved, false === $actual ? false : (int) $actual );
+		if ( $error ) {
+			$this->assertMatchesRegularExpression( '/class="ui (?:red|error) message"/', $html );
+			$this->assertStringContainsString( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default. Other settings were saved.', $html );
+			$this->assertStringNotContainsString( 'Settings have been saved successfully!', $html );
+		} else {
+			$this->assertStringContainsString( 'Settings have been saved successfully!', $html );
+		}
+	}
+
+	public static function advanced_timeout_inputs(): array {
+		return array(
+			'below floor' => array( '299', 600, true ),
+			'not numeric' => array( 'invalid', 600, true ),
+			'valid' => array( '450', 450, false ),
+			'blank default' => array( '', false, false ),
+			'explicit default' => array( '72000', false, false ),
+		);
+	}
+
 	public function test_gateway_and_curl_timeouts_are_timeout_and_missing_plugin_is_not(): void {
 		$missing = '<html><body>MainWP Child plugin is not installed.</body></html>';
 		$this->assertSame( 'NOMAINWP', MainWP_Connect::child_fetch_else_code( $missing, '', 200, 0 ) );

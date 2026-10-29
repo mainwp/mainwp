@@ -311,6 +311,11 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function create_item( $request ) {
+        $permission = $this->check_operation_right( 'add_costs' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // handle_rest_update_insert_item() reads a non-empty id as "update that row", and
         // the body bag outranks anything the create route registers, so the id is cleared
         // out of every bag before the handler can point a create at an existing cost.
@@ -643,6 +648,10 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function update_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_costs' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $cost = $this->get_request_item( $request );
         if ( is_wp_error( $cost ) ) {
@@ -679,6 +688,10 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function delete_item( $request ) {
+        $permission = $this->check_operation_right( 'delete_costs' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $cost = $this->get_request_item( $request );
         if ( is_wp_error( $cost ) ) {

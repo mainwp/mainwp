@@ -284,7 +284,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Preserve fixed Child credential guidance while hiding reflected secrets.
      *
      * @param string $message Decoded registration error.
-     * @return string Escaped fixed guidance or conservatively redacted text.
+     * @return string Escaped fixed guidance or redacted, allowlisted HTML.
      */
     public static function sanitize_registration_error( $message ) {
         if ( 'Unable to connect to the site. Please verify that your Admin Username and Password are correct and try again.' === $message ) {
@@ -294,8 +294,8 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return esc_html__( 'Unable to connect to the site. Password Authentication is disabled, so please verify that the Unique Security ID is correct and try again.', 'mainwp' );
         }
 
-        // URL redaction can decode encoded markup after the caller's HTML filtering.
-        return esc_html( self::sanitize_diagnostic_text( $message ) );
+        // URL redaction can decode markup, so reapply the HTML allowlist afterward.
+        return MainWP_Utility::esc_content( self::sanitize_diagnostic_text( $message, true ) );
     }
 
     /**
@@ -837,15 +837,16 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * be trusted in an exception or other free-form diagnostic string.
      *
      * @param string $text Diagnostic text.
+     * @param bool   $html Escape decoded URL values for an HTML context.
      *
      * @return string
      */
-    public static function sanitize_diagnostic_text( $text ) {
+    public static function sanitize_diagnostic_text( $text, $html = false ) {
         if ( ! is_string( $text ) || '' === $text ) {
             return '';
         }
 
-        $with_urls = self::redact_urls_in_text( $text );
+        $with_urls = self::redact_urls_in_text( $text, $html );
         if ( ! is_string( $with_urls ) ) {
             return self::unredactable_text();
         }
@@ -860,14 +861,16 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Strip unknown secrets from URLs embedded in text.
      *
      * @param string $text Text that may contain absolute or relative URLs.
+     * @param bool   $html Escape decoded URL values for an HTML context.
      *
      * @return string|null
      */
-    private static function redact_urls_in_text( $text ) {
+    private static function redact_urls_in_text( $text, $html = false ) {
         $with_urls = preg_replace_callback(
             '#(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}+://[^\s\'"<>]++|//[^\s\'"<>]++|/[^\s\'"<>]*+\?[^\s\'"<>]++)#',
-            static function ( $found ) {
-                return MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
+            static function ( $found ) use ( $html ) {
+                $url = MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
+                return $html ? esc_attr( $url ) : $url;
             },
             $text
         );
@@ -879,20 +882,24 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // only the whitespace-delimited token, then replace its URL portion.
         return preg_replace_callback(
             '#[^\s\'"<>]+#u',
-            static function ( $found ) {
+            static function ( $found ) use ( $html ) {
                 $decoded = MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] );
                 if ( $decoded === $found[0] ) {
                     return $found[0];
                 }
                 if ( preg_match( '/(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}:\/\//', $decoded, $scheme, PREG_OFFSET_CAPTURE ) ) {
                     $offset = $scheme[0][1];
-                    return substr( $decoded, 0, $offset ) . MainWP_Connect_Failure_Ux::redact_url( substr( $decoded, $offset ) );
+                    $prefix = substr( $decoded, 0, $offset );
+                    $url    = MainWP_Connect_Failure_Ux::redact_url( substr( $decoded, $offset ) );
+                    return $html ? esc_html( $prefix ) . esc_attr( $url ) : $prefix . $url;
                 }
                 if ( 0 === strpos( $decoded, '//' ) ) {
-                    return MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                    $url = MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                    return $html ? esc_attr( $url ) : $url;
                 }
                 if ( 0 === strpos( $decoded, '/' ) && false !== strpos( $decoded, '?' ) ) {
-                    return MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                    $url = MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                    return $html ? esc_attr( $url ) : $url;
                 }
                 return $found[0];
             },

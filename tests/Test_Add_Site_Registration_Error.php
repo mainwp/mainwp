@@ -39,6 +39,45 @@ class Test_Add_Site_Registration_Error extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Keep help links clickable while filtering markup decoded inside their URLs.
+	 */
+	public function test_registration_error_preserves_safe_links_without_injected_markup(): void {
+		$links = array(
+			'<a href="https://example.test/help?ticket=diagnostic" title="Support">Help document</a>',
+			'<a href="https://example.test/%22%20onmouseover%3D%22alert(1)">Help document</a>',
+			'<a href="https://example.test/%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E">Help document</a>',
+			'<a href="https://example.test/%22%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E">Help document</a>',
+			'<a href="https://example.test/&quot;&#32;onmouseover=&quot;alert(1)">Help document</a>',
+			'<a href="https://example.test/&lt;img&#32;src=x&#32;onerror=alert(1)&gt;">Help document</a>',
+		);
+
+		foreach ( $links as $child_error ) {
+			$information = \MainWP\Dashboard\MainWP_System_Utility::get_child_response( wp_json_encode( array( 'error' => rawurlencode( $child_error ) ) ) );
+			$message     = \MainWP\Dashboard\MainWP_Utility::esc_content( urldecode( $information['error'] ) );
+			$html        = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::sanitize_registration_error( $message );
+			$document    = new \DOMDocument();
+			$previous    = libxml_use_internal_errors( true );
+			try {
+				$document->loadHTML( '<!doctype html><html><body>' . $html . '</body></html>' );
+			} finally {
+				libxml_clear_errors();
+				libxml_use_internal_errors( $previous );
+			}
+			$xpath   = new \DOMXPath( $document );
+			$anchors = $xpath->query( '//a' );
+
+			$this->assertSame( 1, $anchors->length, 'The help link must remain an anchor.' );
+			$this->assertStringContainsString( 'Help document', $anchors->item( 0 )->textContent );
+			$this->assertStringStartsWith( 'https://example.test/', $anchors->item( 0 )->getAttribute( 'href' ) );
+			$this->assertStringNotContainsString( 'ticket=', $html );
+			$this->assertSame( 0, $xpath->query( '//img | //script | //svg | //iframe | //object | //embed' )->length );
+			foreach ( $xpath->query( '//@*' ) as $attribute ) {
+				$this->assertContains( $attribute->nodeName, array( 'href', 'title' ), 'Only allowlisted link attributes may survive.' );
+			}
+		}
+	}
+
+	/**
 	 * The UI must retain the Child error when transport diagnostics are present.
 	 *
 	 * @dataProvider registration_errors
@@ -166,6 +205,11 @@ class Test_Add_Site_Registration_Error extends \WP_UnitTestCase {
 	 */
 	public static function registration_errors(): array {
 		return array(
+			'linked help document'                     => array(
+				'Review the <a href="https://docs.mainwp.com/troubleshooting/potential-issues/">help document</a>.',
+				'REG_ERROR8',
+				'',
+			),
 			'encoded markup'                           => array(
 				rawurlencode( '<img src=x onerror=alert(1)>https://example.test/' ),
 				'REG_ERROR7',

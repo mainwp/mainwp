@@ -96,6 +96,29 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     }
 
     /**
+     * Method is_site_preview_enabled()
+     *
+     * Whether the dashboard shows site screenshots. Each screenshot is loaded
+     * from mShots (WordPress.com), which fetches the child site to render it.
+     *
+     * @return bool True to show site screenshots.
+     */
+    public static function is_site_preview_enabled() {
+        /**
+         * Filter: mainwp_site_preview_enabled
+         *
+         * Return false to turn off the site screenshots (mShots by WordPress.com)
+         * everywhere in the dashboard, for example when a firewall blocks the
+         * mShots crawler or the site URLs should not be sent to a third party.
+         *
+         * @since 6.3.1
+         *
+         * @param bool $enabled Whether to show site screenshots. Default true.
+         */
+        return (bool) apply_filters( 'mainwp_site_preview_enabled', true );
+    }
+
+    /**
      * Method select_sites_box()
      *
      * Select sites box.
@@ -1847,7 +1870,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
 
                 // To avoid error in case of direct access to page with wrong id.
-                if ( ! empty( $website ) && ! empty( $website->url ) ) {
+                if ( ! empty( $website ) && ! empty( $website->url ) && static::is_site_preview_enabled() ) {
                     $overview_mshot = static::get_mshots_image_sources( $website->url, 170 );
                     ?>
                     <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="<?php echo esc_url( $overview_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $overview_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $overview_mshot['requeue_src'] ); ?>" id="mainwp-site-preview-image">

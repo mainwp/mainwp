@@ -36,6 +36,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      */
     public static function get_mainwp_translations() { // phpcs:ignore -- NOSONAR - complex.
 
+        // The function is declared on the first call; a second call in the same request would fatal on redeclare.
         if ( ! function_exists( __NAMESPACE__ . '\\mainwp_add_translation' ) ) {
             /**
              * Method mainwp_add_translation()
@@ -113,6 +114,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Adding the task to MainWP', esc_html__( 'Adding the task to MainWP', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please select websites or tags.', esc_html__( 'Please select websites or tags.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Are you sure you want to delete this backup task?', esc_html__( 'Are you sure you want to delete this backup task?', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, "Also delete this task's snapshots", esc_html__( "Also delete this task's snapshots", 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Leave this unticked to keep the snapshots. They stay in Snapshots & Restore until you delete them with Clean Up.', esc_html__( 'Leave this unticked to keep the snapshots. They stay in Snapshots & Restore until you delete them with Clean Up.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Removing the task..', esc_html__( 'Removing the task..', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'The task has been removed', esc_html__( 'The task has been removed', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'An unspecified error occurred', esc_html__( 'An unspecified error occurred', 'mainwp' ) );
@@ -121,6 +124,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Received HTTP-code:', esc_html__( 'Received HTTP-code:', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Cloudflare/proxy edge IP', esc_html__( 'Cloudflare/proxy edge IP', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.', esc_html__( 'No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.', 'mainwp' ) );
+        // feedback() inserts this as a text node, so esc_html__() would show an apostrophe as &#039;.
+        /* translators: %1 and %2 wrap the link text to the site's Dashboard. */
+        mainwp_add_translation( $mainwpTranslations, 'Site successfully added - Visit the Site\'s %1Dashboard%2 now.', __( 'Site successfully added - Visit the Site\'s %1Dashboard%2 now.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Connection test successful.', esc_html__( 'Connection test successful.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Invalid response from the server, please try again.', esc_html__( 'Invalid response from the server, please try again.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please enter csv file for upload.', esc_html__( 'Please enter csv file for upload.', 'mainwp' ) );
@@ -193,11 +199,10 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Upgrading %1', esc_html__( 'Upgrading %1', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Updating your plan...', esc_html__( 'Updating your plan...', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Updated your plan', esc_html__( 'Updated your plan', 'mainwp' ) );
-        $mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
-        if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
-            $mainwp_backup_before_upgrade_days = 7;
-        }
+        $mainwp_backup_before_upgrade_days = MainWP_Updates_Overview::get_backup_before_upgrade_days();
         mainwp_add_translation( $mainwpTranslations, 'A full backup has not been taken in the last days for the following sites:', str_replace( '%1', '' . $mainwp_backup_before_upgrade_days, esc_html__( 'A full backup has not been taken in the last %1 days for the following sites:', 'mainwp' ) ) );
+        mainwp_add_translation( $mainwpTranslations, 'No backup from the last days has a verified offsite copy for the following sites:', str_replace( '%1', '' . $mainwp_backup_before_upgrade_days, esc_html__( 'No backup from the last %1 days has a verified offsite copy for the following sites:', 'mainwp' ) ) );
+        mainwp_add_translation( $mainwpTranslations, 'Backup all cannot add an offsite copy. Check each site\'s storage destination on the Snapshots & Restore page.', esc_html__( 'Backup all cannot add an offsite copy. Check each site\'s storage destination on the Snapshots & Restore page.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Starting required backup(s).', esc_html__( 'Starting required backup(s).', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Required backup(s) complete', esc_html__( 'Required backup(s) complete', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Continue update anyway', esc_html__( 'Continue update anyway', 'mainwp' ) );
@@ -244,6 +249,46 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'is_activated_parent', esc_html__( '%1 could not be deleted. This theme is parent theme for the currently active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'is_activated_theme', esc_html__( '%1 could not be deleted. This theme is active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Change score changed. Click to review changes.', esc_html__( 'Change score changed. Click to review changes.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'ERROR', esc_html__( 'ERROR', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'remaining', esc_html__( 'remaining', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'See this help document for possible fixes.', esc_html__( 'See this help document for possible fixes.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The backup timed out before the child site finished responding. The site may be overloaded, or the host may be limiting long-running requests.', esc_html__( 'The backup timed out before the child site finished responding. The site may be overloaded, or the host may be limiting long-running requests.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The backup request to the child site timed out. The site may be overloaded, or the host may be limiting long-running requests.', esc_html__( 'The backup request to the child site timed out. The site may be overloaded, or the host may be limiting long-running requests.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Backup stalled, trying to resume from last file...', esc_html__( 'Backup stalled, trying to resume from last file...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The download from the child site failed. Check that the site is reachable and try again.', esc_html__( 'The download from the child site failed. Check that the site is reachable and try again.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The backup task could not be started. Reload the page and try again.', esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The backup task could not be saved. Reload the page and try again.', esc_html__( 'The backup task could not be saved. Reload the page and try again.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Reset this task\'s stuck run? Only do this if you are sure the scheduled backup crashed.', esc_html__( 'Reset this task\'s stuck run? Only do this if you are sure the scheduled backup crashed.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Task reset. Cancelled %1 child backup run(s); %2 site(s) could not be stopped. See the task\'s Last run notes.', esc_html__( 'Task reset. Cancelled %1 child backup run(s); %2 site(s) could not be stopped. See the task\'s Last run notes.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Task reset. Cancelled %1 child backup run(s).', esc_html__( 'Task reset. Cancelled %1 child backup run(s).', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Creating the backup file on the child site, this might take a while depending on the size. Please be patient.', esc_html__( 'Creating the backup file on the child site, this might take a while depending on the size. Please be patient.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Backup file on child site created successfully!', esc_html__( 'Backup file on child site created successfully!', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Backup completed.', esc_html__( 'Backup completed.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Starting the backup task...', esc_html__( 'Starting the backup task...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Running task', esc_html__( 'Running task', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Backup task completed', esc_html__( 'Backup task completed', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Creating backup file.', esc_html__( 'Creating backup file.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Backup file created successfully.', esc_html__( 'Backup file created successfully.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Backup failed!', esc_html__( 'Backup failed!', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Please select websites or groups to add a backup task.', esc_html__( 'Please select websites or groups to add a backup task.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Adding the task...', esc_html__( 'Adding the task...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Please select websites or groups.', esc_html__( 'Please select websites or groups.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Removing the task...', esc_html__( 'Removing the task...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The task has been removed.', esc_html__( 'The task has been removed.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'An undefined error occurred.', esc_html__( 'An undefined error occurred.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Resuming the task...', esc_html__( 'Resuming the task...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The task has been resumed.', esc_html__( 'The task has been resumed.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Pausing the task...', esc_html__( 'Pausing the task...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The task has been paused.', esc_html__( 'The task has been paused.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Checking backup settings...', esc_html__( 'Checking backup settings...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Proceed with Updates', esc_html__( 'Proceed with Updates', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Full backup required!', esc_html__( 'Full backup required!', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Offsite backup required!', esc_html__( 'Offsite backup required!', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Full backup', esc_html__( 'Full backup', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Starting required backup(s)...', esc_html__( 'Starting required backup(s)...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Required backup(s) completed', esc_html__( 'Required backup(s) completed', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Creating backup file...', esc_html__( 'Creating backup file...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Download from the child site completed.', esc_html__( 'Download from the child site completed.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'No sites to import', esc_html__( 'No sites to import', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'No valid data rows were found in the import file.', esc_html__( 'No valid data rows were found in the import file.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Congratulations!', esc_html__( 'Congratulations!', 'mainwp' ) );
@@ -489,8 +534,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         static::render_secure_priv_key_connection();
 
-        static::render_notice_php_version8();
-
         static::render_notice_trust_update();
 
         static::render_mainwp_themes_deprecation_notice();
@@ -500,6 +543,36 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::check_rating_notice();
 
         static::render_browser_extensions_notice();
+
+        static::render_native_backups_default_off_notice();
+    }
+
+    /**
+     * Render the one-time notice for installs where the upgrade defaulted
+     * Native Backups off because no backup flag was ever written.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+     */
+    public static function render_native_backups_default_off_notice() {
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() || ! get_option( 'mainwp_native_backups_defaulted_off_on_upgrade' ) || ! MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_native_backups_defaulted_off_on_upgrade' ) ) {
+            return;
+        }
+        ?>
+        <div class="ui blue message">
+            <div class="header"><?php esc_html_e( 'Built-In Backups Available', 'mainwp' ); ?></div>
+            <div>
+                <?php
+                esc_html_e( 'Built-In Backups were left turned off during this update because backups were not previously in use on this Dashboard.', 'mainwp' );
+                ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && ! MainWP_System_Utility::is_team_control_staff() ) : ?>
+                    <?php /* translators: 1: Opening anchor tag, 2: Closing anchor tag. */ printf( esc_html__( 'To schedule backups for your child sites, enable Built-In Backups in %1$sSettings > Backup Settings%2$s.', 'mainwp' ), '<a href="' . esc_url( admin_url( 'admin.php?page=BackupSettings#mainwp_options_enableNativeBackups' ) ) . '">', '</a>' ); ?>
+                <?php else : ?>
+                    <?php esc_html_e( 'Ask a Dashboard administrator to enable Built-In Backups in Settings > Backup Settings to schedule backups for your child sites.', 'mainwp' ); ?>
+                <?php endif; ?>
+            </div>
+            <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_native_backups_defaulted_off_on_upgrade"></i>
+        </div>
+        <?php
     }
 
     /**
@@ -703,31 +776,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         </div>
         <?php
     }
-
-    /**
-     * Renders PHP 8.0 Version Notice.
-     *
-     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
-     */
-    public static function render_notice_php_version8() {
-        $phpver = phpversion();
-        if ( version_compare( $phpver, '8.0', '<' ) ) {
-            $last_hidden = (int) get_user_option( 'lasttime_hidden_phpver_8_0' );
-            if ( time() > $last_hidden + 30 * DAY_IN_SECONDS || MainWP_Utility::show_mainwp_message( 'notice', 'phpver_8_0' ) ) {
-                ?>
-                <div class="ui attention message">
-                    <div class="header"><?php esc_html_e( 'Upcoming PHP requirement (Dashboard)', 'mainwp' ); ?></div>
-                    <?php esc_html_e( 'In the coming months, MainWP Dashboard will require PHP 8.1+. To avoid issues and stay secure, please update your Dashboard site to a supported version (for example PHP 8.3).', 'mainwp' ); ?>
-                    <?php /* translators: 1: Opening link tag, 2: Closing link tag */ printf( esc_html__( 'You can check the list of actively maintained PHP versions %1$shere%2$s.', 'mainwp' ), '<a href="https://www.php.net/supported-versions.php" target="_blank">', '</a>' ); ?>
-                    <br/><br/>
-                    <strong><?php esc_html_e( 'This change affects only your MainWP Dashboard site, not your connected child sites.', 'mainwp' ); ?></strong>
-                    <i class="close icon mainwp-notice-dismiss" notice-id="phpver_8_0"></i>
-                </div>
-                <?php
-            }
-        }
-    }
-
 
     /**
      * Renders Guided Tours Notice.
@@ -1101,10 +1149,10 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
                 $class_string .= ' mainwp-individual-client-overview ';
             }
-            if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) {
+            if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'BackupSettings' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
-            if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {
+            if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
             // phpcs:enable
@@ -1162,13 +1210,13 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     if ( is_array( $websites ) ) {
                         $count = count( $websites );
                         for ( $i = 0; $i < $count; $i++ ) {
-                            $site_name   = $website->name;
                             $website     = $websites[ $i ];
+                            $site_name   = $website->name;
                             $is_sync_err = ( '' !== $website->sync_errors ) ? true : false;
                             ?>
                             <div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
                                 <div class="right floated content">
-                                    <div class="sync-site-status" niceurl="<?php echo esc_html( $site_name ); ?>" siteid="<?php echo intval( $website->id ); ?>"><span data-position="left center" data-inverted="" data-tooltip="<?php echo $is_sync_err ? esc_html__( 'Site disconnected', 'mainwp' ) : esc_html__( 'Pending', 'mainwp' ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></span></div>
+                                    <div class="sync-site-status" niceurl="<?php echo esc_attr( rawurlencode( stripslashes( $site_name ) ) ); ?>" siteid="<?php echo intval( $website->id ); ?>"><span data-position="left center" data-inverted="" data-tooltip="<?php echo $is_sync_err ? esc_html__( 'Site disconnected', 'mainwp' ) : esc_html__( 'Pending', 'mainwp' ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></span></div>
                                 </div>
                                 <div class="content">
                                 <?php echo esc_html( $site_name ); ?>
@@ -1185,7 +1233,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                             ?>
                             <div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
                                 <div class="right floated content">
-                                    <div class="sync-site-status" niceurl="<?php echo esc_html( $site_name ); ?>" siteid="<?php echo intval( $website->id ); ?>"><span data-position="left center" data-inverted="" data-tooltip="<?php echo $is_sync_err ? esc_html__( 'Site disconnected', 'mainwp' ) : esc_html__( 'Pending', 'mainwp' ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></span></div>
+                                    <div class="sync-site-status" niceurl="<?php echo esc_attr( rawurlencode( stripslashes( $site_name ) ) ); ?>" siteid="<?php echo intval( $website->id ); ?>"><span data-position="left center" data-inverted="" data-tooltip="<?php echo $is_sync_err ? esc_html__( 'Site disconnected', 'mainwp' ) : esc_html__( 'Pending', 'mainwp' ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></span></div>
                                 </div>
                                 <div class="content">
                                 <?php echo esc_html( $site_name ); ?>

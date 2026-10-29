@@ -61,7 +61,9 @@ class MainWP_Uptime_Monitoring_Site_Widget {
 
         $days_number = static::get_days_number_by_period( $current_period );
 
-        if ( empty( $site_id ) ) {
+        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+        if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'The Site ID is invalid or not found. Please try again.', 'mainwp' ) ) ) );
         }
 
@@ -466,9 +468,9 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                             jQuery('#mainwp-monitor-widget-loader').hide();
 
                         } else if (response?.error) {
-                            mainwp_showhide_message('mainwp-response-time-message-zone', '<i class="close icon"></i>' + response.error, 'red');
+                            mainwp_showhide_message('mainwp-response-time-message-zone', jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(response.error)), 'red');
                         } else {
-                            mainwp_showhide_message('mainwp-response-time-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
+                            mainwp_showhide_message('mainwp-response-time-message-zone', jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(__('Undefined error. Please try again.'))), 'red');
                         }
                     }, 'json');
                     return false;

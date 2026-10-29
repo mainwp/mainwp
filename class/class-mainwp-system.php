@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.3'; // NOSONAR.
+    public static $version = '6.4'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -117,7 +117,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Extensions::init()
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Install_Bulk::init()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Page::init()
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites::init()
      * @uses \MainWP\Dashboard\MainWP_Overview::get()
      * @uses \MainWP\Dashboard\MainWP_Page::init()
@@ -144,6 +144,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $this->load_all_options();
 
         $this->update_install();
+        add_action( 'mainwp_install_update_actions', array( MainWP_Get_Started::class, 'record_first_update' ), 10, 4 );
         $this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
         add_action( 'shutdown', array( $this, 'hook_wp_shutdown' ) );
@@ -189,19 +190,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( get_option( 'mainwp_setting_demo_mode_enabled' ) && ! defined( 'MAINWP_DEMO_MODE' ) ) {
             define( 'MAINWP_DEMO_MODE', true );
-        }
-
-        $ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
-        if ( empty( $ssl_api_verifyhost ) ) {
-            add_filter(
-                'http_request_args',
-                array(
-                    MainWP_Extensions_Handler::get_class_name(),
-                    'no_ssl_filter_extension_upgrade',
-                ),
-                99,
-                2
-            );
         }
 
         MainWP_Extensions::init();
@@ -280,8 +268,12 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Updates::init();
         MainWP_Post::init();
         MainWP_Settings::init();
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            MainWP_Manage_Backups::init();
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            MainWP_Backup_Page::init();
+            MainWP_Backup_Upload_Driver::instance()->init();
+            MainWP_Backup_Retention_Scheduler::instance()->init();
+            MainWP_Backup_Diagnostics::instance()->init();
+            MainWP_Backup_Run_History::init();
         }
         MainWP_Manage_Groups::init();
         MainWP_User::init();
@@ -372,12 +364,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_upgradeVersionInfo',
                 'mainwp_extensions',
                 'mainwp_activated',
-                'mainwp_api_sslVerifyCertificate',
                 'mainwp_automaticDailyUpdate',
                 'mainwp_pluginAutomaticDailyUpdate',
                 'mainwp_themeAutomaticDailyUpdate',
                 'mainwp_backup_before_upgrade',
-                'mainwp_enableLegacyBackupFeature',
+                'mainwp_backup_before_upgrade_require_offsite',
+                'mainwp_enableNativeBackups',
+                'mainwp_backup_progress_uniq_key_repair_pending',
                 'mainwp_maximumInstallUpdateRequests',
                 'mainwp_maximumSyncRequests',
                 'mainwp_primaryBackup',
@@ -522,6 +515,32 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method mainwp_cronbackups_slice_action()
+     *
+     * Run cron backups slice action.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_backups_slice()
+     */
+    public function mainwp_cronbackups_slice_action() {
+        MainWP_System_Cron_Jobs::instance()->cron_backups_slice();
+    }
+
+    /**
+     * Method mainwp_cronbackups_prune_action()
+     *
+     * Run the daily backups prune from the system cron script.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_backups_prune()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Diagnostics::prune()
+     */
+    public function mainwp_cronbackups_prune_action() {
+        MainWP_System_Cron_Jobs::instance()->cron_backups_prune();
+        // Under WP-Cron the diagnostics prune rides the same hook; this script calls the lane directly, so prune here too.
+        MainWP_Backup_Diagnostics::instance()->prune();
+        MainWP_Backup_Run_History::prune();
+    }
+
+    /**
      * Method mainwp_cronbackups_action()
      *
      * Run cron backups action.
@@ -619,7 +638,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public static function is_mainwp_site_page() {
         $is_page = false;
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) ) {
+        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'BackupSettings' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) ) {
             $is_page = true;
         }
         //phpcs:enable
@@ -632,6 +651,22 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         return apply_filters( 'mainwp_is_mainwp_site_page', $is_page );
     }
 
+
+    /**
+     * Applies the permission filter and denies access when a callback throws.
+     *
+     * @param mixed      $initial_grant Default permission value.
+     * @param string     $cap_type      Capability group.
+     * @param string|int $cap           Capability or site ID.
+     * @return mixed Filter result, or false when a callback throws.
+     */
+    public static function filter_current_user_permission( $initial_grant, $cap_type, $cap ) {
+        try {
+            return apply_filters( 'mainwp_currentusercan', $initial_grant, $cap_type, $cap );
+        } catch ( \Throwable $e ) {
+            return false;
+        }
+    }
 
     /**
      * Method plugins_loaded()
@@ -687,7 +722,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     require_once ABSPATH . WPINC . '/pluggable.php'; // NOSONAR - WP compatible.
                 }
 
-                return apply_filters( 'mainwp_currentusercan', true, $cap_type, $cap );
+                return MainWP_System::filter_current_user_permission( true, $cap_type, $cap ); // phpcs:ignore Squiz.Classes.SelfMemberReference.NotUsed -- This named function has no class scope.
             }
         }
     }
@@ -737,10 +772,58 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( ! isset( $_REQUEST['mwpdl'] ) || ! is_string( $_REQUEST['mwpdl'] ) || ! is_string( $_GET['sig'] ) ) {
                 return;
             }
-            $mwpDir = MainWP_System_Utility::get_mainwp_dir();
-            $mwpDir = $mwpDir[0];
-            $mwpdl  = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
-            $file   = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
+            $private_root = isset( $_GET['root'] ) && 'private' === $_GET['root'];
+            if ( $private_root ) {
+                if ( ! is_user_logged_in() ) {
+                    return;
+                }
+                if ( wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+                    return;
+                }
+                if ( ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) || ! \mainwp_current_user_can( 'dashboard', 'download_backups' ) ) {
+                    return;
+                }
+                $mwpdl    = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
+                $decoded  = rawurldecode( $mwpdl );
+                $segments = explode( '/', $decoded );
+                $site_id  = isset( $segments[1] ) ? (int) $segments[1] : 0;
+                if ( 'sites' !== ( $segments[0] ?? '' ) || $site_id <= 0 || ( $segments[1] ?? '' ) !== (string) $site_id || empty( $segments[2] ) ) {
+                    return;
+                }
+                $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+                if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                    return;
+                }
+                $mwpDir = MainWP_Backup_Private_Root::resolve();
+                if ( is_wp_error( $mwpDir ) || stristr( $decoded, '..' ) ) {
+                    return;
+                }
+                $file = trailingslashit( $mwpDir ) . $decoded;
+                if ( ! MainWP_Backup_File_Manager::path_is_confined_to( $file, $mwpDir ) || ! is_file( $file ) ) {
+                    return;
+                }
+            } else {
+                $mwpdl    = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
+                $segments = explode( '/', ltrim( strtolower( wp_normalize_path( rawurldecode( $mwpdl ) ) ), '/' ) );
+                // Diagnostics must pass the user-bound admin-post checks.
+                while ( isset( $segments[0] ) && ( '' === $segments[0] || '.' === $segments[0] ) ) {
+                    array_shift( $segments );
+                }
+                if ( strtolower( MainWP_Backup_Diagnostics::SUBDIR ) === ( $segments[0] ?? '' ) ) {
+                    return;
+                }
+                $mwpDir = MainWP_System_Utility::get_mainwp_dir();
+                $mwpDir = $mwpDir[0];
+            }
+            $mwpdl = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
+            $file  = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
+
+            if ( ! $private_root && is_file( $file ) ) {
+                $diagnostics_dir = MainWP_Backup_Diagnostics::instance()->diagnostics_dir();
+                if ( MainWP_Backup_File_Manager::path_is_confined_to( $file, $diagnostics_dir ) ) {
+                    return;
+                }
+            }
 
             $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
@@ -939,6 +1022,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Post_Plugin_Theme_Handler::instance()->init();
         MainWP_Post_Extension_Handler::instance()->init();
         MainWP_Post_Backup_Handler::instance()->init();
+        MainWP_Backup_Storage_Handler::instance()->init();
         MainWP_Manage_Sites_Filter_Segment::get_instance()->admin_init();
         MainWP_Ui_Manage_Widgets_Layout::get_instance()->admin_init();
 
@@ -999,7 +1083,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         wp_localize_script( 'mainwp', 'security_nonces', $security_nonces );
 
         wp_enqueue_script( 'thickbox' );
-        wp_enqueue_script( 'user-profile' );
         wp_enqueue_style( 'thickbox' );
 
         $load_gridstack = false;
@@ -2164,10 +2247,30 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Check if single user environment.
      *
+     * Single-user has always been the only shipped mode: no released code
+     * computes this, and per-user access on multi-user installs is the Team
+     * Control extension's capability model (the mainwp_currentusercan and
+     * mainwp_currentuserallowedaccesssites filters), which ignores the row
+     * userid ownership layer entirely. The filter below arms that legacy
+     * ownership layer (can_edit_website(), userid-scoped site and group
+     * queries, per-user extension prefs) for installs that opt in; do not
+     * flip it on an install using Team Control, or the two models will
+     * contradict each other. The private-files root (encryption keys under
+     * pk/) is deliberately NOT keyed off this - see
+     * MainWP_System_Utility::get_mainwp_specific_dir().
+     *
      * @return boolean true|false.
      */
     public function is_single_user() {
-        return true;
+        /**
+         * Filter whether the Dashboard runs in single-user mode.
+         *
+         * Default true, matching every shipped release. Returning false
+         * arms the legacy per-user ownership gates dashboard-wide.
+         *
+         * @param bool $single_user Whether the Dashboard is single-user.
+         */
+        return (bool) apply_filters( 'mainwp_is_single_user', true );
     }
 
     /**

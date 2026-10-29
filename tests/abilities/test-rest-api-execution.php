@@ -141,6 +141,23 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Accept the registry's unknown-ability notice only on cores that raise it.
+	 *
+	 * WordPress 7.0 calls _doing_it_wrong() from WP_Abilities_Registry::get_registered()
+	 * for an unregistered name; 7.1 returns null silently. The base test case fails on
+	 * both an unexpected notice and an expected one that never fires, so the
+	 * expectation is set from what the request actually raised. It is matched on
+	 * the ability name rather than on core's exact wording, so any other
+	 * incorrect-usage notice from the same method still fails the test.
+	 */
+	protected function expect_registry_notice_if_raised( string $ability_name ): void {
+		$caught = (string) ( $this->caught_doing_it_wrong['WP_Abilities_Registry::get_registered'] ?? '' );
+		if ( '' !== $caught && false !== strpos( $caught, $ability_name ) ) {
+			$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+		}
+	}
+
+	/**
 	 * Authenticate as admin for REST requests.
 	 *
 	 * @return void
@@ -1093,11 +1110,9 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 		$this->skip_if_no_abilities_api();
 		$this->authenticate_as_admin();
 
-		// Expect _doing_it_wrong notice when trying to fetch non-existent ability.
-		$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
-
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/nonexistent-v1' ) );
 		$response = rest_do_request( $request );
+		$this->expect_registry_notice_if_raised( 'mainwp/nonexistent-v1' );
 
 		$this->assertEquals(
 			404,
@@ -1188,12 +1203,10 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 		$this->skip_if_no_abilities_api();
 		$this->authenticate_as_admin();
 
-		// Abilities API triggers _doing_it_wrong() for non-existent abilities.
-		$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
-
 		// Trigger an error by requesting non-existent ability.
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/nonexistent-v1' ) );
 		$response = rest_do_request( $request );
+		$this->expect_registry_notice_if_raised( 'mainwp/nonexistent-v1' );
 
 		$data = $response->get_data();
 

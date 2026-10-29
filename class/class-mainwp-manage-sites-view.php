@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Settings;
+
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -259,7 +261,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         if ( ! empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
             unset( $site_pages['ManageSitesBackups'] );
-        } elseif ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        } elseif ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             if ( isset( $site_pages['ManageSitesBackups'] ) ) {
                 unset( $site_pages['ManageSitesBackups'] );
             }
@@ -454,7 +456,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'uniqueId'           => '',
                     'http_user'          => '',
                     'http_pass'          => '',
-                    'verify_certificate' => 1,
+                    'verify_certificate' => 2,
                     'ssl_version'        => 'auto',
                 );
 
@@ -543,7 +545,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( wp_unslash( $site['security_id'] ) ) : '',
                         'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( wp_unslash( $site['http_username'] ) ) : '',
                         'http_pass'          => ! empty( $site['http_password'] ) ? wp_unslash( $site['http_password'] ) : '',
-                        'verify_certificate' => isset( $site['verify_certificate'] ) ? intval( $site['verify_certificate'] ) : 1,
+                        'verify_certificate' => static::normalize_ssl_verify( $site['verify_certificate'] ?? null ),
                         'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( wp_unslash( $site['ssl_version'] ) ) : 'auto',
                     );
 
@@ -940,7 +942,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             MainWP_Client_Handler::show_notice_existed_contact_emails();
             ?>
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-            <?php if ( $updated ) { ?>
+            <?php if ( $updated && ( ! class_exists( Api_Backups_Settings::class ) || ! Api_Backups_Settings::get_instance()->has_credential_save_failed() ) ) { ?>
             <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
             <?php } ?>
             <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data" class="ui form">
@@ -1501,7 +1503,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 MainWP_Manage_Sites::render_email_settings( $website );
 
-                MainWP_Manage_Backups::render_individual_settings( $website );
+                MainWP_Backup_Settings_View::render_individual_settings( $website );
 
                 do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
                 do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
@@ -2090,10 +2092,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     );
 
                     if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-                        $err        = urldecode( $information['error'] );
-                        $_error     = MainWP_Utility::esc_content( $err );
-                        $error_code = isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
-                        $_error     = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $_error, '', $error_code ), $output );
+                        $err                  = urldecode( $information['error'] );
+                        $_error               = MainWP_Utility::esc_content( $err );
+                        $error_code           = isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
+                        $reconnect_exception  = new MainWP_Exception( $_error, '', $error_code );
+                        $_error               = MainWP_Connect_Failure_Ux::sanitize_registration_error( MainWP_Error_Helper::get_error_message( $reconnect_exception ) );
+                        $_error              .= MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( $reconnect_exception, $output ) );
+                        $output['failure_ux'] = $_error;
                     } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 
                         $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $privkey, $website->id, true );
@@ -2128,7 +2133,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {
-                    $_error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
+                    $_error = 'HTTP error' . ( null !== $e->get_message_extra( false ) ? ' - ' . esc_html( $e->get_message_extra( false ) ) : '' );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $_error = MainWP_Error_Helper::get_error_not_detected_connect(); // phpcs:ignore WordPress.Security.EscapeOutput
                 } elseif ( 'TIMEOUT' === $e->getMessage() ) {
@@ -2160,6 +2165,26 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Convert a request choice to the stored TLS policy.
+     *
+     * An untouched Add Site checkbox inherits the global setting.
+     *
+     * @param mixed $value       Request value; omitted or blank inherits global.
+     * @param bool  $ui_default  Whether 1 is the default Add Site checkbox.
+     * @param mixed $ui_explicit Whether the user changed the Add Site checkbox.
+     * @return int 0 disables verification, 1 enables it, 2 inherits global.
+     */
+    public static function normalize_ssl_verify( $value = null, $ui_default = false, $ui_explicit = false ) {
+        if ( in_array( $value, array( 0, '0', false ), true ) ) {
+            return 0;
+        }
+        if ( in_array( $value, array( 1, '1', true ), true ) ) {
+            return $ui_default && ! in_array( $ui_explicit, array( 1, '1', true ), true ) ? 2 : 1;
+        }
+        return 2;
+    }
+
+    /**
      * Method add_site()
      *
      * Add Child Site.
@@ -2176,7 +2201,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $params['wpadmin']            = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
         $params['adminpwd']           = isset( $_POST['managesites_add_adminpwd'] ) ?   wp_unslash( $_POST['managesites_add_adminpwd'] ) : ''; //phpcs:ignore -- NOSONAR - requires urlencoded passwd, do not sanitize for specical chars.
         $params['unique_id']          = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
-        $params['ssl_verify']         = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
+        $params['ssl_verify']         = static::normalize_ssl_verify( wp_unslash( $_POST['ssl_verify'] ?? $_POST['verify_certificate'] ?? null ), empty( $_POST['bulk'] ), wp_unslash( $_POST['ssl_verify_explicit'] ?? null ) );
         $params['ssl_version']        = empty( $_POST['ssl_version'] ) ? false : intval( $_POST['ssl_version'] );
         $params['force_use_ipv4']     = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $params['url'] );
         $params['http_user']          = isset( $_POST['managesites_add_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_http_user'] ) ) : '';
@@ -2187,6 +2212,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $params['uploaded_site_icon'] = isset( $_POST['uploaded_icon'] ) && ! empty( $_POST['uploaded_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['uploaded_icon'] ) ) : '';
         $params['selected_site_icon'] = isset( $_POST['selected_icon'] ) && ! empty( $_POST['selected_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['selected_icon'] ) ) : '';
         $params['cust_icon_color']    = isset( $_POST['cust_color'] ) && ! empty( $_POST['cust_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['cust_color'] ) ) : '';
+        $params['defer_site_icon']    = ! empty( $_POST['defer_site_icon'] );
         $params['group_creation_ui']  = true;
 
         if ( isset( $_POST['qsw_page'] ) ) {
@@ -2241,7 +2267,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param array $params  Child site add parameters.
      */
     private static function maybe_fetch_initial_site_favicon( $site_id, $params ) {
-        if ( empty( $site_id ) ) {
+        if ( empty( $site_id ) || ! empty( $params['defer_site_icon'] ) ) {
             return;
         }
 
@@ -2410,7 +2436,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 $url = $params['url'];
 
-                $verifyCertificate = ( ! isset( $params['ssl_verify'] ) || empty( $params['ssl_verify'] ) ) ? false : true;
+                $verifyCertificate = static::normalize_ssl_verify( $params['ssl_verify'] ?? null );
                 $sslVersion        = ! isset( $params['ssl_version'] ) || empty( $params['ssl_version'] ) ? 0 : $params['ssl_version'];
                 $addUniqueId       = isset( $params['unique_id'] ) ? $params['unique_id'] : '';
                 $http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';
@@ -2453,7 +2479,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             $error_code = $output['error_code'];
                         }
                     }
-                    $error = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $err, '', $error_code ), $output );
+                    $exception            = new MainWP_Exception( $err, '', $error_code );
+                    $error                = MainWP_Connect_Failure_Ux::sanitize_registration_error( MainWP_Error_Helper::get_error_message( $exception ) );
+                    $error               .= MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( $exception, $output ) );
+                    $output['failure_ux'] = $error;
                 } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
                     $reported_site_url = isset( $information['siteurl'] ) ? trim( wp_unslash( $information['siteurl'] ) ) : '';
 
@@ -2481,7 +2510,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $others = array(
                         'groupids'          => $groupids,
                         'groupnames'        => $groupnames,
-                        'verifyCertificate' => $verifyCertificate || false === $verifyCertificate ? 2 : 0, // 2 use global.
+                        'verifyCertificate' => $verifyCertificate,
                         'addUniqueId'       => $addUniqueId,
                         'http_user'         => $http_user,
                         'http_pass'         => $http_pass,
@@ -2527,10 +2556,16 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         MainWP_DB::instance()->update_website_option( $obj_site, 'cust_site_icon_info', $icon_info );
                     }
 
-                    if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
+                    // add_website() returns false when the row or its credentials cannot be saved; callers read an empty $error as success.
+                    if ( ! $id ) {
+                        $error = esc_html__( 'The site could not be saved to the Dashboard. Please try again.', 'mainwp' );
+                        // Both Add Site screens show failure_ux in place of the error, and the handler would otherwise
+                        // fill it with HTTP diagnostics for a handshake that succeeded.
+                        $output['failure_ux'] = '<p>' . $error . '</p>';
+                    } elseif ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
                         set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
                         /* translators: 1: Opening div tag, 2: Site name wrapped in strong tag, 3: Closing div tag, 4: Continue button anchor tag. */
-                        $message = sprintf( esc_html__( '%4$s%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page. Proceeding to the next step in 3 seconds...', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>', '<a href="admin.php?page=mainwp-setup&step=monitoring" class="ui mini basic green right floated button">Continue</a>' );
+                        $message = sprintf( esc_html__( '%4$s%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page. Proceeding to the next step in 3 seconds...', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>', '<a href="admin.php?page=mainwp-setup&step=next_steps&siteid=' . intval( $id ) . '" class="ui mini basic green right floated button">Continue</a>' );
                     } else {
                         /* translators: 1: Opening anchor tag for dashboard link, 2: Closing anchor tag, 3: Line break HTML tag. */
                         $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );
@@ -2578,7 +2613,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {
-                    $error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
+                    $error = 'HTTP error' . ( null !== $e->get_message_extra( false ) ? ' - ' . esc_html( $e->get_message_extra( false ) ) : '' );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $error = MainWP_Error_Helper::get_error_not_detected_connect();
                 } elseif ( 'TIMEOUT' === $e->getMessage() ) {

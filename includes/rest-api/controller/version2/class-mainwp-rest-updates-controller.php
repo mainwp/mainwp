@@ -16,6 +16,7 @@ use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\Rest_Api_V1_Helper;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_Common_Functions;
+use MainWP\Dashboard\MainWP_Common_Handler;
 use MainWP\Dashboard\MainWP_Cron_Jobs_Batch;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Auto_Updates_DB;
@@ -349,7 +350,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         }
 
         $all_updates = array();
-        $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true, null, 'wp.url', false, false, null, false, array( 'ignored_wp_upgrades', 'rollback_updates_data' ) ) );
+        $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true, null, 'wp.url', false, false, null, false, array( 'ignored_wp_upgrades', 'rollback_updates_data', 'ignored_trans_updates' ) ) );
 
         if ( empty( $type ) ) {
             $type[] = 'all';
@@ -392,6 +393,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             $plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
             $theme_upgrades       = json_decode( $website->theme_upgrades, true );
             $translation_upgrades = json_decode( $website->translation_upgrades, true );
+
+            if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
+                $translation_upgrades = array();
+            }
 
             if ( $website->is_ignoreCoreUpdates ) {
                 $wp_upgrades = array();
@@ -547,7 +552,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         $rollback_themes  = array();
 
         // get data.
-        $website = MainWP_DB::instance()->get_website_by_id( $item->id, false, array( 'ignored_wp_upgrades', 'wp_upgrades', 'rollback_updates_data' ) );
+        $website = MainWP_DB::instance()->get_website_by_id( $item->id, false, array( 'ignored_wp_upgrades', 'wp_upgrades', 'rollback_updates_data', 'ignored_trans_updates' ) );
 
         $wp_upgrades          = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
         $plugin_upgrades      = ! empty( $website->plugin_upgrades ) ? json_decode( $website->plugin_upgrades, true ) : array();
@@ -567,6 +572,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         }
 
         if ( ! is_array( $translation_upgrades ) ) {
+            $translation_upgrades = array();
+        }
+
+        if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
             $translation_upgrades = array();
         }
 
@@ -851,7 +860,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      */
     protected function ignored_updates_error( $error, $request = null ) {
         $code = $error->get_error_code();
-        if ( null !== $request && 'ability_invalid_permissions' === $code && 'all' !== \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all() ) {
+        if ( null !== $request && 'ability_invalid_permissions' === $code && 'all' !== \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all( false ) ) {
             return $this->get_rest_data_error( is_numeric( $request['id_domain'] ) ? 'id' : 'domain', 'site' );
         }
         if ( 'ability_invalid_permissions' === $code ) {
@@ -869,6 +878,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @return WP_Error|WP_REST_Response
      */
     public function update_all_items_start( $request ) { //phpcs:ignore -- NOSONAR complex function.
+        $permission = $this->check_all_update_rights();
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $batch_updates_running = get_option( 'mainwp_batch_updates_is_running', 0 );
         $start_time            = get_option( 'mainwp_batch_updates_start_time', 0 );
@@ -975,6 +988,11 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @return WP_Error|WP_REST_Response
      */
     public function update_all_items_inidividual_site_start( $request ) { //phpcs:ignore -- NOSONAR complex function.
+        $permission = $this->check_all_update_rights();
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
 
         if ( is_wp_error( $website ) ) {
@@ -1100,6 +1118,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @return WP_Error|WP_REST_Response
      */
     public function update_wp_site( $request ) {
+        $permission = $this->check_operation_right( 'update_wordpress' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
 
@@ -1164,6 +1186,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @return WP_Error|WP_REST_Response
      */
     public function update_plugins_site( $request ) {  //phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'update_plugins' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
 
@@ -1251,6 +1277,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @return WP_Error|WP_REST_Response
      */
     public function update_themes_site( $request ) { //phpcs:ignore -- NOSONAR complex function.
+        $permission = $this->check_operation_right( 'update_themes' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
 
@@ -1338,11 +1368,24 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @return WP_Error|WP_REST_Response
      */
     public function update_translations_site( $request ) {
+        $permission = $this->check_operation_right( 'update_translations' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
 
         if ( is_wp_error( $website ) ) {
             return $website;
+        }
+
+        if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => esc_html__( 'Translations ignored updates per site.', 'mainwp' ),
+                )
+            );
         }
 
         $prepared_slugs = ! empty( $request['slug'] ) ? array_map( 'trim', wp_parse_list( $request['slug'] ) ) : array();
@@ -1399,6 +1442,11 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
          * @return WP_Error|WP_REST_Response
          */
     public function ignore_update_plugins_of_site( $request ) {
+        $permission = $this->check_operation_right( 'ignore_unignore_updates' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
 
         if ( is_wp_error( $website ) ) {
@@ -1414,6 +1462,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @return WP_Error|WP_REST_Response
      */
     public function ignore_update_themes_of_site( $request ) {
+        $permission = $this->check_operation_right( 'ignore_unignore_updates' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
 
@@ -1570,6 +1622,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      * @return WP_Error|WP_REST_Response
      */
     public function ignore_update_core_of_site( $request ) {
+        $permission = $this->check_operation_right( 'ignore_unignore_updates' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
 
@@ -1591,6 +1647,22 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         );
 
         return rest_ensure_response( $resp_data );
+    }
+
+    /**
+     * Both bulk update routes request every update type, including legacy fallbacks.
+     *
+     * @return true|WP_Error
+     */
+    private function check_all_update_rights() {
+        foreach ( MainWP_Abilities_Util::UPDATE_TYPE_RIGHTS as $right ) {
+            $permission = $this->check_operation_right( $right );
+            if ( is_wp_error( $permission ) ) {
+                return $permission;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -281,6 +281,44 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method site_has_woocommerce()
+     *
+     * Whether a child site runs WooCommerce, read from the plugin list already
+     * synced to the Dashboard so no child round-trip is needed. Used to warn
+     * before a restore that would overwrite a live store's newer orders.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return bool True when woocommerce/woocommerce.php is present and active.
+     */
+    public static function site_has_woocommerce( $site_id ) {
+        $website = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+        if ( empty( $website ) || empty( $website->plugins ) ) {
+            return false;
+        }
+
+        $plugins = json_decode( (string) $website->plugins, true );
+        if ( ! is_array( $plugins ) ) {
+            return false;
+        }
+
+        // The synced plugins column is a numeric list of {slug, active, ...}
+        // objects (the shape every other reader iterates). Match WooCommerce by
+        // its slug, while still tolerating an older path-keyed map.
+        foreach ( $plugins as $key => $plugin ) {
+            if ( ! is_array( $plugin ) ) {
+                continue;
+            }
+            $slug = isset( $plugin['slug'] ) ? (string) $plugin['slug'] : (string) $key;
+            if ( 'woocommerce/woocommerce.php' === $slug ) {
+                return 1 === (int) ( $plugin['active'] ?? 0 );
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Method get_sub_array_with_limit()
      *
      * Get sub array.

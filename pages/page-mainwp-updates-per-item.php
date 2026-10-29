@@ -193,7 +193,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         $compatible_wp  = isset( $plugin_upgrade['php_compatible'] ) ? $plugin_upgrade['php_compatible'] : true;
 
                                         ?>
-                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( $website->name ); ?>" site_url="<?php echo esc_attr( $website->url ); ?>" plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" plugin_name="<?php echo esc_attr( $plugin_upgrade['Name'] ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" site_name="<?php echo esc_attr( stripslashes( $website->name ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?> tz-info="<?php echo esc_attr( $tz_info ); ?>">
+                                        <tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" site_url="<?php echo esc_attr( $website->url ); ?>" plugin_slug="<?php echo esc_attr( $plugin_name ); ?>" plugin_name="<?php echo esc_attr( $plugin_upgrade['Name'] ); ?>" last-version="<?php echo esc_attr( rawurlencode( $last_version ) ); ?>" updated="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?> tz-info="<?php echo esc_attr( $tz_info ); ?>">
                                             <?php
                                             $row_columns     = $updates_table_helper->render_columns( $row_columns, $website, $others );
                                             $action_rendered = isset( $row_columns['action'] ) ? true : false;

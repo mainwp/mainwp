@@ -99,8 +99,9 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
      * Restore the job owner and confirm the account can still manage sites.
      *
      * Cron has no authenticated owner by default. Site scope and rights must
-     * be checked as the user who queued the job. Deleted accounts and accounts
-     * that lost manage_options must not continue driving remote calls.
+     * be checked as the user who queued the job. Scoped Team Control roles may
+     * lack manage_options; they must retain explicit site access, and the worker
+     * rechecks required operation rights and each target before remote calls.
      *
      * @param array $job Job data (reads user_id).
      *
@@ -120,12 +121,16 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
             return false;
         }
 
-        if ( ! user_can( $owner_id, 'manage_options' ) ) {
-            return false;
+        wp_set_current_user( $owner_id );
+        if ( current_user_can( 'manage_options' ) ) {
+            return true;
         }
 
-        wp_set_current_user( $owner_id );
-        return true;
+        // Without an explicit scope grant, a non-admin account cannot resume
+        // a job. In particular, the default 'all' without Team Control is not
+        // evidence that a demoted account retains MainWP access.
+        $allowed_sites = MainWP_Abilities_Util::get_configured_site_ids();
+        return is_array( $allowed_sites ) && ! empty( $allowed_sites );
     }
 
     /**
@@ -501,10 +506,11 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
             }
 
             // Normalize result arrays defensively (transient data could be corrupted).
-            $job['updated']   = isset( $job['updated'] ) && is_array( $job['updated'] ) ? $job['updated'] : array();
-            $job['errors']    = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
-            $job['skipped']   = isset( $job['skipped'] ) && is_array( $job['skipped'] ) ? $job['skipped'] : array();
-            $job['unchanged'] = isset( $job['unchanged'] ) && is_array( $job['unchanged'] ) ? $job['unchanged'] : array();
+            $job['updated']     = isset( $job['updated'] ) && is_array( $job['updated'] ) ? $job['updated'] : array();
+            $job['errors']      = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
+            $job['skipped']     = isset( $job['skipped'] ) && is_array( $job['skipped'] ) ? $job['skipped'] : array();
+            $job['unchanged']   = isset( $job['unchanged'] ) && is_array( $job['unchanged'] ) ? $job['unchanged'] : array();
+            $job['backup_gate'] = isset( $job['backup_gate'] ) && is_array( $job['backup_gate'] ) ? $job['backup_gate'] : array();
 
             // Calculate already processed site IDs.
             $processed_ids = array_merge(
@@ -562,7 +568,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                         : array();
 
                     // The restored owner's global lists and current holds are read at dispatch time.
-                    $plan = MainWP_Abilities_Updates::build_update_plan( array( $website ), $job['types'], $specific_items );
+                    $plan = MainWP_Abilities_Updates::build_update_plan( array( $website ), $job['types'], $specific_items, MainWP_Abilities_Util::get_boolean_input( $job, 'ignore_backup_gate' ) );
                     if ( ! empty( $plan['errors'] ) ) {
                         foreach ( $plan['errors'] as $error ) {
                             $job['errors'][] = array(
@@ -581,6 +587,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                         'translation' => array(),
                     );
                     foreach ( $plan['sites'] as $entry ) {
+                        $job['backup_gate'][ $site_id ] = array( 'site_id' => (int) $site_id ) + $entry['backup_gate'];
                         foreach ( $entry['skipped'] as $item ) {
                             $job['skipped'][] = array(
                                 'site_id' => $site_id,
@@ -592,6 +599,9 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                         foreach ( $entry['items'] as $item ) {
                             $planned_slugs[ $item['type'] ][] = $item['slug'];
                         }
+                    }
+                    if ( ! empty( $job['backup_gate'][ $site_id ]['overridden'] ) && array_filter( $planned_slugs ) ) {
+                        MainWP_Backup_Run_History::record_gate_override( (int) $site_id, $job['backup_gate'][ $site_id ]['verdict'], $job_id );
                     }
 
                     // Process each update type.

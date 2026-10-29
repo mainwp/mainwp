@@ -434,7 +434,7 @@ class MainWP_Application_Passwords {  // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         // 3.  Non-admins: only allow if Team Control explicitly grants.
-        $explicit_grant = apply_filters( 'mainwp_currentusercan', false, 'rest_api', 'view_all_application_passwords' );
+        $explicit_grant = MainWP_System::filter_current_user_permission( false, 'rest_api', 'view_all_application_passwords' );
         return (bool) $explicit_grant;
     }
 
@@ -455,7 +455,7 @@ class MainWP_Application_Passwords {  // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         // 3. Non-admins: only allow if Team Control explicitly grants.
-        $explicit_grant = apply_filters( 'mainwp_currentusercan', false, 'rest_api', 'manage_application_passwords' );
+        $explicit_grant = MainWP_System::filter_current_user_permission( false, 'rest_api', 'manage_application_passwords' );
         return (bool) $explicit_grant;
     }
 

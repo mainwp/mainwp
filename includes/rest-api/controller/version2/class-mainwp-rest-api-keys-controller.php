@@ -10,6 +10,7 @@
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_Rest_Api_Page;
+use MainWP\Dashboard\MainWP_System_Utility;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -139,6 +140,18 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function list_keys( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        // Match the API Access screen: any key-management right allows the list.
+        $permission = $this->check_operation_right( 'manage_rest_api_keys', 'rest_api' );
+        foreach ( array( 'create_rest_api_keys', 'edit_rest_api_keys', 'delete_rest_api_keys' ) as $right ) {
+            if ( ! is_wp_error( $permission ) ) {
+                break;
+            }
+            $permission = $this->check_operation_right( $right, 'rest_api' );
+        }
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $data = array();
         // Get params.
         $args     = $this->prepare_objects_query( $request );
@@ -225,6 +238,11 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function create_new_key( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'create_rest_api_keys', 'rest_api' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $body = $this->get_request_body_data( $request );
         if ( is_wp_error( $body ) ) {
             return $body;
@@ -293,6 +311,11 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function edit_key( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'edit_rest_api_keys', 'rest_api' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get API key.
         $api_key = $this->get_request_item( $request );
         if ( empty( $api_key ) ) {
@@ -351,6 +374,13 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Edit api key v1.
         if ( ! is_numeric( $cons_key_id ) ) {
+            if ( ! MainWP_System_Utility::is_admin() || MainWP_System_Utility::is_team_control_staff() ) {
+                return new WP_Error(
+                    'mainwp_restricted_account',
+                    __( 'Only unrestricted administrators can edit legacy API keys.', 'mainwp' ),
+                    array( 'status' => 403 )
+                );
+            }
             $save     = false;
             $all_keys = get_option( 'mainwp_rest_api_keys', false );
             if ( is_array( $all_keys ) && isset( $all_keys[ $cons_key_id ] ) ) {
@@ -401,6 +431,11 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function delete_key( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'delete_rest_api_keys', 'rest_api' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get API key.
         $api_key = $this->get_request_item( $request );
         if ( empty( $api_key ) ) {

@@ -70,6 +70,16 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
     protected $auth_method = '';
 
     /**
+     * REST requests currently running permission checks or callbacks.
+     *
+     * Keep nested requests separate so a foreign route cannot inherit the
+     * outer MainWP request's authorization for internal ability calls.
+     *
+     * @var WP_REST_Request[]
+     */
+    private $rest_requests = array();
+
+    /**
      * Static variable to hold the single instance of the class.
      *
      * @static
@@ -114,6 +124,8 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         add_filter( 'rest_authentication_errors', array( $this, 'check_authentication_error' ), 15 );
         add_filter( 'rest_post_dispatch', array( $this, 'send_unauthorized_headers' ), 50 );
         add_filter( 'rest_pre_dispatch', array( $this, 'check_user_permissions' ), 10, 3 );
+        add_filter( 'rest_request_before_callbacks', array( $this, 'begin_rest_request' ), -PHP_INT_MAX, 3 );
+        add_filter( 'rest_request_after_callbacks', array( $this, 'end_rest_request' ), PHP_INT_MAX, 3 );
         add_action( 'deleted_user', array( $this, 'delete_user_api_keys' ), 10, 3 );
         add_action( 'remove_user_from_blog', array( $this, 'remove_user_from_blog_api_keys' ), 10, 3 );
         add_action( 'revoked_super_admin', array( $this, 'revoked_super_admin_api_keys' ) );
@@ -938,26 +950,36 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid timestamp.', 'mainwp' ), array( 'status' => 401 ) );
         }
 
+        if ( ! is_string( $nonce ) ) {
+            return $this->refused_key_error();
+        }
+
         $used_nonces = maybe_unserialize( $user->nonces );
 
         if ( empty( $used_nonces ) ) {
             $used_nonces = array();
         }
 
-        if ( in_array( $nonce, $used_nonces, true ) ) {
-            return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid nonce - nonce has already been used.', 'mainwp' ), array( 'status' => 401 ) );
-        }
-
-        $used_nonces[ $timestamp ] = $nonce;
-
-        // Remove expired nonces.
-        foreach ( $used_nonces as $nonce_timestamp => $nonce ) {
-            if ( $nonce_timestamp < ( time() - $valid_window ) ) {
-                unset( $used_nonces[ $nonce_timestamp ] );
+        $nonce_history = array();
+        foreach ( $used_nonces as $stored_key => $stored_value ) {
+            // Legacy entries use timestamp keys and string nonce values.
+            $nonce_timestamp = is_int( $stored_value ) ? $stored_value : (int) $stored_key;
+            $stored_nonce    = is_int( $stored_value ) ? $stored_key : $stored_value;
+            if ( ! is_string( $stored_nonce ) && ! is_int( $stored_nonce ) ) {
+                continue;
+            }
+            if ( $nonce_timestamp >= ( time() - $valid_window ) ) {
+                $nonce_history[ $stored_nonce ] = $nonce_timestamp;
             }
         }
 
-        $used_nonces = maybe_serialize( $used_nonces );
+        if ( isset( $nonce_history[ $nonce ] ) ) {
+            return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid nonce - nonce has already been used.', 'mainwp' ), array( 'status' => 401 ) );
+        }
+
+        $nonce_history[ $nonce ] = (int) $timestamp;
+
+        $used_nonces = maybe_serialize( $nonce_history );
 
         $wpdb->update(
             MainWP_DB::instance()->get_table_name( 'api_keys' ),
@@ -1178,6 +1200,62 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      */
     public function get_rest_valid_user() {
         return $this->user;
+    }
+
+    /**
+     * Track the request before its permission callback runs.
+     *
+     * @param mixed           $response Existing response.
+     * @param array           $handler  Matched route handler.
+     * @param WP_REST_Request $request  Request being dispatched.
+     * @return mixed Unchanged response.
+     */
+    public function begin_rest_request( $response, $handler, $request ) {
+        unset( $handler );
+        $this->rest_requests[] = $request;
+        return $response;
+    }
+
+    /**
+     * Restore the outer request after a nested dispatch finishes.
+     *
+     * @param mixed           $response Existing response.
+     * @param array           $handler  Matched route handler.
+     * @param WP_REST_Request $request  Request being dispatched.
+     * @return mixed Unchanged response.
+     */
+    public function end_rest_request( $response, $handler, $request ) {
+        unset( $handler );
+        if ( end( $this->rest_requests ) === $request ) {
+            array_pop( $this->rest_requests );
+        }
+        return $response;
+    }
+
+    /**
+     * Authenticate internal ability calls made by a REST v2 handler.
+     *
+     * A migrated Team Control role need not hold manage_options. Its key
+     * authenticates this request; ability and controller checks still enforce
+     * operation rights and object scope. Other entry points retain their gates.
+     *
+     * @return true|WP_Error|null Null outside a MainWP REST v2 callback.
+     */
+    public function get_abilities_rest_permission() {
+        $request = end( $this->rest_requests );
+        if ( ! $request instanceof WP_REST_Request || ! preg_match( '#^/mainwp/v2(?:/|$)#i', $request->get_route() ) ) {
+            return null;
+        }
+
+        if ( empty( $this->user->user_id ) || get_current_user_id() !== (int) $this->user->user_id ) {
+            return new WP_Error(
+                'mainwp_permission_denied',
+                __( 'The current user does not match the API key owner.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        return $this->is_valid_permissions( $request );
     }
 
     /**

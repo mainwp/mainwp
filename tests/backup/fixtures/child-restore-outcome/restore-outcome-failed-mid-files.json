@@ -1,0 +1,27 @@
+{
+    "task_id": "<task_id>",
+    "phase": "failed",
+    "type": "restore",
+    "sub_state": {
+        "verification": {
+            "outcome": {
+                "files": "left_partial",
+                "database": "not_started",
+                "files_copy_taken": false,
+                "phase_reached": "restoring_files"
+            }
+        },
+        "params": [],
+        "error": {
+            "message": "checkpoint fixture failed",
+            "code": "mainwp_restore_db_replay"
+        }
+    },
+    "started_at": "<started_at>",
+    "last_progress_at": "<last_progress_at>",
+    "max_wall_clock_at": "<max_wall_clock_at>",
+    "resume_count": 0,
+    "max_resumes": 20,
+    "error": "checkpoint fixture failed",
+    "error_code": "mainwp_restore_db_replay"
+}

@@ -1,0 +1,36 @@
+{
+    "task_id": "<task_id>",
+    "phase": "completed",
+    "type": "restore_files",
+    "sub_state": {
+        "verification": {
+            "outcome": {
+                "files": "applied",
+                "database": "not_applicable",
+                "files_copy_taken": false,
+                "phase_reached": "verify_site"
+            },
+            "row_counts_ok": true,
+            "identity_verify_delta": 0,
+            "sentinel_ok": true,
+            "loopback_status": 200,
+            "sub_site_probes": [],
+            "url_rewrite_renamed_over": [],
+            "url_rewrite_failed_updates": 0,
+            "url_rewrite_error": "",
+            "reconcile": {
+                "status": "skipped",
+                "reason": "no_manifest"
+            },
+            "cache_purge": {
+                "attempted": false
+            }
+        },
+        "params": []
+    },
+    "started_at": "<started_at>",
+    "last_progress_at": "<last_progress_at>",
+    "max_wall_clock_at": "<max_wall_clock_at>",
+    "resume_count": 0,
+    "max_resumes": 20
+}

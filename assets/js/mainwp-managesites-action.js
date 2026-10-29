@@ -237,28 +237,28 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
     rowObj.html('<td colspan="999"></td>');
 
     response = response.trim();
-    let msg = '', error = '';
+    let msg = '', error = null;
     if (response.substring(0, 5) == 'ERROR') {
       if (response.length == 5) {
-        error = MainWP.I18n.t('Undefined error occurred. Please try again.');
-        error = siteUrl + ' - ' + error;
+        error = jQuery('<span>').text(siteUrl + ' - ' + MainWP.I18n.t('Undefined error occurred. Please try again.'));
       } else {
-        error = response.substring(6);
-        let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', false, true);
-        if (false !== err && true !== err && '' != err) {
-          error = err; // decoded JSON error. Plain text, including a request timeout, stays as returned.
-        }
+        error = mainwp_reconnect_error_nodes(response.substring(6));
       }
+    } else if (response === 'reconnect_failed') {
+      error = mainwp_get_reconnect_error(response, siteId);
     } else {
-      msg = siteUrl + ' - ' + mainwp_get_reconnect_error(response, siteId);
+      msg = siteUrl + ' - ' + mainwp_entities_text(response);
     }
 
     if (msg != '') {
       rowObj.removeClass('error');
       rowObj.addClass('positive');
-      rowObj.html('<td colspan="999"><i class="green check icon"></i>' + msg + '</td>');
-    } else if (error != '') {
-      rowObj.html('<td colspan="999"><i class="red times icon"></i>' + error + '</td>');
+      rowObj.html('<td colspan="999"><i class="green check icon"></i>' + mainwp_html_escape(msg) + '</td>');
+    } else if (error) {
+      rowObj.removeClass('positive');
+      rowObj.addClass('error');
+      rowObj.html('<td colspan="999"><i class="red times icon"></i></td>');
+      rowObj.find('td').append(error);
     }
     mainwp_managesites_bulk_reconnect_next();
   });
@@ -296,24 +296,34 @@ let mainwp_managesites_bulk_remove_specific = function (pCheckedBox) {
     rowObj.html('<td colspan="999"></td>');
     let result = '';
     let error = '';
+    // An error can come with removed_site true (Child unreachable after the Dashboard removal), so the fade follows removed_site.
+    let removed = true === response.removed_site;
     if (response.error != undefined) {
       error = response.error;
-    } else if (response.result == 'SUCCESS') {
-      result = MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled.');
     } else if (response.result == 'NOSITE') {
       error = MainWP.I18n.t('Site not found. Please try again.');
+    } else if (!removed) {
+      error = MainWP.I18n.t('Undefined error. Please try again.');
+    } else if (response.result == 'SUCCESS') {
+      result = MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled.');
     } else {
       result = MainWP.I18n.t('The site has been removed but the MainWP Child plugin could not be disabled.');
     }
 
     if (error != '') {
-      rowObj.html('<td colspan="999"><i class="red times icon"></i>' + error + '</td>');
+      rowObj.removeClass('positive');
+      rowObj.addClass('error');
+      rowObj.html('<td colspan="999"><i class="red times icon"></i>' + mainwp_text_html(error) + '</td>');
+    } else {
+      rowObj.removeClass('error');
+      rowObj.addClass('positive');
+      rowObj.html('<td colspan="999"><i class="green check icon"></i>' + result + '</td>');
     }
-
-    rowObj.html('<td colspan="999"><i class="green check icon"></i>' + result + '</td>');
-    setTimeout(function () {
-      jQuery('tr[siteid=' + id + ']').fadeOut(1000);
-    }, 3000);
+    if (removed) {
+      setTimeout(function () {
+        jQuery('tr[siteid=' + id + ']').fadeOut(1000);
+      }, 3000);
+    }
 
     mainwp_managesites_bulk_remove_next();
   }, 'json');

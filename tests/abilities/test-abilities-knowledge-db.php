@@ -1781,7 +1781,7 @@ PHP;
 			}
 			update_site_option( 'mainwp_db_version', $version );
 			MainWP_Install::instance()->install();
-			$this->assertSame( '9.0.2.8', get_site_option( 'mainwp_db_version' ) );
+			$this->assertSame( $this->shipped_db_version(), get_site_option( 'mainwp_db_version' ) );
 			$this->assertFalse( get_site_option( 'mainwp_knowledge_description_column_confirmed' ) );
 			$this->assertFalse( get_site_option( 'mainwp_knowledge_description_column_repair_pending' ) );
 			$columns = $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ), OBJECT_K );
@@ -1844,7 +1844,7 @@ PHP;
 				}
 				return $sql;
 			} );
-			update_site_option( 'mainwp_db_version', '9.0.2.8' );
+			update_site_option( 'mainwp_db_version', $this->shipped_db_version() );
 			$install = MainWP_Install::instance();
 			$install->install();
 			$this->assertSame( $suppressed, $wpdb->suppress_errors );
@@ -1871,5 +1871,15 @@ PHP;
 			add_filter( 'query', array( $this, '_create_temporary_tables' ) );
 			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
 		}
+	}
+
+	/**
+	 * The db version this build ships. Release lines number their migrations
+	 * differently, so the current-version path is not a fixed string.
+	 */
+	private function shipped_db_version(): string {
+		$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
+		$property->setAccessible( true );
+		return (string) $property->getValue( MainWP_Install::instance() );
 	}
 }

@@ -38,6 +38,21 @@
   --border-color: #dddddd;
 }
 
+:root {
+  --mainwp-onboarding-text: var(--font-color);
+  --mainwp-onboarding-muted: var(--font-light-color);
+  --mainwp-onboarding-surface: var(--background-color);
+  --mainwp-onboarding-surface-secondary: var(--background-color);
+  --mainwp-onboarding-border: var(--border-color);
+  --mainwp-onboarding-link: color-mix(in srgb, var(--accent-color) 95%, #000);
+  --mainwp-onboarding-info-accent: var(--blue-color);
+  --mainwp-onboarding-success: var(--green-color);
+  --mainwp-onboarding-warning: var(--yellow-color);
+  --mainwp-onboarding-danger: color-mix(in srgb, var(--red-color) 80%, #000);
+  --mainwp-onboarding-info-surface: color-mix(in srgb, var(--mainwp-onboarding-info-accent) 10%, var(--mainwp-onboarding-surface));
+  --mainwp-onboarding-icon-foreground: #fff;
+}
+
 /* Fix Colors */
 
 .mainwp-ui.mainwp-custom-theme i.green.icon:not(.inverted) {

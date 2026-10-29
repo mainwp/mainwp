@@ -483,13 +483,18 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
         if ( ! empty( $api_key ) ) {
 
-            $data = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+            try {
+                $data = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+            } catch ( MainWP_Exception $exception ) {
+                wp_send_json( array( 'error' => $exception->getMessage() ) );
+            }
 
-            $result = json_decode( $data, true );
-            $return = array();
+            $result = is_string( $data ) ? json_decode( $data, true ) : null;
+            $return = array( 'error' => esc_html__( 'Could not retrieve purchased add-ons from the MainWP license server. Please try again later.', 'mainwp' ) );
 
             if ( is_array( $result ) ) {
                 if ( isset( $result['success'] ) && $result['success'] ) {
+                    $return             = array();
                     $purchased_data     = ( isset( $result['purchased_data'] ) && is_array( $result['purchased_data'] ) ) ? $result['purchased_data'] : array();
                     $not_purchased_exts = array_diff_key( $all_free_pro_exts, $purchased_data );
                     $installing_exts    = array_diff_key( $purchased_data, $installed_softwares );

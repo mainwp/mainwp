@@ -1,0 +1,13 @@
+{
+    "result": "ok",
+    "orphan_dirs_removed": 0,
+    "units_pruned": 0,
+    "snapshots_pruned": 0,
+    "deleted_ids": [],
+    "remaining_ids": [],
+    "cloud_deletes_queued": [],
+    "orphaned_snapshots_pruned": 0,
+    "bytes_pruned": 0,
+    "bytes_pruned_label": "",
+    "errors": []
+}

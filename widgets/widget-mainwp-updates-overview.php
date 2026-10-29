@@ -127,7 +127,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         global $current_user;
 
         $current_wpid = (int) MainWP_System_Utility::get_current_wpid();
-        $is_staging = 'no';
+        $is_staging   = 'no';
 
         if ( $current_wpid ) {
             $sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
@@ -461,8 +461,8 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method prepare_update_data().
      *
-     * @param string $update_type: Values all, core, plugin, theme, trans.
-     * @param int $current_wpid Current site id.
+     * @param string $update_type Values all, core, plugin, theme, trans.
+     * @param int    $current_wpid Current site id.
      */
     public static function prepare_update_data( $update_type, $current_wpid ) { // phpcs:ignore -- NOSONAR - long function.
 
@@ -772,7 +772,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <div class="center aligned middle alidgned column">
                     <?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
                         <?php if ( $can_total_update ) : ?>
-                            <a href="#" <?php echo empty( $total_upgrades ) ? 'disabled' : 'onClick="updatesoverview_global_upgrade_all( \'all\', ' .  intval( $current_wpid ) . ' ); return false;"'; ?> class="ui mini basic green fluid button" id="mainwp-update-everything-button"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
+                            <a href="#" <?php echo empty( $total_upgrades ) ? 'disabled' : 'onClick="updatesoverview_global_upgrade_all( \'all\', ' . intval( $current_wpid ) . ' ); return false;"'; ?> class="ui mini basic green fluid button" id="mainwp-update-everything-button"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
                         <?php endif; ?>
                     <?php endif; ?>
                     </div>
@@ -1277,7 +1277,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( $process['core'] && $user_can_update_wordpress && $total_wp_upgrades > 0 ) {
                     foreach ( $all_wp_updates as $item ) {
                         ?>
-                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
+                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $item['name'] ) ) ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
                         <?php
                     }
                 }
@@ -1289,7 +1289,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( $process['plugin'] && $user_can_update_plugins && $total_plugin_upgrades > 0 ) {
                     foreach ( $all_plugins_updates as $item ) {
                         ?>
-                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" plugin_slug="<?php echo esc_attr( $item['plugin_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
+                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $item['name'] ) ) ); ?>" plugin_slug="<?php echo esc_attr( $item['plugin_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
                             <?php
                     }
                 }
@@ -1301,7 +1301,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( $process['theme'] && $user_can_update_themes && $total_theme_upgrades > 0 ) {
                     foreach ( $all_themes_updates as $item ) {
                         ?>
-                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" theme_slug="<?php echo esc_attr( $item['theme_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
+                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $item['name'] ) ) ); ?>" theme_slug="<?php echo esc_attr( $item['theme_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
                             <?php
                     }
                 }
@@ -1315,7 +1315,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( $process['trans'] && $user_can_update_translation && $total_translation_upgrades > 0 ) {
                     foreach ( $all_translations_updates as $item ) {
                         ?>
-                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" translation_slug="<?php echo esc_attr( $item['translation_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
+                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $item['name'] ) ) ); ?>" translation_slug="<?php echo esc_attr( $item['translation_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
                         <?php
                     }
                 }
@@ -1376,17 +1376,51 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
+     * The badge and update gates must use the same configured freshness window.
+     *
+     * @return int
+     */
+    public static function get_backup_before_upgrade_days(): int {
+        $days = get_option( 'mainwp_backup_before_upgrade_days' );
+        if ( empty( $days ) || ! ctype_digit( (string) $days ) ) {
+            $days = 7;
+        }
+        return (int) $days;
+    }
+
+    /**
+     * Settings writers must share the update gate's fallback and supported range.
+     *
+     * @param mixed $value Submitted freshness window.
+     * @return int
+     */
+    public static function normalize_backup_before_upgrade_days( $value ): int {
+        if ( ! is_scalar( $value ) ) {
+            return 7;
+        }
+        return filter_var(
+            ltrim( (string) $value, '0' ),
+            FILTER_VALIDATE_INT,
+            array(
+                'options' => array(
+                    'min_range' => 1,
+                    'default'   => 7,
+                ),
+            )
+        );
+    }
+
+    /**
      * Method checkbackups()
      *
      * Check if Child Site needs to be backed up before updates.
      *
      * @return mixed $output
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::evaluate_update_backup_gate()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
     public static function check_backups() { // phpcs:ignore -- NOSONAR - complex.
         if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR - verified before.
@@ -1396,15 +1430,20 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $primaryBackup                = MainWP_System_Utility::get_primary_backup();
         $global_backup_before_upgrade = get_option( 'mainwp_backup_before_upgrade' );
 
-        $mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
-        if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
-            $mainwp_backup_before_upgrade_days = 7;
-        }
+        $mainwp_backup_before_upgrade_days = self::get_backup_before_upgrade_days();
 
         $output = array();
         if ( isset( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $siteId ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                $siteId  = intval( $siteId );
                 $website = MainWP_DB::instance()->get_website_by_id( $siteId );
+                // The action behind this handler is registered without a
+                // dashboard capability gate, so this per-site check is the
+                // only thing keeping an arbitrary posted site id from
+                // answering with another site's backup-freshness status.
+                if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $siteId ) ) {
+                    continue;
+                }
                 if ( ( 0 === (int) $website->backup_before_upgrade ) || ( ( 2 === (int) $website->backup_before_upgrade ) && empty( $global_backup_before_upgrade ) ) ) {
                     continue;
                 }
@@ -1426,25 +1465,18 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     }
                     $output['primary_backup'] = $backup_method;
                 } else {
-                    $dir = MainWP_System_Utility::get_mainwp_specific_dir( $siteId );
-                    // Check if backup ok.
-                    $lastBackup = - 1;
-                    if ( file_exists( $dir ) ) {
-                        $dh = opendir( $dir ); // NOSONAR.
-                        if ( $dh ) {
-                            while ( false !== ( $file = readdir( $dh ) ) ) {
-                                if ( '.' !== $file && '..' !== $file ) {
-                                    $theFile = $dir . $file;
-                                    if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
-                                        $lastBackup = filemtime( $theFile );
-                                    }
-                                }
-                            }
-                            closedir( $dh );
-                        }
+                    // The interactive pre-update answer comes from the same
+                    // provenance-aware evaluator the automatic-update cron
+                    // gate uses (native snapshots, the legacy archive scan,
+                    // and the offsite requirement), so a policy the cron
+                    // would enforce can no longer be waved through here. The
+                    // verdict also tells the box why a site is held.
+                    $verdict                    = MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $siteId, (int) $mainwp_backup_before_upgrade_days );
+                    $output['sites'][ $siteId ] = MainWP_Backup_Executor::UPDATE_GATE_PASS === $verdict;
+                    $output['require_offsite']  = (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
+                    if ( MainWP_Backup_Executor::UPDATE_GATE_PASS !== $verdict ) {
+                        $output['gate_verdicts'][ $siteId ] = $verdict;
                     }
-
-                    $output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
                 }
             }
         }

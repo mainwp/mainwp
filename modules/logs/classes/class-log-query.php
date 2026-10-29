@@ -47,6 +47,20 @@ class Log_Query {
         $opti_with_meta  = isset( $args['optimize_with_meta'] ) && ! empty( $args['optimize_with_meta'] ) ? true : false;
         $with_logs_meta  = ! empty( $args['with_all_logs_meta'] );
 
+        // Cron and CLI queries without a logged-in identity deliberately exclude deleted sites.
+        $public_records  = doing_filter( 'mainwp_module_logs_get_log_records' );
+        $private_meta    = 'api-view' === $view || $public_records;
+        $allow_deleted   = ! $private_meta && is_user_logged_in() && '' === MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
+        $site_name       = 'wp.name';
+        $site_url        = 'wp.url';
+        $site_visibility = '';
+
+        if ( $allow_deleted ) {
+            // Scalar subqueries keep duplicate metadata from multiplying audit rows.
+            $site_name = $wpdb->prepare( 'CASE WHEN wp.id IS NULL THEN (SELECT MAX(identity_meta.meta_value) FROM %i identity_meta WHERE identity_meta.meta_log_id = lg.log_id AND identity_meta.meta_key = %s) ELSE wp.name END', $wpdb->mainwp_tbl_logs_meta, 'deleted_site_name' );
+            $site_url  = $wpdb->prepare( 'CASE WHEN wp.id IS NULL THEN (SELECT MAX(identity_meta.meta_value) FROM %i identity_meta WHERE identity_meta.meta_log_id = lg.log_id AND identity_meta.meta_key = %s) ELSE wp.url END', $wpdb->mainwp_tbl_logs_meta, 'deleted_site_url' );
+        }
+
         $join        = '';
         $join_meta   = '';
         $select_view = '';
@@ -65,7 +79,7 @@ class Log_Query {
                 $search_str = trim( $search_str );
                 // prepare search value for searching.
                 if ( ! empty( $search_str ) ) {
-                    $where_search  = ' AND (  wp.name LIKE  "%' . $search_str . '%" OR lg.action LIKE  "%' . $search_str . '%" ';
+                    $where_search  = ' AND (  ' . $site_name . ' LIKE  "%' . $search_str . '%" OR lg.action LIKE  "%' . $search_str . '%" ';
                     $where_search .= ' OR ( CASE ';
                     $where_search .= " WHEN lg.action = 'sync' THEN '" . MainWP_DB::instance()->escape( esc_html__( 'Sync Data', 'mainwp' ) ) . "' ";
                     $where_search .= " WHEN lg.action = 'activate' THEN '" . MainWP_DB::instance()->escape( esc_html__( 'Activated', 'mainwp' ) ) . "' ";
@@ -235,7 +249,7 @@ class Log_Query {
 
         if ( in_array( $args['orderby'], $orderable, true ) ) {
             if ( in_array( $args['orderby'], array( 'name', 'url' ) ) ) {
-                $orderby = sprintf( '%s', $args['orderby'] );
+                $orderby = $allow_deleted ? ( 'name' === $args['orderby'] ? $site_name : $site_url ) : sprintf( '%s', $args['orderby'] );
             } elseif ( 'event' === $args['orderby'] || 'action' === $args['orderby'] ) {
                 $orderby = sprintf( '%s.%s', 'lg', 'action' );
             } else {
@@ -286,15 +300,25 @@ class Log_Query {
         $selects[] = 'lg.*';
 
         if ( 'api-view' !== $view ) {
-            $selects[] = 'wp.url as url';
-            $selects[] = 'wp.name as log_site_name';
+            $selects[] = $site_url . ' as url';
+            $selects[] = $site_name . ' as log_site_name';
+            if ( $allow_deleted ) {
+                $selects[] = '(wp.id IS NULL) AS deleted_site_orphan';
+            }
         }
 
         if ( 'api-view' !== $view ) {
-            $join = ' INNER JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
-            // Improve query.
-            if ( $check_access && 'api-view' !== $view ) {
-                $join .= MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' ); // Example: AND wp.is_staging = 0 or empty.
+            if ( $allow_deleted ) {
+                // Join the actual site before applying access predicates: staging sites are not orphans.
+                $join            = $wpdb->prepare( ' LEFT JOIN %i wp ON lg.site_id = wp.id ', $wpdb->mainwp_tbl_wp );
+                $site_access     = $check_access ? MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' ) : '';
+                $site_visibility = ' AND ( ( wp.id IS NOT NULL ' . $site_access . ' ) OR ( wp.id IS NULL ' . $wpdb->prepare( ' AND lg.connector = %s AND lg.context = %s AND lg.action = %s AND NOT EXISTS (SELECT 1 FROM %i staging_meta WHERE staging_meta.meta_log_id = lg.log_id AND staging_meta.meta_key = %s AND staging_meta.meta_value <> %s) AND ( NOT EXISTS (SELECT 1 FROM %i identity_meta WHERE identity_meta.meta_log_id = lg.log_id AND identity_meta.meta_key IN (%s,%s)) OR EXISTS (SELECT 1 FROM %i staging_zero WHERE staging_zero.meta_log_id = lg.log_id AND staging_zero.meta_key = %s AND staging_zero.meta_value = %s) )', 'site', 'sites', 'deleted', $wpdb->mainwp_tbl_logs_meta, 'deleted_site_is_staging', '0', $wpdb->mainwp_tbl_logs_meta, 'deleted_site_name', 'deleted_site_url', $wpdb->mainwp_tbl_logs_meta, 'deleted_site_is_staging', '0' ) . ' ) ) ';
+            } else {
+                $join = ' INNER JOIN ' . $wpdb->mainwp_tbl_wp . ' wp ON lg.site_id = wp.id ';
+                // Improve query.
+                if ( $check_access ) {
+                    $join .= MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' ); // Example: AND wp.is_staging = 0 or empty.
+                }
             }
         }
 
@@ -321,7 +345,7 @@ class Log_Query {
             FROM $wpdb->mainwp_tbl_logs as lg
             {$join}
             {$join_meta}
-            WHERE `lg`.`connector` != 'compact' ORDER BY lg.created DESC {$recent_limits}";
+            WHERE `lg`.`connector` != 'compact' {$site_visibility} ORDER BY lg.created DESC {$recent_limits}";
 
             $recent_created = $wpdb->get_var( $recent_query ); //phpcs:ignore -- NOSONAR - ok.
 
@@ -351,7 +375,7 @@ class Log_Query {
         FROM $wpdb->mainwp_tbl_logs as lg
         {$join}
         {$join_meta}
-        WHERE `lg`.`connector` != 'compact' {$where} {$where_users_filter} {$recent_where}
+        WHERE `lg`.`connector` != 'compact' {$site_visibility} {$where} {$where_users_filter} {$recent_where}
         {$orderby}
         {$limits}";
 
@@ -363,7 +387,7 @@ class Log_Query {
         if ( ! empty( $search_str ) ) {
             $count_query .= "{$join_meta}";
         }
-        $count_query .= " WHERE `lg`.`connector` != 'compact' {$where} {$where_users_filter} {$recent_where} ";
+        $count_query .= " WHERE `lg`.`connector` != 'compact' {$site_visibility} {$where} {$where_users_filter} {$recent_where} ";
 
         if ( ! empty( $recent_query ) ) {
             MainWP_DB::instance()->log_system_query( $args, $recent_query, $this );
@@ -378,7 +402,7 @@ class Log_Query {
         }
 
         // Generate cache key for count query.
-        $cache_key = 'mainwp_logs_count_' . md5( serialize( $args ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic purposes.
+        $cache_key = 'mainwp_logs_count_' . md5( serialize( $args ) . $site_visibility ); // NOSONAR - MD5 used for cache key generation only, not cryptographic purposes.
 
         if ( $count_only ) {
             $cached_count = wp_cache_get( $cache_key, 'mainwp_logs' );
@@ -430,6 +454,9 @@ class Log_Query {
 
                     if ( is_array( $meta_records ) ) {
                         foreach ( $meta_records as $meta_record ) {
+                            if ( $private_meta && in_array( $meta_record->meta_key, array( 'deleted_site_name', 'deleted_site_url', 'deleted_site_is_staging' ), true ) ) {
+                                continue;
+                            }
                             if ( ! empty( $meta_record->meta_value ) ) {
                                 // compatible format.
                                 if ( in_array( $meta_record->meta_key, array( 'user_meta_json', 'user_login', 'extra_info' ) ) ) {

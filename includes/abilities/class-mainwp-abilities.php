@@ -342,6 +342,8 @@ class MainWP_Abilities {
     public static function register_abilities(): void {
         // Site abilities.
         MainWP_Abilities_Sites::register();
+        require_once __DIR__ . '/class-mainwp-abilities-api-backups.php';
+        MainWP_Abilities_Api_Backups::register();
 
         // Update abilities.
         MainWP_Abilities_Updates::register();

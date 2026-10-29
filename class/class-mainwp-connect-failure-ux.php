@@ -294,7 +294,8 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return esc_html__( 'Unable to connect to the site. Password Authentication is disabled, so please verify that the Unique Security ID is correct and try again.', 'mainwp' );
         }
 
-        return self::sanitize_diagnostic_text( $message );
+        // URL redaction can decode encoded markup after the caller's HTML filtering.
+        return esc_html( self::sanitize_diagnostic_text( $message ) );
     }
 
     /**

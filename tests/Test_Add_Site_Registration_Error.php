@@ -17,6 +17,28 @@ class Test_Add_Site_Registration_Error extends \WP_UnitTestCase {
 	use Site_Fixture;
 
 	/**
+	 * URL redaction must not restore executable markup after the HTML filters.
+	 */
+	public function test_encoded_registration_error_cannot_restore_html(): void {
+		$payload = '<img src=x onerror=alert(1)>https://example.test/';
+		$errors  = array(
+			rawurlencode( rawurlencode( $payload ) ),
+			rawurlencode( rawurlencode( rawurlencode( $payload ) ) ),
+			htmlspecialchars( $payload, ENT_QUOTES ),
+			htmlspecialchars( htmlspecialchars( $payload, ENT_QUOTES ), ENT_QUOTES ),
+		);
+
+		foreach ( $errors as $child_error ) {
+			$information = \MainWP\Dashboard\MainWP_System_Utility::get_child_response( wp_json_encode( array( 'error' => $child_error ) ) );
+			$message     = \MainWP\Dashboard\MainWP_Utility::esc_content( urldecode( $information['error'] ) );
+			$html        = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::sanitize_registration_error( $message );
+
+			$this->assertStringNotContainsString( '<', $html, 'The error prefix must remain text when failure_ux is parsed as HTML.' );
+			$this->assertStringContainsString( 'https://example.test/', $html, 'Keep the non-sensitive diagnostic URL.' );
+		}
+	}
+
+	/**
 	 * The UI must retain the Child error when transport diagnostics are present.
 	 *
 	 * @dataProvider registration_errors
@@ -68,6 +90,7 @@ class Test_Add_Site_Registration_Error extends \WP_UnitTestCase {
 			$this->assertSame( $error, $output['failure_ux'], 'Both Add Site screens prefer failure_ux over the response error.' );
 			$this->assertStringNotContainsString( 'Generic transport diagnostic', $output['failure_ux'] );
 			$this->assertStringNotContainsString( 'OBVIOUS_FAKE_PASSWORD', wp_json_encode( $output ) );
+			$this->assertStringNotContainsString( '<img', $output['failure_ux'] );
 		} finally {
 			remove_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
 			remove_filter( 'mainwp_fetch_url_not_authed_pre', $fetch );
@@ -143,6 +166,12 @@ class Test_Add_Site_Registration_Error extends \WP_UnitTestCase {
 	 */
 	public static function registration_errors(): array {
 		return array(
+			'encoded markup'                           => array(
+				rawurlencode( '<img src=x onerror=alert(1)>https://example.test/' ),
+				'REG_ERROR7',
+				'',
+				'https://example.test/',
+			),
 			'wrong administrator'                      => array(
 				'Administrator user does not exist. Please verify that the user is an existing administrator.',
 				'REG_ERROR8',

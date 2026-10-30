@@ -3454,6 +3454,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             }
         }
 
+        // Requested custom_fields can JOIN secret site options onto the row, so strip
+        // them before public callbacks see either value. The caller strips again
+        // in case a callback adds them back.
+        $data = $this->strip_never_in_response_fields( $data );
+        $item = $this->strip_never_in_response_fields( clone $item );
+
         /**
          * Filterobject returned from the REST API.
          *

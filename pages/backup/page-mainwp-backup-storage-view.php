@@ -298,7 +298,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned" for="mainwp-storage-sse"><?php esc_html_e( 'Server-side encryption', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <select id="mainwp-storage-sse" class="ui dropdown">
-                                <option value=""><?php esc_html_e( 'None', 'mainwp' ); ?></option>
+                                <option value="none"><?php esc_html_e( 'None', 'mainwp' ); ?></option>
                                 <option value="AES256"><?php esc_html_e( 'SSE-S3 (AES-256)', 'mainwp' ); ?></option>
                                 <option value="aws:kms"><?php esc_html_e( 'SSE-KMS (account default key)', 'mainwp' ); ?></option>
                             </select>
@@ -684,14 +684,10 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         if ( '#mainwp-storage-sse' === map[ key ] ) {
                             // A Fomantic dropdown keeps its own label, so .val()
                             // would leave the previous destination's choice on
-                            // screen. An empty setting means None, which
-                            // 'set selected' will not match, so restore the
-                            // default instead.
-                            if ( '' === value ) {
-                                jQuery( map[ key ] ).dropdown( 'restore defaults' );
-                            } else {
-                                jQuery( map[ key ] ).dropdown( 'set selected', value );
-                            }
+                            // screen. None is stored as an empty value and
+                            // listed as 'none', since Fomantic turns an empty
+                            // option into placeholder text nobody can pick.
+                            jQuery( map[ key ] ).dropdown( 'set selected', '' === value ? 'none' : value );
                             continue;
                         }
                         jQuery( map[ key ] ).val( value );

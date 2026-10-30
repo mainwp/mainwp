@@ -1403,6 +1403,21 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array { done: bool, error: string|null, retryable: bool }
      */
     public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline, ?callable $should_continue = null, int $job_id = 0 ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
+        $metadata = MainWP_Backup_Monitor::restore_plan_metadata( $plan );
+        $expected = '';
+        if ( ! empty( $metadata ) && ! is_wp_error( $metadata ) && $job_id > 0 ) {
+            $job      = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
+            $expected = null === $job ? '' : (string) ( $job->checkpoint['target_layout_id'] ?? '' );
+        }
+        $admission = MainWP_Backup_Monitor::admit_restore_plan( $website, $plan, $expected );
+        if ( is_wp_error( $admission ) ) {
+            return array(
+                'done'       => false,
+                'error'      => $admission->get_error_message(),
+                'error_code' => $admission->get_error_code(),
+                'retryable'  => false,
+            );
+        }
         $format_error = $this->plan_format_error( $plan );
         if ( null !== $format_error ) {
             return $format_error;
@@ -1506,6 +1521,17 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 );
             }
 
+            if ( ! empty( $metadata ) ) {
+                $admission = MainWP_Backup_Monitor::admit_restore_plan( $website, $plan, $expected );
+                if ( is_wp_error( $admission ) ) {
+                    return array(
+                        'done'       => false,
+                        'error'      => $admission->get_error_message(),
+                        'error_code' => $admission->get_error_code(),
+                        'retryable'  => false,
+                    );
+                }
+            }
             $diag_start = microtime( true );
             $outcome    = $this->send_chunk( $website, $task_id, $entry, $cursor['offset'], $raw, $last );
 
@@ -1596,11 +1622,15 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             }
             if ( 'error' === $outcome['result'] ) {
                 $cursor['ok_streak'] = 0;
-                return array(
+                $failure             = array(
                     'done'      => false,
                     'error'     => $outcome['error'],
                     'retryable' => $outcome['retryable'],
                 );
+                if ( isset( $outcome['error_code'] ) ) {
+                    $failure['error_code'] = $outcome['error_code'];
+                }
+                return $failure;
             }
 
             // An empty artifact still needs its final request to create and verify the child file.
@@ -1760,6 +1790,15 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 false
             );
         } catch ( \Throwable $e ) {
+            if ( $e instanceof MainWP_Exception && in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                return array(
+                    'result'         => 'error',
+                    'bytes_received' => $offset,
+                    'error'          => MainWP_Backup_Error_Codes::message( $e->get_message_error_code() ),
+                    'error_code'     => $e->get_message_error_code(),
+                    'retryable'      => false,
+                );
+            }
             // Transport failures on large bodies are how hosts with small
             // request caps present; shrink before counting it a fault. The
             // connect layer's real detail hides behind a token message
@@ -1776,6 +1815,15 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             );
         }
 
+        if ( is_array( $response ) && in_array( $response['error_code'] ?? '', array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+            return array(
+                'result'         => 'error',
+                'bytes_received' => $offset,
+                'error'          => MainWP_Backup_Error_Codes::message( $response['error_code'] ),
+                'error_code'     => $response['error_code'],
+                'retryable'      => false,
+            );
+        }
         if ( is_array( $response ) && isset( $response['error_code'] ) && 'mainwp_restore_chunk_gap' === $response['error_code'] ) {
             return array(
                 'result'         => 'realign',

@@ -875,6 +875,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             try {
                 $temp = MainWP_Connect::fetch_url_authed( $website, 'backup_task_' . $operation, array( 'task_id' => $backupTaskProgress->child_backup_task_id ), false, false, false );
             } catch ( \Exception $e ) {
+                if ( $e instanceof MainWP_Exception && in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                    throw $e;
+                }
                 if ( $reconcile ) {
                     $run_state['reconcile_pending']['transport_error_code'] = MainWP_Backup_Error_Codes::code_for_exception( $e );
                     MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'last_error' => wp_json_encode( $run_state ) ) );
@@ -3511,6 +3514,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     )
                 );
                 if ( $reconcile ) {
+                    if ( $e instanceof MainWP_Exception && in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                        throw $e;
+                    }
                     $pending['transport_error_code'] = MainWP_Backup_Error_Codes::code_for_exception( $e );
                     $pending['attempts']             = (int) ( $pending['attempts'] ?? 0 ) + 1;
                     self::save_gate_reconciliation( $website, $task_id, $pending );

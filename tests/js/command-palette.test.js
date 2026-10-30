@@ -8,6 +8,8 @@ const vm = require( 'node:vm' );
 const source = fs.readFileSync( path.join( __dirname, '../../assets/js/mainwp-command-palette.js' ), 'utf8' );
 const mainwpSource = fs.readFileSync( path.join( __dirname, '../../assets/js/mainwp.js' ), 'utf8' );
 const sharedSync = mainwpSource.slice( mainwpSource.indexOf( 'globalThis.mainwp_sync_sites_data = function' ), mainwpSource.indexOf( 'mainwpVars.websitesToUpdate = [];' ) );
+const showAllStart = mainwpSource.indexOf( 'globalThis.dashboard_update_site_show_all = function' );
+const sharedShowAll = mainwpSource.slice( showAllStart, mainwpSource.indexOf( '\n    };', showAllStart ) + 7 );
 
 function fixture( supportsLoader = true, mainwpPage = true, withPalette = false ) {
     const timers = new Map();
@@ -176,12 +178,14 @@ function fixture( supportsLoader = true, mainwpPage = true, withPalette = false 
     jQuery.grep = ( values, callback ) => values.filter( callback );
     jQuery.inArray = ( value, values ) => values.indexOf( value );
     jQuery.post = ( url, data ) => savedStatuses.push( data );
+    vm.runInNewContext( sharedShowAll, { globalThis: window } );
     vm.runInNewContext( sharedSync, {
         globalThis: window, document, jQuery, mainwpVars: window.mainwpVars,
         MainWP: { I18n: { t: ( value ) => value } }, ajaxurl: '/ajax',
         mainwpPopup: ( selector ) => { assert.equal( selector, '#mainwp-sync-sites-modal' ); return { init: ( config ) => popups.push( config ) }; },
         dashboard_update_site_hide: ( id ) => { window.dashboardSync.rowMap.get( id ).style.display = 'none'; },
         dashboard_update_site_status() {}, mainwp_secure_data: ( data ) => data,
+        dashboard_update_site_show_all: window.dashboard_update_site_show_all,
         dashboard_update: ( ids, globalSync, action ) => { syncQueues.push( { ids: Array.from( ids ), globalSync, action } ); window.mainwpVars.bulkTaskRunning = true; },
         history: { pushState() {} }, mainwp_forceReload: () => reloaded++,
     } );
@@ -369,7 +373,9 @@ test( 'sync directly uses the existing bulk popup, selection and refresh callbac
     app.runTimers( 250 );
     await app.respond( 0, siteCommands( 28, 'sync' ) );
     const sync = app.render( 'alder' ).commands[ 0 ];
+    app.sync.rowMap.get( '28' ).style.display = 'none';
     sync.callback();
+    assert.equal( app.sync.rowMap.get( '28' ).style.display, '', 'Standard Sync restores its previously hidden popup row' );
     sync.callback();
     assert.equal( app.requests.length, 1, 'No custom sync AJAX request' );
     assert.equal( app.syncCalls.length, 1, 'Existing task guard prevents duplicate syncs' );

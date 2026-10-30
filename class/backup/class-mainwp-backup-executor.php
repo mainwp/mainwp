@@ -390,14 +390,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         self::private_site_dir( (int) $siteid );
         MainWP_Backup_Monitor::validate_backup_environment();
 
-        $subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
-        $subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
-        $subfolder = str_replace( '%type%', $type, $subfolder );
-        $subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
-        $subfolder = str_replace( '%task%', '', $subfolder );
-        $subfolder = str_replace( '%', '', $subfolder );
-        $subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
-        $subfolder = MainWP_Backup_File_Manager::normalize_filename( $subfolder );
+        $subfolder = MainWP_Backup_File_Manager::expand_subfolder( (string) $subfolder, (string) $website->name, (string) $website->url, (string) $type );
 
         if ( ! MainWP_System::instance()->is_single_user() && ( $userid !== $website->userid ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_NO_PERMISSION ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -413,25 +406,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $websiteCleanUrl
         );
 
-        $file = ( null === $pFilename ) ? '' : str_replace(
-            array(
-                '%sitename%',
-                '%url%',
-                '%date%',
-                '%time%',
-                '%type%',
-            ),
-            array(
-                MainWP_Utility::sanitize( $website->name ),
-                $websiteCleanUrl,
-                MainWP_Utility::date( 'm-d-Y' ),
-                MainWP_Utility::date( 'G\hi\ms\s' ),
-                $type,
-            ),
-            $pFilename
-        );
-        $file = str_replace( '%', '', $file );
-        $file = MainWP_Backup_File_Manager::normalize_filename( $file );
+        $file = ( null === $pFilename ) ? '' : MainWP_Backup_File_Manager::expand_archive_name( $pFilename, (string) $website->name, $websiteCleanUrl, MainWP_Utility::date( 'm-d-Y' ), MainWP_Utility::date( 'G\hi\ms\s' ), $type );
 
         if ( 'zip' === $pTask->archiveFormat ) {
             $loadFilesBeforeZip = (int) $pTask->loadFilesBeforeZip;
@@ -1349,24 +1324,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time;
 
                     if ( null !== $pFilename ) {
-                        $filename        = str_replace(
-                            array(
-                                '%sitename%',
-                                '%url%',
-                                '%date%',
-                                '%time%',
-                                '%type%',
-                            ),
-                            array(
-                                MainWP_Utility::sanitize( $website->name ),
-                                $websiteCleanUrl,
-                                $fm_date,
-                                $fm_time,
-                                $what,
-                            ),
-                            $pFilename
-                        );
-                        $filename        = str_replace( '%', '', $filename );
+                        $filename        = MainWP_Backup_File_Manager::expand_archive_name( $pFilename, (string) $website->name, $websiteCleanUrl, $fm_date, $fm_time, $what );
                         $localBackupFile = $dir . $filename;
                     }
                     $localBackupFile .= MainWP_Backup_File_Manager::child_artifact_extension( $information['db'], 'db' );
@@ -1448,24 +1406,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $localBackupFile = $dir . $name_type . '-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $realExt;
 
                     if ( null !== $pFilename ) {
-                        $filename        = str_replace(
-                            array(
-                                '%sitename%',
-                                '%url%',
-                                '%date%',
-                                '%time%',
-                                '%type%',
-                            ),
-                            array(
-                                MainWP_Utility::sanitize( $website->name ),
-                                $websiteCleanUrl,
-                                $fm_date,
-                                $fm_time,
-                                $name_type,
-                            ),
-                            $pFilename
-                        );
-                        $filename        = str_replace( '%', '', $filename );
+                        $filename        = MainWP_Backup_File_Manager::expand_archive_name( $pFilename, (string) $website->name, $websiteCleanUrl, $fm_date, $fm_time, $name_type );
                         $localBackupFile = $dir . $filename . $realExt;
                     }
 
@@ -2788,14 +2729,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 self::private_site_dir( (int) $pSiteId );
                 MainWP_Backup_Monitor::validate_backup_environment();
 
-                $subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
-                $subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
-                $subfolder = str_replace( '%type%', $pType, $subfolder );
-                $subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
-                $subfolder = str_replace( '%task%', '', $subfolder );
-                $subfolder = str_replace( '%', '', $subfolder );
-                $subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
-                $subfolder = MainWP_Backup_File_Manager::normalize_filename( $subfolder );
+                $subfolder = MainWP_Backup_File_Manager::expand_subfolder( (string) $pSubfolder, (string) $website->name, (string) $website->url, (string) $pType );
 
                 if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SUSPENDED_SITE ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -2833,25 +2767,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
                 }
 
-                $file = ( null === $pFilename ) ? '' : str_replace(
-                    array(
-                        '%sitename%',
-                        '%url%',
-                        '%date%',
-                        '%time%',
-                        '%type%',
-                    ),
-                    array(
-                        MainWP_Utility::sanitize( $website->name ),
-                        $websiteCleanUrl,
-                        MainWP_Utility::date( 'm-d-Y' ),
-                        MainWP_Utility::date( 'G\hi\ms\s' ),
-                        $pType,
-                    ),
-                    $pFilename
-                );
-                $file = str_replace( '%', '', $file );
-                $file = MainWP_Backup_File_Manager::normalize_filename( $file );
+                $file = ( null === $pFilename ) ? '' : MainWP_Backup_File_Manager::expand_archive_name( $pFilename, (string) $website->name, $websiteCleanUrl, MainWP_Utility::date( 'm-d-Y' ), MainWP_Utility::date( 'G\hi\ms\s' ), $pType );
 
                 // Normal flow: check site settings & fallback to global.
                 if ( false === $pLoadFilesBeforeZip ) {
@@ -2965,24 +2881,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
 
                     if ( null !== $pFilename ) {
-                        $filename        = str_replace(
-                            array(
-                                '%sitename%',
-                                '%url%',
-                                '%date%',
-                                '%time%',
-                                '%type%',
-                            ),
-                            array(
-                                MainWP_Utility::sanitize( $website->name ),
-                                $websiteCleanUrl,
-                                $fm_date,
-                                $fm_time,
-                                $pType,
-                            ),
-                            $pFilename
-                        );
-                        $filename        = str_replace( '%', '', $filename );
+                        $filename        = MainWP_Backup_File_Manager::expand_archive_name( $pFilename, (string) $website->name, $websiteCleanUrl, $fm_date, $fm_time, $pType );
                         $localBackupFile = $dir . $filename;
                         $localBackupFile = MainWP_Backup_File_Manager::normalize_filename( $localBackupFile );
 

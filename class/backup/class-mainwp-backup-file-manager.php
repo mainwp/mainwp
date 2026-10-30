@@ -583,6 +583,85 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
+     * Clean a file name or subfolder template while keeping its %tokens%.
+     *
+     * Not sanitize_text_field(): it strips percent-encoded octets, which turns %date% into te%.
+     * The expanded name is made path-safe again when the backup runs.
+     *
+     * @param string $template Submitted or stored template.
+     * @return string
+     */
+    public static function clean_name_template( string $template ): string {
+        return trim( wp_strip_all_tags( wp_check_invalid_utf8( $template ), true ) );
+    }
+
+    /**
+     * Expand a task's file name template into a single safe path segment.
+     *
+     * @param string $template  Stored file name template.
+     * @param string $site_name Site name.
+     * @param string $clean_url Site URL already reduced to a file name part.
+     * @param string $date      Run date.
+     * @param string $time      Run time.
+     * @param string $type      Backup type.
+     * @return string
+     */
+    public static function expand_archive_name( string $template, string $site_name, string $clean_url, string $date, string $time, string $type ): string {
+        $name = str_replace(
+            array( '%sitename%', '%url%', '%date%', '%time%', '%type%' ),
+            array( MainWP_Utility::sanitize( $site_name ), $clean_url, $date, $time, $type ),
+            $template
+        );
+        return self::sanitize_path_segment( self::normalize_filename( str_replace( '%', '', $name ) ) );
+    }
+
+    /**
+     * Expand a task's subfolder template into a path with no dot segments.
+     *
+     * @param string $template  Stored subfolder template, with %task% already replaced.
+     * @param string $site_name Site name.
+     * @param string $site_url  Site URL.
+     * @param string $type      Backup type.
+     * @return string
+     */
+    public static function expand_subfolder( string $template, string $site_name, string $site_url, string $type ): string {
+        $subfolder = str_replace(
+            array( '%sitename%', '%url%', '%type%', '%date%', '%task%' ),
+            array( MainWP_Utility::sanitize( $site_name ), MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $site_url ) ), $type, MainWP_Utility::date( 'Ymd' ), '' ),
+            $template
+        );
+        $subfolder = MainWP_Utility::remove_preslash_spaces( str_replace( '%', '', $subfolder ) );
+        return self::sanitize_subfolder_path( self::normalize_filename( $subfolder ) );
+    }
+
+    /**
+     * Drop control characters and the characters file systems reserve, including path separators.
+     *
+     * @param string $segment One file or folder name.
+     * @return string
+     */
+    public static function sanitize_path_segment( string $segment ): string {
+        return (string) MainWP_Utility::sanitize( (string) preg_replace( '/[\x00-\x1F\x7F]+/', '', $segment ) );
+    }
+
+    /**
+     * Sanitize each folder of a path and drop "." and ".." so it stays inside its destination root.
+     *
+     * @param string $path Folder path.
+     * @return string
+     */
+    public static function sanitize_subfolder_path( string $path ): string {
+        $segments = array();
+        foreach ( explode( '/', str_replace( '\\', '/', $path ) ) as $segment ) {
+            $segment = self::sanitize_path_segment( $segment );
+            if ( '.' !== trim( $segment ) && '..' !== trim( $segment ) ) {
+                $segments[] = $segment;
+            }
+        }
+        return implode( '/', $segments );
+    }
+
+    /**
      * Method normalize_filename()
      *
      * Normalize filename.

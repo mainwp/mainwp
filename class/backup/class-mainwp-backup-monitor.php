@@ -97,14 +97,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $result['file'] = $information['file'];
             $result['size'] = $information['size'];
 
-            $subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
-            $subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
-            $subfolder = str_replace( '%type%', $type, $subfolder );
-            $subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
-            $subfolder = str_replace( '%task%', '', $subfolder );
-            $subfolder = str_replace( '%', '', $subfolder );
-            $subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
-            $subfolder = MainWP_Backup_File_Manager::normalize_filename( $subfolder );
+            $subfolder = MainWP_Backup_File_Manager::expand_subfolder( (string) $subfolder, (string) $website->name, (string) $website->url, (string) $type );
 
             $result['subfolder'] = $subfolder;
 
@@ -139,24 +132,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
 
             if ( null !== $pFilename ) {
-                $filename        = str_replace(
-                    array(
-                        '%sitename%',
-                        '%url%',
-                        '%date%',
-                        '%time%',
-                        '%type%',
-                    ),
-                    array(
-                        MainWP_Utility::sanitize( $website->name ),
-                        $websiteCleanUrl,
-                        $fm_date,
-                        $fm_time,
-                        $type,
-                    ),
-                    $pFilename
-                );
-                $filename        = str_replace( '%', '', $filename );
+                $filename        = MainWP_Backup_File_Manager::expand_archive_name( $pFilename, (string) $website->name, $websiteCleanUrl, $fm_date, $fm_time, $type );
                 $localBackupFile = $dir . $filename;
                 $localBackupFile = MainWP_Backup_File_Manager::normalize_filename( $localBackupFile );
 

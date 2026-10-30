@@ -1532,7 +1532,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $sidebar_pages                = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
         $sidebar_pages                = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
         $sidebar_pages                = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
-        $current_user                 = get_current_user_id();
         $custom_theme                 = MainWP_Settings::get_instance()->get_current_user_theme();
         $screen                       = get_current_screen();
         $show_command_palette_trigger = wp_script_is( 'wp-core-commands', 'enqueued' );
@@ -1592,6 +1591,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             }
         }
         ob_start();
+        ?>
+        <div id="mainwp-header-actions">
+        <?php
         if ( $show_command_palette_trigger ) :
             ?>
             <span id="mainwp-header-command-palette-actions" class="mainwp-768-hide">
@@ -1706,14 +1708,18 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <a class="ui button icon" id="mainwp-sites-sidebar" aria-label="<?php esc_attr_e( 'Open sites shortcuts sidebar', 'mainwp' ); ?>">
                 <i class="globe icon"></i>
             </a>
-            <?php if ( 'default-dark' === $custom_theme && empty( $themes_files ) ) : ?>
-                <a id="mainwp-select-light-theme-button" class="ui button icon" aria-label="<?php esc_attr_e( 'Select MainWP Light theme', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Switch to Light mode', 'mainwp' ); ?>">
-                    <i class="sun icon"></i>
-                </a>
-            <?php elseif ( 'default' === $custom_theme && empty( $themes_files ) ) : ?>
-                <a id="mainwp-select-dark-theme-button" class="ui button icon" aria-label="<?php esc_attr_e( 'Select MainWP Dark theme', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Switch to Dark mode', 'mainwp' ); ?>">
-                    <i class="moon icon"></i>
-                </a>
+            <?php if ( in_array( $custom_theme, array( 'default', 'default-dark' ), true ) && empty( $themes_files ) ) : ?>
+                <?php $is_dark_theme = 'default-dark' === $custom_theme; ?>
+                <button type="button" id="<?php echo esc_attr( $is_dark_theme ? 'mainwp-select-light-theme-button' : 'mainwp-select-dark-theme-button' ); ?>" class="mainwp-theme-toggle" role="switch" aria-checked="<?php echo $is_dark_theme ? 'true' : 'false'; ?>" aria-label="<?php esc_attr_e( 'Dark mode', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php echo esc_attr( $is_dark_theme ? __( 'Switch to Light mode', 'mainwp' ) : __( 'Switch to Dark mode', 'mainwp' ) ); ?>">
+                    <span class="mainwp-theme-toggle-thumb" aria-hidden="true"></span>
+                    <svg class="mainwp-theme-toggle-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false">
+                        <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+                        <path d="M12 1v3m0 16v3M1 12h3m16 0h3M4.22 4.22l2.12 2.12m11.32 11.32 2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
+                    </svg>
+                    <svg class="mainwp-theme-toggle-moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+                    </svg>
+                </button>
             <?php else : ?>
                 <a id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" aria-label="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Select MainWP theme', 'mainwp' ); ?>">
                     <i class="palette icon"></i>
@@ -1728,28 +1734,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
          * @since 4.5.2
          */
         do_action( 'mainwp_header_actions_after_select_themes' );
-        $show_avar = get_option( 'show_avatars' );
         ?>
-        <div class="ui top right pointing dropdown <?php echo $show_avar ? '' : 'icon button'; ?> mainwp-768-hide" id="mainwp-user-menu-button">
-            <?php
-            if ( $show_avar ) {
-                echo get_avatar(
-                    $current_user,
-                    38,
-                    'wavatar',
-                    esc_html__( 'Settings', 'mainwp' ),
-                    array(
-                        'extra_attr' => 'style="width:38px!important;height:38px!important;"',
-                        'class'      => 'ui small avatar image',
-                    )
-                );
-            } else {
-                ?>
-                <i class="user icon"></i>
-                <?php
-            }
-            ?>
-            <div class="menu">
+        <div class="ui top right pointing dropdown icon button not-auto-init mainwp-768-hide" id="mainwp-user-menu-button" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="mainwp-user-menu" aria-label="<?php esc_attr_e( 'MainWP menu', 'mainwp' ); ?>">
+            <i class="bars icon" aria-hidden="true"></i>
+            <div class="menu" id="mainwp-user-menu">
                 <a class="item" id="mainwp-settings-menu-item" href="<?php echo esc_url( admin_url( 'admin.php?page=Settings' ) ); ?>">
                     <i class="cog grey icon"></i> <?php esc_html_e( 'MainWP Settings', 'mainwp' ); ?>
                 </a>
@@ -1788,6 +1776,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 </a>
             </div>
         </div>
+        </div>
         <a class="ui icon button" href="javascript:void(0)" id="mainwp-mobile-menu-trigger">
             <i class="bars icon"></i>
         </a>
@@ -1795,7 +1784,25 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         <input type="hidden" id="mainwp-screen-options-pulse-control" value="<?php echo esc_attr( $pulse ); ?>">
         <script>
             jQuery( document ).ready( function( $ ) {
-                $( '#mainwp-user-menu-button' ).dropdown();
+                var $menuButton = $( '#mainwp-user-menu-button' );
+                $menuButton.on( 'keydown', function( event ) {
+                    if ( event.target !== this ) {
+                        return;
+                    }
+                    var isExpanded = $menuButton.attr( 'aria-expanded' ) === 'true';
+                    if ( event.key === ' ' || ( event.key === 'Enter' && ! isExpanded ) ) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                        $menuButton.dropdown( isExpanded ? 'hide' : 'show' );
+                    }
+                } ).dropdown( {
+                    onShow: function() {
+                        $menuButton.attr( 'aria-expanded', 'true' );
+                    },
+                    onHide: function() {
+                        $menuButton.attr( 'aria-expanded', 'false' );
+                    }
+                } );
             } );
         </script>
         <?php

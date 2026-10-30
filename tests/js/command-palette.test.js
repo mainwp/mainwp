@@ -11,7 +11,7 @@ const sharedSync = mainwpSource.slice( mainwpSource.indexOf( 'globalThis.mainwp_
 const showAllStart = mainwpSource.indexOf( 'globalThis.dashboard_update_site_show_all = function' );
 const sharedShowAll = mainwpSource.slice( showAllStart, mainwpSource.indexOf( '\n    };', showAllStart ) + 7 );
 
-function fixture( supportsLoader = true, mainwpPage = true, withPalette = false ) {
+function fixture( supportsLoader = true, mainwpPage = true, withPalette = false, adminDirectory = '/wp-admin/' ) {
     const timers = new Map();
     const requests = [];
     const states = [];
@@ -91,8 +91,8 @@ function fixture( supportsLoader = true, mainwpPage = true, withPalette = false 
         dispatcher.registerCommandLoader = ( config ) => { loader = config; loaderRegistrations++; };
     }
     const window = {
-        URLSearchParams, AbortController,
-        location: { pathname: '/wp-admin/admin.php', search: '?page=managesites&dashboard=28', assign: ( url ) => assigned.push( url ) },
+        URL, URLSearchParams, AbortController,
+        location: { origin: 'http://dash.local', href: 'http://dash.local' + adminDirectory + 'admin.php?page=managesites&dashboard=28', pathname: adminDirectory + 'admin.php', search: '?page=managesites&dashboard=28', assign: ( url ) => assigned.push( url ) },
         mainwpVars: { bulkTaskRunning: false },
         open: ( ...args ) => opened.push( args ),
         addEventListener() {},
@@ -109,7 +109,7 @@ function fixture( supportsLoader = true, mainwpPage = true, withPalette = false 
         mainwpCommandPalette: {
             commands: [ { name: 'existing-menu', label: 'Settings', url: '/settings' } ],
             siteSearch: {
-                ajaxUrl: '/ajax', searchNonce: 'search-nonce',
+                ajaxUrl: adminDirectory + 'admin-ajax.php', searchNonce: 'search-nonce',
                 strings: { searchError: 'Retry search', syncingAction: 'Syncing…', searchLabel:'Search sites, clients and commands', actionsFor:'Actions for %s', siteAction:'%1$s for %2$s', selectSite:'Select site', actions:'Actions', search:'Search', enter:'Enter', keyboard:'Enter for %s' },
             },
         },
@@ -277,7 +277,11 @@ function siteCommands( siteId = 28, defaultAction = 'operations' ) {
         label: 'Alder Home (example.com)',
         category: defaultAction === 'sync' ? 'command' : 'view',
         defaultAction, siteId, siteName: 'Alder Home',
-        actions: Object.fromEntries( [ 'operations', 'admin', 'sync' ].map( ( action ) => [ action, { label: action, url: '/' + action } ] ) ),
+        actions: {
+            operations: { label: 'operations', url: '/wp-admin/admin.php?page=managesites&dashboard=' + siteId },
+            admin: { label: 'admin', url: '/wp-admin/admin.php?page=SiteOpen&newWindow=yes&websiteid=' + siteId + '&_opennonce=test-nonce' },
+            sync: { label: 'sync' },
+        },
         keywords: [ 'example.com' ],
     } ];
 }
@@ -347,8 +351,8 @@ test( 'normalized URL matches remain searchable and navigation uses the intended
     admin.runTimers( 250 );
     await admin.respond( 0, siteCommands( 28, 'admin' ) );
     admin.render( query ).commands[ 0 ].callback( { close: () => closed++ } );
-    assert.deepEqual( app.assigned, [ '/operations' ] );
-    assert.deepEqual( admin.opened, [ [ '/admin', '_blank', 'noopener,noreferrer' ] ] );
+    assert.deepEqual( app.assigned, [ 'http://dash.local/wp-admin/admin.php?page=managesites&dashboard=28' ] );
+    assert.deepEqual( admin.opened, [ [ 'http://dash.local/wp-admin/admin.php?page=SiteOpen&newWindow=yes&websiteid=28&_opennonce=test-nonce', '_blank', 'noopener,noreferrer' ] ] );
     assert.equal( closed, 2 );
 } );
 
@@ -399,7 +403,7 @@ test( 'sync is omitted where the standard popup is unavailable', async () => {
     const command = app.render( 'alder' ).commands[ 0 ];
     assert.equal( command.site.actions.sync, undefined );
     command.callback();
-    assert.deepEqual( app.assigned, [ '/operations' ] );
+    assert.deepEqual( app.assigned, [ 'http://dash.local/wp-admin/admin.php?page=managesites&dashboard=28' ] );
     assert.equal( app.syncCalls.length, 0 );
 } );
 
@@ -417,7 +421,7 @@ test( 'one result per site exposes actions outside the listbox and follows the s
     const sync = bar.querySelector( '[data-action="sync"]' );
     assert.equal( bar.querySelectorAll( 'button' ).length, 2 );
     admin.listeners.click();
-    assert.deepEqual( app.opened, [ [ '/admin', '_blank', 'noopener,noreferrer' ] ] );
+    assert.deepEqual( app.opened, [ [ 'http://dash.local/wp-admin/admin.php?page=SiteOpen&newWindow=yes&websiteid=11&_opennonce=test-nonce', '_blank', 'noopener,noreferrer' ] ] );
     sync.listeners.click();
     sync.listeners.click();
     assert.equal( app.requests.length, 1 );
@@ -489,9 +493,9 @@ test( 'popup labels are text and server-disallowed Sync stays absent on any page
     const absent = fixture();
     absent.render( 'alder' );
     absent.runTimers( 250 );
-    unavailable[ 0 ].siteId = 11;
-    unavailable[ 0 ].name = 'mainwp/site/11';
-    await absent.respond( 0, unavailable );
+    const absentSite = siteCommands( 11 );
+    delete absentSite[ 0 ].actions.sync;
+    await absent.respond( 0, absentSite );
     assert.equal( absent.render( 'alder' ).commands[ 0 ].site.actions.sync, undefined );
 } );
 
@@ -578,7 +582,7 @@ test( 'client results open their own page and have no site actions', async () =>
     assert.equal( client.site, undefined );
     client.callback();
     assert.equal( app.closed, 1 );
-    assert.deepEqual( app.assigned, [ '/wp-admin/admin.php?page=ManageClients&client_id=1' ] );
+    assert.deepEqual( app.assigned, [ 'http://dash.local/wp-admin/admin.php?page=ManageClients&client_id=1' ] );
     assert.equal( app.syncCalls.length, 0 );
 } );
 
@@ -594,5 +598,68 @@ test( 'client-only search works without a sync popup and duplicate names stay di
     let closed = 0;
     commands[ 1 ].callback( { close: () => closed++ } );
     assert.equal( closed, 1 );
-    assert.deepEqual( app.assigned, [ '/wp-admin/admin.php?page=ManageClients&client_id=2' ] );
+    assert.deepEqual( app.assigned, [ 'http://dash.local/wp-admin/admin.php?page=ManageClients&client_id=2' ] );
+} );
+
+
+test( 'entity navigation rejects unsafe protocols, hosts, paths and mismatched routes', async () => {
+    const adminRoute = '/wp-admin/admin.php?page=SiteOpen&websiteid=28';
+    const invalid = [
+        'javascript:alert(1)',
+        'data:text/html,unsafe',
+        '//outside.example' + adminRoute,
+        'http://user:password@dash.local' + adminRoute,
+        '/other/admin.php?page=SiteOpen&websiteid=28',
+        '/wp-admin/admin.php?page=other&websiteid=28',
+        '/wp-admin/admin.php?page=SiteOpen&websiteid=29',
+        adminRoute + '&websiteid=29',
+        adminRoute + '&page=other',
+    ];
+    for ( const url of invalid ) {
+        const app = fixture();
+        const site = siteCommands( 28, 'admin' )[ 0 ];
+        site.actions = { admin: { label: 'admin', url } };
+        const client = { ...clientCommand(), url };
+        app.render( 'alder' );
+        app.runTimers( 250 );
+        await app.respond( 0, [ site, client ] );
+        assert.equal( app.render( 'alder' ).commands.length, 0, url );
+        assert.equal( app.opened.length, 0 );
+        assert.equal( app.assigned.length, 0 );
+    }
+} );
+
+test( 'actions recheck their navigation target before recording history or closing', async () => {
+    const app = fixture( true, true, true );
+    app.render( 'alder' );
+    app.runTimers( 250 );
+    await app.respond( 0, siteCommands() );
+    const { commands } = app.render( 'alder' );
+    const bar = app.palette.querySelector( '.mainwp-command-palette-site-actions' );
+    commands[ 0 ].site.actions.admin.url = 'javascript:alert(1)';
+    bar.querySelector( '[data-action="admin"]' ).listeners.click();
+    assert.equal( app.opened.length, 0 );
+    assert.equal( app.closed, 0 );
+    assert.equal( app.history.length, 0 );
+    commands[ 0 ].site.actions.operations.url = '//outside.example/';
+    commands[ 0 ].callback();
+    assert.equal( app.assigned.length, 0 );
+    assert.equal( app.closed, 0 );
+} );
+
+test( 'valid entity navigation supports a Dashboard in a subdirectory', async () => {
+    const app = fixture( true, false, false, '/dashboard/wp-admin/' );
+    const site = siteCommands( 28, 'admin' )[ 0 ];
+    site.actions.admin.url = 'admin.php?page=SiteOpen&websiteid=28&_opennonce=signed-value';
+    const client = { ...clientCommand(), url: '/dashboard/wp-admin/admin.php?page=ManageClients&client_id=1' };
+    app.render( 'alder' );
+    app.runTimers( 250 );
+    await app.respond( 0, [ site, client ] );
+    const { commands } = app.render( 'alder' );
+    assert.equal( commands.length, 2 );
+    assert.equal( commands[ 0 ].site.actions.operations, undefined, 'Wrong admin path is omitted' );
+    commands[ 0 ].callback();
+    commands[ 1 ].callback();
+    assert.deepEqual( app.opened, [ [ 'http://dash.local/dashboard/wp-admin/admin.php?page=SiteOpen&websiteid=28&_opennonce=signed-value', '_blank', 'noopener,noreferrer' ] ] );
+    assert.deepEqual( app.assigned, [ 'http://dash.local/dashboard/wp-admin/admin.php?page=ManageClients&client_id=1' ] );
 } );

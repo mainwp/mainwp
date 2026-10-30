@@ -139,7 +139,8 @@ class MainWP_Command_Palette { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( 'all' !== $allowed ) {
             // Apply the client dashboard's "at least one allowed site" scope
             // before LIMIT, so inaccessible matches cannot crowd out results.
-            $where .= " AND EXISTS (SELECT 1 FROM {$sites} wp WHERE wp.client_id = wc.client_id AND wp.is_staging = 0 AND wp.id IN (" . implode( ',', $allowed ) . '))';
+            $placeholders = implode( ',', array_fill( 0, count( $allowed ), '%d' ) );
+            $where       .= $wpdb->prepare( " AND EXISTS (SELECT 1 FROM {$sites} wp WHERE wp.client_id = wc.client_id AND wp.is_staging = 0 AND wp.id IN ({$placeholders}))", ...$allowed ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal table name and generated integer placeholders.
         }
 
         $orderby = empty( $ids ) ? $wpdb->prepare(
@@ -215,10 +216,15 @@ class MainWP_Command_Palette { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'select_sync_fields' => array( 'sync_errors' ),
                 'others_fields'      => array(),
                 'where'              => $where,
-                'orderby'            => $orderby,
-                'limit'              => 5,
+                'orderby'            => empty( $ids ) ? 'wp.id ASC' : $orderby,
+                'limit'              => empty( $ids ) ? 0 : 5,
             )
         );
+        if ( empty( $ids ) ) {
+            // Rank the permission-scoped candidates before limiting results,
+            // while keeping the shared query builder's ordering validation intact.
+            $sql = "SELECT * FROM ({$sql}) wp ORDER BY {$orderby} LIMIT 5";
+        }
         $sites    = $db->get_results_result( $sql );
         $commands = array();
 

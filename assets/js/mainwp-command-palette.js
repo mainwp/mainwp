@@ -5,9 +5,38 @@
     let searchCommandsByValue = new Map();
     let siteActionUI = null;
 
+    function getAdminNavigationUrl( value, page, idKey, id ) {
+        if ( typeof value !== 'string' || ! /^[1-9]\d*$/.test( String( id ) ) ) {
+            return null;
+        }
+        try {
+            const url = new window.URL( value, window.location.href );
+            const ajaxUrl = new window.URL( siteConfig.ajaxUrl, window.location.href );
+            const adminUrl = new window.URL( 'admin.php', ajaxUrl );
+            // Entity results may only navigate to their own Dashboard admin route.
+            if ( ! [ 'http:', 'https:' ].includes( url.protocol ) || url.origin !== window.location.origin ||
+                url.username || url.password || url.pathname !== adminUrl.pathname ||
+                url.searchParams.getAll( 'page' ).length !== 1 || url.searchParams.get( 'page' ) !== page ||
+                url.searchParams.getAll( idKey ).length !== 1 || url.searchParams.get( idKey ) !== String( id ) ) {
+                return null;
+            }
+            return url.href;
+        } catch {
+            return null;
+        }
+    }
+
+    function getSiteNavigationUrl( site, action ) {
+        return getAdminNavigationUrl( site.actions?.[ action ]?.url, action === 'admin' ? 'SiteOpen' : 'managesites', action === 'admin' ? 'websiteid' : 'dashboard', site.siteId );
+    }
+
     function runSiteAction( site, action, close = getDispatcher()?.close ) {
         const target = site?.actions?.[ action ];
         if ( ! target || ( action === 'sync' && ( ! supportsSiteSync() || window.mainwpVars?.bulkTaskRunning ) ) ) {
+            return;
+        }
+        const navigationUrl = action === 'sync' ? null : getSiteNavigationUrl( site, action );
+        if ( action !== 'sync' && ! navigationUrl ) {
             return;
         }
         const preferences = window.wp.data.select?.( 'core/preferences' );
@@ -26,9 +55,9 @@
             window.mainwp_sync_sites_data( [ String( site.siteId ) ] );
             updateSiteActionBar();
         } else if ( action === 'admin' ) {
-            window.open( target.url, '_blank', 'noopener,noreferrer' );
-        } else if ( target.url ) {
-            window.location.assign( target.url );
+            window.open( navigationUrl, '_blank', 'noopener,noreferrer' );
+        } else if ( navigationUrl ) {
+            window.location.assign( navigationUrl );
         }
     }
 
@@ -300,7 +329,12 @@
     function buildSearchCommands( commands, search ) {
         return commands.filter( ( command ) => command && command.name && command.label ).map( ( command ) => {
             // Clients are ordinary navigation commands with no site action bar.
-            if ( command.name.startsWith( 'mainwp/client/' ) && command.url ) {
+            const clientMatch = /^mainwp\/client\/([1-9]\d*)$/.exec( command.name );
+            if ( clientMatch ) {
+                const url = getAdminNavigationUrl( command.url, 'ManageClients', 'client_id', clientMatch[ 1 ] );
+                if ( ! url ) {
+                    return null;
+                }
                 return {
                     name: command.name,
                     label: command.label,
@@ -312,14 +346,21 @@
                         if ( typeof dismiss === 'function' ) {
                             dismiss();
                         }
-                        window.location.assign( command.url );
+                        window.location.assign( url );
                     },
                 };
             }
-            if ( ! /^[1-9]\d*$/.test( String( command.siteId ) ) ) {
+            if ( ! /^[1-9]\d*$/.test( String( command.siteId ) ) || command.name !== 'mainwp/site/' + command.siteId ) {
                 return null;
             }
-            const actions = { ...command.actions };
+            const actions = {};
+            for ( const action of [ 'operations', 'admin', 'sync' ] ) {
+                const target = command.actions?.[ action ];
+                const url = action === 'sync' ? null : getSiteNavigationUrl( command, action );
+                if ( target && ( action === 'sync' || url ) ) {
+                    actions[ action ] = { ...target, ...( url ? { url } : {} ) };
+                }
+            }
             if ( ! supportsSiteSync() ) {
                 delete actions.sync;
             }

@@ -1162,6 +1162,7 @@ managebackups_cancel_run = function (element) {
 
 jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {
     if (updatesoverviewContinueAfterBackup != undefined) {
+        mainwpVars.ignoreBackupGate = true;
         mainwpPopup('#updatesoverview-backup-box').close();
         updatesoverviewContinueAfterBackup();
         updatesoverviewContinueAfterBackup = undefined;
@@ -1171,9 +1172,12 @@ jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {
 let updatesoverviewShowBusyFunction;
 let updatesoverviewShowBusyTimeout;
 mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
+    mainwpVars.ignoreBackupGate = false;
+    // Another update can replace the shared global while this check is in flight, so keep the one it was started for.
+    const continueAfterBackup = updatesoverviewContinueAfterBackup;
     if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
-        if (updatesoverviewContinueAfterBackup != undefined) {
-            updatesoverviewContinueAfterBackup();
+        if (continueAfterBackup != undefined) {
+            continueAfterBackup();
         }
         return false;
     }
@@ -1237,6 +1241,8 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
                 }
 
                 if (siteFeedback != undefined) {
+                    // The box buttons resume through the shared global.
+                    updatesoverviewContinueAfterBackup = continueAfterBackup;
                     let title = mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback, 'updatesoverview');
                     mainwpPopup('#updatesoverview-backup-box').init({
                         title: title, callback: function () {
@@ -1249,8 +1255,8 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
                     return false;
                 }
 
-                if (updatesoverviewContinueAfterBackup != undefined) {
-                    updatesoverviewContinueAfterBackup();
+                if (continueAfterBackup != undefined) {
+                    continueAfterBackup();
                 }
             }
         }(siteNames),
@@ -1273,6 +1279,10 @@ jQuery(document).on('click', '#updatesoverview-backupnow-close', function () {
         mainwpPopup('#updatesoverview-backup-box').close(true);
     } else {
         mainwpPopup('#updatesoverview-backup-box').close();
+        // "Continue update anyway" after a failed backup is an explicit override; the server gate refuses without it.
+        if (updatesoverviewBackupError)
+            mainwpVars.ignoreBackupGate = true;
+        updatesoverviewBackupError = false;
         if (updatesoverviewContinueAfterBackup != undefined)
             updatesoverviewContinueAfterBackup();
     }

@@ -698,9 +698,9 @@ class MainWP_Backup_V2_Restore_Admission_Test extends MainWP_Abilities_Test_Case
 	/** A queued user cancellation keeps its existing local outcome. */
 	public function test_user_cancel_intent_precedes_new_restore_admission() {
 		$this->enable( true );
-		$this->report                = array();
-		$job                         = $this->job( $this->plan(), 'staging' );
-		$store                       = MainWP_Backup_Restore_Job_Store::instance();
+		$this->report = array();
+		$job          = $this->job( $this->plan(), 'staging' );
+		$store        = MainWP_Backup_Restore_Job_Store::instance();
 		$this->assertTrue( $store->arm_cancel_intent( (int) $job->id ) );
 		( new MainWP_Backup_Restore_Orchestrator() )->run_job( $store->get_job( (int) $job->id ), microtime( true ) + 1 );
 		$this->assertSame( 'cancelled', $store->get_job( (int) $job->id )->status );

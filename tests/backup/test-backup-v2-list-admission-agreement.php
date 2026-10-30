@@ -176,15 +176,32 @@ class MainWP_Backup_V2_List_Admission_Agreement_Test extends MainWP_Abilities_Te
 	 * @param bool $damaged Whether the full base is damaged.
 	 */
 	public function test_all_v1_control( bool $damaged ) {
-		global $wpdb;
 		$base = $this->record( 'v1', 0, $damaged );
 		$mid  = $this->record( 'v1', $base );
-		$this->record( 'v1', $mid );
-		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
-		$before  = $wpdb->num_queries;
+		$leaf = $this->record( 'v1', $mid );
+
+		$catalog = new class() extends MainWP_Backup_Snapshot_Catalog {
+			/**
+			 * Snapshots whose chains the list admits.
+			 *
+			 * @var int[]
+			 */
+			public $admission_calls = array();
+
+			/**
+			 * Observe admission while retaining the production verdict.
+			 *
+			 * @param int $snapshot_id Snapshot to resolve.
+			 * @param int $expected_site_id Authorized source owner.
+			 * @return array Restore admission result.
+			 */
+			public function resolve_restorable_chain( int $snapshot_id, int $expected_site_id = 0 ): array {
+				$this->admission_calls[] = $snapshot_id;
+				return parent::resolve_restorable_chain( $snapshot_id, $expected_site_id );
+			}
+		};
 		$entries = $catalog->list_snapshots_for_site( 9901 );
-		$queries = $wpdb->num_queries - $before;
-		$this->assertSame( $damaged ? 31 : 9, $queries );
+		$this->assertEqualsCanonicalizing( $damaged ? array( $mid, $leaf ) : array(), $catalog->admission_calls, 'Only descendants of a damaged v1 ancestor need full restore admission.' );
 		$this->assertCount( 3, $entries );
 		foreach ( $entries as $entry ) {
 			$id        = (int) $entry['snapshot']->id;

@@ -236,7 +236,9 @@ body.mainwp-ui #mainwp-top-header #mainwp-mobile-menu-trigger {
     display: none !important;
 }
 
-body.mainwp-header-collapsed #mainwp-top-header #mainwp-header-actions {
+body.mainwp-header-collapsed #mainwp-top-header #mainwp-header-command-palette-actions,
+body.mainwp-header-collapsed #mainwp-top-header #mainwp-header-secondary-actions,
+body.mainwp-header-collapsed #mainwp-top-header #mainwp-user-menu-button {
     display: none !important;
 }
 
@@ -245,7 +247,9 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
 }
 
 @media screen and (max-width: 1140px) {
-    #mainwp-top-header #mainwp-header-actions {
+    #mainwp-top-header #mainwp-header-command-palette-actions,
+    #mainwp-top-header #mainwp-header-secondary-actions,
+    #mainwp-top-header #mainwp-user-menu-button {
         display: none !important;
     }
 

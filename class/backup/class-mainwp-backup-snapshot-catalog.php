@@ -94,9 +94,37 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
                 'removal_reason' => $removal_reason,
             );
         }
-        $by_id = array();
+        $by_id      = array();
+        $format_ids = array();
         foreach ( $entries as $entry ) {
-            $by_id[ (int) $entry['snapshot']->id ] = $entry;
+            $id           = (int) $entry['snapshot']->id;
+            $by_id[ $id ] = $entry;
+            foreach ( (array) $entry['snapshot']->archives as $archive ) {
+                if ( is_array( $archive ) && ( ( array_key_exists( 'backup_format', $archive ) && ! in_array( $archive['backup_format'], array( 1, '1' ), true ) ) || ! empty( $archive['layout_descriptor_sha256'] ) ) ) {
+                    $format_ids[ $id ] = true;
+                    break;
+                }
+            }
+        }
+        foreach ( $entries as $index => $entry ) {
+            if ( empty( $format_ids ) ) {
+                break;
+            }
+            $current = (int) $entry['snapshot']->id;
+            $seen    = array();
+            while ( isset( $by_id[ $current ] ) && ! isset( $seen[ $current ] ) ) {
+                $seen[ $current ] = true;
+                if ( isset( $format_ids[ $current ] ) ) {
+                    // Keep v1 on its cheap path; the resolver owns format and layout admission.
+                    $admission                       = $this->resolve_restorable_chain( (int) $entry['snapshot']->id, $site_id );
+                    $entries[ $index ]['restorable'] = $entry['restorable'] && $admission['ok'];
+                    if ( '' === $entry['restore_reason'] && ! $admission['ok'] ) {
+                        $entries[ $index ]['restore_reason'] = (string) $admission['error'];
+                    }
+                    break;
+                }
+                $current = (int) $by_id[ $current ]['snapshot']->parent_id;
+            }
         }
         foreach ( $entries as $index => $entry ) {
             if ( 'incremental' !== $entry['snapshot']->type || '' !== $entry['restore_reason'] ) {

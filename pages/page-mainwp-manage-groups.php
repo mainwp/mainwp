@@ -690,7 +690,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             $groupName = $matches[1];
         }
 
-        $group = MainWP_DB_Common::instance()->get_group_by_name( $groupName );
+        $group = self::get_visible_group_by_name( $groupName );
         while ( $group && ( ( null === $groupId ) || ( (int) $group->id !== (int) $groupId ) ) ) {
             if ( null === $cnt ) {
                 $cnt = 1;
@@ -698,10 +698,33 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 ++$cnt;
             }
 
-            $group = MainWP_DB_Common::instance()->get_group_by_name( $groupName . ' (' . $cnt . ')' );
+            $group = self::get_visible_group_by_name( $groupName . ' (' . $cnt . ')' );
         }
 
         return $groupName . ( null === $cnt ? '' : ' (' . $cnt . ')' );
+    }
+
+    /**
+     * REST requests skip the tag filter in get_sql_where_allow_groups(), so the lookup is limited
+     * to the caller's scope here; numbering or refusing a new name after a hidden tag would reveal it.
+     *
+     * @param string $name Tag name.
+     * @return object|null Tag row, or null when missing or hidden.
+     */
+    public static function get_visible_group_by_name( $name ) {
+        $allowed = ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) ? MainWP_Abilities_Util::get_scoped_group_ids_or_all() : 'all';
+        if ( 'all' === $allowed ) {
+            return MainWP_DB_Common::instance()->get_group_by_name( $name );
+        }
+        $allowed = array_diff( $allowed, array( (int) get_option( 'mainwp_stagingsites_group_id' ) ) );
+        if ( empty( $allowed ) ) {
+            return null;
+        }
+
+        // Hidden and visible tags can share a name, so the match is made among visible tags only.
+        global $wpdb;
+        $ids = implode( ',', array_map( 'intval', $allowed ) );
+        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM %i WHERE id IN ({$ids}) AND name = %s", MainWP_DB_Common::instance()->get_table_name( 'group' ), MainWP_DB_Common::instance()->escape( $name ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery -- IDs are cast to int; name escaped as get_group_by_name() does.
     }
 
     /**

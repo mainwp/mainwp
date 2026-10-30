@@ -3562,7 +3562,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $resp_data['error'] = wp_strip_all_tags( $e->getMessage() );
         }
 
-        if ( ! empty( $found_id ) ) {
+        // The URL lookup ignores scope, so a site outside the key's scope reads as already connected without its id.
+        $allowed_sites = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( ! empty( $found_id ) && ( 'all' === $allowed_sites || in_array( (int) $found_id, $allowed_sites, true ) ) ) {
             $resp_data['found_id'] = $found_id;
         }
 

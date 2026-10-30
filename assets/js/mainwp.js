@@ -4177,6 +4177,10 @@ globalThis.mainwp_secure_data = function (data, includeDts) {
     if (data['action'] == undefined)
         return data;
 
+    if (mainwpVars.ignoreBackupGate && (data.action === 'mainwp_upgradewp' || data.action === 'mainwp_upgradeplugintheme')) {
+        data.ignore_backup_gate = 1;
+    }
+
     if (security_nonces[data['action']] == undefined)
         return data;
 

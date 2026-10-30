@@ -824,7 +824,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
 
     let sitesToUpdate = [websiteId];
     let siteNames = [];
-    siteNames[websiteId] = jQuery('div[site_id="' + websiteId + '"]').attr('site_name');
+    siteNames[websiteId] = jQuery('[site_id="' + websiteId + '"][site_name]').first().attr('site_name');
 
     return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
 };
@@ -1437,7 +1437,7 @@ let updatesoverview_plugins_upgrade_int = function (slug, websiteId, bulkMode, n
 
     let sitesToUpdate = [websiteId];
     let siteNames = [];
-    siteNames[websiteId] = jQuery('div[site_id="' + websiteId + '"]').attr('site_name');
+    siteNames[websiteId] = jQuery('[site_id="' + websiteId + '"][site_name]').first().attr('site_name');
 
     return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
 };
@@ -3721,7 +3721,13 @@ let updatesoverview_plugins_upgrade = function (slug, websiteid) {
 let updatesoverview_themes_upgrade = function (slug, websiteid) {
     let msg = MainWP.I18n.t('Are you sure you want to update the theme on the selected site?');
     mainwp_confirm(msg, function () {
-        return updatesoverview_themes_upgrade_int(slug, websiteid);
+        updatesoverviewContinueAfterBackup = function () {
+            updatesoverviewContinueAfterBackup = undefined;
+            return updatesoverview_themes_upgrade_int(slug, websiteid);
+        };
+        let siteNames = [];
+        siteNames[websiteid] = jQuery('[site_id="' + websiteid + '"][site_name]').first().attr('site_name');
+        return mainwp_updatesoverview_checkBackups([websiteid], siteNames);
     }, false, 1);
 };
 

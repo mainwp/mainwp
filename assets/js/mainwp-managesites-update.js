@@ -55,7 +55,7 @@ let mainwp_update_get_selected_sitesids = function (selectedSitesIds, allSitesId
 
 
 // global variable.
-globalThis.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
+globalThis.mainwp_update_pluginsthemes = function (updateType, updateSiteIds, continueRun) {
     let allWebsiteIds = jQuery('.dashboard_wp_id[error-status=0]').map(function (indx, el) {
         return jQuery(el).val();
     });
@@ -116,7 +116,7 @@ globalThis.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
         }
     }(updateType, nrOfWebsites, allWebsiteIds);
 
-    if (!ignoredBackupBeforeUpdate) {
+    if (!continueRun || !ignoredBackupBeforeUpdate) {
         mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
     } else if (managesitesContinueAfterBackup != undefined) {
         managesitesContinueAfterBackup();
@@ -174,7 +174,7 @@ let managesites_update_pluginsthemes_done = function (pType) {
                     let selectedIds = jQuery('#sync_selected_site_ids').val().split(',');
                     setTimeout(function () {
                         // start next update step.
-                        mainwp_update_pluginsthemes(nextStep, selectedIds);
+                        mainwp_update_pluginsthemes(nextStep, selectedIds, true);
                     }, 1000);
                     return; // do not close the popup.
                 }
@@ -291,6 +291,7 @@ let managesites_update_pluginsthemes_next = function (pType) {
 jQuery(document).on('click', '#managesites-backup-ignore', function () {
     if (managesitesContinueAfterBackup != undefined) {
         ignoredBackupBeforeUpdate = true;
+        mainwpVars.ignoreBackupGate = true;
         mainwpPopup('#managesites-backup-box').close();
         managesitesContinueAfterBackup();
         managesitesContinueAfterBackup = undefined;
@@ -298,6 +299,8 @@ jQuery(document).on('click', '#managesites-backup-ignore', function () {
 });
 
 let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
+    mainwpVars.ignoreBackupGate = false;
+    ignoredBackupBeforeUpdate = false;
     if (!mainwpParams['backup_before_upgrade']) {
         if (managesitesContinueAfterBackup != undefined)
             managesitesContinueAfterBackup();
@@ -399,6 +402,13 @@ jQuery(document).on('click', '#managesites-backupnow-close', function () {
         mainwpPopup('#managesites-backup-box').close(true);
     } else {
         mainwpPopup('#managesites-backup-box').close();
+        // "Continue update anyway" after a failed backup is an explicit override; the server gate refuses without it.
+        // Later Update Everything stages keep it, as they do after Ignore.
+        if (managesitesBackupError) {
+            mainwpVars.ignoreBackupGate = true;
+            ignoredBackupBeforeUpdate = true;
+        }
+        managesitesBackupError = false;
         if (managesitesContinueAfterBackup != undefined)
             managesitesContinueAfterBackup();
     }
@@ -630,7 +640,7 @@ let managesites_wordpress_upgrade_all_update_done = function () {
             let selectedIds = jQuery('#sync_selected_site_ids').val().split(',');
             setTimeout(function () {
                 // start next update step.
-                mainwp_update_pluginsthemes(nextStep, selectedIds);
+                mainwp_update_pluginsthemes(nextStep, selectedIds, true);
             }, 1000);
             return; // do not close the popup.
         }

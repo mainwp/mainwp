@@ -624,6 +624,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             } );
         </script>
         <?php
+        MainWP_Manage_Sites::render_backup_modal();
         static::render_footer( 'Manage' );
     }
 

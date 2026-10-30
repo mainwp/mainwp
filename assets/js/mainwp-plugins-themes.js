@@ -933,11 +933,6 @@ let manage_plugins_upgrade_int = function (slug, websiteId) {
         return manage_plugins_upgrade_continueAfterBackup(slug, websiteId, websiteHolder);
     };
 
-    if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
-        _callbackAfterBackup();
-        return false;
-    }
-
     let sitesToUpdate = [websiteId];
     let siteNames = [];
     siteNames[websiteId] = jQuery(websiteHolder).attr('site-name');
@@ -1083,12 +1078,9 @@ let manage_themes_upgrade_int = function (slug, websiteId) {
     let websiteHolder = jQuery('.mainwp-manage-theme-item-website[theme-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<span data-tooltip="Updating..." data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span');
 
-    let _callbackAfterBackup = manage_themes_upgrade_continueAfterBackup(slug, websiteId, websiteHolder);
-
-    if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
-        _callbackAfterBackup();
-        return false;
-    }
+    let _callbackAfterBackup = function () {
+        return manage_themes_upgrade_continueAfterBackup(slug, websiteId, websiteHolder);
+    };
 
     let sitesToUpdate = [websiteId];
     let siteNames = [];
@@ -1102,6 +1094,13 @@ let manage_themes_upgrade_int = function (slug, websiteId) {
  * Check Backups.
  */
 let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterBackup) {
+    mainwpVars.ignoreBackupGate = false;
+    if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
+        if (continueAfterBackup != undefined) {
+            continueAfterBackup();
+        }
+        return false;
+    }
     let managesitesShowBusyFunction = function () {
         let output = MainWP.I18n.t('Checking if a backup is required for the selected updates...');
         mainwpPopup('#managesites-backup-box').getContentEl().html(output);
@@ -1147,10 +1146,12 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
                 }
 
                 if (siteFeedback != undefined) {
+                    // The box buttons resume through this shared global, so point it at the update this check belongs to.
+                    managesitesContinueAfterBackup = continueAfterBackup;
                     let title = mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
                     mainwpPopup('#managesites-backup-box').init({
                         title: title, callback: function () {
-                            continueAfterBackup = undefined;
+                            managesitesContinueAfterBackup = undefined;
                             mainwp_forceReload();
                         }
                     });

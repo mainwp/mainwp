@@ -78,7 +78,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$protection                        = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
 		$now                               = time();
 		$first                             = $protection::observe_remote_protection( array( $id ), $now );
-		$this->assertSame( $now + DAY_IN_SECONDS, $first['protected_until'] );
+		$this->assertSame( $now + $protection::LATE_WRITE_SECONDS + DAY_IN_SECONDS, $first['protected_until'] );
 		$this->assertFalse( $first['unknown_age'] );
 		$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $now + DAY_IN_SECONDS - 1 ) );
 		$this->assertFalse( $protection::holds_automatic_removal( array( $id ), $now + 2 * DAY_IN_SECONDS ) );
@@ -107,7 +107,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$protection          = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
 		$now                 = time();
 		$first               = $protection::observe_remote_protection( array( $id ), $now );
-		$this->assertSame( $now + DAY_IN_SECONDS, $first['protected_until'] );
+		$this->assertSame( $now + $protection::LATE_WRITE_SECONDS + DAY_IN_SECONDS, $first['protected_until'] );
 		foreach ( array( 'prune:first', 'prune:second' ) as $offset => $token ) {
 			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now + ( 5 + $offset ) * DAY_IN_SECONDS;
 			try {
@@ -121,6 +121,32 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $store->save_checkpoint( $job_id, $stale ) );
 		$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['storage_age_floor'] );
 		$this->assertFalse( $protection::holds_automatic_removal( array( $id ), $now + 2 * DAY_IN_SECONDS ) );
+	}
+
+	/** A worker whose lease runs out after the floor can still land a write; the minimum covers it. */
+	public function test_unknown_upload_hold_covers_late_write_from_expired_worker(): void {
+		list( $id, $job_id ) = $this->make_unknown_age_upload( 'failed_retryable' );
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$protection          = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
+		$lease               = \MainWP\Dashboard\MainWP_Backup_Upload_Driver::DEFAULT_BUDGET_SECONDS + 60;
+		$window              = $lease + MainWP_Backup_Upload_Job_Store::PRUNE_STALE_LEASE_SECONDS;
+		$now                 = time();
+		$worker              = $store->acquire_next_job( 'late-worker', $lease, $now - 1 );
+		$this->assertSame( $job_id, (int) $worker->id );
+		$protection::observe_remote_protection( array( $id ), $now );
+		$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['storage_age_floor'] );
+		// The provider request returns after the lease ran out; fencing refuses the save but not the remote write.
+		$late_write                                        = $now + $lease + 5 * MINUTE_IN_SECONDS;
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $late_write;
+		try {
+			$this->assertFalse( $store->save_checkpoint( $job_id, array( 'phase' => 'uploading' ), 'late-worker' ) );
+		} finally {
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+		}
+		$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['storage_age_floor'], 'The floor itself never moves.' );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $late_write + DAY_IN_SECONDS - 1 ), 'The late write must still get its full minimum.' );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $now + $window + DAY_IN_SECONDS - 1 ) );
+		$this->assertFalse( $protection::holds_automatic_removal( array( $id ), $now + $window + DAY_IN_SECONDS ), 'The bounded hold still ends.' );
 	}
 
 	/** The query preview and direct protection expose the same persisted date. */
@@ -240,7 +266,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
 		$deletes = $store->get_jobs_for_snapshot( $id, 'delete' );
 		$this->assertCount( 1, $deletes );
-		$this->assertSame( $job->checkpoint['storage_age_floor'], $deletes[0]->checkpoint['storage_age']['uploaded_at'] );
+		$this->assertSame( $job->checkpoint['storage_age_floor'] + $protection::LATE_WRITE_SECONDS, $deletes[0]->checkpoint['storage_age']['uploaded_at'] );
 	}
 
 	/** A failed floor write keeps the upload held until evidence is durable. */
@@ -3644,7 +3670,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$store->set_status( $job->id, 'failed_permanent' );
 		$failed = $protection::observe_remote_protection( array( $id ), $now );
 		$this->assertFalse( $failed['unknown_age'] );
-		$this->assertSame( $now + 30 * DAY_IN_SECONDS, $failed['protected_until'] );
+		$this->assertSame( $now + $protection::LATE_WRITE_SECONDS + 30 * DAY_IN_SECONDS, $failed['protected_until'] );
 	}
 
 	/** A failed destination read cannot make its unknown minimum disappear. */

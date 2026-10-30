@@ -147,6 +147,16 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Read the private rollout switch for internal cross-site admission.
+     *
+     * @internal
+     * @return bool Whether v2 admission is enabled.
+     */
+    public static function is_layout_v2_enabled(): bool {
+        return self::$layout_v2_enabled;
+    }
+
+    /**
      * Admit v2 only on this call's fresh destination capability report.
      *
      * @internal

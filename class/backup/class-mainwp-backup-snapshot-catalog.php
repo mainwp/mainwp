@@ -199,6 +199,48 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
      *                 local_path, remote_key, adopt_only }.
      */
     public function resolve_restorable_chain( int $snapshot_id, int $expected_site_id = 0 ): array {
+        return $this->resolve_owned_chain( $snapshot_id, $expected_site_id );
+    }
+
+    /**
+     * Resolve a v2 source chain for a separately admitted destination.
+     *
+     * @internal
+     * @param int $snapshot_id    Source snapshot.
+     * @param int $source_site_id Authorized source owner.
+     * @param int $target_site_id Destination for restore capability checks.
+     * @return array Restorable chain or refusal.
+     */
+    public function resolve_cross_site_restorable_chain( int $snapshot_id, int $source_site_id, int $target_site_id ): array {
+        if ( ! MainWP_Backup_Monitor::is_layout_v2_enabled() || $source_site_id <= 0 || $target_site_id <= 0 ) {
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE, __( 'The selected backup does not belong to this site.', 'mainwp' ) );
+        }
+        $leaf = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        if ( null === $leaf ) {
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND, __( 'The selected backup no longer exists.', 'mainwp' ) );
+        }
+        if ( (int) $leaf->site_id !== $source_site_id ) {
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE, __( 'The selected backup does not belong to this site.', 'mainwp' ) );
+        }
+        $metadata = MainWP_Backup_Snapshots::format_metadata( (array) $leaf->archives );
+        if ( is_wp_error( $metadata ) ) {
+            return $this->refusal( $metadata->get_error_code(), $metadata->get_error_message() );
+        }
+        if ( empty( $metadata ) ) {
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT ) );
+        }
+        return $this->resolve_owned_chain( $snapshot_id, $source_site_id, $target_site_id );
+    }
+
+    /**
+     * Resolve source artifacts while checking the restore site's capabilities.
+     *
+     * @param int $snapshot_id      Source snapshot.
+     * @param int $expected_site_id Expected snapshot owner, or zero for existing callers.
+     * @param int $target_site_id   Separate destination, or zero for same-site resolution.
+     * @return array Restorable chain or refusal.
+     */
+    private function resolve_owned_chain( int $snapshot_id, int $expected_site_id, int $target_site_id = 0 ): array {
         $snapshots = MainWP_Backup_Snapshots::instance();
         $leaf      = $snapshots->get_snapshot_by_id( $snapshot_id );
         if ( null === $leaf ) {
@@ -210,10 +252,11 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         if ( 'complete' !== $leaf->status ) {
             return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_PRUNED, __( 'The selected backup was removed by retention and can no longer be restored.', 'mainwp' ) );
         }
-        if ( 'files' === $leaf->type && ! $this->site_supports_restore_files( (int) $leaf->site_id ) ) {
+        $restore_site_id = $target_site_id > 0 ? $target_site_id : (int) $leaf->site_id;
+        if ( 'files' === $leaf->type && ! $this->site_supports_restore_files( $restore_site_id ) ) {
             return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_FILES_CHILD_OUTDATED, __( 'This backup contains the site\'s files without a database, and the site\'s MainWP Child plugin predates files-only restore. Update the child plugin to restore it, or download the archive to recover individual files.', 'mainwp' ) );
         }
-        if ( $this->site_is_multisite( (int) $leaf->site_id ) && ! $this->site_supports_restore_multisite( (int) $leaf->site_id ) ) {
+        if ( $this->site_is_multisite( $restore_site_id ) && ! $this->site_supports_restore_multisite( $restore_site_id ) ) {
             return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_MULTISITE_CHILD_OUTDATED, __( 'This site runs WordPress Multisite, and its MainWP Child plugin predates network-wide restore. Update the child plugin to restore this backup.', 'mainwp' ) );
         }
 
@@ -227,6 +270,9 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_BASE_MISSING, __( 'The selected backup belongs to an incremental chain whose base full backup is missing.', 'mainwp' ) );
         }
         foreach ( $chain as $link ) {
+            if ( $target_site_id > 0 && (int) $link->site_id !== $expected_site_id ) {
+                return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE, __( 'The selected backup does not belong to this site.', 'mainwp' ) );
+            }
             if ( 'complete' !== $link->status ) {
                 return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_CHAIN_PRUNED, __( 'Part of the selected backup chain was removed by retention, so this point in time can no longer be restored.', 'mainwp' ) );
             }

@@ -142,6 +142,47 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      */
     public function initiate_restore( int $site_id, int $snapshot_id, array $options = array() ): int {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
+        return $this->initiate_restore_for_site( $site_id, $snapshot_id, $options );
+    }
+
+    /**
+     * Start an internal v2 restore from an immutable source onto another site.
+     *
+     * Callers authorize source backup access and destination restore access separately.
+     *
+     * @internal
+     * @param int   $source_site_id Authorized source site.
+     * @param int   $target_site_id Authorized destination site.
+     * @param int   $snapshot_id    Source snapshot.
+     * @param array $options        Restore options.
+     * @throws MainWP_Exception When the source or destination cannot be admitted.
+     * @return int Destination job id.
+     */
+    public function initiate_cross_site_restore( int $source_site_id, int $target_site_id, int $snapshot_id, array $options = array() ): int {
+        if ( $source_site_id === $target_site_id ) {
+            return $this->initiate_restore( $target_site_id, $snapshot_id, $options );
+        }
+        $resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_cross_site_restorable_chain( $snapshot_id, $source_site_id, $target_site_id );
+        if ( ! $resolved['ok'] ) {
+            throw new MainWP_Exception( esc_html( $resolved['error'] ), null, $resolved['code'] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- catalog refusal is escaped.
+        }
+        return $this->initiate_restore_for_site( $target_site_id, $snapshot_id, $options, $source_site_id, $resolved );
+    }
+
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all refusals use MainWP_Exception.
+    /**
+     * Admit a restore while reserving only its destination.
+     *
+     * @param int        $site_id        Destination site.
+     * @param int        $snapshot_id    Source snapshot.
+     * @param array      $options        Restore options.
+     * @param int        $source_site_id Separate source owner, or zero for same-site requests.
+     * @param array|null $resolved       Resolved cross-site source chain.
+     * @throws MainWP_Exception When admission fails.
+     * @return int Job id.
+     */
+    private function initiate_restore_for_site( int $site_id, int $snapshot_id, array $options, int $source_site_id = 0, ?array $resolved = null ): int {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
@@ -162,8 +203,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // but a direct AJAX call can omit it, so a database-bearing restore is
         // refused until confirm_destructive is set. The response carries
         // the reason (WooCommerce, backup age) for the modal and CLI to explain.
-        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
-        if ( null !== $snapshot && (int) $snapshot->site_id === $site_id && self::restore_needs_confirmation( $snapshot, ! empty( $options['confirm_destructive'] ) ) ) {
+        $snapshot_site_id = $source_site_id > 0 ? $source_site_id : $site_id;
+        $snapshot         = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        if ( null !== $snapshot && (int) $snapshot->site_id === $snapshot_site_id && self::restore_needs_confirmation( $snapshot, ! empty( $options['confirm_destructive'] ) ) ) {
             $refusal = new MainWP_Exception( esc_html__( 'Confirmation is required for this action.', 'mainwp' ), null, 'mainwp_confirmation_required' );
             $refusal->set_data(
                 array(
@@ -176,7 +218,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         // Order preservation applies only to a database-bearing restore; the
         // backup's created time bounds the customer capture on the child.
-        $options['preserve_orders'] = ! empty( $options['preserve_orders'] ) && null !== $snapshot && (int) $snapshot->site_id === $site_id && 'files' !== (string) $snapshot->type;
+        $options['preserve_orders'] = ! empty( $options['preserve_orders'] ) && null !== $snapshot && (int) $snapshot->site_id === $snapshot_site_id && 'files' !== (string) $snapshot->type;
         $options['woo_order_since'] = $options['preserve_orders'] ? (int) $snapshot->created : 0;
 
         // A preserve-orders request the child's apply-phase gate is certain
@@ -204,13 +246,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
         }
 
-        // Hold the site's restore slot before resolving the chain: Clean Up
-        // deletes a snapshot only while it holds the same slot, so the files
-        // resolved here cannot be removed before this job exists.
+        // Same-site resolution holds the snapshot owner's slot against cleanup.
+        // Cross-site jobs hold only the destination; staging verifies source files.
         $store       = MainWP_Backup_Restore_Job_Store::instance();
         $reservation = $this->reserve_site_for( $site_id, esc_html__( 'A restore is already running for this site. Wait for it to finish before starting another.', 'mainwp' ) );
         try {
-            $job_id      = $this->admit_restore( $reservation, $site_id, $snapshot_id, $options );
+            $job_id      = $this->admit_restore( $reservation, $site_id, $snapshot_id, $options, $source_site_id, $resolved );
             $reservation = 0;
         } finally {
             if ( $reservation > 0 ) {
@@ -225,17 +266,21 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     /**
      * Resolve the chain and turn the held reservation into the restore job.
      *
-     * @param int   $reservation Reservation id holding the site.
-     * @param int   $site_id     Child site id.
-     * @param int   $snapshot_id Snapshot to restore.
-     * @param array $options     Restore options.
+     * @param int        $reservation    Reservation id holding the site.
+     * @param int        $site_id        Child site id.
+     * @param int        $snapshot_id    Snapshot to restore.
+     * @param array      $options        Restore options.
+     * @param int        $source_site_id Separate source owner, or zero for same-site requests.
+     * @param array|null $resolved       Resolved cross-site source chain.
      *
      * @throws MainWP_Exception When the restore cannot start.
      *
      * @return int Job id.
      */
-    private function admit_restore( int $reservation, int $site_id, int $snapshot_id, array $options ): int {
-        $resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id, $site_id );
+    private function admit_restore( int $reservation, int $site_id, int $snapshot_id, array $options, int $source_site_id = 0, ?array $resolved = null ): int {
+        if ( null === $resolved ) {
+            $resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id, $site_id );
+        }
         if ( ! $resolved['ok'] ) {
             throw new MainWP_Exception( esc_html( $resolved['error'] ), null, $resolved['code'] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- catalog codes are trusted identifiers; the message is escaped.
         }
@@ -260,6 +305,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 throw new MainWP_Exception( MainWP_Backup_Error_Codes::message( $admission->get_error_code() ), null, $admission->get_error_code() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry message.
             }
             $checkpoint['target_layout_id'] = $admission['expected_layout_id'];
+        }
+
+        if ( $source_site_id > 0 ) {
+            $checkpoint['source_site_id'] = $source_site_id;
         }
 
         $job_id = MainWP_Backup_Restore_Job_Store::instance()->promote_reservation( $reservation, $snapshot_id, $checkpoint );
@@ -581,6 +630,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             ),
             'transfer'               => array(),
         );
+        if ( ! empty( $failed_job->checkpoint['source_site_id'] ) ) {
+            $checkpoint['source_site_id'] = (int) $failed_job->checkpoint['source_site_id'];
+        }
         if ( ! empty( $metadata ) ) {
             // A rollback retains the destination binding of its safety capture.
             $checkpoint['target_layout_id'] = (string) ( $failed_job->checkpoint['target_layout_id'] ?? '' );

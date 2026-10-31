@@ -62,3 +62,14 @@ if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
 if ( ! $included ) {
     exit( 'Unsupported WordPress setup' );
 }
+
+// HTTP cron callers need a server-to-server key; shell jobs need no credential.
+if ( 'cli' !== PHP_SAPI && isset( $_SERVER['REQUEST_METHOD'] ) ) {
+    if ( ! class_exists( '\MainWP\Dashboard\MainWP_Server_Information' )
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Server-to-server cron keys are compared directly; user nonces do not apply.
+        || ! \MainWP\Dashboard\MainWP_Server_Information::is_cron_request_allowed( PHP_SAPI, $_SERVER, isset( $_GET['key'] ) ? wp_unslash( $_GET['key'] ) : '' ) ) {
+        status_header( 403 );
+        nocache_headers();
+        exit;
+    }
+}

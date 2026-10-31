@@ -1280,6 +1280,43 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Returns the configured key or persists a generated key for HTTP cron callers.
+     *
+     * @return string Cron key.
+     */
+    public static function get_cron_secret(): string {
+        if ( defined( 'MAINWP_CRON_SECRET' ) && is_string( MAINWP_CRON_SECRET ) && '' !== MAINWP_CRON_SECRET ) {
+            return MAINWP_CRON_SECRET;
+        }
+
+        $secret = get_option( 'mainwp_cron_secret' );
+        if ( empty( $secret ) || ! is_string( $secret ) ) {
+            $secret = wp_generate_password( 32, false, false );
+            if ( ! add_option( 'mainwp_cron_secret', $secret, '', false ) ) {
+                $secret = get_option( 'mainwp_cron_secret' );
+            }
+        }
+
+        return $secret;
+    }
+
+    /**
+     * Shell jobs remain keyless, including CGI binaries invoked without an HTTP request.
+     *
+     * @param string $sapi   PHP interface.
+     * @param array  $server Request metadata.
+     * @param mixed  $key    Caller-supplied key.
+     * @return bool Whether the cron job may run.
+     */
+    public static function is_cron_request_allowed( string $sapi, array $server, $key ): bool {
+        if ( 'cli' === $sapi || ! isset( $server['REQUEST_METHOD'] ) ) {
+            return true;
+        }
+
+        return is_string( $key ) && '' !== $key && hash_equals( static::get_cron_secret(), $key );
+    }
+
+    /**
      * Renders the Cron Schedule page.
      *
      * @return void
@@ -1296,6 +1333,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         static::render_header( 'ServerInformationCron' );
 
         $local_timestamp = MainWP_Utility::get_timestamp();
+        $useWPCron       = ( false === get_option( 'mainwp_wp_cron' ) ) || ( 1 === (int) get_option( 'mainwp_wp_cron' ) );
 
         $freq = (int) get_option( 'mainwp_frequencyDailyUpdate', 2 );
         if ( $freq <= 0 ) {
@@ -1341,6 +1379,20 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Make sure scheduled actions are working correctly. If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/customization/disable-wp-cron" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
             </div>
         <?php endif; ?>
+        <?php if ( ! $useWPCron ) : ?>
+            <div class="ui blue message">
+                <div class="header"><?php echo esc_html__( 'System cron', 'mainwp' ); ?></div>
+                <p><?php echo esc_html__( 'From the command line no key is needed:', 'mainwp' ); ?></p>
+                <div class="ui fluid input">
+                    <input type="text" readonly aria-label="<?php echo esc_attr( __( 'Cron command', 'mainwp' ) ); ?>" value="<?php echo esc_attr( 'php ' . MAINWP_PLUGIN_DIR . 'cron/updatescheck.php' ); ?>">
+                </div>
+                <p><?php echo esc_html__( 'If your cron calls a URL with wget or curl, include your cron key:', 'mainwp' ); ?></p>
+                <div class="ui fluid input">
+                    <input type="text" readonly aria-label="<?php echo esc_attr( __( 'Cron URL', 'mainwp' ) ); ?>" value="<?php echo esc_attr( MAINWP_PLUGIN_URL . 'cron/updatescheck.php?key=' . rawurlencode( static::get_cron_secret() ) ); ?>">
+                </div>
+                <p><?php echo esc_html__( 'Use the same pattern for the other scripts in the cron folder. To set your own key, define MAINWP_CRON_SECRET in wp-config.php.', 'mainwp' ); ?></p>
+            </div>
+        <?php endif; ?>
         <table class="ui single line unstackable table" id="mainwp-cron-jobs-table">
             <thead>
                 <tr>
@@ -1353,8 +1405,6 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             </thead>
             <tbody>
                 <?php
-                $useWPCron = ( false === get_option( 'mainwp_wp_cron' ) ) || ( 1 === (int) get_option( 'mainwp_wp_cron' ) );
-
                 foreach ( $cron_jobs as $cron_job => $hook ) {
 
                     if ( is_array( $hook ) && isset( $hook['title'] ) && isset( $hook['action'] ) ) {

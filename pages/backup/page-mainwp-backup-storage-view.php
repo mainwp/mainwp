@@ -289,9 +289,12 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Path style addressing', 'mainwp' ); ?></label>
-                        <div class="ten wide column ui toggle checkbox">
-                            <input type="checkbox" id="mainwp-storage-path-style"/>
-                            <label for="mainwp-storage-path-style"><span class="ui small text"><?php esc_html_e( 'Required by MinIO and some self-hosted services.', 'mainwp' ); ?></span></label>
+                        <div class="ten wide column">
+                            <div class="ui toggle checkbox">
+                                <input type="checkbox" id="mainwp-storage-path-style" aria-describedby="mainwp-storage-path-style-note"/>
+                                <label for="mainwp-storage-path-style"><span class="ui small text"><?php esc_html_e( 'Required by MinIO and some self-hosted services.', 'mainwp' ); ?></span></label>
+                            </div>
+                            <div id="mainwp-storage-path-style-note" aria-live="polite"><span class="ui small text"></span></div>
                         </div>
                     </div>
                     <div class="ui grid field">
@@ -612,7 +615,66 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 // underlying value would leave the previous choice on screen.
                 jQuery( '#mainwp-storage-sse' ).dropdown( 'restore defaults' );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
+                pathStyleAuto = false;
+                pathStyleChosen = false;
+                updatePathStyle();
             };
+
+            // Amazon S3 and Wasabi certificates cover one bucket label, so a
+            // dotted bucket name in the host fails the HTTPS check. Read the
+            // endpoint the way the S3 driver does: empty means Amazon S3, and
+            // no scheme means https.
+            let storageEndpoint = function () {
+                let endpoint = String( jQuery( '#mainwp-storage-endpoint' ).val() || '' ).trim();
+                if ( '' === endpoint ) {
+                    endpoint = 's3.amazonaws.com';
+                }
+                if ( -1 === endpoint.indexOf( '://' ) ) {
+                    endpoint = 'https://' + endpoint;
+                }
+                try {
+                    return new URL( endpoint );
+                } catch ( e ) {
+                    return null;
+                }
+            };
+
+            let pathStyleAuto = false; // The form turned path style on, not the user.
+            let pathStyleChosen = false; // The user set path style in this form session.
+
+            let updatePathStyle = function () {
+                let endpoint = storageEndpoint();
+                let https = endpoint && 'https:' === endpoint.protocol;
+                let host = https ? endpoint.hostname.replace( /\.+$/, '' ) : '';
+                let dotted = -1 !== String( jQuery( '#mainwp-storage-bucket' ).val() || '' ).trim().indexOf( '.' );
+                // Amazon S3: s3.amazonaws.com, s3.<region>, s3-<region> or
+                // s3.dualstack.<region>, where a region looks like us-east-1.
+                let knownService = /^s3(\.amazonaws\.com|(\.|-|\.dualstack\.)[a-z]{2}(-[a-z]+)+-[0-9]+\.amazonaws\.com)$/.test( host ) || /^s3(\.[a-z0-9-]+)?\.wasabisys\.com$/.test( host );
+                // An existing destination keeps its saved choice.
+                if ( '0' === String( jQuery( '#mainwp-storage-id' ).val() ) && ! pathStyleChosen ) {
+                    let wanted = dotted && knownService;
+                    if ( wanted !== pathStyleAuto ) {
+                        jQuery( '#mainwp-storage-path-style' ).prop( 'checked', wanted );
+                        pathStyleAuto = wanted;
+                    }
+                }
+                let checked = jQuery( '#mainwp-storage-path-style' ).is( ':checked' );
+                let note = '';
+                if ( pathStyleAuto && checked ) {
+                    note = '<?php echo esc_js( __( 'Turned on because the bucket name contains a dot, which causes an SSL certificate mismatch with this service.', 'mainwp' ) ); ?>';
+                } else if ( dotted && ! checked && '' !== host && 'localhost' !== host && ! /^[0-9.]+$|^\[/.test( host ) ) {
+                    // The S3 driver always uses path style for IP and localhost endpoints.
+                    note = '<?php echo esc_js( __( 'This bucket name contains a dot, which can cause an SSL certificate error. If the connection test fails, check whether your provider supports path style addressing.', 'mainwp' ) ); ?>';
+                }
+                jQuery( '#mainwp-storage-path-style-note > span' ).text( note );
+            };
+
+            jQuery( '#mainwp-storage-endpoint, #mainwp-storage-bucket' ).on( 'input change', updatePathStyle );
+            jQuery( '#mainwp-storage-path-style' ).on( 'change', function () {
+                pathStyleChosen = true;
+                pathStyleAuto = false;
+                updatePathStyle();
+            } );
 
             let storageModal = jQuery( '#mainwp-storage-form' ).modal( {
                 closable: false,
@@ -693,6 +755,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         jQuery( map[ key ] ).val( value );
                     }
                     jQuery( '#mainwp-storage-path-style' ).prop( 'checked', !! parseInt( settings.path_style || 0 ) );
+                    updatePathStyle();
                     jQuery( '#mainwp-storage-is-default' ).prop( 'checked', !! response.is_default );
                     if ( response.credentials_invalid ) {
                         formFeedback( '<?php echo esc_js( __( 'The saved credentials can no longer be read. Re-enter every setting for this destination.', 'mainwp' ) ); ?>', 'yellow' );

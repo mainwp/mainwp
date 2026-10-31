@@ -138,7 +138,7 @@ class MainWP_Backup_Delete_File_Gate_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Legacy archive cleanup needs a conditional second right too.
+	 * Delete Backups grant states.
 	 *
 	 * @return array
 	 */
@@ -151,13 +151,13 @@ class MainWP_Backup_Delete_File_Gate_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Refused legacy requests must not reach the Child or record a request marker.
+	 * The legacy flow calls this after downloading the archive to clear the Child copy, so it is not a snapshot delete.
 	 *
 	 * @dataProvider delete_support_cases
 	 * @param bool $supported Team Control supports the new right.
 	 * @param bool $granted Delete right grant.
 	 */
-	public function test_legacy_delete_requires_supported_second_right( bool $supported, bool $granted ): void {
+	public function test_legacy_transfer_cleanup_ignores_delete_right( bool $supported, bool $granted ): void {
 		$this->skip_when_capabilities_bypassed();
 		$this->filter( 'mainwp_backups_delete_right_supported', $supported ? '__return_true' : '__return_false' );
 		$this->filter(
@@ -168,14 +168,8 @@ class MainWP_Backup_Delete_File_Gate_Test extends MainWP_Abilities_Test_Case {
 		);
 		$name     = 'backup-K7Q2M9XA-1760000000.zip';
 		$response = $this->dispatch( $this->create_test_site(), $name );
-		if ( $supported && ! $granted ) {
-			$this->assertArrayHasKey( 'error', $response );
-			$this->assertNotEmpty( $response['error'] );
-			$this->assertCount( 0, $this->requests );
-		} else {
-			$this->assertSame( array( 'result' => true ), $response );
-			$this->assert_request( $name );
-		}
+		$this->assertSame( array( 'result' => true ), $response );
+		$this->assert_request( $name );
 	}
 
 	/**

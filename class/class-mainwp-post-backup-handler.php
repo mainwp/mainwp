@@ -1298,9 +1298,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) && ! \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
                 throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
             }
-            if ( MainWP_Backup_Operations::delete_right_applies() && ! \mainwp_current_user_can( 'dashboard', 'delete_backups' ) ) {
-                throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
-            }
             $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
             if ( ! $site_id ) {
                 throw new MainWP_Exception( esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );

@@ -431,9 +431,11 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_constructor_deletes_legacy_plaintext_token( $external_cache ) {
-		$settings       = $this->settings();
-		$key            = 'mainwp_dropbox_token_' . md5( $settings['app_key'] . '|' . $settings['refresh_token'] );
-		$previous_cache = wp_using_ext_object_cache();
+		global $_wp_using_ext_object_cache;
+		$settings = $this->settings();
+		$key      = 'mainwp_dropbox_token_' . md5( $settings['app_key'] . '|' . $settings['refresh_token'] );
+		// The flag can start as null, and wp_using_ext_object_cache( null ) only reads it.
+		$previous_cache = $_wp_using_ext_object_cache;
 		wp_using_ext_object_cache( $external_cache );
 		try {
 			set_transient( $key, 'legacy-plaintext-bearer', 14100 );
@@ -448,7 +450,7 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 			}
 		} finally {
 			delete_transient( $key );
-			wp_using_ext_object_cache( $previous_cache );
+			$_wp_using_ext_object_cache = $previous_cache;
 		}
 	}
 

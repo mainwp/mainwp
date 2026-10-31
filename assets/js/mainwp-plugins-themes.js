@@ -926,6 +926,10 @@ let manage_plugins_upgrade_continueAfterBackup = function (slug, websiteId, webs
 
 
 let manage_plugins_upgrade_int = function (slug, websiteId) {
+    // A start dropped by the pending backup check must not leave its row spinning.
+    if (mainwpVars.backupCheckPending) {
+        return false;
+    }
     let websiteHolder = jQuery('.mainwp-manage-plugin-item-website[plugin-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<span data-tooltip="Updating..." data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span>');
 
@@ -1075,6 +1079,10 @@ let manage_themes_upgrade_continueAfterBackup = function (slug, websiteId, websi
 }
 
 let manage_themes_upgrade_int = function (slug, websiteId) {
+    // A start dropped by the pending backup check must not leave its row spinning.
+    if (mainwpVars.backupCheckPending) {
+        return false;
+    }
     let websiteHolder = jQuery('.mainwp-manage-theme-item-website[theme-slug="' + slug + '"][site-id="' + websiteId + '"]');
     websiteHolder.find('.column.update-column').html('<span data-tooltip="Updating..." data-inverted="" data-position="left center"><i class="notched circle loading icon"></i></span');
 
@@ -1094,6 +1102,10 @@ let manage_themes_upgrade_int = function (slug, websiteId) {
  * Check Backups.
  */
 let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterBackup) {
+    // The pending check owns the shared override flag and backup box until it settles, so a second start is dropped.
+    if (mainwpVars.backupCheckPending) {
+        return false;
+    }
     mainwpVars.ignoreBackupGate = false;
     if (mainwpParams['disable_checkBackupBeforeUpgrade']) {
         if (continueAfterBackup != undefined) {
@@ -1123,12 +1135,14 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
         sites: sitesToUpdate
     });
 
+    mainwpVars.backupCheckPending = true;
     jQuery.ajax({
         type: "POST",
         url: ajaxurl,
         data: data,
         success: function (pSiteNames) {
             return function (response) {
+                mainwpVars.backupCheckPending = false;
                 clearTimeout(managesitesShowBusyTimeout);
 
                 mainwpPopup('#managesites-backup-box').close();
@@ -1165,6 +1179,7 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
             }
         }(siteNames),
         error: function () {
+            mainwpVars.backupCheckPending = false;
             mainwpPopup('#managesites-backup-box').close(true);
         },
         dataType: 'json'

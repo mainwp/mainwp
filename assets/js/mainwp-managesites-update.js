@@ -299,6 +299,10 @@ jQuery(document).on('click', '#managesites-backup-ignore', function () {
 });
 
 let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
+    // The pending check owns the shared override flag and backup box until it settles, so a second start is dropped.
+    if (mainwpVars.backupCheckPending) {
+        return;
+    }
     mainwpVars.ignoreBackupGate = false;
     ignoredBackupBeforeUpdate = false;
     if (!mainwpParams['backup_before_upgrade']) {
@@ -306,6 +310,8 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
             managesitesContinueAfterBackup();
         return;
     }
+    // A dropped start still overwrites the shared global, so keep the update this check was started for.
+    const continueAfterBackup = managesitesContinueAfterBackup;
     let managesitesShowBusyFunction = function () {
         let output = MainWP.I18n.t('Checking if a backup is required for the selected updates...');
         mainwpPopup('#managesites-backup-box').getContentEl().html(output);
@@ -314,6 +320,8 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
         mainwpPopup('#managesites-backup-box').init({
             title: MainWP.I18n.t("Checking backup settings..."), callback: function () {
                 mainwpVars.bulkManageSitesTaskRunning = false;
+                // Closing the box cancels the check; its error handler releases the pending flag.
+                checkRequest.abort();
             },
             allowMultiple: true
         });
@@ -328,12 +336,14 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
         sites: sitesToUpdate
     });
 
-    jQuery.ajax({
+    mainwpVars.backupCheckPending = true;
+    let checkRequest = jQuery.ajax({
         type: "POST",
         url: ajaxurl,
         data: data,
         success: function (pSiteNames) {
             return function (response) {
+                mainwpVars.backupCheckPending = false;
                 clearTimeout(managesitesShowBusyTimeout);
 
                 mainwpPopup('#managesites-backup-box').close();
@@ -351,6 +361,8 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                 }
 
                 if (siteFeedback != undefined) {
+                    // The box buttons resume through the shared global.
+                    managesitesContinueAfterBackup = continueAfterBackup;
                     let title = mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
                     mainwpPopup('#managesites-backup-box').init({
                         title: title, callback: function () {
@@ -361,11 +373,12 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
 
                     return;
                 }
-                if (managesitesContinueAfterBackup != undefined)
-                    managesitesContinueAfterBackup();
+                if (continueAfterBackup != undefined)
+                    continueAfterBackup();
             }
         }(siteNames),
         error: function () {
+            mainwpVars.backupCheckPending = false;
             mainwpPopup('#managesites-backup-box').close(true);
         },
         dataType: 'json'

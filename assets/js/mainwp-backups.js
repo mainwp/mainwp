@@ -1172,6 +1172,10 @@ jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {
 let updatesoverviewShowBusyFunction;
 let updatesoverviewShowBusyTimeout;
 mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
+    // The pending check owns the shared override flag and backup box until it settles, so a second start is dropped.
+    if (mainwpVars.backupCheckPending) {
+        return false;
+    }
     mainwpVars.ignoreBackupGate = false;
     // Another update can replace the shared global while this check is in flight, so keep the one it was started for.
     const continueAfterBackup = updatesoverviewContinueAfterBackup;
@@ -1217,12 +1221,14 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
         sites: sitesToCheck
     });
 
+    mainwpVars.backupCheckPending = true;
     jQuery.ajax({
         type: "POST",
         url: ajaxurl,
         data: data,
         success: function (pSiteNames) {
             return function (response) {
+                mainwpVars.backupCheckPending = false;
                 clearTimeout(updatesoverviewShowBusyTimeout);
 
                 mainwpPopup('#updatesoverview-backup-box').close();
@@ -1261,7 +1267,7 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
             }
         }(siteNames),
         error: function () {
-
+            mainwpVars.backupCheckPending = false;
             mainwpPopup('#updatesoverview-backup-box').close(true);
         },
         dataType: 'json'

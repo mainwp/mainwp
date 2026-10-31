@@ -400,21 +400,6 @@ test( 'Manage Sites: Continue update anyway after a failed backup carries into t
     assert.equal( h.request( 'mainwp_upgradeplugintheme' ).ignore_backup_gate, 1 );
 } );
 
-test( 'plugins: overlapping backup checks each resume their own update', () => {
-    const h = harness();
-    const pending = [];
-    h.context.jQuery.ajax = options => { pending.push( options ); };
-    const resumed = [];
-    h.context.plugins( [ 1 ], {}, () => { resumed.push( 'A' ); } );
-    h.context.plugins( [ 2 ], {}, () => { resumed.push( 'B' ); } );
-    pending[ 0 ].success( { result: { sites: { 1: true } } } );
-    assert.deepEqual( resumed, [ 'A' ] );
-    pending[ 1 ].success( { result: { sites: { 2: false } } } );
-    assert.deepEqual( resumed, [ 'A' ] );
-    h.click( '#managesites-backup-ignore' );
-    assert.deepEqual( resumed, [ 'A', 'B' ] );
-} );
-
 test( 'Updates page: the per-item theme Update runs the backup check before updating', () => {
     const updates = fs.readFileSync( require.resolve( '../../assets/js/mainwp-updates.js' ), 'utf8' );
     const checks = [];
@@ -439,19 +424,170 @@ test( 'Updates page: the per-item theme Update runs the backup check before upda
     assert.equal( context.updatesoverviewContinueAfterBackup, undefined );
 } );
 
-test( 'updatesoverview: overlapping backup checks each resume their own update', () => {
+for ( const entry of [ 'manage', 'plugins', 'updatesoverview' ] ) {
+    const prefix = entry === 'updatesoverview' ? entry : 'managesites';
+    const startCheck = ( h, site, resume ) => {
+        if ( entry === 'plugins' ) {
+            return h.context.plugins( [ site ], {}, resume );
+        }
+        // The page callers point the shared global at their update before they start the check.
+        h.context[ prefix + 'ContinueAfterBackup' ] = resume;
+        return entry === 'manage' ? h.context.manage( [ site ], {} ) : h.context.mainwp_updatesoverview_checkBackups( [ site ], {} );
+    };
+    const pendingChecks = h => {
+        const pending = [];
+        h.context.jQuery.ajax = options => { pending.push( options ); };
+        return pending;
+    };
+
+    test( entry + ': a second update started while a backup check is pending is ignored', () => {
+        const h = harness();
+        const pending = pendingChecks( h );
+        const resumed = [];
+        startCheck( h, 1, () => { resumed.push( 'A' ); } );
+        startCheck( h, 2, () => { resumed.push( 'B' ); } );
+        assert.equal( pending.length, 1, 'Only the first backup check may be in flight.' );
+        pending[ 0 ].success( { result: { sites: { 1: false } } } );
+        assert.equal( h.popups.get( '#' + prefix + '-backup-box' ).title, 'Full backup required!' );
+        h.click( '#' + prefix + '-backup-ignore' );
+        assert.deepEqual( resumed, [ 'A' ], 'Ignore must resume the update the prompt was shown for.' );
+        startCheck( h, 3, () => {} );
+        assert.equal( pending.length, 2, 'A settled check must let the next update check again.' );
+    } );
+
+    test( entry + ': a passing check resumes the update it was started for after a dropped start', () => {
+        const h = harness();
+        const pending = pendingChecks( h );
+        const resumed = [];
+        startCheck( h, 1, () => { resumed.push( 'A' ); } );
+        startCheck( h, 2, () => { resumed.push( 'B' ); } );
+        pending[ 0 ].success( { result: { sites: { 1: true } } } );
+        assert.deepEqual( resumed, [ 'A' ] );
+    } );
+
+    test( entry + ': an Ignore for one update never reaches an overlapping one', () => {
+        const h = harness();
+        const pending = pendingChecks( h );
+        const overrides = {};
+        const sent = name => () => { overrides[ name ] = h.request( 'mainwp_upgradeplugintheme' ).ignore_backup_gate; };
+        startCheck( h, 1, sent( 'A' ) );
+        startCheck( h, 2, sent( 'B' ) );
+        pending[ 0 ].success( { result: { sites: { 1: false } } } );
+        h.click( '#' + prefix + '-backup-ignore' );
+        for ( const check of pending.slice( 1 ) ) {
+            check.success( { result: { sites: { 2: true } } } );
+        }
+        assert.deepEqual( overrides, { A: 1 }, 'Only the update the user chose to Ignore may carry the override.' );
+    } );
+
+    test( entry + ': a failed backup check lets the next update check again', () => {
+        const h = harness();
+        const pending = pendingChecks( h );
+        startCheck( h, 1, () => {} );
+        pending[ 0 ].error();
+        startCheck( h, 2, () => {} );
+        assert.equal( pending.length, 2 );
+    } );
+}
+
+const updatesSource = fs.readFileSync( require.resolve( '../../assets/js/mainwp-updates.js' ), 'utf8' );
+const startedUiContext = pending => {
+    const touched = [];
+    const touch = name => () => { touched.push( name ); throw new Error( 'touched ' + name ); };
+    const context = {
+        mainwpVars: { bulkTaskRunning: false, backupCheckPending: pending },
+        MainWP: { I18n: { t: text => text } },
+        jQuery: touch( 'jQuery' ),
+        mainwpPopup: touch( 'mainwpPopup' ),
+        mainwp_confirm: touch( 'mainwp_confirm' ),
+        mainwp_updatesoverview_checkBackups: touch( 'check' ),
+        mainwp_manages_checkBackups: touch( 'check' )
+    };
+    vm.createContext( context );
+    return { context, touched };
+};
+// Returns true when the start went past its guard: it called a stub or reached other page code.
+const runStart = ( context, call ) => {
+    try {
+        vm.runInContext( call, context );
+        return false;
+    } catch ( e ) {
+        return true;
+    }
+};
+
+for ( const name of [
+    'updatesoverview_wordpress_global_upgrade_all', 'updatesoverview_translations_global_upgrade_all', 'updatesoverview_translations_upgrade_all',
+    'updatesoverview_plugins_global_upgrade_all', 'updatesoverview_plugins_upgrade_all', 'updatesoverview_themes_global_upgrade_all',
+    'updatesoverview_themes_upgrade_all', 'updatesoverview_global_upgrade_all', 'updatesoverview_global_prepare_upgrade_all'
+] ) {
+    test( 'Updates page: ' + name + ' leaves the progress list alone while a backup check is pending', () => {
+        const marker = ( updatesSource.includes( 'const ' + name + ' = ' ) ? 'const ' : 'let ' ) + name + ' = ';
+        const source = sliceFunction( updatesSource, marker ) + '\nglobalThis.start = ' + name + ';';
+        const idle = startedUiContext( false );
+        vm.runInContext( source, idle.context );
+        assert.equal( runStart( idle.context, 'start( "all", "" )' ), true, 'Without a pending check the start must reach the page.' );
+        const held = startedUiContext( true );
+        vm.runInContext( source, held.context );
+        assert.equal( runStart( held.context, 'start( "all", "" )' ), false );
+        assert.deepEqual( held.touched, [] );
+    } );
+}
+
+test( 'Updates page: a prepared Update All is not stopped at its run step by a pending check', () => {
+    // The entry points refuse a start while a check is pending. The run step after
+    // "Preparing update data..." only keeps its bulkTaskRunning check, so a prepared
+    // run goes on to build its form and hands over to the backup check.
+    const source = sliceFunction( updatesSource, 'const updatesoverview_global_run_upgrade_all = ' ) + '\nglobalThis.start = updatesoverview_global_run_upgrade_all;';
+    const startWith = vars => {
+        const selectors = [];
+        const context = {
+            mainwpVars: vars,
+            jQuery: selector => { selectors.push( selector ); throw new Error( 'form lookup' ); }
+        };
+        vm.createContext( context );
+        vm.runInContext( source, context );
+        runStart( context, 'start( "all" )' );
+        return selectors;
+    };
+    assert.deepEqual( startWith( { bulkTaskRunning: false, backupCheckPending: true } ), [ '#wp_upgrades' ], 'The run must start building its form.' );
+    assert.deepEqual( startWith( { bulkTaskRunning: true, backupCheckPending: false } ), [], 'A running bulk task still stops it.' );
+} );
+
+for ( const type of [ 'plugins', 'themes' ] ) {
+    test( type + ': a per-item update dropped by a pending backup check leaves its row alone', () => {
+        const source = sliceFunction( plugins, 'let manage_' + type + '_upgrade_int = ' ) + '\nglobalThis.start = manage_' + type + '_upgrade_int;';
+        const idle = startedUiContext( false );
+        vm.runInContext( source, idle.context );
+        runStart( idle.context, 'start( "example", 1 )' );
+        assert.deepEqual( idle.touched, [ 'jQuery' ], 'Without a pending check the row gets its spinner.' );
+        const held = startedUiContext( true );
+        vm.runInContext( source, held.context );
+        assert.equal( runStart( held.context, 'start( "example", 1 )' ), false );
+        assert.deepEqual( held.touched, [] );
+    } );
+}
+
+test( 'manage: closing Checking backup settings cancels the check and lets the next update check again', () => {
     const h = harness();
     const pending = [];
-    h.context.jQuery.ajax = options => { pending.push( options ); };
+    let aborted = 0;
+    h.context.jQuery.ajax = options => {
+        pending.push( options );
+        return { abort() { aborted++; options.error(); } };
+    };
+    let busy;
+    h.context.setTimeout = fn => { busy = fn; return 1; };
     const resumed = [];
-    h.context.updatesoverviewContinueAfterBackup = () => { resumed.push( 'A' ); };
-    h.context.mainwp_updatesoverview_checkBackups( [ 1 ], {} );
-    h.context.updatesoverviewContinueAfterBackup = () => { resumed.push( 'B' ); };
-    h.context.mainwp_updatesoverview_checkBackups( [ 2 ], {} );
-    pending[ 1 ].success( { result: { sites: { 2: true } } } );
-    assert.deepEqual( resumed, [ 'B' ] );
-    pending[ 0 ].success( { result: { sites: { 1: false } } } );
-    assert.deepEqual( resumed, [ 'B' ] );
-    h.click( '#updatesoverview-backup-ignore' );
-    assert.deepEqual( resumed, [ 'B', 'A' ] );
+    h.context.managesitesContinueAfterBackup = () => { resumed.push( 'A' ); };
+    h.context.manage( [ 1 ], {} );
+    busy();
+    const box = h.popups.get( '#managesites-backup-box' );
+    assert.equal( box.title, 'Checking backup settings...' );
+    box.options.callback();
+    assert.equal( aborted, 1 );
+    assert.deepEqual( resumed, [], 'A cancelled check must not resume its update.' );
+    h.context.managesitesContinueAfterBackup = () => {};
+    h.context.manage( [ 2 ], {} );
+    assert.equal( pending.length, 2 );
 } );

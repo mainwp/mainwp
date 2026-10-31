@@ -667,6 +667,36 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( is_wp_error( $history ) ) {
                 return $history;
             }
+            $tightens_retention = empty( $task->delete_cloud_copies ) && $values['retention']['delete_cloud_copies'];
+            foreach (
+                array(
+                    'count'      => 'retention_count',
+                    'days'       => 'retention_days',
+                    'storage_mb' => 'retention_storage_mb',
+                ) as $field => $column
+            ) {
+                $previous = (int) $task->$column;
+                $updated  = $values['retention'][ $field ];
+                if ( $updated > 0 && ( 0 === $previous || $updated < $previous ) ) {
+                    $tightens_retention = true;
+                    break;
+                }
+            }
+            if ( $tightens_retention ) {
+                $delete_task = self::authorize_task( (int) $task->id, 'delete_backup_tasks', $context );
+                if ( is_wp_error( $delete_task ) ) {
+                    if ( 'mainwp_insufficient_right' === $delete_task->get_error_code() ) {
+                        $data                         = (array) $delete_task->get_error_data();
+                        $data['retention_tightening'] = true;
+                        return new \WP_Error( 'mainwp_insufficient_right', __( 'Your role does not permit Delete Backup Tasks, which is also required for tightening retention.', 'mainwp' ), $data );
+                    }
+                    return $delete_task;
+                }
+                $history = self::authorize_task_history_sites( (int) $task->id, 'delete_backup_tasks', $context );
+                if ( is_wp_error( $history ) ) {
+                    return $history;
+                }
+            }
         }
         return $values;
     }
@@ -714,8 +744,8 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'exclude'                        => MainWP_Backup_Settings::sanitize_exclude_list( array_map( 'htmlentities', $values['exclude'] ) ),
             'sites'                          => implode( ',', $values['site_ids'] ),
             'groups'                         => implode( ',', $values['group_ids'] ),
-            'subfolder'                      => MainWP_Utility::remove_preslash_spaces( sanitize_text_field( $fields['subfolder'] ?? $task->subfolder ?? '' ) ),
-            'filename'                       => sanitize_text_field( $fields['filename'] ?? $task->filename ?? '' ),
+            'subfolder'                      => MainWP_Backup_File_Manager::sanitize_subfolder_path( MainWP_Utility::remove_preslash_spaces( MainWP_Backup_File_Manager::clean_name_template( $fields['subfolder'] ?? $task->subfolder ?? '' ) ) ),
+            'filename'                       => MainWP_Backup_File_Manager::sanitize_path_segment( MainWP_Backup_File_Manager::clean_name_template( $fields['filename'] ?? $task->filename ?? '' ) ),
             'excludebackup'                  => (int) $flags['backup_archives'],
             'excludecache'                   => (int) $flags['cache'],
             'excludenonwp'                   => (int) $flags['non_wp_folders'],

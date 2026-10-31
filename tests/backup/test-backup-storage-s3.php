@@ -1288,4 +1288,105 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'The storage endpoint s3.example.com needs https://', $result['error'] );
 		$this->assertStringNotContainsString( 'example-bucket.s3.example.com', $result['error'] );
 	}
+
+	/**
+	 * Amazon S3 and Wasabi endpoints a dotted bucket name is used with.
+	 *
+	 * @return array
+	 */
+	public function data_dotted_bucket_service_endpoints() {
+		return array(
+			'Wasabi'           => array( 's3.wasabisys.com', 's3.wasabisys.com' ),
+			'Amazon S3 region' => array( 'https://s3.us-west-2.amazonaws.com', 's3.us-west-2.amazonaws.com' ),
+			'Amazon S3 empty'  => array( '', 's3.amazonaws.com' ),
+		);
+	}
+
+	/**
+	 * With path style saved, a dotted bucket stays out of the host for the
+	 * connection test, uploads, reads, lists, deletes and presigned URLs, and
+	 * every signature covers that same host (MWP-2089).
+	 *
+	 * @dataProvider data_dotted_bucket_service_endpoints
+	 *
+	 * @param string $endpoint Saved endpoint setting.
+	 * @param string $host     Host every request must go to.
+	 *
+	 * @return void
+	 */
+	public function test_dotted_bucket_with_path_style_uses_the_service_host_everywhere( $endpoint, $host ) {
+		$this->resolve_hostnames_publicly();
+		$target    = get_temp_dir() . 'mainwp-s3-dotted-' . uniqid() . '.bin';
+		$transport = function ( $url, $args ) {
+			$this->requests[] = array(
+				'url'  => $url,
+				'args' => $args,
+			);
+			if ( ! empty( $args['filename'] ) ) {
+				file_put_contents( $args['filename'], 'bytes' );
+			}
+			return $this->response( 200, '<?xml version="1.0" encoding="UTF-8"?><ListBucketResult><IsTruncated>false</IsTruncated></ListBucketResult>', array( 'content-length' => '5' ) );
+		};
+		$provider  = new MainWP_Backup_Storage_S3(
+			$this->settings(
+				array(
+					'bucket'     => 'backups.example.com',
+					'endpoint'   => $endpoint,
+					'path_style' => 1,
+				)
+			),
+			$transport
+		);
+
+		try {
+			$this->assertTrue( $provider->connection_test()['ok'] );
+			$provider->put_object( 'k.bin', 'bytes' );
+			$provider->head_object( 'k.bin' );
+			$this->assertTrue( $provider->get_object( 'k.bin', $target ) );
+			$provider->list_objects( '4/' );
+			$provider->delete_object( 'k.bin' );
+		} finally {
+			if ( file_exists( $target ) ) {
+				unlink( $target );
+			}
+		}
+
+		$this->assertCount( 9, $this->requests );
+		foreach ( $this->requests as $request ) {
+			$this->assertStringStartsWith( 'https://' . $host . '/backups.example.com', $request['url'] );
+			$this->assertSame( $host, $request['args']['headers']['Host'] );
+			$this->assertMatchesRegularExpression( '/SignedHeaders=([a-z0-9-]+;)*host[;,]/', $request['args']['headers']['Authorization'] );
+			// WordPress verifies certificates when sslverify is absent.
+			if ( array_key_exists( 'sslverify', $request['args'] ) ) {
+				$this->assertTrue( (bool) $request['args']['sslverify'], 'Certificate verification stays on.' );
+			}
+		}
+		$this->assertSame( $host, $provider->object_host() );
+
+		$presigned = $provider->presigned_get_url( 'k.bin', 600 );
+		$this->assertStringStartsWith( 'https://' . $host . '/backups.example.com/k.bin?', $presigned );
+		$this->assertStringContainsString( 'X-Amz-SignedHeaders=host', $presigned );
+	}
+
+	/**
+	 * Without path style, the same settings keep virtual-hosted addressing:
+	 * the driver never changes a saved choice on its own (MWP-2089).
+	 *
+	 * @return void
+	 */
+	public function test_dotted_bucket_without_path_style_keeps_virtual_hosted_urls() {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'bucket'   => 'backups.example.com',
+				'endpoint' => 's3.wasabisys.com',
+			)
+		);
+
+		$provider->put_object( 'k.bin', 'bytes' );
+
+		$this->assertSame( 'https://backups.example.com.s3.wasabisys.com/k.bin', $this->requests[0]['url'] );
+		$this->assertStringStartsWith( 'https://backups.example.com.s3.wasabisys.com/k.bin?', $provider->presigned_get_url( 'k.bin', 600 ) );
+	}
 }

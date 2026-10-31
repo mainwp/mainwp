@@ -2092,10 +2092,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     );
 
                     if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-                        $err        = urldecode( $information['error'] );
-                        $_error     = MainWP_Utility::esc_content( $err );
-                        $error_code = isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
-                        $_error     = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $_error, '', $error_code ), $output );
+                        $err                  = urldecode( $information['error'] );
+                        $_error               = MainWP_Utility::esc_content( $err );
+                        $error_code           = isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
+                        $reconnect_exception  = new MainWP_Exception( $_error, '', $error_code );
+                        $_error               = MainWP_Connect_Failure_Ux::sanitize_registration_error( MainWP_Error_Helper::get_error_message( $reconnect_exception ) );
+                        $_error              .= MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( $reconnect_exception, $output ) );
+                        $output['failure_ux'] = $_error;
                     } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 
                         $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $privkey, $website->id, true );
@@ -2476,7 +2479,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             $error_code = $output['error_code'];
                         }
                     }
-                    $error = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $err, '', $error_code ), $output );
+                    $exception            = new MainWP_Exception( $err, '', $error_code );
+                    $error                = MainWP_Connect_Failure_Ux::sanitize_registration_error( MainWP_Error_Helper::get_error_message( $exception ) );
+                    $error               .= MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( $exception, $output ) );
+                    $output['failure_ux'] = $error;
                 } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
                     $reported_site_url = isset( $information['siteurl'] ) ? trim( wp_unslash( $information['siteurl'] ) ) : '';
 

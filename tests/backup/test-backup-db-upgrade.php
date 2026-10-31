@@ -60,6 +60,13 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	private $saved_fresh_flag;
 
 	/**
+	 * Stored install repair markers before the test, keyed by site option name.
+	 *
+	 * @var array
+	 */
+	private $saved_repair_markers = array();
+
+	/**
 	 * Snapshot options that install() mutates.
 	 *
 	 * @return void
@@ -70,6 +77,23 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->saved_legacy_flag = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$this->saved_native_flag = get_option( 'mainwp_enableNativeBackups' );
 		$this->saved_fresh_flag  = get_option( 'mainwp_onboarding_fresh_install' );
+		foreach ( $this->repair_markers() as $name ) {
+			$this->saved_repair_markers[ $name ] = get_site_option( $name );
+		}
+	}
+
+	/**
+	 * Site options install() uses to mark pending repairs and checked tables.
+	 *
+	 * @return array Site option names.
+	 */
+	private function repair_markers() {
+		return array(
+			MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING,
+			MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING,
+			MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING,
+			MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED,
+		);
 	}
 
 	/**
@@ -190,12 +214,19 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY uniq_task_wp (task_id, wp_id)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
 
-		// install() implicitly commits past the transaction rollback, so a
-		// repair marker a test set must be cleared by hand.
-		delete_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING );
-		delete_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
-		delete_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
-		delete_site_option( MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED );
+		parent::tear_down();
+
+		// install() implicitly commits past the transaction rollback, so the
+		// repair markers and options it wrote are put back to their snapshots
+		// after the rollback and committed.
+		wp_cache_flush();
+		foreach ( $this->saved_repair_markers as $name => $value ) {
+			if ( false === $value ) {
+				delete_site_option( $name );
+			} else {
+				update_site_option( $name, $value );
+			}
+		}
 
 		if ( false === $this->saved_db_version ) {
 			delete_site_option( 'mainwp_db_version' );
@@ -221,7 +252,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			update_option( 'mainwp_onboarding_fresh_install', $this->saved_fresh_flag );
 		}
 
-		parent::tear_down();
+		self::commit_transaction();
 	}
 
 	/**

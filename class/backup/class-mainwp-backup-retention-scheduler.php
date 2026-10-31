@@ -57,6 +57,27 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
     const PAIR_BUDGET_SECONDS = 60;
 
     /**
+     * Drain passes a pair may spend waiting for a held eviction to clear.
+     *
+     * @var int
+     */
+    const HOLD_RETRY_MAX_ATTEMPTS = 8;
+
+    /**
+     * First wait after a held eviction, matching the continue tick.
+     *
+     * @var int
+     */
+    const HOLD_RETRY_BASE_SECONDS = 300;
+
+    /**
+     * Longest wait between held-eviction retries.
+     *
+     * @var int
+     */
+    const HOLD_RETRY_MAX_SECONDS = 3600;
+
+    /**
      * Instance variable class.
      *
      * @static
@@ -118,7 +139,8 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
         }
 
         $key = (int) $task_id . '-' . (int) $site_id;
-        if ( isset( $queue[ $key ] ) ) {
+        // A pair waiting out a held eviction starts over: the new event may have cleared the hold.
+        if ( isset( $queue[ $key ] ) && ! isset( $queue[ $key ]['attempts'] ) ) {
             return;
         }
 
@@ -158,7 +180,18 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
             return;
         }
 
-        $key  = array_key_first( $queue );
+        $clock = null === $now ? time() : $now;
+        $key   = null;
+        foreach ( $queue as $queued_key => $queued_pair ) {
+            if ( (int) ( $queued_pair['retry_at'] ?? 0 ) <= $clock ) {
+                $key = $queued_key;
+                break;
+            }
+        }
+        if ( null === $key ) {
+            return;
+        }
+
         $pair = $queue[ $key ];
         unset( $queue[ $key ] );
         update_option( static::QUEUE_OPTION, $queue, false );
@@ -176,14 +209,38 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
             // instead of waiting for the daily sweep. Errors deliberately
             // do not requeue - a permanent failure would churn every tick,
             // and the daily sweep retries those anyway.
-            $queue = get_option( static::QUEUE_OPTION, array() );
-            if ( ! is_array( $queue ) ) {
-                $queue = array();
+            $this->requeue_pair( $key, $pair );
+        } elseif ( ! empty( $report['eviction']['held'] ) ) {
+            // A running backup, restore or transfer held the local archive
+            // removal. Retry with a growing wait so the archive goes once
+            // the hold clears; a hold that never clears stops after the
+            // last attempt and is left to the daily sweep.
+            $attempts = (int) ( $pair['attempts'] ?? 0 ) + 1;
+            if ( $attempts < static::HOLD_RETRY_MAX_ATTEMPTS ) {
+                $pair['attempts'] = $attempts;
+                $pair['retry_at'] = $clock + min( static::HOLD_RETRY_MAX_SECONDS, static::HOLD_RETRY_BASE_SECONDS * ( 2 ** ( $attempts - 1 ) ) );
+                $this->requeue_pair( $key, $pair );
             }
-            if ( ! isset( $queue[ $key ] ) ) {
-                $queue[ $key ] = $pair;
-                update_option( static::QUEUE_OPTION, $queue, false );
-            }
+        }
+    }
+
+    /**
+     * Put a drained pair back at the queue tail unless a newer event
+     * already queued it.
+     *
+     * @param string $key  Queue key.
+     * @param array  $pair Queue entry.
+     *
+     * @return void
+     */
+    private function requeue_pair( string $key, array $pair ): void {
+        $queue = get_option( static::QUEUE_OPTION, array() );
+        if ( ! is_array( $queue ) ) {
+            $queue = array();
+        }
+        if ( ! isset( $queue[ $key ] ) ) {
+            $queue[ $key ] = $pair;
+            update_option( static::QUEUE_OPTION, $queue, false );
         }
     }
 
@@ -345,7 +402,16 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
         )
             : MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $site_id, (int) $task->id, $budget_seconds );
 
-        $units  = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, (int) $task->id );
+        $units = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, (int) $task->id );
+        if ( ! $dry_run ) {
+            foreach ( $units as &$unit ) {
+                $ids                     = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
+                $protection              = MainWP_Backup_Retention_Protection::observe_remote_protection( $ids, $now );
+                $unit['protected_until'] = $protection['protected_until'];
+                $unit['unknown_age']     = $protection['unknown_age'];
+            }
+            unset( $unit );
+        }
         $policy = new MainWP_Backup_Retention_Policy( MainWP_Backup_Settings::task_retention_count( $task ), (int) $task->retention_days, (int) $task->retention_storage_mb );
 
         $candidates = $policy->evaluate( $units, $now );

@@ -517,6 +517,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_general_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get general settings data.
         $settings = $this->get_general_settings_data();
 
@@ -664,6 +668,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_advanced_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get advanced settings data.
         $settings = $this->get_advanced_settings_data();
 
@@ -782,6 +790,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_monitoring_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get monitoring settings data.
         $settings = $this->get_monitoring_settings_data();
 
@@ -906,6 +918,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_emails_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get notification email types.
         $notification_emails = MainWP_Notification_Settings::get_notification_types();
         // Get email settings.
@@ -1482,6 +1498,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_dashboard_insights_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         $options  = get_option( 'mainwp_module_log_settings', array() );
         $settings = array(
             'enable_insights_logging' => $options['enabled'] ?? 0,
@@ -1549,6 +1569,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_api_backup_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_api_backups' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Masked token.
         $masked = static function ( $token ) {
             $token = (string) $token;
@@ -1798,6 +1822,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_tool_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get tool settings.
         $settings = $this->get_tool_settings_data();
 
@@ -1929,7 +1957,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_destroy_sessions_status( $request ) {  // phpcs:ignore -- NOSONAR - complex.
-
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         $destroy_id = $request->get_param( 'destroy_id' ); // Get id from url.
         if ( empty( $destroy_id ) ) {
             return new WP_Error(
@@ -2114,6 +2145,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_renew_connection_status( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         $renew_id = $request->get_param( 'renew_id' ); // Get id from url.
 
         if ( empty( $renew_id ) ) {
@@ -2381,6 +2416,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_REST_Response|WP_Error Response or error.
      */
     public function get_disconnect_status( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         $disconnect_id = $request->get_param( 'disconnect_id' ); // Get id from url.
 
         if ( empty( $disconnect_id ) ) {
@@ -2752,14 +2791,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'mainwp_backups_on_server'              => array(
                 'required'          => false,
-                'description'       => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
+                'description'       => __( 'Leftover downloaded backup files kept per site outside completed snapshots. Does not set Built-In Backups retention. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'validate_backup_retention_count' ),
             ),
             'mainwp_backup_on_external_sources'     => array(
                 'required'          => false,
-                'description'       => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
+                'description'       => __( 'Legacy remote backup count from the retired Backups Add-on. Stored for compatibility only; Built-In Backups do not use it.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'validate_backup_retention_count' ),
@@ -2831,14 +2870,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'mainwp_backups_on_server'             => array(
                 'required'          => false,
-                'description'       => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
+                'description'       => __( 'Leftover downloaded backup files kept per site outside completed snapshots. Does not set Built-In Backups retention. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'validate_backup_retention_count' ),
             ),
             'mainwp_backup_on_external_sources'    => array(
                 'required'          => false,
-                'description'       => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
+                'description'       => __( 'Legacy remote backup count from the retired Backups Add-on. Stored for compatibility only; Built-In Backups do not use it.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'validate_callback' => array( $this, 'validate_backup_retention_count' ),
@@ -5425,12 +5464,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
                 'mainwp_backups_on_server'                 => array(
                     'type'        => 'string',
-                    'description' => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
+                    'description' => __( 'Leftover downloaded backup files kept per site outside completed snapshots. Does not set Built-In Backups retention. 0 means unlimited.', 'mainwp' ),
                     'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_backup_on_external_sources'        => array(
                     'type'        => 'string',
-                    'description' => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
+                    'description' => __( 'Legacy remote backup count from the retired Backups Add-on. Stored for compatibility only; Built-In Backups do not use it.', 'mainwp' ),
                     'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_archive_format'                    => array(

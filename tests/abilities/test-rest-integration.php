@@ -1430,4 +1430,120 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 			$this->assertWPError( $ability->execute( $input ), 'The ability schema must reject arbitrary option selection.' );
 		}
 	}
+
+	/**
+	 * Callbacks on mainwp_rest_prepare_site never receive secret site options.
+	 *
+	 * @dataProvider prepare_site_filter_cases
+	 * @param bool   $legacy     Whether to use the legacy controller branch.
+	 * @param bool   $collection Whether to request the collection.
+	 * @param string $case       Requested option name casing.
+	 */
+	public function test_prepare_site_filter_never_receives_secret_options( bool $legacy, bool $collection, string $case ): void {
+		if ( ! $legacy ) {
+			$this->skip_if_no_abilities_api();
+		}
+		$this->authenticate_as_admin();
+		$key                   = $this->create_rest_api_key( $this->admin_user_id, 'read' );
+		$this->consumer_key    = $key['consumer_key'];
+		$this->consumer_secret = $key['consumer_secret'];
+		$site_id               = $this->create_test_site( [ 'name' => 'Filter credential fixture' ] );
+		$secret_options        = [ 'register_verify_key', 'mainwp_api_backups_vultr_api_key' ];
+		foreach ( $secret_options as $option ) {
+			$this->set_site_option( $site_id, $option, 'synthetic-secret-' . $option );
+		}
+		$this->set_site_option( $site_id, 'integration_status', 'healthy' );
+		$requested = array_map( 'upper' === $case ? 'strtoupper' : 'strval', $secret_options );
+
+		$seen     = [];
+		$recorder = static function ( $data, $item, $request ) use ( &$seen ) {
+			$seen[] = [
+				'data'         => $data,
+				'item'         => $item,
+				'request'      => $request,
+				'item_is_obj'  => is_object( $item ),
+				'item_has_url' => is_object( $item ) && property_exists( $item, 'url' ),
+			];
+			return $data;
+		};
+		add_filter( 'mainwp_rest_prepare_site', $recorder, 10, 3 );
+
+		// Without the Abilities API the controller already takes the legacy branch.
+		$registry = class_exists( '\WP_Abilities_Registry' ) ? \WP_Abilities_Registry::get_instance() : null;
+		if ( $registry ) {
+			$property = new \ReflectionProperty( $registry, 'registered_abilities' );
+			$property->setAccessible( true );
+			$registered = $property->getValue( $registry );
+		}
+		try {
+			if ( $legacy && $registry ) {
+				wp_unregister_ability( 'mainwp/get-site-v1' );
+				wp_unregister_ability( 'mainwp/list-sites-v1' );
+			}
+			$params   = [ 'custom_fields' => implode( ',', array_merge( $requested, [ 'integration_status' ] ) ) ];
+			$route    = '/mainwp/v2/sites' . ( $collection ? '' : '/' . $site_id );
+			$response = $this->do_authenticated_request( 'GET', $route, $params );
+			$this->assertSame( 200, $response->get_status() );
+
+			$calls = array_values(
+				array_filter(
+					$seen,
+					static function ( $call ) use ( $site_id ) {
+						return isset( $call['data']['id'] ) && $site_id === (int) $call['data']['id'];
+					}
+				)
+			);
+			$this->assertNotEmpty( $calls, 'The filter must run for the requested site.' );
+			foreach ( $calls as $call ) {
+				$this->assertIsArray( $call['data'] );
+				$this->assertTrue( $call['item_is_obj'], 'The filter must still receive the site row object.' );
+				$this->assertTrue( $call['item_has_url'], 'Non-secret row fields must reach the filter.' );
+				$this->assertInstanceOf( \WP_REST_Request::class, $call['request'] );
+				$item_keys = array_keys( get_object_vars( $call['item'] ) );
+				foreach ( array_merge( $secret_options, $requested ) as $secret ) {
+					foreach ( [ 'data' => array_keys( $call['data'] ), 'item' => $item_keys ] as $where => $keys ) {
+						$this->assertNotContains(
+							strtolower( $secret ),
+							array_map( 'strtolower', array_map( 'strval', $keys ) ),
+							"{$secret} must not reach the filter \${$where}."
+						);
+					}
+				}
+				$this->assertStringNotContainsString( 'synthetic-secret-', wp_json_encode( [ $call['data'], $call['item'] ] ) );
+				if ( ! ( $legacy && $collection ) ) {
+					// Legacy collections already omit options outside the schema.
+					$this->assertSame( 'healthy', $call['data']['integration_status'] ?? null, 'Non-secret custom fields must reach the filter $data.' );
+					$this->assertSame( 'healthy', $call['item']->integration_status ?? null, 'Non-secret custom fields must reach the filter $item.' );
+				}
+			}
+		} finally {
+			$caught = (string) ( $this->caught_doing_it_wrong['WP_Abilities_Registry::get_registered'] ?? '' );
+			if ( $legacy && ( false !== strpos( $caught, 'mainwp/get-site-v1' ) || false !== strpos( $caught, 'mainwp/list-sites-v1' ) ) ) {
+				$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+			}
+			if ( $registry ) {
+				$property->setValue( $registry, $registered );
+			}
+			remove_filter( 'mainwp_rest_prepare_site', $recorder, 10 );
+		}
+	}
+
+	/**
+	 * Filter exposure cases across both controller branches.
+	 *
+	 * The legacy collection never joins custom options onto the row, so its
+	 * case passes without the strip and only guards against a regression there.
+	 *
+	 * @return array Request variants.
+	 */
+	public static function prepare_site_filter_cases(): array {
+		$cases = [];
+		foreach ( [ false, true ] as $legacy ) {
+			foreach ( [ false, true ] as $collection ) {
+				$cases[ ( $legacy ? 'legacy' : 'ability' ) . ( $collection ? '-list' : '-single' ) ] = [ $legacy, $collection, 'lower' ];
+			}
+			$cases[ ( $legacy ? 'legacy' : 'ability' ) . '-single-upper' ] = [ $legacy, false, 'upper' ];
+		}
+		return $cases;
+	}
 }

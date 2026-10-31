@@ -850,6 +850,12 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'search'  => ! empty( $args['s'] ) ? $args['s'] : '',
         );
 
+        // A scoped key sees the general fields (client 0) and the fields of clients it reaches through an allowed site.
+        $allowed_sites = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' !== $allowed_sites ) {
+            $params['client_id'] = array_merge( array( 0 ), \MainWP\Dashboard\MainWP_Abilities_Util::get_accessible_client_ids( $allowed_sites ) );
+        }
+
         // Get client fields.
         $fields = MainWP_DB_Client::instance()->get_client_fields_by_params( $params );
         if ( empty( $fields ) ) {

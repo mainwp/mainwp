@@ -12110,6 +12110,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	public function test_restore_initiate_refusal_is_plain_text() {
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
 		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
 
 		$response = $this->post_ajax( 'mainwp_restore_initiate', array( 'site_id' => (string) $this->site_id ) );
 

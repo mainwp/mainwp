@@ -140,6 +140,8 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/update-backup-destination-v1',
 			'mainwp/delete-backup-destination-v1',
 			'mainwp/update-backup-settings-v1',
+			'mainwp/list-api-backups-providers-v1',
+			'mainwp/list-api-backups-site-status-v1',
 
 			'mainwp/list-sites-v1',
 			'mainwp/get-site-v1',
@@ -167,8 +169,8 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 				return 'mainwp-backups' === $ability->get_category();
 			}
 		);
-		$this->assertCount( 32, $backup_abilities );
-		foreach ( array_slice( $expected, 0, 32 ) as $name ) {
+		$this->assertCount( 34, $backup_abilities );
+		foreach ( array_slice( $expected, 0, 34 ) as $name ) {
 			$this->assertSame( 'mainwp-backups', wp_get_ability( $name )->get_category(), $name );
 		}
 

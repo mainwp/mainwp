@@ -1156,6 +1156,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 $result['errors'][] = sprintf( 'Snapshots %s: an upload in progress uses this backup, so it was kept. Try again once the upload finishes.', implode( ',', $ids ) );
                 return $result;
             }
+            if ( ! $manual_override ) {
+                MainWP_Backup_Retention_Protection::observe_remote_protection( $ids );
+            }
             if ( ! $manual_override && MainWP_Backup_Retention_Protection::holds_automatic_removal( $ids ) ) {
                 $result['errors'][] = __( 'These backups were kept because remote copies are inside their minimum retention period or required uploads have not been verified.', 'mainwp' );
                 return $result;

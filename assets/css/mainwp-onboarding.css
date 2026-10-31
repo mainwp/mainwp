@@ -67,6 +67,10 @@
 #mainwp-onboarding-start-cards > .card:first-child {
     outline: 1px solid var(--mainwp-onboarding-success, #6c9800);
 }
+#mainwp-onboarding-start-cards > .card:hover,
+#mainwp-onboarding-start-cards > .card:focus-visible {
+    background: var(--mainwp-onboarding-surface, #fff);
+}
 #mainwp-onboarding-start-cards > .card .header {
     margin-top: 0 !important;
     overflow-wrap: normal;
@@ -110,7 +114,6 @@
 }
 #mainwp-onboarding-detection.ui.message {
     padding-left: 4.5rem;
-    border-left: 0 !important;
     color: var(--mainwp-onboarding-text, #2f3437) !important;
     background: color-mix(in srgb, var(--onboarding-state-color) 10%, var(--mainwp-onboarding-surface, #fff)) !important;
 }

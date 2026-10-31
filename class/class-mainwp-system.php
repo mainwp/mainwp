@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.4-rc.3'; // NOSONAR.
+    public static $version = '6.4'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -1048,7 +1048,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
         wp_enqueue_script( 'mainwp-cache-warm', MAINWP_PLUGIN_URL . 'assets/js/mainwp-cache-warm.js', array(), $this->current_version, true );
 
-        $disable_backup_checking = true; // removed option.
+        $disable_backup_checking = 1 !== (int) get_option( 'mainwp_backup_before_upgrade' );
         $mainwpParams            = array(
             'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',
             'backup_before_upgrade'            => 1 === (int) get_option( 'mainwp_backup_before_upgrade' ),

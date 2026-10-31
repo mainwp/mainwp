@@ -1862,6 +1862,17 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </form>
         </div>
         <?php MainWP_UI::render_modal_edit_notes(); ?>
+        <?php
+        static::render_backup_modal();
+        static::render_screen_options();
+        static::render_footer( '' );
+    }
+
+    /**
+     * Keep manual update pages on the same backup prompt and continuation controls.
+     */
+    public static function render_backup_modal() {
+        ?>
         <div class="ui modal" id="managesites-backup-box" tabindex="0">
             <div class="header"><?php esc_html_e( 'Full backup required', 'mainwp' ); ?></div>
             <div class="content mainwp-modal-content"></div>
@@ -1872,8 +1883,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
         </div>
         <?php
-        static::render_screen_options();
-        static::render_footer( '' );
     }
 
     /**

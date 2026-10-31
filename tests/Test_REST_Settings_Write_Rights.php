@@ -1,6 +1,6 @@
 <?php
 /**
- * Settings writes require the API key owner's Team Control operation right.
+ * Settings reads and writes require the API key owner's Team Control operation right.
  *
  * @package MainWP\Dashboard\Tests
  */
@@ -42,6 +42,12 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
      * @var int
      */
     private $other_id;
+    /**
+     * Team Control staff user that owns a read key.
+     *
+     * @var int
+     */
+    private $staff_id;
     /**
      * Read-write and read-only credentials.
      *
@@ -130,7 +136,18 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
         $this->keys     = array(
             'read_write' => $this->create_rest_api_key( $this->owner_id, 'read_write' ),
             'read'       => $this->create_rest_api_key( $this->owner_id, 'read' ),
+            'write'      => $this->create_rest_api_key( $this->owner_id, 'write' ),
         );
+        add_role(
+            'mainwp_settings_read_staff',
+            'Settings read staff',
+            array(
+                'read'     => true,
+                'level_10' => true,
+            )
+        );
+        $this->staff_id            = $this->factory->user->create( array( 'role' => 'mainwp_settings_read_staff' ) );
+        $this->keys['staff_read'] = $this->create_rest_api_key( $this->staff_id, 'read' );
         $this->site_ids = array( $this->create_test_site(), $this->create_test_site() );
         foreach ( array( $this->owner_id, $this->other_id ) as $user_id ) {
             update_user_option( $user_id, 'mainwp_notice_saved_status', array( 'held' => 1 ) );
@@ -153,6 +170,10 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
         $this->add_test_filter(
             'mainwp_currentuserallowedaccesssites',
             function () {
+                if ( get_current_user_id() === $this->staff_id ) {
+                    // Team Control gives staff an explicit site list, even when every site is granted.
+                    return $this->site_ids;
+                }
                 return $this->restricted ? array( $this->site_ids[0] ) : 'all';
             }
         );
@@ -186,9 +207,12 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
         foreach ( $this->filters as $hook => $callback ) {
             remove_filter( $hook, $callback, 99 );
         }
-        foreach ( MainWP_DB::instance()->remove_rest_api_keys_by_user( $this->owner_id ) as $row ) {
-            \MainWP_REST_Authentication::delete_api_key_cache( $row->consumer_key );
+        foreach ( array( $this->owner_id, $this->staff_id ) as $user_id ) {
+            foreach ( MainWP_DB::instance()->remove_rest_api_keys_by_user( $user_id ) as $row ) {
+                \MainWP_REST_Authentication::delete_api_key_cache( $row->consumer_key );
+            }
         }
+        remove_role( 'mainwp_settings_read_staff' );
         foreach ( $this->original['auth_state'] as $name => $value ) {
             $property = new \ReflectionProperty( $this->auth, $name );
             $property->setAccessible( true );
@@ -357,7 +381,7 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
         $GLOBALS['wp']->query_vars['rest_route'] = '/mainwp/v2/settings/' . $route;
         wp_set_current_user( 0 );
         $owner = $this->auth->authenticate( false );
-        $this->assertSame( $this->owner_id, (int) $owner );
+        $this->assertSame( 'staff_read' === $permissions ? $this->staff_id : $this->owner_id, (int) $owner );
         wp_set_current_user( $owner );
         $request = new \WP_REST_Request( $method, '/mainwp/v2/settings/' . $route );
         $request->set_header( 'content-type', 'application/json' );
@@ -574,5 +598,156 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
         $response                = $this->dispatch_write( $method, $route, $body );
         $code                    = 'job' === $option || 'notices' === $option ? 'mainwp_insufficient_right' : 'mainwp_restricted_account';
         $this->assert_refused( $response, $before, 403, $code );
+    }
+
+    /**
+     * Every settings read route and the right its settings screen requires.
+     *
+     * GET cost-tracker stays open while the Chrome extension uses it to detect
+     * Cost Tracker (Test_Cost_Tracker_Settings_Rights).
+     *
+     * @return array
+     */
+    public static function read_routes(): array {
+        return array(
+            'general'            => array( 'general', 'manage_dashboard_settings' ),
+            'advanced'           => array( 'advanced', 'manage_dashboard_settings' ),
+            'monitoring'         => array( 'monitoring', 'manage_dashboard_settings' ),
+            'emails'             => array( 'emails', 'manage_dashboard_settings' ),
+            'dashboard-insights' => array( 'dashboard-insights', 'manage_dashboard_settings' ),
+            'api-backups'        => array( 'api-backups', 'manage_api_backups' ),
+            'backups'            => array( 'backups', 'manage_dashboard_settings' ),
+            'tools'              => array( 'tools', 'manage_dashboard_settings' ),
+            'destroy-status'     => array( 'tools/destroy-sessions-status/read-job', 'manage_dashboard_settings' ),
+            'renew-status'       => array( 'tools/renew-connections-status/read-job', 'manage_dashboard_settings' ),
+            'disconnect-status'  => array( 'tools/disconnect-all-sites-status/read-job', 'manage_dashboard_settings' ),
+        );
+    }
+
+    /** Store one finished job of each kind so status reads return a body. */
+    private function seed_jobs(): void {
+        foreach ( array( 'destroy', 'renew', 'disconnect' ) as $kind ) {
+            set_transient(
+                "mainwp_tool_{$kind}_job_read-job",
+                array(
+                    'websites'     => $this->site_ids,
+                    'status'       => 'completed',
+                    'total'        => 2,
+                    'processed'    => 2,
+                    'failed'       => 0,
+                    'errors'       => array(),
+                    'started_at'   => '2026-10-30 10:00:00',
+                    'completed_at' => '2026-10-30 10:01:00',
+                ),
+                HOUR_IN_SECONDS
+            );
+        }
+    }
+
+    /**
+     * Dispatch a read with a read key.
+     *
+     * The advanced reader looks up defaults that MainWP_Settings_Indicator does not
+     * define (an existing warning, logged as a follow-up), so only those warnings
+     * are ignored here.
+     *
+     * @param string $route Settings route.
+     * @param string $key   Key to authenticate with.
+     * @return \WP_REST_Response
+     */
+    private function dispatch_read( $route, $key = 'read' ) {
+        $previous = null;
+        $previous = set_error_handler(
+            static function ( $errno, $errstr, $errfile, $errline ) use ( &$previous ) {
+                if ( E_WARNING === $errno && str_starts_with( $errstr, 'Undefined array key "mainwp_' ) && str_ends_with( $errfile, 'class-mainwp-rest-settings-controller.php' ) ) {
+                    return true;
+                }
+                return $previous ? $previous( $errno, $errstr, $errfile, $errline ) : false;
+            }
+        );
+        try {
+            return $this->dispatch_write( 'GET', $route, array(), $key );
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    /**
+     * A read key without the screen's right cannot read the settings.
+     *
+     * @dataProvider read_routes
+     * @param string $route Settings route.
+     * @param string $right Required right.
+     */
+    public function test_missing_owner_right_refuses_read( $route, $right ): void {
+        $this->seed_jobs();
+        $this->denied_right = $right;
+        $response           = $this->dispatch_write( 'GET', $route, array(), 'read' );
+        $this->assertSame( 403, $response->get_status(), wp_json_encode( $response->get_data() ) );
+        $this->assertSame( 'mainwp_insufficient_right', $response->get_data()['code'] );
+        $this->assertSame( $right, $response->get_data()['data']['right'] );
+        $this->assertContains( array( $right, $this->owner_id ), $this->right_calls );
+    }
+
+    /**
+     * A granted right returns the same body as a Dashboard without Team Control.
+     *
+     * @dataProvider read_routes
+     * @param string $route Settings route.
+     * @param string $right Required right.
+     */
+    public function test_granted_owner_right_preserves_read( $route, $right ): void {
+        $this->seed_jobs();
+        // Domain-specific settings rights must not also require the general settings right.
+        $this->denied_right = 'manage_dashboard_settings' === $right ? 'manage_api_backups' : 'manage_dashboard_settings';
+        $granted            = $this->dispatch_read( $route );
+        $this->assertSame( 200, $granted->get_status(), wp_json_encode( $granted->get_data() ) );
+        $this->assertContains( array( $right, $this->owner_id ), $this->right_calls );
+
+        remove_filter( 'mainwp_currentusercan', $this->filters['mainwp_currentusercan'], 99 );
+        $without_team_control = $this->dispatch_read( $route );
+        $this->assertSame( 200, $without_team_control->get_status(), wp_json_encode( $without_team_control->get_data() ) );
+        $this->assertSame( $without_team_control->get_data(), $granted->get_data() );
+    }
+
+    /**
+     * The key still needs read permission before any right is checked.
+     *
+     * @dataProvider read_routes
+     * @param string $route Settings route.
+     */
+    public function test_write_only_key_still_refused_read( $route ): void {
+        $this->seed_jobs();
+        $response = $this->dispatch_write( 'GET', $route, array(), 'write' );
+        $this->assertSame( 401, $response->get_status() );
+        $this->assertSame( 'mainwp_rest_authentication_error', $response->get_data()['code'] );
+        $this->assertSame( array(), $this->right_calls );
+    }
+
+    /**
+     * A Team Control staff member's read key needs the settings right too.
+     *
+     * @dataProvider read_routes
+     * @param string $route Settings route.
+     * @param string $right Required right.
+     */
+    public function test_staff_read_key_without_right_refused( $route, $right ): void {
+        $this->seed_jobs();
+        $this->denied_right = $right;
+        $response           = $this->dispatch_read( $route, 'staff_read' );
+        $this->assertTrue( \MainWP\Dashboard\MainWP_System_Utility::is_team_control_staff() );
+        $this->assertSame( 403, $response->get_status(), wp_json_encode( $response->get_data() ) );
+        if ( 'api-backups' === $route ) {
+            // The existing scope guard refuses site-scoped staff before the right check.
+            $this->assertSame( 'mainwp_restricted_account', $response->get_data()['code'] );
+            return;
+        }
+        $this->assertSame( 'mainwp_insufficient_right', $response->get_data()['code'] );
+        $this->assertSame( $right, $response->get_data()['data']['right'] );
+        $this->assertContains( array( $right, $this->staff_id ), $this->right_calls );
+
+        $this->denied_right = '';
+        $granted            = $this->dispatch_read( $route, 'staff_read' );
+        $this->assertSame( 200, $granted->get_status(), wp_json_encode( $granted->get_data() ) );
     }
 }

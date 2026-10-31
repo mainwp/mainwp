@@ -1295,6 +1295,114 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * None carries a non-empty value: Fomantic turns an empty-value option
+	 * into placeholder text and drops it from the menu, which left no way
+	 * back to None once an encryption mode was picked.
+	 *
+	 * @return void
+	 */
+	public function test_s3_sse_none_option_is_selectable() {
+		ob_start();
+		MainWP_Backup_Storage_View::render_form();
+		$output = ob_get_clean();
+
+		$this->assertSame( 1, preg_match( '#<select id="mainwp-storage-sse"[^>]*>(.*?)</select>#s', $output, $select ) );
+		$this->assertMatchesRegularExpression( '#<option value="none">\s*None\s*</option>#', $select[1] );
+		$this->assertStringNotContainsString( 'value=""', $select[1], 'An empty-value option becomes the dropdown placeholder and cannot be picked.' );
+	}
+
+	/**
+	 * Encryption modes for the reset-to-None tests.
+	 *
+	 * @return array
+	 */
+	public function sse_modes() {
+		return array(
+			'SSE-S3'  => array( 'AES256' ),
+			'SSE-KMS' => array( 'aws:kms' ),
+		);
+	}
+
+	/**
+	 * Saving None over a stored encryption mode clears it, keeps the blank
+	 * secret, and leaves the destination id and task assignment alone.
+	 *
+	 * @dataProvider sse_modes
+	 * @param string $mode Stored encryption mode.
+	 * @return void
+	 */
+	public function test_s3_sse_resets_to_none_on_edit( string $mode ) {
+		$requests = array();
+		add_filter(
+			'pre_http_request',
+			function ( $pre, $args ) use ( &$requests ) {
+				$requests[] = $args;
+				return array(
+					'headers'  => array( 'content-length' => '22' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			},
+			10,
+			2
+		);
+		$settings = array(
+			'bucket'     => 'b',
+			'region'     => 'us-east-1',
+			'access_key' => 'AKIA-SSE',
+			'secret_key' => 'sse-secret',
+			'sse'        => $mode,
+		);
+
+		$created = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 's3',
+				'name'     => 'Encrypted bucket',
+				'settings' => $settings,
+			)
+		);
+		$this->assertArrayNotHasKey( 'error', $created );
+		$id      = (int) $created['id'];
+		$task_id = $this->insert_task( array( $id ) );
+		$this->assertSame( $mode, MainWP_Backup_Storage_Destinations::instance()->get_destination( $id )->settings['sse'] );
+
+		$requests = array();
+		$edited   = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => $id,
+				'provider' => 's3',
+				'name'     => 'Encrypted bucket',
+				'settings' => array_merge(
+					$settings,
+					array(
+						'secret_key' => '',
+						'sse'        => 'none',
+					)
+				),
+			)
+		);
+		$this->assertArrayNotHasKey( 'error', $edited );
+		$this->assertSame( $id, (int) $edited['id'], 'Resetting encryption must edit the destination in place.' );
+		$this->assertNotEmpty( $requests, 'The edit must run a connection test.' );
+		foreach ( $requests as $request ) {
+			$this->assertArrayNotHasKey( 'x-amz-server-side-encryption', array_change_key_case( (array) ( $request['headers'] ?? array() ) ), 'No encryption header may be sent once None is chosen.' );
+		}
+
+		$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
+		$this->assertSame( '', $row->settings['sse'], 'None must store an empty SSE value.' );
+		$this->assertSame( 'sse-secret', $row->settings['secret_key'], 'A blank secret on edit must keep the stored one.' );
+		$this->assertSame( '', MainWP_Backup_Storage_Handler::destination_for_edit( $id )['settings']['sse'] );
+		$this->assertCount( 1, MainWP_Backup_Storage_Destinations::instance()->list_destinations() );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+		$this->assertSame( array( $id ), array_map( 'intval', json_decode( $task->destinations, true ) ), 'The task must still point at the same destination.' );
+	}
+
+	/**
 	 * The Dropbox block offers the Connect button and shows the exact
 	 * redirect URI the app must register.
 	 *

@@ -1557,12 +1557,12 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     'value' => static::format_boolean_label( (int) MainWP_Backup_Settings::is_native_backups_enabled() ),
                 ),
                 array(
-                    'label' => esc_html__( 'Backups kept on server', 'mainwp' ),
+                    'label' => esc_html__( 'Leftover backup files kept', 'mainwp' ),
                     'value' => (string) ( false === get_option( 'mainwp_backupsOnServer' ) ? 1 : intval( get_option( 'mainwp_backupsOnServer' ) ) ),
                 ),
                 array(
-                    'label' => esc_html__( 'Backup to external sources', 'mainwp' ),
-                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_backupOnExternalSources', 0 ) ),
+                    'label' => esc_html__( 'Legacy remote backup count (unused)', 'mainwp' ),
+                    'value' => (string) intval( get_option( 'mainwp_backupOnExternalSources', 1 ) ),
                 ),
                 array(
                     'label' => esc_html__( 'Archive format', 'mainwp' ),
@@ -1617,8 +1617,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'Abandoned plugins/themes tolerance',
                 'Primary backup system',
                 'MainWP Built-In Backups enabled',
-                'Backups kept on server',
-                'Backup to external sources',
+                'Leftover backup files kept',
+                'Legacy remote backup count (unused)',
                 'Archive format',
                 'Auto detect maximum file descriptors on child sites',
                 'Maximum file descriptors fallback value',

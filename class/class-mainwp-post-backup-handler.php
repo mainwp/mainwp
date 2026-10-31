@@ -1091,6 +1091,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
+     * A posted file name or subfolder template, with its %tokens% intact.
+     *
+     * @param string $key POST field.
+     * @return string
+     */
+    private static function posted_name_template( string $key ): string {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- callers verify the nonce; clean_name_template() sanitizes.
+        return isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) ? MainWP_Backup_File_Manager::clean_name_template( wp_unslash( $_POST[ $key ] ) ) : '';
+    }
+
+    /**
      * Method sanitize_adhoc_backup_type()
      *
      * Allowlist the ad-hoc backup type from the wire. Incremental is
@@ -1136,12 +1147,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $excludedFolder = MainWP_Backup_Settings::sanitize_exclude_list( $excludedFolder );
 
             $type                           = static::sanitize_adhoc_backup_type( isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '' );
-            $subfolder                      = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
+            $subfolder                      = static::posted_name_template( 'subfolder' );
             $excludebackup                  = isset( $_POST['excludebackup'] ) ? sanitize_text_field( wp_unslash( $_POST['excludebackup'] ) ) : '';
             $excludecache                   = isset( $_POST['excludecache'] ) ? sanitize_text_field( wp_unslash( $_POST['excludecache'] ) ) : '';
             $excludenonwp                   = isset( $_POST['excludenonwp'] ) ? sanitize_text_field( wp_unslash( $_POST['excludenonwp'] ) ) : '';
             $excludezip                     = isset( $_POST['excludezip'] ) ? sanitize_text_field( wp_unslash( $_POST['excludezip'] ) ) : '';
-            $filename                       = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
+            $filename                       = static::posted_name_template( 'filename' );
             $fileNameUID                    = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : '';
             $archiveFormat                  = isset( $_POST['archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['archiveFormat'] ) ) : '';
             $maximumFileDescriptorsOverride = isset( $_POST['maximumFileDescriptorsOverride'] ) ? intval( $_POST['maximumFileDescriptorsOverride'] ) : false;
@@ -1215,8 +1226,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             }
             $pid       = isset( $_POST['pid'] ) ? intval( $_POST['pid'] ) : false;
             $type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-            $subfolder = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
-            $filename  = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
+            $subfolder = static::posted_name_template( 'subfolder' );
+            $filename  = static::posted_name_template( 'filename' );
             $result    = MainWP_Backup_Executor::with_backup_hold(
                 $site_id,
                 static function () use ( $site_id, $pid, $type, $subfolder, $filename ) {

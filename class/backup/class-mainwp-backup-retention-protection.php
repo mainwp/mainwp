@@ -24,6 +24,19 @@ class MainWP_Backup_Retention_Protection {
     const DROPBOX_IDENTITY_FIELD = '_mainwp_retention_identity';
 
     /**
+     * How long after an unfinished upload's age floor a worker can still land a
+     * remote write. Lease fencing stops a stale worker's checkpoint save, not its
+     * in-flight provider request, so a worker leased at the floor can renew for
+     * one more lease and then run a final request sequence. That sequence is at
+     * most 600 seconds on HTTP providers (four 120-second requests plus a Dropbox
+     * token refresh); the store's abandoned-lease age covers it with margin and
+     * also bounds SFTP, which has no request timeout. The lease term mirrors the
+     * cron lane's `budget + 60` (constant expressions cannot call max()); keep it
+     * in step if DEFAULT_BUDGET_SECONDS changes.
+     */
+    const LATE_WRITE_SECONDS = MainWP_Backup_Upload_Driver::DEFAULT_BUDGET_SECONDS + 60 + MainWP_Backup_Upload_Job_Store::PRUNE_STALE_LEASE_SECONDS;
+
+    /**
      * Read the absent-by-default task opt-in.
      *
      * @param int $task_id Task identity.
@@ -345,7 +358,31 @@ class MainWP_Backup_Retention_Protection {
      * @return array Deadline and unknown-age evidence.
      */
     public static function remote_protection( array $snapshot_ids, ?int $now = null, bool $refresh_destinations = true ): array {
-        unset( $now );
+        return self::remote_protection_for( $snapshot_ids, $now, $refresh_destinations, false );
+    }
+
+    /**
+     * Record unknown upload ages during retention execution, never previews.
+     *
+     * @param int[]    $snapshot_ids Snapshot identities.
+     * @param int|null $now First-observation time.
+     * @return array Deadline and unknown-age evidence after confirmed persistence.
+     */
+    public static function observe_remote_protection( array $snapshot_ids, ?int $now = null ): array {
+        return self::remote_protection_for( $snapshot_ids, $now, true, true );
+    }
+
+    /**
+     * Read protection, optionally establishing age at an explicit write boundary.
+     *
+     * @param int[]    $snapshot_ids Snapshot identities.
+     * @param int|null $now First-observation time.
+     * @param bool     $refresh_destinations Whether to refresh destination credentials.
+     * @param bool     $observe Whether retention execution may record an age floor.
+     * @return array Deadline and unknown-age evidence.
+     */
+    private static function remote_protection_for( array $snapshot_ids, ?int $now, bool $refresh_destinations, bool $observe ): array {
+        $now        = null === $now ? time() : $now;
         $protection = array(
             'protected_until' => 0,
             'unknown_age'     => false,
@@ -356,6 +393,13 @@ class MainWP_Backup_Retention_Protection {
                 $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id, $refresh_destinations );
                 if ( null === $destination ) {
                     continue;
+                }
+                $readable = empty( $destination->credentials_invalid ) && is_array( $destination->settings );
+                if ( $readable && (int) ( $destination->settings['minimum_remote_retention_days'] ?? 0 ) <= 0 ) {
+                    continue;
+                }
+                if ( $observe && $readable && MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE !== $job->status ) {
+                    $job->checkpoint['storage_age_floor'] = MainWP_Backup_Upload_Job_Store::instance()->storage_age_floor( (int) $job->id, $now );
                 }
                 $age                           = self::upload_age_evidence( $job, $snapshot );
                 $one                           = self::destination_protection( $destination, $age );
@@ -371,9 +415,12 @@ class MainWP_Backup_Retention_Protection {
      *
      * @param object      $job Upload job.
      * @param object|null $snapshot Snapshot row.
-     * @return array Immutable storage age or an explicit unknown marker.
+     * @param int|null    $now Reserved for compatibility; reads do not establish age.
+     * @return array Upload time for complete uploads, the latest possible write
+     *               for unfinished ones, or an explicit unknown marker.
      */
-    public static function upload_age_evidence( object $job, ?object $snapshot ): array {
+    public static function upload_age_evidence( object $job, ?object $snapshot, ?int $now = null ): array {
+        unset( $now );
         if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE === $job->status ) {
             $uploaded = (int) ( $job->checkpoint['uploaded_at'] ?? 0 );
             if ( $uploaded <= 0 && null !== $snapshot ) {
@@ -388,10 +435,14 @@ class MainWP_Backup_Retention_Protection {
                 'unknown_age' => $uploaded <= 0,
             );
         }
-        // Partial writes may be newer than every durable timestamp in a failed job.
+        // Only retention execution records this floor. Unobserved uploads stay
+        // unknown to previews; prune claims and resumed saves preserve the floor.
+        // Age counts from the latest write an expired worker could still land;
+        // delete jobs copy this evidence, so their holds match.
+        $floor = (int) ( $job->checkpoint['storage_age_floor'] ?? 0 );
         return array(
-            'uploaded_at' => 0,
-            'unknown_age' => true,
+            'uploaded_at' => $floor > 0 ? $floor + self::LATE_WRITE_SECONDS : 0,
+            'unknown_age' => $floor <= 0,
         );
     }
 

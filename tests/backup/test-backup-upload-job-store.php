@@ -107,7 +107,12 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertSame( ! $expired, $store->save_checkpoint( (int) $job->id, array( 'cursor' => 9 ), 'holder' ) );
 		$this->assertSame( ! $expired, $store->set_status( (int) $job->id, $store::STATUS_UPLOADING, 'holder' ) );
 		$after = $store->get_job( (int) $job->id );
-		$this->assertSame( $expired ? $before->checkpoint : array( 'cursor' => 9 ), $after->checkpoint );
+		$saved = $after->checkpoint;
+		$this->assertArrayHasKey( 'last_attempt_at', $saved );
+		$this->assertGreaterThan( 0, $saved['last_attempt_at'] );
+		$expected = $expired ? $before->checkpoint : array( 'cursor' => 9 );
+		unset( $expected['last_attempt_at'], $saved['last_attempt_at'] );
+		$this->assertSame( $expected, $saved );
 		$this->assertSame( $expired ? $before->status : $store::STATUS_UPLOADING, $after->status );
 		$this->assertSame( ! $expired, $store->save_checkpoint( (int) $job->id, $after->checkpoint, 'holder' ), 'An unchanged write must still check lease freshness.' );
 		if ( $expired ) {
@@ -293,7 +298,11 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$checkpoint = array( 'metadata' => (object) array( 'cursor' => 4 ) );
 		$this->assertNotNull( $job );
 		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint, 'object-holder' ) );
-		$this->assertSame( array( 'metadata' => array( 'cursor' => 4 ) ), $store->get_job( (int) $job->id )->checkpoint );
+		$saved = $store->get_job( (int) $job->id )->checkpoint;
+		$this->assertArrayHasKey( 'last_attempt_at', $saved );
+		$this->assertGreaterThan( 0, $saved['last_attempt_at'] );
+		unset( $saved['last_attempt_at'] );
+		$this->assertSame( array( 'metadata' => array( 'cursor' => 4 ) ), $saved );
 		$this->assertFalse( $store->save_checkpoint( (int) $job->id, $checkpoint, 'other-holder' ) );
 	}
 
@@ -310,7 +319,11 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$before = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $job->id ) );
 		try {
 			$this->assertFalse( $store->save_checkpoint( (int) $job->id, array( 'metadata' => $handle ), 'encoding-holder' ) );
-			$this->assertSame( array(), $store->get_job( (int) $job->id )->checkpoint );
+			$saved = $store->get_job( (int) $job->id )->checkpoint;
+			$this->assertArrayHasKey( 'last_attempt_at', $saved );
+			$this->assertGreaterThan( 0, $saved['last_attempt_at'] );
+			unset( $saved['last_attempt_at'] );
+			$this->assertSame( array(), $saved );
 			$this->assertEquals( $before, $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $job->id ) ), 'A failed encoding must not replace the raw checkpoint with an empty string.' );
 		} finally {
 			fclose( $handle );
@@ -351,7 +364,11 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 
 		$store->save_checkpoint( (int) $job->id, $checkpoint );
 
-		$this->assertSame( $checkpoint, $store->get_job( (int) $job->id )->checkpoint );
+		$saved = $store->get_job( (int) $job->id )->checkpoint;
+		$this->assertArrayHasKey( 'last_attempt_at', $saved );
+		$this->assertSame( 1000000, $saved['last_attempt_at'] );
+		unset( $saved['last_attempt_at'] );
+		$this->assertSame( $checkpoint, $saved );
 	}
 
 	/**
@@ -650,7 +667,11 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 
 		$checkpoint = array( 'artifact_cursor' => 3 );
 		$this->assertFalse( $store->save_checkpoint( $job_id, $checkpoint, 'token-zombie' ), 'A checkpoint fenced with a stale token must be refused.' );
-		$this->assertSame( array(), $store->get_job( $job_id )->checkpoint, 'The refused checkpoint must not persist.' );
+		$saved = $store->get_job( $job_id )->checkpoint;
+		$this->assertArrayHasKey( 'last_attempt_at', $saved );
+		$this->assertSame( $now + 301, $saved['last_attempt_at'] );
+		unset( $saved['last_attempt_at'] );
+		$this->assertSame( array(), $saved, 'The refused checkpoint must not persist.' );
 
 		$this->assertFalse( $store->set_status( $job_id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING, 'token-zombie' ), 'A status write fenced with a stale token must be refused.' );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $store->get_job( $job_id )->status );

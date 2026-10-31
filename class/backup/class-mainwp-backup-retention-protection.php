@@ -24,15 +24,13 @@ class MainWP_Backup_Retention_Protection {
     const DROPBOX_IDENTITY_FIELD = '_mainwp_retention_identity';
 
     /**
-     * How long after an unfinished upload's age floor a worker can still land a
-     * remote write. Lease fencing stops a stale worker's checkpoint save, not its
-     * in-flight provider request, so a worker leased at the floor can renew for
-     * one more lease and then run a final request sequence. That sequence is at
-     * most 600 seconds on HTTP providers (four 120-second requests plus a Dropbox
-     * token refresh); the store's abandoned-lease age covers it with margin and
-     * also bounds SFTP, which has no request timeout. The lease term mirrors the
-     * cron lane's `budget + 60` (constant expressions cannot call max()); keep it
-     * in step if DEFAULT_BUDGET_SECONDS changes.
+     * Bound on late writes after the later of the age floor and latest attempt
+     * stamp. Acquisition stamps immediately; renewal stamps lag by at most 60
+     * seconds. A stale worker can finish an in-flight provider request after its
+     * lease expires. HTTP request sequences take at most 600 seconds, including
+     * a Dropbox token refresh; the abandoned-lease age leaves margin for the
+     * throttle and covers the existing SFTP window. The lease term mirrors the
+     * cron lane's `budget + 60`; keep it in step if DEFAULT_BUDGET_SECONDS changes.
      */
     const LATE_WRITE_SECONDS = MainWP_Backup_Upload_Driver::DEFAULT_BUDGET_SECONDS + 60 + MainWP_Backup_Upload_Job_Store::PRUNE_STALE_LEASE_SECONDS;
 
@@ -413,6 +411,9 @@ class MainWP_Backup_Retention_Protection {
     /**
      * Preserve upload age when upload rows are replaced by delete jobs.
      *
+     * Unfinished uploads need a retention floor. Their latest attempt stamp
+     * extends the write window and lags renewal by at most 60 seconds.
+     *
      * @param object      $job Upload job.
      * @param object|null $snapshot Snapshot row.
      * @param int|null    $now Reserved for compatibility; reads do not establish age.
@@ -437,11 +438,11 @@ class MainWP_Backup_Retention_Protection {
         }
         // Only retention execution records this floor. Unobserved uploads stay
         // unknown to previews; prune claims and resumed saves preserve the floor.
-        // Age counts from the latest write an expired worker could still land;
-        // delete jobs copy this evidence, so their holds match.
-        $floor = (int) ( $job->checkpoint['storage_age_floor'] ?? 0 );
+        // Delete jobs copy the latest possible write so their holds match.
+        $floor        = (int) ( $job->checkpoint['storage_age_floor'] ?? 0 );
+        $last_attempt = (int) ( $job->checkpoint['last_attempt_at'] ?? 0 );
         return array(
-            'uploaded_at' => $floor > 0 ? $floor + self::LATE_WRITE_SECONDS : 0,
+            'uploaded_at' => $floor > 0 ? max( $floor, $last_attempt ) + self::LATE_WRITE_SECONDS : 0,
             'unknown_age' => $floor <= 0,
         );
     }

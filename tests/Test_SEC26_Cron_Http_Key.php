@@ -390,6 +390,21 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
         }
     }
 
+    /**
+     * A request that skipped install() must not write a state without a mode, or install() would never seed it.
+     */
+    public function test_keyless_call_before_install_leaves_state_for_installer() {
+        delete_option( 'mainwp_cron_key_state' );
+
+        $this->assertFalse( $this->http( '' ) );
+        $this->assertFalse( get_option( 'mainwp_cron_key_state' ) );
+
+        $partial = array( 'keyless_seen' => 1 );
+        update_option( 'mainwp_cron_key_state', $partial, true );
+        $this->assertFalse( $this->http( '' ) );
+        $this->assertSame( $partial, get_option( 'mainwp_cron_key_state' ) );
+    }
+
     /** Notice paths are mutually exclusive and retain exact actionable copy. */
     public function test_notice_renders_once_on_mainwp_and_wordpress_pages_then_clears() {
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );

@@ -1360,8 +1360,9 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $allowed   = $now < $grace_end;
         $blocked   = ! $allowed;
 
-        if ( empty( $state['keyless_seen'] ) || $now - (int) $state['keyless_seen'] >= HOUR_IN_SECONDS
-            || ( $state['keyless_script'] ?? '' ) !== $script || ! empty( $state['keyless_blocked'] ) !== $blocked ) {
+        // Without a mode, install() has not run for this request; leave the option for it to seed.
+        if ( ! empty( $state['mode'] ) && ( empty( $state['keyless_seen'] ) || $now - (int) $state['keyless_seen'] >= HOUR_IN_SECONDS
+            || ( $state['keyless_script'] ?? '' ) !== $script || ! empty( $state['keyless_blocked'] ) !== $blocked ) ) {
             $state['keyless_seen']   = $now;
             $state['keyless_script'] = $script;
             if ( $allowed ) {

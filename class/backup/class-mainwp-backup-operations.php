@@ -109,6 +109,44 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Older Team Control versions cannot grant the delete right.
+     *
+     * @return bool
+     */
+    public static function delete_right_applies(): bool {
+        /**
+         * Wait for Team Control's upgrade grant so a Dashboard-first update
+         * preserves existing staff access to deletion.
+         *
+         * @param bool $supported Whether delete_backups role grants are ready.
+         */
+        return (bool) apply_filters( 'mainwp_backups_delete_right_supported', false );
+    }
+
+    /**
+     * UI staff and integrations use different base capability gates.
+     *
+     * @param string $context Calling transport.
+     * @return true|\WP_Error
+     */
+    public static function authorize_delete( string $context ) {
+        if ( ! self::delete_right_applies() ) {
+            return true;
+        }
+        return 'ui' === $context ? self::authorize_ui( 'delete_backups' ) : self::authorize_base( 'delete_backups' );
+    }
+
+    /**
+     * Page controls and AJAX registrations must agree on deletion access.
+     *
+     * @return bool
+     */
+    public static function current_user_can_delete(): bool {
+        return \mainwp_current_user_can( 'dashboard', 'execute_backups' )
+            && ( ! self::delete_right_applies() || \mainwp_current_user_can( 'dashboard', 'delete_backups' ) );
+    }
+
+    /**
      * Single-site and fleet access use the same scope and ownership rules.
      *
      * @param object $site Website row.
@@ -2079,6 +2117,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $site ) ) {
             return $site;
         }
+        $delete = self::authorize_delete( $context );
+        if ( is_wp_error( $delete ) ) {
+            return $delete;
+        }
         $snapshot = self::authorize_snapshot( $snapshot_id, $context );
         if ( is_wp_error( $snapshot ) ) {
             return $snapshot;
@@ -2427,6 +2469,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $site ) ) {
             return $site;
         }
+        $delete = self::authorize_delete( $context );
+        if ( is_wp_error( $delete ) ) {
+            return $delete;
+        }
         // A preview must not fall through to the existing destructive pass.
         if ( $dry_run ) {
             return MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep, 6 * HOUR_IN_SECONDS );
@@ -2673,6 +2719,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $site = self::authorize_site( $site_id, 'execute_backups', $context );
         if ( is_wp_error( $site ) ) {
             return $site;
+        }
+        $delete = self::authorize_delete( $context );
+        if ( is_wp_error( $delete ) ) {
+            return $delete;
         }
         $error = self::native_task_write_error();
         if ( $error ) {

@@ -385,9 +385,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             <button type="button" class="ui mini red button" id="mainwp-native-backup-cancel-btn" style="display: none;">
                                 <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
                             </button>
-                            <button type="button" class="ui mini basic button<?php echo $cleanup_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $cleanup_off ); ?>>
-                                <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
-                            </button>
+                                <?php if ( MainWP_Backup_Operations::current_user_can_delete() ) : ?>
+                                    <button type="button" class="ui mini basic button<?php echo $cleanup_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $cleanup_off ); ?>>
+                                        <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -487,6 +489,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // restore_backups; an unregistered admin-ajax action answers 400.
             var canDownload = <?php echo MainWP_Abilities_Util::current_user_has_operation_right( 'download_backups' ) ? 'true' : 'false'; ?>;
             var canRestore = <?php echo \mainwp_current_user_can( 'dashboard', 'restore_backups' ) ? 'true' : 'false'; ?>;
+            var canDelete = <?php echo MainWP_Backup_Operations::current_user_can_delete() ? 'true' : 'false'; ?>;
             var backupTypeLabels = <?php echo wp_json_encode( $type_labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
             var snapshotDeleteBusy = false;
@@ -723,7 +726,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function deleteButton( snap ) {
-                if ( 'pruned' === snap.status ) {
+                if ( ! canDelete || 'pruned' === snap.status ) {
                     return '';
                 }
                 var disabled = snapshotDeleteBusy ? ' disabled' : '';

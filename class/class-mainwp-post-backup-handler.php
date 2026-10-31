@@ -96,8 +96,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // Page: ManageBackupsSnapshots (restore).
         if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
             $this->add_action( 'mainwp_restore_snapshot_list', array( &$this, 'mainwp_restore_snapshot_list' ) );
-            $this->add_action( 'mainwp_backup_snapshot_delete_preview', array( &$this, 'mainwp_backup_snapshot_delete_preview' ) );
-            $this->add_action( 'mainwp_backup_snapshot_delete', array( &$this, 'mainwp_backup_snapshot_delete' ) );
+            if ( MainWP_Backup_Operations::current_user_can_delete() ) {
+                $this->add_action( 'mainwp_backup_snapshot_delete_preview', array( &$this, 'mainwp_backup_snapshot_delete_preview' ) );
+                $this->add_action( 'mainwp_backup_snapshot_delete', array( &$this, 'mainwp_backup_snapshot_delete' ) );
+                $this->add_action( 'mainwp_snapshots_cleanup', array( &$this, 'mainwp_snapshots_cleanup' ) );
+            }
             $this->add_action( 'mainwp_backup_snapshot_download_url', array( &$this, 'mainwp_backup_snapshot_download_url' ) );
             $this->add_action( 'mainwp_restore_progress', array( &$this, 'mainwp_restore_progress' ) );
             if ( \mainwp_current_user_can( 'dashboard', 'restore_backups' ) ) {
@@ -108,7 +111,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_native_backup_initiate', array( &$this, 'mainwp_native_backup_initiate' ) );
             $this->add_action( 'mainwp_native_backup_progress', array( &$this, 'mainwp_native_backup_progress' ) );
             $this->add_action( 'mainwp_native_backup_cancel', array( &$this, 'mainwp_native_backup_cancel' ) );
-            $this->add_action( 'mainwp_snapshots_cleanup', array( &$this, 'mainwp_snapshots_cleanup' ) );
             $this->add_action( 'mainwp_backup_diagnostics_export', array( &$this, 'mainwp_backup_diagnostics_export' ) );
         }
         add_action( 'admin_post_mainwp_backup_diagnostics_download', array( MainWP_Backup_Diagnostics::instance(), 'download_bundle' ) );
@@ -1294,6 +1296,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         try {
             if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) && ! \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
+                throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
+            }
+            if ( MainWP_Backup_Operations::delete_right_applies() && ! \mainwp_current_user_can( 'dashboard', 'delete_backups' ) ) {
                 throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
             }
             $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;

@@ -26,30 +26,88 @@ class MainWP_Backup_Flag_Migration_Test extends \WP_UnitTestCase {
 	private $saved_db_version;
 
 	/**
-	 * Snapshot the db version that install() mutates.
+	 * Stored mainwp_enableNativeBackups before the test.
+	 *
+	 * @var mixed
+	 */
+	private $saved_native_flag;
+
+	/**
+	 * Stored mainwp_enableLegacyBackupFeature before the test.
+	 *
+	 * @var mixed
+	 */
+	private $saved_legacy_flag;
+
+	/**
+	 * Stored mainwp_native_backups_defaulted_off_on_upgrade before the test.
+	 *
+	 * @var mixed
+	 */
+	private $saved_notice_marker;
+
+	/**
+	 * Options a fresh install() writes, keyed by name.
+	 *
+	 * @var array
+	 */
+	private $saved_install_options = array();
+
+	/**
+	 * Snapshot the db version, both flags, the notice marker and the fresh-install options that install() mutates.
 	 *
 	 * @return void
 	 */
 	public function set_up() {
 		parent::set_up();
-		$this->saved_db_version = get_site_option( 'mainwp_db_version' );
+		$this->saved_db_version    = get_site_option( 'mainwp_db_version' );
+		$this->saved_native_flag   = get_option( 'mainwp_enableNativeBackups' );
+		$this->saved_legacy_flag   = get_option( 'mainwp_enableLegacyBackupFeature' );
+		$this->saved_notice_marker = get_option( 'mainwp_native_backups_defaulted_off_on_upgrade' );
+		foreach ( array( 'mainwp_run_quick_setup', 'mainwp_onboarding_fresh_install', 'mainwp_selected_theme' ) as $name ) {
+			$this->saved_install_options[ $name ] = get_option( $name );
+		}
 	}
 
 	/**
-	 * Remove both flag options and restore the db version.
+	 * Restore the snapshotted options and the db version, and commit them.
+	 *
+	 * install() commits mid-test through DDL, so the test rollback alone can
+	 * leave the legacy flag on with no new flag for every later test.
 	 *
 	 * @return void
 	 */
 	public function tear_down() {
-		delete_option( 'mainwp_enableNativeBackups' );
-		delete_option( 'mainwp_enableLegacyBackupFeature' );
-		delete_option( 'mainwp_native_backups_defaulted_off_on_upgrade' );
+		parent::tear_down();
+		wp_cache_flush();
+		$this->restore_option( 'mainwp_enableNativeBackups', $this->saved_native_flag );
+		$this->restore_option( 'mainwp_enableLegacyBackupFeature', $this->saved_legacy_flag );
+		$this->restore_option( 'mainwp_native_backups_defaulted_off_on_upgrade', $this->saved_notice_marker );
+		foreach ( $this->saved_install_options as $name => $value ) {
+			$this->restore_option( $name, $value );
+		}
 		if ( false === $this->saved_db_version ) {
 			delete_site_option( 'mainwp_db_version' );
 		} else {
 			update_site_option( 'mainwp_db_version', $this->saved_db_version );
 		}
-		parent::tear_down();
+		self::commit_transaction();
+	}
+
+	/**
+	 * Put an option back to its snapshot, deleting it when it was absent.
+	 *
+	 * @param string $name  Option name.
+	 * @param mixed  $value Snapshot from set_up(), false when absent.
+	 *
+	 * @return void
+	 */
+	private function restore_option( $name, $value ) {
+		if ( false === $value ) {
+			delete_option( $name );
+		} else {
+			update_option( $name, $value );
+		}
 	}
 
 	/**

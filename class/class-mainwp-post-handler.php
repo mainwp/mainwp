@@ -757,7 +757,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
     /** Rotates the stored HTTP cron key for Dashboard settings managers. */
     public function mainwp_cron_secret_rotate() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+        // Same audience as the Cron page key display.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) || MainWP_System_Utility::is_team_control_staff() ) {
             wp_send_json_error( __( 'Error - insufficient permissions!', 'mainwp' ) );
         }
         $this->secure_request( 'mainwp_cron_secret_rotate' );

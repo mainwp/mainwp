@@ -534,6 +534,26 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
         $this->assertStringContainsString( 'Rotate key', $html );
         $this->assertStringContainsString( 'mainwp_secure_data', $html );
         $this->assertStringContainsString( 'Rotate the cron key? Cron jobs that use the current URLs stop working right away, so update them afterwards.', $html );
+        // Team Control staff cannot see the key, so they cannot rotate it either.
+        add_role(
+            'mainwp_sec26_staff',
+            'SEC26 staff',
+            array(
+                'read'     => true,
+                'level_10' => true,
+            )
+        );
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'mainwp_sec26_staff' ) ) );
+        add_filter( 'mainwp_currentusercan', '__return_true', 999 );
+        try {
+            $response = json_decode( $this->rotate(), true );
+            $this->assertFalse( $response['success'] );
+            $this->assertArrayNotHasKey( 'url', (array) $response['data'] );
+            $this->assertSame( $new, get_option( 'mainwp_cron_secret' ) );
+        } finally {
+            remove_filter( 'mainwp_currentusercan', '__return_true', 999 );
+            remove_role( 'mainwp_sec26_staff' );
+        }
     }
 
     /**

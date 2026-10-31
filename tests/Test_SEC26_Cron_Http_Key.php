@@ -52,6 +52,33 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
     }
 
     /**
+     * A corrupted stored key must be replaced, not returned.
+     *
+     * @dataProvider invalid_stored_secrets
+     * @param mixed $stored Value already in the option.
+     */
+    public function test_invalid_stored_secret_is_replaced( $stored ) {
+        update_option( 'mainwp_cron_secret', $stored, false );
+
+        $secret = MainWP_Server_Information::get_cron_secret();
+
+        $this->assertMatchesRegularExpression( '/^[A-Za-z0-9]{32}$/', $secret );
+        $this->assertSame( $secret, get_option( 'mainwp_cron_secret' ) );
+    }
+
+    /**
+     * Shapes that cannot authenticate a caller.
+     *
+     * @return array Stored values.
+     */
+    public static function invalid_stored_secrets() {
+        return array(
+            'empty string' => array( '' ),
+            'array'        => array( array( 'sec26' ) ),
+        );
+    }
+
+    /**
      * Shell entry points are exempt; HTTP callers must supply the exact string.
      *
      * @dataProvider cron_requests
@@ -149,8 +176,8 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
 
         $this->assertStringContainsString( 'class="ui blue message"', $html );
         $this->assertStringContainsString( '<div class="header">System cron</div>', $html );
-        $this->assertStringContainsString( 'From the command line no key is needed:', $html );
-        $this->assertStringContainsString( 'If your cron calls a URL with wget or curl, include your cron key:', $html );
+        $this->assertStringContainsString( 'Command line (no key needed):', $html );
+        $this->assertStringContainsString( 'URL for wget or curl (key included):', $html );
         $this->assertStringContainsString( 'Use the same pattern for the other scripts in the cron folder. To set your own key, define MAINWP_CRON_SECRET in wp-config.php.', $html );
         $this->assertStringContainsString( 'type="text" readonly aria-label="Cron command" value="' . esc_attr( $command ) . '"', $html );
         $this->assertStringContainsString( 'type="text" readonly aria-label="Cron URL" value="' . esc_attr( $url ) . '"', $html );

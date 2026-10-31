@@ -1290,11 +1290,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         $secret = get_option( 'mainwp_cron_secret' );
-        if ( empty( $secret ) || ! is_string( $secret ) ) {
+        if ( ! is_string( $secret ) || '' === $secret ) {
             $secret = wp_generate_password( 32, false, false );
-            if ( ! add_option( 'mainwp_cron_secret', $secret, '', false ) ) {
-                $secret = get_option( 'mainwp_cron_secret' );
-            }
+            // update_option() also replaces a corrupted stored value, which add_option() would keep.
+            update_option( 'mainwp_cron_secret', $secret, false );
         }
 
         return $secret;
@@ -1382,11 +1381,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <?php if ( ! $useWPCron ) : ?>
             <div class="ui blue message">
                 <div class="header"><?php echo esc_html__( 'System cron', 'mainwp' ); ?></div>
-                <p><?php echo esc_html__( 'From the command line no key is needed:', 'mainwp' ); ?></p>
+                <p><?php echo esc_html__( 'Command line (no key needed):', 'mainwp' ); ?></p>
                 <div class="ui fluid input">
                     <input type="text" readonly aria-label="<?php echo esc_attr( __( 'Cron command', 'mainwp' ) ); ?>" value="<?php echo esc_attr( 'php ' . MAINWP_PLUGIN_DIR . 'cron/updatescheck.php' ); ?>">
                 </div>
-                <p><?php echo esc_html__( 'If your cron calls a URL with wget or curl, include your cron key:', 'mainwp' ); ?></p>
+                <p><?php echo esc_html__( 'URL for wget or curl (key included):', 'mainwp' ); ?></p>
                 <div class="ui fluid input">
                     <input type="text" readonly aria-label="<?php echo esc_attr( __( 'Cron URL', 'mainwp' ) ); ?>" value="<?php echo esc_attr( MAINWP_PLUGIN_URL . 'cron/updatescheck.php?key=' . rawurlencode( static::get_cron_secret() ) ); ?>">
                 </div>

@@ -65,9 +65,12 @@ if ( ! $included ) {
 
 // HTTP cron callers need a server-to-server key; shell jobs need no credential.
 if ( 'cli' !== PHP_SAPI && isset( $_SERVER['REQUEST_METHOD'] ) ) {
+    // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Validate the basename against the cron script pattern below.
+    $cron_script = basename( wp_unslash( $_SERVER['SCRIPT_FILENAME'] ?? '' ) );
+    $cron_script = preg_match( '/^[a-z_]+\.php$/D', $cron_script ) ? $cron_script : '';
     if ( ! class_exists( '\MainWP\Dashboard\MainWP_Server_Information' )
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Server-to-server cron keys are compared directly; user nonces do not apply.
-        || ! \MainWP\Dashboard\MainWP_Server_Information::is_cron_request_allowed( PHP_SAPI, $_SERVER, isset( $_GET['key'] ) ? wp_unslash( $_GET['key'] ) : '' ) ) {
+        || ! \MainWP\Dashboard\MainWP_Server_Information::is_cron_request_allowed( PHP_SAPI, $_SERVER, isset( $_GET['key'] ) ? wp_unslash( $_GET['key'] ) : '', $cron_script ) ) {
         status_header( 403 );
         nocache_headers();
         exit;

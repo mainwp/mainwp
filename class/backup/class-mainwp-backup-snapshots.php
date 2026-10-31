@@ -85,6 +85,120 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     private static $health_map_cache = array();
 
     /**
+     * Read the optional format contract without changing legacy archives.
+     *
+     * @param array $archives Stored artifact entries.
+     * @return array|\WP_Error Format metadata, empty for v1, or a refusal.
+     */
+    public static function format_metadata( array $archives ) {
+        $v2       = false;
+        $manifest = null;
+        foreach ( $archives as $archive ) {
+            if ( ! is_array( $archive ) || ! array_key_exists( 'backup_format', $archive ) ) {
+                continue;
+            }
+            if ( ! in_array( $archive['backup_format'], array( 1, 2, '1' ), true ) ) {
+                return new \WP_Error( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT ) );
+            }
+            if ( 2 === (int) $archive['backup_format'] ) {
+                $v2 = true;
+                if ( 'manifest' === ( $archive['role'] ?? '' ) ) {
+                    if ( null !== $manifest ) {
+                        return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+                    }
+                    $manifest = $archive;
+                }
+            }
+        }
+        if ( ! $v2 ) {
+            return array();
+        }
+        $metadata = self::validate_format_metadata( $manifest ?? array( 'backup_format' => 2 ) );
+        if ( is_wp_error( $metadata ) ) {
+            return $metadata;
+        }
+        foreach ( $archives as $archive ) {
+            if ( ! is_array( $archive ) ) {
+                continue;
+            }
+            $file_role = in_array( $archive['role'] ?? '', array( 'full', 'part', 'tombstones', 'manifest' ), true );
+            if ( ! $file_role && 2 !== (int) ( $archive['backup_format'] ?? 1 ) ) {
+                continue;
+            }
+            if ( 2 !== (int) ( $archive['backup_format'] ?? 1 ) || ( $archive['layout_descriptor_sha256'] ?? null ) !== $metadata['layout_descriptor_sha256'] ) {
+                return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+            }
+        }
+        return $metadata;
+    }
+
+    /**
+     * Verify a descriptor using the contract's field order and JSON encoding.
+     *
+     * @param array $metadata Supplied snapshot or cloud metadata.
+     * @return array|\WP_Error The explicit format metadata or a refusal.
+     */
+    public static function validate_format_metadata( array $metadata ) {
+        if ( ! array_key_exists( 'backup_format', $metadata ) || in_array( $metadata['backup_format'], array( 1, '1' ), true ) ) {
+            return array();
+        }
+        if ( 2 !== $metadata['backup_format'] ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT ) );
+        }
+        $descriptor = $metadata['layout_descriptor'] ?? null;
+        $digest     = $metadata['layout_descriptor_sha256'] ?? null;
+        $keys       = array( 'format', 'roots', 'layout_id', 'core_policy', 'list_format', 'path_encoding' );
+        if ( is_array( $descriptor ) && ( 2 !== ( $descriptor['format'] ?? null ) || 2 !== ( $descriptor['list_format'] ?? null ) ) ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT ) );
+        }
+        $valid = is_array( $descriptor ) && ! array_diff( $keys, array_keys( $descriptor ) ) && ! array_diff( array_keys( $descriptor ), array_merge( $keys, array( 'core_version' ) ) );
+        $valid = $valid && ( ! array_key_exists( 'core_version', $descriptor ) || is_string( $descriptor['core_version'] ) );
+        $valid = $valid && 'role-prefix' === $descriptor['path_encoding'] && 'managed_preserve' === $descriptor['core_policy'];
+        $valid = $valid && is_string( $descriptor['layout_id'] ) && 1 === preg_match( '/^[a-f0-9]{64}$/D', $descriptor['layout_id'] ) && is_array( $descriptor['roots'] ) && ! empty( $descriptor['roots'] );
+        $roots = array();
+        $seen  = array();
+        if ( $valid ) {
+            foreach ( $descriptor['roots'] as $root ) {
+                if ( ! is_array( $root ) || count( $root ) !== 2 || ! in_array( $root['role'] ?? null, array( 'site', 'content', 'uploads', 'plugins', 'mu_plugins', 'config' ), true ) || ! in_array( $root['coverage'] ?? null, array( 'restore', 'recovery_only', 'preserved' ), true ) || isset( $seen[ $root['role'] ] ) ) {
+                    $valid = false;
+                    break;
+                }
+                $seen[ $root['role'] ] = $root['coverage'];
+            }
+        }
+        if ( ! $valid || ! is_string( $digest ) || 1 !== preg_match( '/^[a-f0-9]{64}$/D', $digest ) ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+        }
+        foreach ( array( 'site', 'content', 'uploads', 'plugins', 'mu_plugins', 'config' ) as $role ) {
+            if ( isset( $seen[ $role ] ) ) {
+                $roots[] = array(
+                    'role'     => $role,
+                    'coverage' => $seen[ $role ],
+                );
+            }
+        }
+        $canonical = array(
+            'format'        => 2,
+            'roots'         => $roots,
+            'layout_id'     => $descriptor['layout_id'],
+            'core_policy'   => $descriptor['core_policy'],
+            'list_format'   => 2,
+            'path_encoding' => 'role-prefix',
+        );
+        if ( ! hash_equals( $digest, hash( 'sha256', (string) wp_json_encode( $canonical, JSON_UNESCAPED_SLASHES ) ) ) ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+        }
+        if ( array_key_exists( 'core_version', $descriptor ) ) {
+            $canonical['core_version'] = $descriptor['core_version'];
+        }
+        return array(
+            'backup_format'            => 2,
+            'layout_descriptor'        => $canonical,
+            'layout_descriptor_sha256' => $digest,
+        );
+    }
+
+    /**
      * Record a completed backup run as a snapshot row.
      *
      * @param array $data {
@@ -108,6 +222,10 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     public function record_snapshot( array $data ): int {
         $archives = '[]';
         if ( isset( $data['archives'] ) && is_array( $data['archives'] ) ) {
+            $metadata = self::format_metadata( $data['archives'] );
+            if ( is_wp_error( $metadata ) ) {
+                return 0;
+            }
             if ( MainWP_Backup_Retention_Protection::task_removes_local_archives( (int) ( $data['task_id'] ?? 0 ) ) ) {
                 // Insert intent with the row so a failed requirement capture still
                 // holds this new snapshot. Legacy archive descriptors stay unchanged.

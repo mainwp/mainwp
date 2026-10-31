@@ -135,6 +135,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return bool
      */
     public function can_use_cloud_pull( object $website, array $plan, array $checkpoint ): bool {
+        if ( ! $this->legacy_pull_plan( $plan ) ) {
+            return false;
+        }
         if ( ! empty( $checkpoint['cloud_pull_tried'] ) ) {
             return false;
         }
@@ -163,7 +166,12 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             if ( $this->snapshot_is_encrypted( $snapshot_id ) ) {
                 return false;
             }
-            if ( null === $this->presignable_upload_for_snapshot( $snapshot_id ) ) {
+            $upload = $this->presignable_upload_for_snapshot( $snapshot_id );
+            if ( null === $upload ) {
+                return false;
+            }
+            $metadata = MainWP_Backup_Snapshots::format_metadata( (array) $upload['artifacts'] );
+            if ( is_wp_error( $metadata ) || ! empty( $metadata ) ) {
                 return false;
             }
         }
@@ -198,6 +206,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array|null { artifacts: array } or null.
      */
     public function generate_pull_manifest( array &$plan ): ?array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- all-or-nothing manifest assembly.
+        if ( ! $this->legacy_pull_plan( $plan ) ) {
+            return null;
+        }
         $uploads   = array();
         $artifacts = array();
 
@@ -210,6 +221,10 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             if ( ! isset( $uploads[ $snapshot_id ] ) ) {
                 $upload = $this->presignable_upload_for_snapshot( $snapshot_id );
                 if ( null === $upload ) {
+                    return null;
+                }
+                $metadata = MainWP_Backup_Snapshots::format_metadata( (array) $upload['artifacts'] );
+                if ( is_wp_error( $metadata ) || ! empty( $metadata ) ) {
                     return null;
                 }
                 $uploads[ $snapshot_id ] = $upload;
@@ -439,6 +454,10 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array { done: bool, error: string|null, retryable?: bool }
      */
     public function stage_artifacts( int $job_id, array &$plan, float $deadline ): array {
+        $format_error = $this->plan_format_error( $plan );
+        if ( null !== $format_error ) {
+            return $format_error;
+        }
         $staging = '';
 
         foreach ( $plan as $index => $entry ) {
@@ -489,6 +508,60 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             'done'  => true,
             'error' => null,
         );
+    }
+
+    /**
+     * Keep versioned stored formats off the legacy Child pull protocol.
+     *
+     * @param array $plan Stored restore plan.
+     * @return bool Whether every source uses the legacy format.
+     */
+    private function legacy_pull_plan( array $plan ): bool {
+        foreach ( $plan as $entry ) {
+            $metadata = $this->entry_format_metadata( $entry );
+            if ( is_wp_error( $metadata ) || ! empty( $metadata ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Resolve a legacy database artifact's containing snapshot descriptor.
+     *
+     * Database bytes keep their v1 encoding inside a v2 file snapshot.
+     *
+     * @param array $entry Stored plan entry.
+     * @return array|\WP_Error Applicable source metadata or a refusal.
+     */
+    private function entry_format_metadata( array $entry ): array|\WP_Error {
+        $metadata = MainWP_Backup_Snapshots::validate_format_metadata( $entry );
+        if ( is_wp_error( $metadata ) || ! empty( $metadata ) || 'db' !== ( $entry['role'] ?? '' ) ) {
+            return $metadata;
+        }
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $entry['snapshot_id'] );
+        return null === $snapshot ? array() : MainWP_Backup_Snapshots::format_metadata( (array) $snapshot->archives );
+    }
+
+    /**
+     * Validate stored format metadata before staging or resuming a transfer.
+     *
+     * @param array $plan Stored restore plan.
+     * @return array|null Permanent failure, or null for a supported plan.
+     */
+    private function plan_format_error( array $plan ): ?array {
+        foreach ( $plan as $entry ) {
+            $metadata = MainWP_Backup_Snapshots::validate_format_metadata( $entry );
+            if ( is_wp_error( $metadata ) ) {
+                return array(
+                    'done'       => false,
+                    'error'      => $metadata->get_error_message(),
+                    'error_code' => $metadata->get_error_code(),
+                    'retryable'  => false,
+                );
+            }
+        }
+        return null;
     }
 
     /**
@@ -741,6 +814,21 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             return $this->stage_state( 'error', __( 'No storage destination holds a copy of this backup.', 'mainwp' ) );
         }
 
+        $metadata = $this->entry_format_metadata( $entry );
+        if ( is_wp_error( $metadata ) ) {
+            return $this->stage_state( 'error', $metadata->get_error_message(), $metadata->get_error_code() );
+        }
+        if ( ! empty( $metadata ) ) {
+            $retryable = false;
+            $manifest  = $this->fetch_manifest( $provider, $entry, $staging, $retryable );
+            if ( is_wp_error( $manifest ) ) {
+                return $this->stage_state( 'error', $manifest->get_error_message(), $manifest->get_error_code() );
+            }
+            if ( null === $manifest ) {
+                return $this->stage_state( 'error', MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ), MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $retryable );
+            }
+        }
+
         $enc = $this->resolve_artifact_encryption( $entry );
         if ( null === $enc ) {
             return $this->stage_state(
@@ -884,6 +972,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         if ( empty( $entry['chunks'] ) ) {
             $retryable = false;
             $manifest  = $this->fetch_manifest( $provider, $entry, $staging, $retryable );
+            if ( is_wp_error( $manifest ) ) {
+                return $this->stage_state( 'error', $manifest->get_error_message(), $manifest->get_error_code() );
+            }
             if ( null === $manifest ) {
                 return $this->stage_state(
                     'error',
@@ -1077,9 +1168,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @param string                         $staging  Staging dir.
      * @param bool                           $retryable Whether the provider failed transiently (by reference).
      *
-     * @return array|null { chunks: array, size: int } or null.
+     * @return array|\WP_Error|null Artifact metadata, a format error, or null.
      */
-    protected function fetch_manifest( MainWP_Backup_Storage_Provider $provider, array &$entry, string $staging, bool &$retryable = false ): ?array {
+    protected function fetch_manifest( MainWP_Backup_Storage_Provider $provider, array &$entry, string $staging, bool &$retryable = false ): array|\WP_Error|null {
         $retryable = false;
         // The manifest lives beside the artifact's chunks under the
         // snapshot prefix, which the remote key scheme encodes as
@@ -1105,15 +1196,43 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         if ( ! is_array( $decoded ) || empty( $decoded['artifacts'] ) ) {
             return null;
         }
+        $format = $decoded['format'] ?? 1;
+        if ( ! in_array( $format, array( 1, 2 ), true ) ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT ) );
+        }
+        $metadata = MainWP_Backup_Snapshots::validate_format_metadata( $decoded );
+        if ( is_wp_error( $metadata ) ) {
+            return $metadata;
+        }
+        $expected = $this->entry_format_metadata( $entry );
+        if ( is_wp_error( $expected ) ) {
+            return $expected;
+        }
+        if ( ( 1 === $format && ! empty( $metadata ) ) || ( 2 === $format && empty( $metadata ) ) || $metadata !== $expected ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+        }
 
         // The manifest records the snapshot's own archive names, but the
         // plan's 'file' is the chain-namespaced staging name (s{id}-...).
         // Match on the raw source_file, as the whole-file path above does.
         $plan_name = ! empty( $entry['source_file'] ) ? (string) $entry['source_file'] : (string) $entry['file'];
         foreach ( (array) $decoded['artifacts'] as $artifact ) {
-            if ( isset( $artifact['file'] ) && $artifact['file'] === $plan_name && ! empty( $artifact['chunks'] ) ) {
+            if ( ! isset( $artifact['file'] ) || $artifact['file'] !== $plan_name ) {
+                continue;
+            }
+            if ( ! empty( $metadata ) ) {
+                $artifact_metadata = MainWP_Backup_Snapshots::validate_format_metadata( array_merge( array( 'layout_descriptor' => $metadata['layout_descriptor'] ), $artifact ) );
+                if ( is_wp_error( $artifact_metadata ) ) {
+                    return $artifact_metadata;
+                }
+                $legacy_database = 'db' === ( $entry['role'] ?? '' ) && 1 === (int) ( $entry['backup_format'] ?? 1 ) && empty( $artifact_metadata );
+                if ( ! $legacy_database && $artifact_metadata !== $metadata ) {
+                    return new \WP_Error( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+                }
+            }
+            if ( ! empty( $artifact['chunks'] ) || ! empty( $metadata ) ) {
                 return array(
-                    'chunks' => array_values( (array) $artifact['chunks'] ),
+                    'chunks' => array_values( (array) ( $artifact['chunks'] ?? array() ) ),
                     'size'   => isset( $artifact['size'] ) ? (int) $artifact['size'] : 0,
                 );
             }
@@ -1284,6 +1403,25 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array { done: bool, error: string|null, retryable: bool }
      */
     public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline, ?callable $should_continue = null, int $job_id = 0 ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
+        $metadata = MainWP_Backup_Monitor::restore_plan_metadata( $plan );
+        $expected = '';
+        if ( ! empty( $metadata ) && ! is_wp_error( $metadata ) && $job_id > 0 ) {
+            $job      = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
+            $expected = null === $job ? '' : (string) ( $job->checkpoint['target_layout_id'] ?? '' );
+        }
+        $admission = MainWP_Backup_Monitor::admit_restore_plan( $website, $plan, $expected );
+        if ( is_wp_error( $admission ) ) {
+            return array(
+                'done'       => false,
+                'error'      => $admission->get_error_message(),
+                'error_code' => $admission->get_error_code(),
+                'retryable'  => false,
+            );
+        }
+        $format_error = $this->plan_format_error( $plan );
+        if ( null !== $format_error ) {
+            return $format_error;
+        }
         // Confine resumed transfers without probing or creating staging directories.
         foreach ( $plan as $index => $entry ) {
             if ( ! empty( $entry['staged_path'] ) && empty( $entry['adopt_only'] ) && in_array( $entry['source'] ?? '', array( 'remote', 'remote_chunked' ), true ) ) {
@@ -1383,6 +1521,17 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 );
             }
 
+            if ( ! empty( $metadata ) ) {
+                $admission = MainWP_Backup_Monitor::admit_restore_plan( $website, $plan, $expected );
+                if ( is_wp_error( $admission ) ) {
+                    return array(
+                        'done'       => false,
+                        'error'      => $admission->get_error_message(),
+                        'error_code' => $admission->get_error_code(),
+                        'retryable'  => false,
+                    );
+                }
+            }
             $diag_start = microtime( true );
             $outcome    = $this->send_chunk( $website, $task_id, $entry, $cursor['offset'], $raw, $last );
 
@@ -1473,11 +1622,15 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             }
             if ( 'error' === $outcome['result'] ) {
                 $cursor['ok_streak'] = 0;
-                return array(
+                $failure             = array(
                     'done'      => false,
                     'error'     => $outcome['error'],
                     'retryable' => $outcome['retryable'],
                 );
+                if ( isset( $outcome['error_code'] ) ) {
+                    $failure['error_code'] = $outcome['error_code'];
+                }
+                return $failure;
             }
 
             // An empty artifact still needs its final request to create and verify the child file.
@@ -1637,6 +1790,15 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 false
             );
         } catch ( \Throwable $e ) {
+            if ( $e instanceof MainWP_Exception && in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+                return array(
+                    'result'         => 'error',
+                    'bytes_received' => $offset,
+                    'error'          => MainWP_Backup_Error_Codes::message( $e->get_message_error_code() ),
+                    'error_code'     => $e->get_message_error_code(),
+                    'retryable'      => false,
+                );
+            }
             // Transport failures on large bodies are how hosts with small
             // request caps present; shrink before counting it a fault. The
             // connect layer's real detail hides behind a token message
@@ -1653,6 +1815,15 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             );
         }
 
+        if ( is_array( $response ) && in_array( $response['error_code'] ?? '', array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT, MainWP_Backup_Error_Codes::ERR_LAYOUT_CHANGED ), true ) ) {
+            return array(
+                'result'         => 'error',
+                'bytes_received' => $offset,
+                'error'          => MainWP_Backup_Error_Codes::message( $response['error_code'] ),
+                'error_code'     => $response['error_code'],
+                'retryable'      => false,
+            );
+        }
         if ( is_array( $response ) && isset( $response['error_code'] ) && 'mainwp_restore_chunk_gap' === $response['error_code'] ) {
             return array(
                 'result'         => 'realign',

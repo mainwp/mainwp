@@ -511,7 +511,21 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
         $site_id     = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0;
         $snapshot_id = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;
-        $options     = array(
+        if ( array_key_exists( 'target_site_id', $_POST ) ) {
+            $target       = $_POST['target_site_id']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- exact positive integer validated before use.
+            $valid_target = ( is_int( $target ) && $target > 0 ) || ( is_string( $target ) && 1 === preg_match( '/^[1-9][0-9]*$/D', $target ) && (string) (int) $target === $target );
+            if ( ! $valid_target || (int) $target !== $site_id ) {
+                $code = $valid_target ? MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE : 'mainwp_invalid_input';
+                wp_send_json(
+                    array(
+                        'error'      => MainWP_Backup_Operations::safe_error( $code )['message'],
+                        'error_code' => $code,
+                    )
+                );
+                return;
+            }
+        }
+        $options = array(
             'pre_snapshot'        => isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'],
             'file_rollback'       => isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'],
             'confirm_destructive' => isset( $_POST['confirm_destructive'] ) && '1' === $_POST['confirm_destructive'],

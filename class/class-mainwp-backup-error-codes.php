@@ -33,13 +33,15 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_CHILD_UNREACHABLE = 'mainwp_backup_child_unreachable';
 
     // Child environment.
-    const ERR_DISK_FULL                = 'mainwp_backup_disk_full';
-    const ERR_MEMORY_LIMIT             = 'mainwp_backup_memory_limit';
-    const ERR_PERMISSIONS              = 'mainwp_backup_permissions';
-    const ERR_DIR_NOT_WRITABLE         = 'mainwp_backup_dir_not_writable';
-    const ERR_PRIVATE_ROOT_UNAVAILABLE = 'mainwp_backup_private_root_unavailable';
-    const ERR_MISSING_EXTENSION        = 'mainwp_backup_missing_extension';
-    const ERR_UNSUPPORTED_LAYOUT       = 'mainwp_backup_unsupported_layout';
+    const ERR_DISK_FULL                 = 'mainwp_backup_disk_full';
+    const ERR_MEMORY_LIMIT              = 'mainwp_backup_memory_limit';
+    const ERR_PERMISSIONS               = 'mainwp_backup_permissions';
+    const ERR_DIR_NOT_WRITABLE          = 'mainwp_backup_dir_not_writable';
+    const ERR_PRIVATE_ROOT_UNAVAILABLE  = 'mainwp_backup_private_root_unavailable';
+    const ERR_MISSING_EXTENSION         = 'mainwp_backup_missing_extension';
+    const ERR_UNSUPPORTED_LAYOUT        = 'mainwp_backup_unsupported_layout';
+    const ERR_UNSUPPORTED_BACKUP_FORMAT = 'mainwp_backup_format_unsupported';
+    const ERR_LAYOUT_CHANGED            = 'mainwp_backup_layout_changed';
 
     // Database.
     const ERR_DB_CONNECTION_LOST = 'mainwp_backup_db_connection_lost';
@@ -312,6 +314,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_DIR_NOT_WRITABLE              => esc_html__( 'The backup directory is not writable. Set the directory permissions to allow the web server to write, or contact your hosting provider.', 'mainwp' ),
             self::ERR_PRIVATE_ROOT_UNAVAILABLE      => esc_html__( 'Private backup storage could not be set up. The Dashboard needs a writable directory outside the web root for backup archives. Set MAINWP_BACKUP_PRIVATE_DIR in wp-config.php to such a directory and try again.', 'mainwp' ),
             self::ERR_MISSING_EXTENSION             => esc_html__( 'A required PHP extension is not available. Ask your host to enable the missing extension, such as cURL, OpenSSL, or ZipArchive.', 'mainwp' ),
+            self::ERR_UNSUPPORTED_BACKUP_FORMAT     => esc_html__( 'This backup format is not supported. Update the backup reader before restoring it. Nothing was restored.', 'mainwp' ),
+            self::ERR_LAYOUT_CHANGED                => esc_html__( 'The site layout changed during this backup or restore. Start a new full backup before continuing.', 'mainwp' ),
             self::ERR_UNSUPPORTED_LAYOUT            => esc_html__( 'This file backup or restore cannot run on this site yet. Its wp-content or uploads folder is outside the WordPress core folder, either directly or through a symlink. Some managed hosts, such as Pressable and WordPress.com, and Bedrock installs use this layout. No backup or restore was started and nothing on the site was changed. Database-only backups and restores still work on this site. Use the backups your host provides for files for now.', 'mainwp' ),
             self::ERR_DB_CONNECTION_LOST            => esc_html__( 'The database connection was lost during the backup. The database server may be overloaded. Try running the backup again during low-traffic hours.', 'mainwp' ),
             self::ERR_DB_QUERY_FAILED               => esc_html__( 'Database backup did not complete. The child site may have run out of memory or the database connection was interrupted. Check the child site PHP memory limit and error log.', 'mainwp' ),

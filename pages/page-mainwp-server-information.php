@@ -1496,7 +1496,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <div class="ui fluid input">
                     <input type="text" readonly aria-label="<?php echo esc_attr( __( 'Cron command', 'mainwp' ) ); ?>" value="<?php echo esc_attr( 'php ' . MAINWP_PLUGIN_DIR . 'cron/updatescheck.php' ); ?>">
                 </div>
-                <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) : ?>
+                <?php if ( MainWP_System_Utility::is_admin() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && ! MainWP_System_Utility::is_team_control_staff() ) : ?>
                     <p><?php echo esc_html__( 'URL for wget or curl (key included):', 'mainwp' ); ?></p>
                     <div class="ui fluid input">
                         <input type="text" readonly aria-label="<?php echo esc_attr( __( 'Cron URL', 'mainwp' ) ); ?>" value="<?php echo esc_attr( static::get_cron_url() ); ?>" id="mainwp-cron-url" class="mainwp-cron-key-url">

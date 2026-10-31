@@ -477,6 +477,7 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
         // Without Team Control every user passes the rights filter; only administrators may see the key.
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
         $this->assertSame( '', $this->capture_render( array( MainWP_System_View::class, 'render_cron_key_notice' ) ) );
+        $this->assertStringNotContainsString( '?key=', $this->capture_render( array( MainWP_Server_Information::class, 'render_cron' ) ) );
         // level_10 makes staff pass the administrator check, so only the staff check hides the notice.
         add_role(
             'mainwp_sec26_staff',
@@ -491,6 +492,9 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
         try {
             $this->assertTrue( \MainWP\Dashboard\MainWP_System_Utility::is_admin() );
             $this->assertSame( '', $this->capture_render( array( MainWP_System_View::class, 'render_cron_key_notice' ) ) );
+            $html = $this->capture_render( array( MainWP_Server_Information::class, 'render_cron' ) );
+            $this->assertStringNotContainsString( '?key=', $html );
+            $this->assertStringNotContainsString( 'Rotate key', $html );
         } finally {
             remove_filter( 'mainwp_currentusercan', '__return_true', 999 );
             remove_role( 'mainwp_sec26_staff' );

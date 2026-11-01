@@ -136,6 +136,29 @@ class Test_MWP_2112_Client_Edit_Save extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A general field stays on a client's form and widgets when only another client has a value for it.
+	 *
+	 * @return void
+	 */
+	public function test_general_field_without_a_stored_value_is_still_listed(): void {
+		$client_a = $this->create_client( time() );
+		$client_b = $this->create_client( time() );
+		$field_id = $this->create_field( 'MWP2112 Plan' );
+
+		$this->save_client( $client_a, array(), array( $field_id => 'Gold plan' ) );
+		$this->save_client( $client_b, array(), array( $field_id => '' ) );
+		$this->assertSame( array(), $this->read_values( $client_b ) );
+
+		$indexed = MainWP_DB_Client::instance()->get_client_fields( true, $client_b, true );
+		$this->assertArrayHasKey( 'MWP2112 Plan', $indexed );
+		$this->assertSame( '', (string) $indexed['MWP2112 Plan']->field_value );
+
+		$listed = wp_list_pluck( MainWP_DB_Client::instance()->get_client_fields( true, $client_b ), 'field_value', 'field_name' );
+		$this->assertArrayHasKey( 'MWP2112 Plan', $listed );
+		$this->assertSame( '', (string) $listed['MWP2112 Plan'] );
+	}
+
+	/**
 	 * Create a client with a given created timestamp.
 	 *
 	 * @param int $created Created timestamp.

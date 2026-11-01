@@ -380,7 +380,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                     }
                                 }
 
-                                $site_client_editing = ( $add_edit_client_id && $website->client_id && $add_edit_client_id === $website->client_id ) ? true : false;
+                                $site_client_editing = ( $add_edit_client_id && $website->client_id && (int) $add_edit_client_id === (int) $website->client_id ) ? true : false;
 
                                 $selected     = false;
                                 $disconnected = false;

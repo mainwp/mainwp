@@ -12,6 +12,7 @@ use MainWP\Dashboard\MainWP_Client;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Post_Handler;
+use MainWP\Dashboard\MainWP_UI_Select_Sites;
 
 /**
  * Class Test_MWP_2109_Client_Suspend_Sites
@@ -243,6 +244,27 @@ class Test_MWP_2109_Client_Suspend_Sites extends \WP_UnitTestCase {
 
 		$this->assertSame( array( 0 ), $seen );
 		$this->assert_site_statuses( $site_ids, array( 1, 1 ) );
+	}
+
+	/** Edit Client keeps a suspended client's sites selectable, so saving it as Active keeps and reactivates them. */
+	public function test_edit_client_picker_keeps_the_clients_suspended_sites(): void {
+		$client   = $this->create_client( 1 );
+		$site_ids = $this->create_client_sites( $client, 1 );
+
+		ob_start();
+		MainWP_UI_Select_Sites::select_sites_box(
+			array(
+				'selected_sites'       => $site_ids,
+				'show_group'           => false,
+				'add_edit_client_id'   => (int) $client->client_id,
+				'enable_offline_sites' => true,
+			)
+		);
+		$html = ob_get_clean();
+
+		foreach ( $site_ids as $site_id ) {
+			$this->assertMatchesRegularExpression( '/<input\s+type="checkbox" name="selected_sites\[\]" siteid="' . $site_id . '"[^>]*checked="true"/', $html );
+		}
 	}
 
 	/** CSV site URLs are assigned before a new client's suspension propagates. */

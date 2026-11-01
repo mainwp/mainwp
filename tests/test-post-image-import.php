@@ -204,6 +204,53 @@ class Test_Post_Image_Import extends \WP_UnitTestCase {
         $this->assertSame( 2, substr_count( $saved, $this->upload_dir['url'] . '/shared.png' ) );
     }
 
+    private function open_with_featured_image( int $site_id, string $filename ): int {
+        $result = MainWP_Post_Page_Handler::create_post(
+            array( 'edit_id' => 123, 'post_title' => 'Draft', 'post_name' => 'draft', 'post_type' => 'post', 'post_status' => 'draft', 'post_content' => 'Draft' ),
+            array(), '', $this->source_url . $filename, array( 'baseurl' => $this->source_url ), '', array(), false, (object) array( 'id' => $site_id, 'url' => 'https://child.example.org/' )
+        );
+        $this->assertTrue( $result['success'] );
+        $this->attachments = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'fields' => 'ids', 'posts_per_page' => -1 ) );
+        return (int) get_post_meta( $result['id'], '_thumbnail_id', true );
+    }
+
+    public function test_reopening_the_same_featured_image_reuses_one_attachment(): void {
+        $first = $this->open_with_featured_image( 7, 'featured.png' );
+        $this->assertGreaterThan( 0, $first );
+        $this->assertSame( $first, $this->open_with_featured_image( 7, 'featured.png' ) );
+        $this->assertSame( $first, $this->open_with_featured_image( 7, 'featured.png' ) );
+        $this->assertCount( 1, $this->attachments );
+        $this->assertCount( 1, $this->temporary_files, 'A reused image should not be downloaded again.' );
+        $this->assertFileDoesNotExist( $this->upload_dir['path'] . '/featured-1.png' );
+    }
+
+    public function test_featured_images_from_other_sites_or_sources_import_separately(): void {
+        $first = $this->open_with_featured_image( 7, 'featured.png' );
+        $other_site = $this->open_with_featured_image( 8, 'featured.png' );
+        $changed = $this->open_with_featured_image( 7, '2026/11/featured.png' );
+        $other_case = $this->open_with_featured_image( 7, 'Featured.png' );
+        $this->assertCount( 4, array_unique( array( $first, $other_site, $changed, $other_case ) ) );
+        $this->assertSame( $first, $this->open_with_featured_image( 7, 'featured.png' ), 'A newer case variant must not hide the exact match.' );
+        $this->assertCount( 4, $this->attachments );
+    }
+
+    public function test_each_user_reuses_only_their_own_featured_image_import(): void {
+        $admin_import = $this->open_with_featured_image( 7, 'featured.png' );
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+        $editor_import = $this->open_with_featured_image( 7, 'featured.png' );
+        $this->assertNotSame( $admin_import, $editor_import );
+        $this->assertSame( $editor_import, $this->open_with_featured_image( 7, 'featured.png' ) );
+        $this->assertSame( get_current_user_id(), (int) get_post( $editor_import )->post_author );
+    }
+
+    public function test_featured_image_imports_again_when_the_reused_file_is_gone(): void {
+        $first = $this->open_with_featured_image( 7, 'featured.png' );
+        unlink( get_attached_file( $first ) );
+        $second = $this->open_with_featured_image( 7, 'featured.png' );
+        $this->assertNotSame( $first, $second );
+        $this->assertFileExists( get_attached_file( $second ) );
+    }
+
     private function assert_content_caller( string $caller, bool $linked_thumbnail = false ): void {
         $filename = $caller . '.png';
         $path     = $this->upload_dir['path'] . '/' . $filename;

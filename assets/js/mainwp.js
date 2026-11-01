@@ -5553,6 +5553,11 @@ let mainwp_overview_gridstack_save_layout = function (item_id, grid) {
         return;
     }
 
+    // Narrow screens stack widgets in fewer columns for display only; never save that as the layout.
+    if (grid.getColumn() < (grid.opts?.columnOpts?.columnMax ?? 12)) {
+        return;
+    }
+
     let orders = [];
     let wgIds = [];
 

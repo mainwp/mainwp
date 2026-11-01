@@ -3964,7 +3964,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $access_check;
         }
 
-        $costs_data = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_sites( array( $site->id ) );
+        $costs_map  = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_sites( array( $site->id ) );
+        $costs_data = is_array( $costs_map ) ? ( $costs_map[ (int) $site->id ] ?? array() ) : array();
 
         $costs = array();
         if ( is_array( $costs_data ) ) {

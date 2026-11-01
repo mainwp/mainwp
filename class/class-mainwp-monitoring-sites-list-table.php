@@ -728,7 +728,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                 <div>
                 <?php
                     // translators: 1: Opening anchor tag, 2: Closing anchor tag with icon.
-                    printf( esc_html__( 'If you need further guidance, feel free to visit our %1$sKnowledge Base%2$s or reach out to support.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/manage-child-sites#uptime-monitoring" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                    printf( esc_html__( 'If you need further guidance, feel free to visit our %1$sKnowledge Base%2$s or reach out to support.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/uptime-monitoring" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
                 ?>
                     </div>
             </div>

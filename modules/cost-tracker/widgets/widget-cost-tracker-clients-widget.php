@@ -232,12 +232,7 @@ class Cost_Tracker_Clients_Widget {
                     foreach ( $item->cost_sites_ids as $ct_siteid ) {
                         // if site of cost tracker in the client's sites then calculate the site's cost/price.
                         if ( is_array( $this->clients_sites[ $client_id ] ) && in_array( $ct_siteid, $this->clients_sites[ $client_id ] ) ) {
-                            $cost_val = 0;
-                            if ( 'single_site' === $item->license_type ) {
-                                $cost_val = $item->price;
-                            } elseif ( 'multi_site' === $item->license_type && ! empty( $item->count_sites ) ) {
-                                $cost_val = $item->price / $item->count_sites;
-                            }
+                            $cost_val = Cost_Tracker_Admin::get_cost_price_per_site( $item );
                             if ( 'lifetime' === $item->type ) {
                                 $array_costs['lifetime'] += $cost_val;
                             } elseif ( isset( $array_costs[ $item->renewal_type ] ) ) {

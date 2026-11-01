@@ -218,4 +218,89 @@ class Test_GetSiteCosts_Ability extends MainWP_Abilities_Test_Case {
             'Each item must be a cost object assigned to the site, not the map bucket.'
         );
     }
+
+    /**
+     * A site's share of a multiple-site license is the price split across the
+     * license's sites; a single-site license is charged in full.
+     *
+     * @return void
+     */
+    public function test_get_site_costs_reports_license_type_and_site_share() {
+        $this->skip_if_no_abilities_api();
+        $this->skip_if_no_cost_tracker();
+        $this->set_current_user_as_admin();
+
+        global $wpdb;
+        $table  = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance()->get_table_name( 'cost_tracker' );
+        $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ); // phpcs:ignore WordPress.DB -- test fixture guard.
+        if ( $exists !== $table ) {
+            $this->markTestSkipped( "Cost Tracker table {$table} is not present in this environment." );
+        }
+
+        $site_id = $this->create_test_site( [ 'name' => 'Share Site', 'url' => 'https://share-site.example.com/' ] );
+        $other_a = $this->create_test_site( [ 'name' => 'Share Other A', 'url' => 'https://share-other-a.example.com/' ] );
+        $other_b = $this->create_test_site( [ 'name' => 'Share Other B', 'url' => 'https://share-other-b.example.com/' ] );
+
+        $purchased = strtotime( gmdate( 'Y-m-d 00:00:00' ) ) - 70 * DAY_IN_SECONDS;
+        $cost_ids  = array();
+        $fixtures  = array(
+            'Shared Hosting' => array( 'multi_site', 90.00, [ $site_id, $other_a, $other_b ] ),
+            'Site License'   => array( 'single_site', 10.00, [ $site_id ] ),
+        );
+        foreach ( $fixtures as $name => $fixture ) {
+            $wpdb->insert( // phpcs:ignore WordPress.DB -- test fixture.
+                $table,
+                [
+                    'name'               => $name,
+                    'url'                => 'https://vendor.example/',
+                    'type'               => 'subscription',
+                    'product_type'       => 'hosting',
+                    'slug'               => '',
+                    'license_type'       => $fixture[0],
+                    'cost_status'        => 'active',
+                    'payment_method'     => 'manual',
+                    'price'              => $fixture[1],
+                    'renewal_type'       => 'monthly',
+                    'last_renewal'       => $purchased,
+                    'next_renewal'       => strtotime( '+1 month', $purchased ),
+                    'next_renewal_today' => 0,
+                    'last_alert'         => 0,
+                    'cost_icon'          => '',
+                    'cost_color'         => '',
+                    'sites'              => wp_json_encode( $fixture[2] ),
+                    'groups'             => '[]',
+                    'clients'            => '[]',
+                    'note'               => '',
+                ]
+            );
+            $cost_ids[ $name ] = (int) $wpdb->insert_id;
+        }
+        wp_cache_delete( 'mainwp_cost_tracker_all', 'mainwp_cost_tracker' );
+
+        $result = $this->execute_ability( 'mainwp/get-site-costs-v1', [
+            'site_id_or_domain' => $site_id,
+        ] );
+
+        foreach ( $cost_ids as $cost_id ) {
+            $wpdb->delete( $table, [ 'id' => $cost_id ] ); // phpcs:ignore WordPress.DB -- test fixture cleanup.
+        }
+        wp_cache_delete( 'mainwp_cost_tracker_all', 'mainwp_cost_tracker' );
+
+        $this->assertNotWPError( $result );
+        $costs = array_column( $result['costs'], null, 'id' );
+
+        $shared = $costs[ $cost_ids['Shared Hosting'] ];
+        $this->assertSame( 'multi_site', $shared['license_type'] );
+        $this->assertSame( 3, $shared['sites_count'] );
+        $this->assertEqualsWithDelta( 30.0, $shared['site_share'], 0.0001 );
+        $this->assertSame( gmdate( 'c', $purchased ), $shared['purchase_date'] );
+        $this->assertSame(
+            gmdate( 'c', \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Admin::get_next_renewal( $purchased, 'monthly' ) ),
+            $shared['next_renewal']
+        );
+
+        $single = $costs[ $cost_ids['Site License'] ];
+        $this->assertSame( 'single_site', $single['license_type'] );
+        $this->assertEqualsWithDelta( 10.0, $single['site_share'], 0.0001 );
+    }
 }

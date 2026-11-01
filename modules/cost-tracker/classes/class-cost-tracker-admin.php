@@ -1055,6 +1055,29 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Method get_cost_price_per_site().
+     *
+     * Get the amount of a cost attributed to each of its sites, as the
+     * per-site and per-client cost widgets total it.
+     *
+     * @param object $cost Cost object; multiple-site licenses need count_sites.
+     *
+     * @return float|int Per-site price, 0 for an inactive cost.
+     */
+    public static function get_cost_price_per_site( $cost ) {
+        if ( 'active' !== $cost->cost_status ) {
+            return 0;
+        }
+        if ( 'single_site' === $cost->license_type ) {
+            return $cost->price;
+        }
+        if ( 'multi_site' === $cost->license_type && ! empty( $cost->count_sites ) ) {
+            return $cost->price / $cost->count_sites;
+        }
+        return 0;
+    }
+
+    /**
      * Method get_default_product_types().
      */
     public static function get_default_product_types() {

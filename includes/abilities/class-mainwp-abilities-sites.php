@@ -3929,7 +3929,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 'costs'   => array(
                     'type'  => 'array',
-                    'items' => array( 'type' => 'object' ),
+                    'items' => MainWP_Abilities_Util::get_cost_output_item_schema( 'site' ),
                 ),
                 'total'   => array( 'type' => 'integer' ),
             ),
@@ -3970,7 +3970,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         $costs = array();
         if ( is_array( $costs_data ) ) {
             foreach ( $costs_data as $cost ) {
-                $costs[] = MainWP_Abilities_Util::format_cost_for_output( $cost );
+                $costs[] = MainWP_Abilities_Util::format_cost_for_output( $cost, 'site' );
             }
         }
 

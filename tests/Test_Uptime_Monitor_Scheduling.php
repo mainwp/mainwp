@@ -778,6 +778,76 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
         );
     }
 
+	/**
+	 * A keyword monitor on the default HEAD method sends GET so the keyword is checked (MWP-2104).
+	 *
+	 * @return void
+	 */
+	public function test_keyword_monitor_uses_get_when_global_method_is_head() {
+		$global_settings            = $this->get_global_settings( 5 );
+		$global_settings['method']  = 'head';
+		$global_settings['type']    = 'keyword';
+		$global_settings['keyword'] = 'Checkout';
+
+		$this->assertSame( 'get', $this->get_checked_method( $global_settings ) );
+	}
+
+	/**
+	 * A non-keyword monitor keeps the HEAD method (MWP-2104).
+	 *
+	 * @return void
+	 */
+	public function test_http_monitor_keeps_head_method() {
+		$global_settings           = $this->get_global_settings( 5 );
+		$global_settings['method'] = 'head';
+		$global_settings['type']   = 'http';
+
+		$this->assertSame( 'head', $this->get_checked_method( $global_settings ) );
+	}
+
+	/**
+	 * Keyword monitors always resolve to GET; other types keep their method (MWP-2104).
+	 *
+	 * @return void
+	 */
+	public function test_get_apply_request_method() {
+		$this->assertSame( 'get', MainWP_Uptime_Monitoring_Connect::get_apply_request_method( 'keyword', 'head' ) );
+		$this->assertSame( 'get', MainWP_Uptime_Monitoring_Connect::get_apply_request_method( 'keyword', 'post' ) );
+		$this->assertSame( 'head', MainWP_Uptime_Monitoring_Connect::get_apply_request_method( 'http', 'HEAD' ) );
+		$this->assertSame( 'post', MainWP_Uptime_Monitoring_Connect::get_apply_request_method( 'http', 'post' ) );
+		$this->assertSame( 'head', MainWP_Uptime_Monitoring_Connect::get_apply_request_method( 'ping', 'head' ) );
+	}
+
+	/**
+	 * Run a real single-monitor check against a closed local port and return the method it used.
+	 *
+	 * @param array $global_settings Global monitoring settings.
+	 *
+	 * @return string
+	 */
+	private function get_checked_method( $global_settings ) {
+		$used_method = '';
+
+		$url_filter    = function () {
+			return 'http://127.0.0.1:1/';
+		};
+		$result_filter = function ( $resp_info ) use ( &$used_method ) {
+			$used_method = isset( $resp_info['use_method'] ) ? $resp_info['use_method'] : '';
+			return $resp_info;
+		};
+
+		add_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+		add_filter( 'mainwp_uptime_monitor_check_result', $result_filter );
+
+		$monitor = $this->get_monitor();
+		MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor( $monitor, $global_settings );
+
+		remove_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+		remove_filter( 'mainwp_uptime_monitor_check_result', $result_filter );
+
+		return $used_method;
+	}
+
     /**
      * Bypass the uptime monitor request during testing.
      *

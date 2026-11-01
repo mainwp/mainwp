@@ -200,6 +200,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $mo_apply_method = $chk_http_method;
         }
 
+        $mo_apply_method = static::get_apply_request_method( $mo_apply_type, $mo_apply_method );
+
         if ( 'head' !== $mo_apply_method ) {
             curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
         }
@@ -555,7 +557,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             $mo_apply_type   = static::get_apply_setting( 'type', $website->type, $global_settings, 'useglobal', 'http' );
             $mo_apply_method = static::get_apply_setting( 'method', $website->method, $global_settings, 'useglobal', 'get' );
-            $mo_apply_method = strtolower( $mo_apply_method );
+            $mo_apply_method = static::get_apply_request_method( $mo_apply_type, $mo_apply_method );
 
             if ( 'head' !== $mo_apply_method ) {
                 curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
@@ -824,7 +826,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $retry_later      = static::is_http_code_type( 'retry', $http_code );
         $is_notallowed    = static::is_http_code_type( 'notallowed', $http_code );
         $mo_apply_type    = static::get_apply_setting( 'type', $website->type, $global_settings, 'useglobal', 'http' );
-        $mo_apply_method  = static::get_apply_setting( 'method', $website->method, $global_settings, 'useglobal', 'get' );
+        $mo_apply_method  = static::get_apply_request_method( $mo_apply_type, static::get_apply_setting( 'method', $website->method, $global_settings, 'useglobal', 'get' ) );
         $mo_apply_timeout = static::get_apply_setting( 'timeout', (int) $website->timeout, $global_settings, -1, 60 );
 
         if ( $retry_later && empty( $website->issub ) ) {
@@ -1391,6 +1393,22 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
         // NOTE: need to match type of values.
         return ( $indi_value === $apply_global_value ) ? $glo_value : $indi_value; //phpcs:ignore -- NOSONAR - compatible.
+    }
+
+    /**
+     * Get the request method a monitor check uses.
+     *
+     * A keyword monitor needs the response body to look for its keyword, so it always uses GET.
+     *
+     * @param  string $mo_apply_type   Monitor type in use.
+     * @param  string $mo_apply_method Method from the monitor or global settings.
+     * @return string Lowercase request method.
+     */
+    public static function get_apply_request_method( $mo_apply_type, $mo_apply_method ) {
+        if ( 'keyword' === $mo_apply_type ) {
+            return 'get';
+        }
+        return strtolower( (string) $mo_apply_method );
     }
 
     /**

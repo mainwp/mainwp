@@ -145,8 +145,9 @@ class Test_MWP_2112_Client_Edit_Save extends \WP_UnitTestCase {
 		$client_b = $this->create_client( time() );
 		$field_id = $this->create_field( 'MWP2112 Plan' );
 
-		$this->save_client( $client_a, array(), array( $field_id => 'Gold plan' ) );
-		$this->save_client( $client_b, array(), array( $field_id => '' ) );
+		$this->assertArrayNotHasKey( 'error', (array) $this->save_client( $client_a, array(), array( $field_id => 'Gold plan' ) ) );
+		$this->assertArrayNotHasKey( 'error', (array) $this->save_client( $client_b, array(), array( $field_id => '' ) ) );
+		$this->assertSame( array( $field_id => 'Gold plan' ), $this->read_values( $client_a ) );
 		$this->assertSame( array(), $this->read_values( $client_b ) );
 
 		$indexed = MainWP_DB_Client::instance()->get_client_fields( true, $client_b, true );

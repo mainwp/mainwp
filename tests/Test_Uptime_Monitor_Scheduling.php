@@ -819,6 +819,83 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A keyword monitor checks the keyword against every body, including an empty one or '0' (MWP-2108).
+	 *
+	 * @dataProvider keyword_body_provider
+	 *
+	 * @param string $keyword         Configured keyword.
+	 * @param string $body            Response body.
+	 * @param int    $expected_status Expected monitor status.
+	 * @param string $expected_msg    Expected heartbeat message fragment, or '' for no keyword note.
+	 *
+	 * @return void
+	 */
+	public function test_keyword_monitor_checks_keyword_against_any_body( $keyword, $body, $expected_status, $expected_msg ) {
+		$settings               = $this->get_global_settings( 5 );
+		$settings['type']       = 'keyword';
+		$settings['keyword']    = $keyword;
+		$settings['maxretries'] = 0;
+
+		$this->process_simulated_result( $this->get_monitor(), $settings, 200, 0, $body );
+
+		$this->assertSame( $expected_status, (int) $this->get_monitor()->last_status );
+
+		$heartbeat_msg = (string) $this->get_latest_heartbeat()->msg;
+		if ( '' === $expected_msg ) {
+			$this->assertStringNotContainsString( 'Keyword', $heartbeat_msg );
+		} else {
+			$this->assertStringContainsString( $expected_msg, $heartbeat_msg );
+		}
+	}
+
+	/**
+	 * The non-multi fallback retries an empty response and handles only the retry, like the multi path (MWP-2108).
+	 *
+	 * @return void
+	 */
+	public function test_single_url_fallback_handles_only_the_retry_response() {
+		$output                  = new \stdClass();
+		$output->global_settings = $this->get_global_settings( 5 );
+		$output->requests_info   = array();
+
+		$handled = 0;
+		$handler = function () use ( &$handled ) {
+			++$handled;
+		};
+
+		// Keep the retry on the closed local port too.
+		$url_filter = function () {
+			return 'http://127.0.0.1:1/';
+		};
+		add_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+
+		$ch = curl_init( 'http://127.0.0.1:1/' );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 2 );
+
+		MainWP_Uptime_Monitoring_Connect::fetch_single_uptime_url( $ch, $handler, $this->get_monitor(), $output, array() );
+
+		remove_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+
+		$this->assertSame( 1, $handled, 'Only the retried response should be handled.' );
+	}
+
+	/**
+	 * Keyword, body and expected result for a 200 response.
+	 *
+	 * @return array
+	 */
+	public function keyword_body_provider() {
+		return array(
+			'empty body'                => array( 'Checkout', '', MainWP_Uptime_Monitoring_Connect::DOWN, 'Keyword not found.' ),
+			'zero body'                 => array( 'Checkout', '0', MainWP_Uptime_Monitoring_Connect::DOWN, 'Keyword not found.' ),
+			'body without keyword'      => array( 'Checkout', 'Welcome', MainWP_Uptime_Monitoring_Connect::DOWN, 'Keyword not found.' ),
+			'body with keyword'         => array( 'Checkout', 'Go to checkout now', MainWP_Uptime_Monitoring_Connect::UP, 'Keyword is found.' ),
+			'no keyword and empty body' => array( '', '', MainWP_Uptime_Monitoring_Connect::UP, '' ),
+		);
+	}
+
+	/**
 	 * Run a real single-monitor check against a closed local port and return the method it used.
 	 *
 	 * @param array $global_settings Global monitoring settings.
@@ -1342,10 +1419,11 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	 * @param array  $settings        Global monitoring settings.
 	 * @param int    $http_code       Simulated HTTP response code.
      * @param int    $set_retry       Set retry 0/1.
+	 * @param string $body            Simulated response body.
 	 *
 	 * @return array
 	 */
-	protected function process_simulated_result( $monitor, $settings, $http_code, $set_retry = 0 ) {
+	protected function process_simulated_result( $monitor, $settings, $http_code, $set_retry = 0, $body = '' ) {
 		$start  = microtime( true );
 		$output = new \stdClass();
 
@@ -1366,7 +1444,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		);
 
 		return MainWP_Uptime_Monitoring_Connect::instance()->handle_response_fetch_uptime(
-			'',
+			$body,
 			$monitor,
 			$output,
 			array( 'ignore_compatible_save' => 1 )
@@ -1513,6 +1591,22 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		return $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}mainwp_monitor_heartbeat WHERE monitor_id = %d AND importance = 1 ORDER BY heartbeat_id DESC LIMIT 1",
+				$this->monitor_id
+			)
+		);
+	}
+
+	/**
+	 * Get the newest heartbeat for the fixture monitor.
+	 *
+	 * @return object|null
+	 */
+	protected function get_latest_heartbeat() {
+		global $wpdb;
+
+		return $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}mainwp_monitor_heartbeat WHERE monitor_id = %d ORDER BY heartbeat_id DESC LIMIT 1",
 				$this->monitor_id
 			)
 		);

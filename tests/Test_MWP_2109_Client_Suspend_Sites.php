@@ -202,6 +202,49 @@ class Test_MWP_2109_Client_Suspend_Sites extends \WP_UnitTestCase {
 		$this->assert_site_statuses( $site_ids, array( 0, 1 ) );
 	}
 
+	/** The unsuspend ability reactivates the client's sites. */
+	public function test_unsuspend_ability_updates_sites(): void {
+		$client   = $this->create_client( 1 );
+		$site_ids = $this->create_client_sites( $client, 1 );
+
+		$result = MainWP_Abilities_Clients::execute_unsuspend_client( array( 'client_id_or_email' => $client->client_id ) );
+
+		$this->assertNotWPError( $result );
+		$this->assert_client_status( $client->client_id, 0 );
+		$this->assert_site_statuses( $site_ids, array( 0, 0 ) );
+	}
+
+	/** Unsuspending a client that is not suspended leaves a manually suspended site alone. */
+	public function test_unsuspend_ability_unchanged_status_leaves_sites_untouched(): void {
+		$client   = $this->create_client( 2 );
+		$site_ids = $this->create_client_sites( $client, 0 );
+		MainWP_DB::instance()->update_website_values( $site_ids[0], array( 'suspended' => 1 ) );
+
+		$result = MainWP_Abilities_Clients::execute_unsuspend_client( array( 'client_id_or_email' => $client->client_id ) );
+
+		$this->assertNotWPError( $result );
+		$this->assert_site_statuses( $site_ids, array( 1, 0 ) );
+	}
+
+	/** The Edit Client site update runs after mainwp_client_suspend, like the Client Info button. */
+	public function test_edit_client_suspend_hook_fires_before_sites_change(): void {
+		$client   = $this->create_client( 0 );
+		$site_ids = $this->create_client_sites( $client, 0 );
+		$seen     = array();
+		$listener = static function () use ( $site_ids, &$seen ) {
+			$seen[] = (int) MainWP_DB::instance()->get_website_by_id( $site_ids[0] )->suspended;
+		};
+		add_action( 'mainwp_client_suspend', $listener );
+		try {
+			$this->save_client( $client->client_id, $site_ids, array( 'client.suspended' => 1 ) );
+		} finally {
+			remove_action( 'mainwp_client_suspend', $listener );
+		}
+
+		$this->assertSame( array( 0 ), $seen );
+		$this->assert_site_statuses( $site_ids, array( 1, 1 ) );
+	}
+
 	/** CSV site URLs are assigned before a new client's suspension propagates. */
 	public function test_csv_import_new_suspended_client_updates_sites(): void {
 		$site_ids = array( $this->create_test_site(), $this->create_test_site() );

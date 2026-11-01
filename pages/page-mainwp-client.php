@@ -1670,13 +1670,6 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( is_object( $inserted ) ) {
 
-            // Sites follow the client only into or out of Suspended; Lead and Lost leave them alone.
-            $was_suspended = 1 === (int) $old_suspended;
-            $is_suspended  = 1 === (int) $new_suspended;
-            if ( isset( $client_to_add['suspended'] ) && $was_suspended !== $is_suspended ) {
-                MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $inserted->client_id, $is_suspended ? 1 : 0 );
-            }
-
             static::invalidate_warm_cache();
 
             /**
@@ -1701,6 +1694,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                  * @param bool $new_suspended true|false.
                  */
                 do_action( 'mainwp_client_suspend', $inserted, $new_suspended );
+            }
+
+            // Sites follow the client only into or out of Suspended; Lead and Lost leave them alone.
+            $was_suspended = 1 === (int) $old_suspended;
+            $is_suspended  = 1 === (int) $new_suspended;
+            if ( isset( $client_to_add['suspended'] ) && $was_suspended !== $is_suspended ) {
+                MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $inserted->client_id, $is_suspended ? 1 : 0 );
             }
         }
 

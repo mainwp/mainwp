@@ -1257,6 +1257,14 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $heartbeat->status );
 		$this->assertSame( '200 - down. OK. Keyword not found.', $heartbeat->msg );
 
+		// With retries left, the miss is stored as PENDING and still reads down, like an HTTP failure.
+		$settings['maxretries'] = 1;
+		$this->process_simulated_result( $this->get_monitor(), $settings, 200, 0, '<html><body>Welcome</body></html>' );
+		$heartbeat = $this->get_latest_heartbeat();
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::PENDING, (int) $heartbeat->status );
+		$this->assertSame( '200 - down. OK. Keyword not found.', $heartbeat->msg );
+		$settings['maxretries'] = 0;
+
 		$this->process_simulated_result( $this->get_monitor(), $settings, 200, 0, '<html><body>Checkout</body></html>' );
 		$heartbeat = $this->get_latest_heartbeat();
 		$this->assertSame( MainWP_Uptime_Monitoring_Connect::UP, (int) $heartbeat->status );

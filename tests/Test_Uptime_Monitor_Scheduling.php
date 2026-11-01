@@ -858,30 +858,35 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$output->global_settings = $this->get_global_settings( 5 );
 		$output->requests_info   = array();
 
-		$monitor = $this->get_monitor();
+		// Local files give an empty first response and a marked retry response without a network.
+		$first_file = tempnam( sys_get_temp_dir(), 'mainwp-uptime-first-' );
+		$retry_file = tempnam( sys_get_temp_dir(), 'mainwp-uptime-retry-' );
+		file_put_contents( $first_file, '' );
+		file_put_contents( $retry_file, 'retry body' );
+
 		$events  = array();
-		$handler = function ( $data, $site, $out ) use ( &$events, $monitor ) {
-			// curl's connect error names the port, so it tells the retry (port 2) from the first request (port 1).
-			$error    = (string) $out->requests_info[ $monitor->monitor_id ]['http_error'];
-			$events[] = false !== strpos( $error, 'port 2' ) ? 'handled retry' : 'handled first';
+		$handler = function ( $data ) use ( &$events ) {
+			$events[] = 'handled:' . (string) $data;
 		};
 
-		// The retry rebuilds its URL through this filter; send it to another closed local port.
-		$url_filter = function () use ( &$events ) {
+		// The retry rebuilds its URL through this filter.
+		$url_filter = function () use ( &$events, $retry_file ) {
 			$events[] = 'retry url';
-			return 'http://127.0.0.1:2/';
+			return 'file://' . $retry_file;
 		};
 		add_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
 
-		$ch = curl_init( 'http://127.0.0.1:1/' );
+		$ch = curl_init( 'file://' . $first_file );
+		curl_setopt( $ch, CURLOPT_NOPROXY, '*' );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 2 );
 
-		MainWP_Uptime_Monitoring_Connect::fetch_single_uptime_url( $ch, $handler, $monitor, $output, array() );
+		MainWP_Uptime_Monitoring_Connect::fetch_single_uptime_url( $ch, $handler, $this->get_monitor(), $output, array() );
 
 		remove_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+		unlink( $first_file );
+		unlink( $retry_file );
 
-		$this->assertSame( array( 'retry url', 'handled retry' ), $events, 'The empty response should be retried and only the retry handled.' );
+		$this->assertSame( array( 'retry url', 'handled:retry body' ), $events, 'The empty response should be retried and only the retry handled.' );
 	}
 
 	/**

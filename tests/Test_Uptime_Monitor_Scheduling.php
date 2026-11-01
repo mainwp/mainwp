@@ -858,14 +858,18 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$output->global_settings = $this->get_global_settings( 5 );
 		$output->requests_info   = array();
 
-		$handled = 0;
-		$handler = function () use ( &$handled ) {
-			++$handled;
+		$monitor = $this->get_monitor();
+		$events  = array();
+		$handler = function ( $data, $site, $out ) use ( &$events, $monitor ) {
+			// curl's connect error names the port, so it tells the retry (port 2) from the first request (port 1).
+			$error    = (string) $out->requests_info[ $monitor->monitor_id ]['http_error'];
+			$events[] = false !== strpos( $error, 'port 2' ) ? 'handled retry' : 'handled first';
 		};
 
-		// Keep the retry on the closed local port too.
-		$url_filter = function () {
-			return 'http://127.0.0.1:1/';
+		// The retry rebuilds its URL through this filter; send it to another closed local port.
+		$url_filter = function () use ( &$events ) {
+			$events[] = 'retry url';
+			return 'http://127.0.0.1:2/';
 		};
 		add_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
 
@@ -873,11 +877,11 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 2 );
 
-		MainWP_Uptime_Monitoring_Connect::fetch_single_uptime_url( $ch, $handler, $this->get_monitor(), $output, array() );
+		MainWP_Uptime_Monitoring_Connect::fetch_single_uptime_url( $ch, $handler, $monitor, $output, array() );
 
 		remove_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
 
-		$this->assertSame( 1, $handled, 'Only the retried response should be handled.' );
+		$this->assertSame( array( 'retry url', 'handled retry' ), $events, 'The empty response should be retried and only the retry handled.' );
 	}
 
 	/**

@@ -773,7 +773,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'suspended' => 1,
         );
 
-        MainWP_DB_Client::instance()->update_client( $params );
+        $updated = MainWP_DB_Client::instance()->update_client( $params );
+
+        if ( $updated && 1 !== (int) $item->suspended ) {
+            MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $item->client_id, 1 );
+        }
 
         $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $item->client_id );
 
@@ -808,7 +812,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'suspended' => 0,
         );
 
-        MainWP_DB_Client::instance()->update_client( $params );
+        $updated = MainWP_DB_Client::instance()->update_client( $params );
+
+        if ( $updated && 1 === (int) $item->suspended ) {
+            MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $item->client_id, 0 );
+        }
 
         $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $item->client_id );
 

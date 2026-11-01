@@ -1428,6 +1428,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 if ( ! empty( $selected_sites ) || ( $current && 'all' !== $allowed ) ) {
                     MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites ); // Set client to selected sites.
                 }
+                // Sites follow the client only into or out of Suspended; Lead and Lost leave them alone.
+                $was_suspended = $current && (int) $current->client_id === (int) $inserted->client_id && 1 === (int) $current->suspended;
+                $is_suspended  = 1 === (int) $inserted->suspended;
+                if ( $was_suspended !== $is_suspended ) {
+                    MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $inserted->client_id, $is_suspended ? 1 : 0 );
+                }
                 // Set default color and icon .
                 $update = array(
                     'client_id'          => $inserted->client_id,

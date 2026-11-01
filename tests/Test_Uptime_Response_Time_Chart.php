@@ -116,7 +116,7 @@ class Test_Uptime_Response_Time_Chart extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Hour grouping (used by the 7-day view for hourly monitors) plots the average too.
+	 * Hour grouping (used by short ranges for monitors checked less often than hourly) plots the average too.
 	 *
 	 * @return void
 	 */

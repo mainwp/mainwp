@@ -1261,6 +1261,8 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                     $this->wpdb->update( $table_field_values, array( 'field_value' => $value ), array( 'value_id' => $row->value_id ) );
                 }
                 return true;
+            } elseif ( '' === (string) $value ) {
+                return true; // Nothing to store for a field left blank.
             } else {
                 return $this->wpdb->insert(
                     $table_field_values,

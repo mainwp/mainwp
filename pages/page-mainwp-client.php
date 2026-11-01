@@ -594,7 +594,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $renderItems[] = array(
                 'title'  => esc_html__( 'Import Clients', 'mainwp' ),
                 'href'   => 'admin.php?page=ClientImport',
-                'active' => ( 'Add' === $shownPage ) ? true : false,
+                'active' => ( 'ImportClients' === $shownPage ) ? true : false,
             );
         }
 
@@ -1456,31 +1456,34 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </table>
 
                 <script type="text/javascript">
-                // Init datatables
-                jQuery( '#mainwp-clients-custom-fields-table' ).DataTable( {
-                    "stateSave": true,
-                    "stateDuration": 0,
-                    "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-                    "columnDefs": [ { "orderable": false, "targets": "no-sort" } ],
-                    "order": [ [ 0, "asc" ] ],
-                    "language": { "emptyTable": "No fields found." },
-                    "drawCallback" : function( settings ) {
-                        jQuery( '#mainwp-clients-custom-fields-table .ui.dropdown').dropdown();
-                        jQuery( '#mainwp-clients-custom-fields-table .ui.checkbox').checkbox();
-                    },
-                    stateSaveParams: function (settings, data) {
-                        data._mwpv = mainwpParams.mainwpVersion || 'dev';
-                    },
-                    stateLoadParams: function (settings, data) {
-                        if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
-                    },
-                    search: { regex: false, smart: false },
-                    orderMulti: false,
-                    searchDelay: 350
-                } );
+                // Init after the deferred DataTables Fomantic UI integration loads, as the Clients list does.
+                jQuery( document ).ready( function() {
+                    // Init datatables
+                    jQuery( '#mainwp-clients-custom-fields-table' ).DataTable( {
+                        "stateSave": true,
+                        "stateDuration": 0,
+                        "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+                        "columnDefs": [ { "orderable": false, "targets": "no-sort" } ],
+                        "order": [ [ 0, "asc" ] ],
+                        "language": { "emptyTable": "No fields found." },
+                        "drawCallback" : function( settings ) {
+                            jQuery( '#mainwp-clients-custom-fields-table .ui.dropdown').dropdown();
+                            jQuery( '#mainwp-clients-custom-fields-table .ui.checkbox').checkbox();
+                        },
+                        stateSaveParams: function (settings, data) {
+                            data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                        },
+                        stateLoadParams: function (settings, data) {
+                            if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
+                        },
+                        search: { regex: false, smart: false },
+                        orderMulti: false,
+                        searchDelay: 350
+                    } );
 
-                // Initialize header checkbox
-                jQuery( '#mainwp-clients-custom-fields-table thead .ui.checkbox' ).checkbox();
+                    // Initialize header checkbox
+                    jQuery( '#mainwp-clients-custom-fields-table thead .ui.checkbox' ).checkbox();
+                } );
                 </script>
             <?php endif; ?>
         </div>
@@ -1631,7 +1634,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             $client_to_add['client_id'] = $client_id; // update client.
             if ( isset( $client_to_add['created'] ) && ! empty( $client_to_add['created'] ) ) {
-                $client_to_add['created'] = strtotime( $client_to_add['created'] );
+                // The form shows only the day, so keep the stored time unless the day was changed.
+                if ( ! empty( $current_client->created ) && date( 'Y-m-d', (int) $current_client->created ) === $client_to_add['created'] ) { // phpcs:ignore -- local time, matches the form.
+                    unset( $client_to_add['created'] );
+                } else {
+                    $client_to_add['created'] = strtotime( $client_to_add['created'] );
+                }
             }
             $add_new = false;
 

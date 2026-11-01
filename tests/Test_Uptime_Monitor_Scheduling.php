@@ -819,34 +819,6 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A keyword miss on a 200 response stores a DOWN heartbeat that says down, not up (MWP-2114).
-	 *
-	 * @return void
-	 */
-	public function test_keyword_miss_heartbeat_message_matches_down_status() {
-		$settings               = $this->get_global_settings( 5 );
-		$settings['maxretries'] = 0;
-		$settings['type']       = 'keyword';
-		$settings['keyword']    = 'Checkout';
-
-		$this->process_simulated_result( $this->get_monitor(), $settings, 200, 0, '<html><body>Welcome</body></html>' );
-		$heartbeat = $this->get_latest_heartbeat();
-		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $heartbeat->status );
-		$this->assertSame( '200 - down. OK. Keyword not found.', $heartbeat->msg );
-
-		$this->process_simulated_result( $this->get_monitor(), $settings, 200, 0, '<html><body>Checkout</body></html>' );
-		$heartbeat = $this->get_latest_heartbeat();
-		$this->assertSame( MainWP_Uptime_Monitoring_Connect::UP, (int) $heartbeat->status );
-		$this->assertSame( '200 - up! OK. Keyword is found.', $heartbeat->msg );
-
-		$settings['type'] = 'http';
-		$this->process_simulated_result( $this->get_monitor(), $settings, 500 );
-		$heartbeat = $this->get_latest_heartbeat();
-		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $heartbeat->status );
-		$this->assertSame( '500 - down. Internal Server Error', $heartbeat->msg );
-	}
-
-	/**
 	 * Run a real single-monitor check against a closed local port and return the method it used.
 	 *
 	 * @param array $global_settings Global monitoring settings.
@@ -1270,6 +1242,34 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A keyword miss on a 200 response stores a DOWN heartbeat that says down, not up (MWP-2114).
+	 *
+	 * @return void
+	 */
+	public function test_keyword_miss_heartbeat_message_matches_down_status() {
+		$settings               = $this->get_global_settings( 5 );
+		$settings['maxretries'] = 0;
+		$settings['type']       = 'keyword';
+		$settings['keyword']    = 'Checkout';
+
+		$this->process_simulated_result( $this->get_monitor(), $settings, 200, 0, '<html><body>Welcome</body></html>' );
+		$heartbeat = $this->get_latest_heartbeat();
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $heartbeat->status );
+		$this->assertSame( '200 - down. OK. Keyword not found.', $heartbeat->msg );
+
+		$this->process_simulated_result( $this->get_monitor(), $settings, 200, 0, '<html><body>Checkout</body></html>' );
+		$heartbeat = $this->get_latest_heartbeat();
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::UP, (int) $heartbeat->status );
+		$this->assertSame( '200 - up! OK. Keyword is found.', $heartbeat->msg );
+
+		$settings['type'] = 'http';
+		$this->process_simulated_result( $this->get_monitor(), $settings, 500 );
+		$heartbeat = $this->get_latest_heartbeat();
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $heartbeat->status );
+		$this->assertSame( '500 - down. Internal Server Error', $heartbeat->msg );
+	}
+
+	/**
 	 * Capture the uptime notification before WordPress attempts email delivery.
 	 *
 	 * @param string       $email          Recipient email address.
@@ -1532,22 +1532,6 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Get the newest heartbeat deterministically.
-	 *
-	 * @return object|null
-	 */
-	protected function get_latest_heartbeat() {
-		global $wpdb;
-
-		return $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}mainwp_monitor_heartbeat WHERE monitor_id = %d ORDER BY heartbeat_id DESC LIMIT 1",
-				$this->monitor_id
-			)
-		);
-	}
-
-	/**
 	 * Get the newest important heartbeat deterministically.
 	 *
 	 * @return object|null
@@ -1558,6 +1542,22 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		return $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}mainwp_monitor_heartbeat WHERE monitor_id = %d AND importance = 1 ORDER BY heartbeat_id DESC LIMIT 1",
+				$this->monitor_id
+			)
+		);
+	}
+
+	/**
+	 * Get the newest heartbeat for the fixture monitor.
+	 *
+	 * @return object|null
+	 */
+	protected function get_latest_heartbeat() {
+		global $wpdb;
+
+		return $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}mainwp_monitor_heartbeat WHERE monitor_id = %d ORDER BY heartbeat_id DESC LIMIT 1",
 				$this->monitor_id
 			)
 		);

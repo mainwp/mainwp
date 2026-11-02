@@ -852,6 +852,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             if ( $_try_second ) {
                 static::fetch_single_uptime_url( $ch, $handler, $website, $output, $params, true );
+                return; // The retry handled the final response.
             }
         }
 
@@ -983,8 +984,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 $keyword = $monitor->keyword;
             }
 
-            if ( ! empty( $keyword ) && ! empty( $data ) ) {
-                $keywordFound = false !== stripos( $data, $keyword );
+            if ( ! empty( $keyword ) ) {
+                $keywordFound = is_string( $data ) && false !== stripos( $data, $keyword );
                 $heart_msg   .= '. Keyword ' . ( $keywordFound ? 'is' : 'not' ) . ' found.';
             }
         }

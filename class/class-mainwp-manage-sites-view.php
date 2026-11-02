@@ -500,7 +500,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         }
                         $encoded = wp_json_encode( $import_data );
                         ?>
-                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( sanitize_text_field( $originalLine ) ); ?>" />
+                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( str_replace( '&', '&amp;', self::import_display_line( array_slice( $items, 0, 10 ) ) ) ); ?>" />
                         <?php
                         ++$row;
                     }
@@ -552,12 +552,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
                 // Import website if import data is not empty.
                 if ( ! empty( $import_data ) ) {
-                    $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
+                    $header_line = trim( 'Site Name, Url, Admin Name,Admin Password, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
                     // Map import data to input html.
                     foreach ( $import_data as $key_import => $val_import ) {
-                        $line = trim( implode( ',', $val_import ) )
+                        $line = self::import_display_line( array_values( $val_import ) );
                         ?>
-                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $key_import + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_import ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
+                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $key_import + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_import ) ); ?>" original="<?php echo esc_attr( str_replace( '&', '&amp;', $line ) ); ?>" />
                         <?php
                     }
                     $hd_id1       = 'mainwp_managesites_do_import';
@@ -599,6 +599,29 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             </div>
             <?php
         }
+    }
+
+    /**
+     * Format an import row for logs and failed-row downloads.
+     *
+     * @param array $fields Parsed CSV fields in import order.
+     * @return string
+     */
+    private static function import_display_line( $fields ) {
+        $fields[3] = '********';
+        $fields[5] = '********';
+        $fields[7] = '********';
+
+        return implode(
+            ',',
+            array_map(
+                static function ( $field ) {
+                    $field = sanitize_text_field( $field );
+                    return strpbrk( $field, ",\"\r\n" ) !== false ? '"' . str_replace( '"', '""', $field ) . '"' : $field;
+                },
+                $fields
+            )
+        );
     }
 
     /**

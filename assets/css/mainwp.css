@@ -1294,6 +1294,12 @@ table.mainwp-manage-wpsites-table .error a {
 }
 
 
+.mainwp-manage-plugin-item-website > .column-actions,
+.mainwp-manage-theme-item-website > .column-actions {
+    min-width: max-content;
+    margin-left: auto;
+}
+
 /* Manage Extensions */
 
 .mainwp-ui #mainwp_com_api_key {

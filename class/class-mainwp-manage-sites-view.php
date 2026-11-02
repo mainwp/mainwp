@@ -608,9 +608,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return string
      */
     private static function import_display_line( $fields ) {
-        $fields[3] = '********';
-        $fields[5] = '********';
-        $fields[7] = '********';
+        foreach ( array( 3, 5, 7 ) as $index ) {
+            if ( '' !== (string) $fields[ $index ] ) {
+                $fields[ $index ] = '********';
+            }
+        }
 
         return implode(
             ',',

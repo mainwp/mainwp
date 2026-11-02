@@ -65,6 +65,19 @@ class Test_MWP_2121_Site_Import_Output extends \WP_UnitTestCase {
         $this->assert_display_row( $html );
     }
 
+    /** Empty credentials stay unused; a literal zero is still a credential. */
+    public function test_empty_credentials_stay_empty_and_zero_credentials_are_masked() {
+        $formatter = new \ReflectionMethod( MainWP_Manage_Sites_View::class, 'import_display_line' );
+        $formatter->setAccessible( true );
+        $fields = array( 'Site', 'https://import.example.test', 'admin', '', 'Tag', '', '', '', 'Y', 'auto' );
+        $this->assertSame( 'Site,https://import.example.test,admin,,Tag,,,,Y,auto', $formatter->invoke( null, $fields ) );
+
+        $fields[3] = '0';
+        $fields[5] = '0';
+        $fields[7] = '0';
+        $this->assertSame( 'Site,https://import.example.test,admin,********,Tag,********,,********,Y,auto', $formatter->invoke( null, $fields ) );
+    }
+
     /**
      * Check the browser-decoded display and operational attributes separately.
      *

@@ -149,6 +149,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_advanced_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_update_advanced_allowed_fields(),
                 ),
@@ -174,6 +175,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_monitoring_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_update_monitoring_allowed_fields(),
                 ),
@@ -199,6 +201,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_emails_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_update_emails_allowed_fields(),
                 ),
@@ -224,6 +227,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'edit_cost_tracker_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_cost_tracker_allowed_fields(),
                 ),
@@ -248,6 +252,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_cost_tracker_product_type' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_cost_tracker_product_type_allowed_fields(),
                 ),
@@ -284,6 +289,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_cost_tracker_payment_method' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_cost_tracker_payment_method_allowed_fields(),
                 ),
@@ -321,6 +327,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_dashboard_insights_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_dashboard_insight_allowed_fields(),
                 ),
@@ -346,6 +353,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_api_backup_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_api_backup_allowed_fields(),
                 ),
@@ -396,6 +404,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_tools_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_tools_allowed_fields(),
                 ),
@@ -4293,6 +4302,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return bool|WP_Error
      */
     public function validate_update_backup_params( $request ) {
+        $valid = $this->validate_content_type( $request );
+        if ( is_wp_error( $valid ) ) {
+            return $valid;
+        }
+
         $body = $this->get_request_body( $request );
         $body = is_array( $body ) ? $body : array();
         $sent = array();
@@ -4353,6 +4367,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return bool|WP_Error
      */
     public function validate_update_general_params( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $valid = $this->validate_content_type( $request );
+        if ( is_wp_error( $valid ) ) {
+            return $valid;
+        }
+
         $primary_backup = $request->get_param( 'mainwp_primary_backup' );
         $backup_feature = $request->get_param( 'mainwp_enable_legacy_backup_feature' );
         $native_backups = $request->get_param( 'mainwp_enable_native_backups' );
@@ -4468,17 +4487,25 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * Validate content type.
+     * Validate the JSON media type and object body before parameter sanitization.
      *
      * @param WP_REST_Request $request Full details about the request.
      * @return bool|WP_Error
      */
-    private function validate_content_type( $request ) {
-        $content_type = (string) $request->get_header( 'content-type' );
-        if ( 'application/json' !== $content_type ) {
+    public function validate_content_type( $request ) {
+        $content_type = explode( ';', (string) $request->get_header( 'content-type' ), 2 );
+        if ( 'application/json' !== strtolower( trim( $content_type[0] ) ) ) {
             return new WP_Error(
                 'invalid_content_type',
                 __( 'Invalid content type. Expected application/json.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+        $body = $request->get_body();
+        if ( '' !== $body && ! ( json_decode( $body ) instanceof \stdClass ) ) {
+            return new WP_Error(
+                'invalid_body',
+                __( 'Request body must be a JSON object.', 'mainwp' ),
                 array( 'status' => 400 )
             );
         }

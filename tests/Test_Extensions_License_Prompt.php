@@ -18,6 +18,8 @@ class Test_Extensions_License_Prompt extends \WP_UnitTestCase {
 
     private const DOC_URL = 'https://docs.mainwp.com/troubleshooting/troubleshoot-extension-licensing-issues';
 
+    private const BUTTON = 'class="ui basic button mainwp-extensions-refresh-license"';
+
     /**
      * Original options.
      *
@@ -117,7 +119,7 @@ class Test_Extensions_License_Prompt extends \WP_UnitTestCase {
             $html = $this->modal();
             $this->assertStringNotContainsString( 'Upgrade to Pro', $html, $term );
             $this->assertStringNotContainsString( 'mainwp.com/signup', $html, $term );
-            $this->assertStringContainsString( 'mainwp-extensions-refresh-license', $html, $term );
+            $this->assertStringContainsString( self::BUTTON, $html, $term );
             $this->assertStringContainsString( 'includes all MainWP add-ons', $html, $term );
             $this->assertStringContainsString( self::DOC_URL, $html, $term );
         }
@@ -142,7 +144,7 @@ class Test_Extensions_License_Prompt extends \WP_UnitTestCase {
             }
             $html = $this->modal();
             $this->assertStringContainsString( 'Upgrade to Pro', $html, $case );
-            $this->assertStringContainsString( 'mainwp-extensions-refresh-license', $html, $case );
+            $this->assertStringContainsString( self::BUTTON, $html, $case );
             $this->assertStringContainsString( self::DOC_URL, $html, $case );
         }
     }
@@ -153,5 +155,24 @@ class Test_Extensions_License_Prompt extends \WP_UnitTestCase {
         $html = $this->modal();
         $this->assertStringContainsString( 'Upgrade to Pro', $html );
         $this->assertStringNotContainsString( 'mainwp-extensions-refresh-license', $html );
+    }
+
+    /** Without the Add-ons right the refresh action would be refused, so only the note and help link render. */
+    public function test_refresh_button_needs_manage_extensions_right(): void {
+        $this->store_key();
+        $this->store_plan( 'lifetime', 'active' );
+        $deny = static function ( $can, $type, $cap ) {
+            return ( 'dashboard' === $type && 'manage_extensions' === $cap ) ? false : $can;
+        };
+        add_filter( 'mainwp_currentusercan', $deny, PHP_INT_MAX, 3 );
+        try {
+            $html = $this->modal();
+        } finally {
+            remove_filter( 'mainwp_currentusercan', $deny, PHP_INT_MAX );
+        }
+        $this->assertStringNotContainsString( 'Upgrade to Pro', $html );
+        $this->assertStringContainsString( 'includes all MainWP add-ons', $html );
+        $this->assertStringContainsString( self::DOC_URL, $html );
+        $this->assertStringNotContainsString( self::BUTTON, $html );
     }
 }

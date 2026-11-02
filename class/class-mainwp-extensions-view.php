@@ -937,7 +937,7 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <?php else : ?>
                     <?php esc_html_e( 'Already on MainWP Pro?', 'mainwp' ); ?>
                 <?php endif; ?>
-                <a href="https://docs.mainwp.com/troubleshooting/troubleshoot-extension-licensing-issues" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Licensing help', 'mainwp' ); ?></a>
+                <a href="https://docs.mainwp.com/troubleshooting/troubleshoot-extension-licensing-issues" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'See licensing help', 'mainwp' ); ?></a>
             </span>
             <?php if ( $can_refresh ) : ?>
                 &nbsp;<a href="javascript:void(0);" class="ui basic button mainwp-extensions-refresh-license" data-failed-text="<?php esc_attr_e( 'Could not refresh your license. Please try again.', 'mainwp' ); ?>"><i class="sync icon"></i> <?php esc_html_e( 'Refresh License', 'mainwp' ); ?></a>

@@ -131,7 +131,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			 *
 			 * @return bool
 			 */
-			public function close(): bool {
+			public function close(): true {
 				return true;
 			}
 		};

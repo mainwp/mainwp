@@ -2442,7 +2442,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'mainwp/activate-site-plugins-v1',
             array(
                 'label'               => __( 'Activate Site Plugins', 'mainwp' ),
-                'description'         => __( 'Activate plugins on a MainWP child site.', 'mainwp' ),
+                'description'         => __( 'Activate plugins on a MainWP child site. Supports dry-run mode. Without dry_run, the change applies right away.', 'mainwp' ),
                 'category'            => 'mainwp-sites',
                 'input_schema'        => self::get_activate_site_plugins_input_schema(),
                 'output_schema'       => self::get_activate_plugins_output_schema(),
@@ -2451,10 +2451,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => '',
+                        'instructions' => 'Destructive operation - use dry_run:true to preview, then confirm:true to apply. Without dry_run, the change applies right away; confirm is optional for existing callers.',
                         'readonly'     => false,
-                        'destructive'  => false,
-                        'idempotent'   => true,
+                        'destructive'  => true,
+                        'idempotent'   => false, // Preserve POST for existing REST callers.
                     ),
                 ),
             )
@@ -2481,6 +2481,16 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                     'items'       => array( 'type' => 'string' ),
                     'minItems'    => 1,
                 ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'description' => __( 'Confirm the change after preview. Optional for existing callers.', 'mainwp' ),
+                    'default'     => false,
+                ),
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'description' => __( 'Preview mode', 'mainwp' ),
+                    'default'     => false,
+                ),
             ),
         );
     }
@@ -2493,24 +2503,27 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     private static function get_activate_plugins_output_schema(): array {
         return array(
             'type'       => 'object',
-            'properties' => array(
-                'activated' => array(
-                    'type'        => 'array',
-                    'description' => __( 'Successfully activated plugins', 'mainwp' ),
-                    'items'       => array( 'type' => 'object' ),
-                ),
-                'errors'    => array(
-                    'type'        => 'array',
-                    'description' => __( 'Errors encountered', 'mainwp' ),
-                    'items'       => array(
-                        'type'       => 'object',
-                        'properties' => array(
-                            'slug'    => array( 'type' => 'string' ),
-                            'code'    => array( 'type' => 'string' ),
-                            'message' => array( 'type' => 'string' ),
+            'properties' => array_merge(
+                self::get_activation_preview_output_properties(),
+                array(
+                    'activated' => array(
+                        'type'        => 'array',
+                        'description' => __( 'Successfully activated plugins', 'mainwp' ),
+                        'items'       => array( 'type' => 'object' ),
+                    ),
+                    'errors'    => array(
+                        'type'        => 'array',
+                        'description' => __( 'Errors encountered', 'mainwp' ),
+                        'items'       => array(
+                            'type'       => 'object',
+                            'properties' => array(
+                                'slug'    => array( 'type' => 'string' ),
+                                'code'    => array( 'type' => 'string' ),
+                                'message' => array( 'type' => 'string' ),
+                            ),
                         ),
                     ),
-                ),
+                )
             ),
         );
     }
@@ -2523,26 +2536,121 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     private static function get_deactivate_plugins_output_schema(): array {
         return array(
             'type'       => 'object',
-            'properties' => array(
-                'deactivated' => array(
-                    'type'        => 'array',
-                    'description' => __( 'Successfully deactivated plugins', 'mainwp' ),
-                    'items'       => array( 'type' => 'object' ),
-                ),
-                'errors'      => array(
-                    'type'        => 'array',
-                    'description' => __( 'Errors encountered', 'mainwp' ),
-                    'items'       => array(
-                        'type'       => 'object',
-                        'properties' => array(
-                            'slug'    => array( 'type' => 'string' ),
-                            'code'    => array( 'type' => 'string' ),
-                            'message' => array( 'type' => 'string' ),
+            'properties' => array_merge(
+                self::get_activation_preview_output_properties(),
+                array(
+                    'deactivated' => array(
+                        'type'        => 'array',
+                        'description' => __( 'Successfully deactivated plugins', 'mainwp' ),
+                        'items'       => array( 'type' => 'object' ),
+                    ),
+                    'errors'      => array(
+                        'type'        => 'array',
+                        'description' => __( 'Errors encountered', 'mainwp' ),
+                        'items'       => array(
+                            'type'       => 'object',
+                            'properties' => array(
+                                'slug'    => array( 'type' => 'string' ),
+                                'code'    => array( 'type' => 'string' ),
+                                'message' => array( 'type' => 'string' ),
+                            ),
+                        ),
+                    ),
+                )
+            ),
+        );
+    }
+
+    /**
+     * Preview fields shared by plugin and theme activation operations.
+     *
+     * @return array JSON Schema properties.
+     */
+    private static function get_activation_preview_output_properties(): array {
+        return array(
+            'dry_run'       => array( 'type' => 'boolean' ),
+            'would_affect'  => array(
+                'type'  => 'array',
+                'items' => array(
+                    'type'       => 'object',
+                    'properties' => array(
+                        'slug'        => array( 'type' => 'string' ),
+                        'name'        => array( 'type' => 'string' ),
+                        'active'      => array(
+                            'type'        => array( 'boolean', 'null' ),
+                            'description' => __( 'Last synced activation state, or null when unknown.', 'mainwp' ),
+                        ),
+                        'will_change' => array(
+                            'type'        => array( 'boolean', 'null' ),
+                            'description' => __( 'Whether the requested activation state differs from the last synced state, or null when unknown.', 'mainwp' ),
                         ),
                     ),
                 ),
             ),
+            'count'         => array(
+                'type'        => 'integer',
+                'description' => __( 'Number of requested items, including items already in the requested state.', 'mainwp' ),
+            ),
+            'warnings'      => array(
+                'type'  => 'array',
+                'items' => array( 'type' => 'string' ),
+            ),
+            'current_theme' => array(
+                'type'        => array( 'object', 'null' ),
+                'description' => __( 'Last synced active theme for a theme preview, or null when unknown.', 'mainwp' ),
+            ),
         );
+    }
+
+    /**
+     * Preview changes using the last synced inventory without contacting Child.
+     *
+     * @param object $site     Site object.
+     * @param array  $slugs    Requested plugin or theme slugs.
+     * @param string $property Site inventory property.
+     * @param bool   $activate Whether items will be activated.
+     * @return array Preview response.
+     */
+    private static function build_activation_preview( $site, array $slugs, string $property, bool $activate ): array {
+        $inventory = ! empty( $site->$property ) ? json_decode( $site->$property, true ) : array();
+        $installed = array();
+        $current   = null;
+        $formatter = 'themes' === $property ? 'format_theme_for_output' : 'format_plugin_for_output';
+        foreach ( is_array( $inventory ) ? $inventory : array() as $key => $item ) {
+            if ( ! is_array( $item ) ) {
+                continue;
+            }
+            $slug = is_string( $key ) ? $key : ( $item['slug'] ?? '' );
+            if ( ! is_string( $slug ) || '' === $slug ) {
+                continue;
+            }
+            $item['slug']       = $slug;
+            $installed[ $slug ] = $item;
+            if ( 'themes' === $property && ! empty( $item['active'] ) ) {
+                $current = MainWP_Abilities_Util::$formatter( $item );
+            }
+        }
+
+        $would_affect = array();
+        foreach ( $slugs as $slug ) {
+            $item                  = $installed[ $slug ] ?? array( 'slug' => $slug );
+            $active                = isset( $item['active'] ) ? (bool) $item['active'] : null;
+            $output                = MainWP_Abilities_Util::$formatter( $item );
+            $output['active']      = $active;
+            $output['will_change'] = null === $active ? null : $active !== $activate;
+            $would_affect[]        = $output;
+        }
+
+        $response = array(
+            'dry_run'      => true,
+            'would_affect' => $would_affect,
+            'count'        => count( $would_affect ),
+            'warnings'     => array( __( 'Preview uses the last synced site data. Current state may have changed; unknown activation state is returned as null.', 'mainwp' ) ),
+        );
+        if ( 'themes' === $property ) {
+            $response['current_theme'] = $current;
+        }
+        return $response;
     }
 
     /**
@@ -2553,6 +2661,16 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function execute_activate_site_plugins( $input ) {
         $input = MainWP_Abilities_Util::normalize_input( $input );
+
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        if ( $dry_run && $confirm ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'Cannot specify both dry_run and confirm.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
 
         $site = MainWP_Abilities_Util::resolve_site( $input['site_id_or_domain'] ?? null );
         if ( is_wp_error( $site ) ) {
@@ -2577,6 +2695,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 __( 'No plugins specified.', 'mainwp' ),
                 array( 'status' => 400 )
             );
+        }
+
+        if ( $dry_run ) {
+            return self::build_activation_preview( $site, $plugins, 'plugins', true );
         }
 
         $activated = array();
@@ -2626,7 +2748,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'mainwp/deactivate-site-plugins-v1',
             array(
                 'label'               => __( 'Deactivate Site Plugins', 'mainwp' ),
-                'description'         => __( 'Deactivate plugins on a MainWP child site.', 'mainwp' ),
+                'description'         => __( 'Deactivate plugins on a MainWP child site. Supports dry-run mode. Without dry_run, the change applies right away.', 'mainwp' ),
                 'category'            => 'mainwp-sites',
                 'input_schema'        => self::get_deactivate_site_plugins_input_schema(),
                 'output_schema'       => self::get_deactivate_plugins_output_schema(),
@@ -2635,10 +2757,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => '',
+                        'instructions' => 'Destructive operation - use dry_run:true to preview, then confirm:true to apply. Without dry_run, the change applies right away; confirm is optional for existing callers.',
                         'readonly'     => false,
-                        'destructive'  => false,
-                        'idempotent'   => true,
+                        'destructive'  => true,
+                        'idempotent'   => false, // Preserve POST for existing REST callers.
                     ),
                 ),
             )
@@ -2665,6 +2787,16 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                     'items'       => array( 'type' => 'string' ),
                     'minItems'    => 1,
                 ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'description' => __( 'Confirm the change after preview. Optional for existing callers.', 'mainwp' ),
+                    'default'     => false,
+                ),
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'description' => __( 'Preview mode', 'mainwp' ),
+                    'default'     => false,
+                ),
             ),
         );
     }
@@ -2677,6 +2809,16 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function execute_deactivate_site_plugins( $input ) {
         $input = MainWP_Abilities_Util::normalize_input( $input );
+
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        if ( $dry_run && $confirm ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'Cannot specify both dry_run and confirm.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
 
         $site = MainWP_Abilities_Util::resolve_site( $input['site_id_or_domain'] ?? null );
         if ( is_wp_error( $site ) ) {
@@ -2701,6 +2843,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 __( 'No plugins specified.', 'mainwp' ),
                 array( 'status' => 400 )
             );
+        }
+
+        if ( $dry_run ) {
+            return self::build_activation_preview( $site, $plugins, 'plugins', false );
         }
 
         $deactivated = array();
@@ -3182,7 +3328,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'mainwp/activate-site-theme-v1',
             array(
                 'label'               => __( 'Activate Site Theme', 'mainwp' ),
-                'description'         => __( 'Activate a theme on a MainWP child site.', 'mainwp' ),
+                'description'         => __( 'Activate a theme on a MainWP child site. Supports dry-run mode. Without dry_run, the change applies right away.', 'mainwp' ),
                 'category'            => 'mainwp-sites',
                 'input_schema'        => self::get_activate_site_theme_input_schema(),
                 'output_schema'       => self::get_activate_theme_output_schema(),
@@ -3191,10 +3337,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => '',
+                        'instructions' => 'Destructive operation - use dry_run:true to preview, then confirm:true to apply. Without dry_run, the change applies right away; confirm is optional for existing callers.',
                         'readonly'     => false,
-                        'destructive'  => false,
-                        'idempotent'   => true,
+                        'destructive'  => true,
+                        'idempotent'   => false, // Preserve POST for existing REST callers.
                     ),
                 ),
             )
@@ -3219,6 +3365,16 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'        => 'string',
                     'description' => __( 'Theme slug to activate', 'mainwp' ),
                 ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'description' => __( 'Confirm the change after preview. Optional for existing callers.', 'mainwp' ),
+                    'default'     => false,
+                ),
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'description' => __( 'Preview mode', 'mainwp' ),
+                    'default'     => false,
+                ),
             ),
         );
     }
@@ -3231,9 +3387,12 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     private static function get_activate_theme_output_schema(): array {
         return array(
             'type'       => 'object',
-            'properties' => array(
-                'activated' => array( 'type' => 'boolean' ),
-                'theme'     => array( 'type' => 'object' ),
+            'properties' => array_merge(
+                self::get_activation_preview_output_properties(),
+                array(
+                    'activated' => array( 'type' => 'boolean' ),
+                    'theme'     => array( 'type' => 'object' ),
+                )
             ),
         );
     }
@@ -3246,6 +3405,16 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function execute_activate_site_theme( $input ) {
         $input = MainWP_Abilities_Util::normalize_input( $input );
+
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        if ( $dry_run && $confirm ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'Cannot specify both dry_run and confirm.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
 
         $site = MainWP_Abilities_Util::resolve_site( $input['site_id_or_domain'] ?? null );
         if ( is_wp_error( $site ) ) {
@@ -3270,6 +3439,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 __( 'Theme slug is required.', 'mainwp' ),
                 array( 'status' => 400 )
             );
+        }
+
+        if ( $dry_run ) {
+            return self::build_activation_preview( $site, array( $theme_slug ), 'themes', true );
         }
 
         $result = MainWP_Connect::fetch_url_authed(

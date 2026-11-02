@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.4
 Requires PHP: 8.3
-Stable tag: 6.4
+Stable tag: 6.4.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -153,6 +153,52 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.4.1 - 11-3-2026 =
+
+* Added: Command Palette support for searching sites and clients, with shortcuts to open or sync sites.
+* Added: Preview and confirmation support for plugin and theme changes through MainWP MCP.
+* Added: Connected AI tools can now access configured API Backups providers and saved backup request dates.
+* Added: WordPress 6.9 requirement notice when setting up MainWP MCP or MainWP Control on older installations.
+* Added: Separate Team Control permissions for deleting backup snapshots and running Clean Up.
+* Added: Access keys for system cron URLs, with a 60-day transition period for existing installations.
+* Fixed: Improved automatic cleanup of local backup files after temporary backup and transfer activity completes.
+* Fixed: Improved retention protection for delayed, retried, and resumed cloud backup uploads.
+* Fixed: Prevented overlapping backup checks caused by repeated update actions.
+* Fixed: Applied the Require a Backup Before an Update setting consistently across Updates, Plugins, and Themes pages.
+* Fixed: Preserved date and other filename placeholders when saving backup tasks.
+* Fixed: Resolved certificate errors when configuring Amazon S3 or Wasabi storage with dotted bucket names.
+* Fixed: Restored the ability to change S3 storage encryption back to None.
+* Fixed: Improved backup setup error messages and allowed Test Restore checks to retry after saving Backup Settings.
+* Fixed: Prevented duplicate backup failure messages and improved text wrapping in progress dialogs.
+* Fixed: Prevented duplicate featured image attachments when reopening posts in Legacy Edit.
+* Fixed: Prevented action buttons from overflowing Manage Plugins and Manage Themes results.
+* Fixed: Improved Daily Digest email formatting in plain-text and HTML modes and removed broken version links.
+* Fixed: Corrected site costs, license types, renewal dates, and site and client cost shares returned to connected AI tools.
+* Fixed: Restored progress tracking for background synchronization and update operations through connected tools.
+* Fixed: Corrected event timestamps and time zone information in Uptime Monitoring alert emails.
+* Fixed: Improved compatibility and error reporting when integrations update Dashboard settings.
+* Fixed: Prevented warnings when integrations retrieve default advanced settings.
+* Fixed: Corrected Keyword Monitoring checks for all request methods, including empty pages and pages containing only 0.
+* Fixed: Corrected Uptime Monitoring notifications when required keywords are missing.
+* Fixed: Corrected Uptime Monitoring charts to display average daily response times instead of inflated totals.
+* Fixed: Improved AI page layouts, Knowledge descriptions, and related interface text.
+* Fixed: Prevented missing MainWP Child version information from incorrectly blocking update previews and actions.
+* Fixed: Displayed an error when site settings cannot be saved.
+* Fixed: Corrected Client and Cost Tracker labels, help links, and form behavior.
+* Fixed: Updated Uptime and Site Health Monitoring help links.
+* Fixed: Corrected weekday, backup tolerance, and Translation Updates labels.
+* Fixed: Prevented mobile Overview page visits from changing saved desktop widget layouts.
+* Fixed: Ensured suspending or reactivating clients through Edit Client or connected tools also updates their associated sites.
+* Fixed: Improved error reporting when extensions cannot access a site or lose its connection.
+* Fixed: Improved license refresh and licensing guidance for MainWP Pro members.
+* Fixed: Restored Manage Themes access and theme activation for Team Control users with the Activate Themes permission.
+* Updated: Improved the Light/Dark mode switch and Dashboard menu accessibility.
+* Updated: Strengthened Team Control permission checks for accessing Dashboard settings through the REST API.
+* Updated: Masked passwords and other credentials in site import logs and failed-row CSV exports.
+* Updated: Updated the bundled phpseclib cryptography library to version 3.0.58.
+* Maintenance: Prepared Built-In Backups for future compatibility improvements.
+* Maintenance: Improved automated backup settings and release testing.
 
 = 6.4 - 10-29-2026 =
 

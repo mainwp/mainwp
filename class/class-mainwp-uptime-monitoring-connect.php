@@ -993,6 +993,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         // forced status down.
         if ( ! $keywordFound ) {
             $status = static::DOWN;
+            // The status word was written before the keyword check.
+            $heart_msg = "{$http_code} - down." . substr( $heart_msg, strlen( "{$http_code} - {$_status_str}" ) );
         }
 
         $max_retries = static::get_apply_setting( 'maxretries', (int) $monitor->maxretries, $global_settings, -1, 0 );

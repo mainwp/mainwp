@@ -323,7 +323,7 @@ class MainWP_Backup_Inflight_Collation_Test extends \WP_UnitTestCase {
 			}
 			return $sql;
 		};
-		$broken     = static function ( callable $read ) use ( $wpdb, $break ) {
+		$broken = static function ( callable $read ) use ( $wpdb, $break ) {
 			add_filter( 'query', $break );
 			$suppressed = $wpdb->suppress_errors( true );
 			try {

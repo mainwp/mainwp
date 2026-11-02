@@ -7,6 +7,10 @@
  * The in-flight incremental check must still read correctly there, and a
  * failed read must keep snapshots without claiming a backup is running.
  *
+ * Each test converts the shared legacy tables, so the suite must not share its
+ * database with another PHPUnit run: the ALTER waits on that run's open
+ * transaction and then changes collations underneath it.
+ *
  * @package MainWP\Dashboard\Tests
  */
 
@@ -67,7 +71,8 @@ class MainWP_Backup_Inflight_Collation_Test extends \WP_UnitTestCase {
 
 		$snapshot = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
 		$column   = $wpdb->get_row( $wpdb->prepare( 'SHOW FULL COLUMNS FROM %i LIKE %s', $snapshot, 'run_key' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture reads column metadata.
-		$this->assertNotEmpty( $column->Collation, 'The snapshot run_key column must exist.' ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
+		$this->assertNotNull( $column, 'The snapshot run_key column must exist.' );
+		$this->assertNotEmpty( $column->Collation, 'The snapshot run_key column must have a collation.' ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
 		$snapshot_collation = (string) $column->Collation; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
 		$charset            = strtok( $snapshot_collation, '_' );
 		$legacy_collation   = $charset . '_unicode_ci' === $snapshot_collation ? $charset . '_general_ci' : $charset . '_unicode_ci';

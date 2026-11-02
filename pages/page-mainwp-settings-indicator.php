@@ -172,11 +172,13 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_minimumIPDelay'                        => 1000,
             'mainwp_maximumSyncRequests'                   => 8,
             'mainwp_maximumInstallUpdateRequests'          => 3,
+            'mainwp_maximum_install_update_requests'       => 3, // REST v2 name for mainwp_maximumInstallUpdateRequests.
             'mainwp_maximum_uptime_monitoring_requests'    => 10,
             'mainwp_child_request_timeout'                 => '',
             'mainwp_optimize'                              => 1,
             'mainwp_wp_cron'                               => 1,
             'mainwp_sslVerifyCertificate'                  => 1,
+            'mainwp_ssl_verify_certificate'                => 1, // REST v2 name for mainwp_sslVerifyCertificate.
             'mainwp_verify_connection_method'              => 1,
             'mainwp_connect_signature_algo'                => defined( 'OPENSSL_ALGO_SHA256' ) ? (int) OPENSSL_ALGO_SHA256 : 1,
             'mainwp_forceUseIPv4'                          => 0,

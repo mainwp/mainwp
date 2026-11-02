@@ -705,6 +705,26 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * MWP-2096: the advanced settings read falls back to the Dashboard's defaults.
+	 *
+	 * The read looked up two defaults keys that did not exist, which raised an
+	 * undefined array key warning and reported 0 for both unset options.
+	 */
+	public function test_advanced_settings_returns_dashboard_defaults_for_unset_options(): void {
+		$this->authenticate_as_admin();
+
+		delete_option( 'mainwp_maximumInstallUpdateRequests' );
+		delete_option( 'mainwp_sslVerifyCertificate' );
+
+		$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/settings/advanced' );
+		$data     = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 3, $data['data']['mainwp_maximum_install_update_requests'] );
+		$this->assertSame( 1, $data['data']['mainwp_ssl_verify_certificate'] );
+	}
+
+	/**
 	 * Item 8: all four daily update params describe the integer value they accept.
 	 */
 	public function test_all_daily_update_params_registered_as_integer_enum(): void {

@@ -473,15 +473,8 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
      * @param mixed             $expected Saved value.
      */
     private function assert_write_result( $response, $option, $path, $expected ): void {
-        if ( 'mainwp_maximumRequests' === $option ) {
-            // The existing response builder reads an undefined defaults key after saving.
-            $this->assertSame( 500, $response->get_status() );
-            $this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
-            $this->assertStringContainsString( 'mainwp_maximum_install_update_requests', $response->get_data()['message'] );
-        } else {
-            $this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
-            $this->assertSame( 1, $response->get_data()['success'] );
-        }
+        $this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+        $this->assertSame( 1, $response->get_data()['success'] );
         $this->assertSame( 0, $this->child_calls );
         if ( 'job' === $option ) {
             $id     = $response->get_data()[ $path[0] ];
@@ -647,29 +640,12 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
     /**
      * Dispatch a read with a read key.
      *
-     * The advanced reader looks up defaults that MainWP_Settings_Indicator does not
-     * define (an existing warning, logged as a follow-up), so only those warnings
-     * are ignored here.
-     *
      * @param string $route Settings route.
      * @param string $key   Key to authenticate with.
      * @return \WP_REST_Response
      */
     private function dispatch_read( $route, $key = 'read' ) {
-        $previous = null;
-        $previous = set_error_handler(
-            static function ( $errno, $errstr, $errfile, $errline ) use ( &$previous ) {
-                if ( E_WARNING === $errno && str_starts_with( $errstr, 'Undefined array key "mainwp_' ) && str_ends_with( $errfile, 'class-mainwp-rest-settings-controller.php' ) ) {
-                    return true;
-                }
-                return $previous ? $previous( $errno, $errstr, $errfile, $errline ) : false;
-            }
-        );
-        try {
-            return $this->dispatch_write( 'GET', $route, array(), $key );
-        } finally {
-            restore_error_handler();
-        }
+        return $this->dispatch_write( 'GET', $route, array(), $key );
     }
 
     /**

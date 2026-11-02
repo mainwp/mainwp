@@ -81,7 +81,7 @@ if ( empty( $heading ) ) {
                                                     <tr>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;"><?php echo $item['new'] ? '<span style="background:#7fb100;padding:3px 6px;color:#fff;font-size:0.6em">NEW</span>' : ''; ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $item['id'] ) ); ?>" style="color:#7fb100;"><?php echo esc_html( $item['name'] ); ?></a></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( $item['current'] ); ?></td>
-                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><a href="#" style="color:#7fb100;"><?php echo esc_html( $item['new_version'] ); ?></a></td>
+                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( $item['new_version'] ); ?></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo $item['trusted'] ? '<span style="background:#7fb100;padding:3px 7px;color:#fff;">Yes</span>' : '<span style="background:#444;padding:3px 7px;color:#fff;">No</span>'; ?></td>
                                                     </tr>
                                                 <?php endforeach; ?>
@@ -106,7 +106,17 @@ if ( empty( $heading ) ) {
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;"><?php echo $item['new'] ? '<span style="background:#7fb100;padding:3px 6px;color:#fff;font-size:0.6em">NEW</span>' : ''; ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $item['id'] ) ); ?>" style="color:#7fb100;"><?php echo esc_html( $item['name'] ); ?></a></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;"><?php echo esc_html( $item['plugin'] ); ?></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( $item['current'] ); ?></td>
-                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><a href="<?php echo ! empty( $item['change_log'] ) ? esc_url_raw( $item['change_log'] ) : ''; ?>" style="color:#7fb100;"><?php echo esc_html( $item['new_version'] ); ?></a></td>
+                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;">
+                                                        <?php
+                                                        $changelog_url   = ! empty( $item['change_log'] ) ? esc_url( $item['change_log'], array( 'http', 'https' ) ) : '';
+                                                        $changelog_parts = wp_parse_url( $changelog_url );
+                                                        if ( ! empty( $changelog_parts['host'] ) && ! empty( $changelog_parts['scheme'] ) ) :
+                                                            ?>
+                                                            <a href="<?php echo esc_url( $changelog_url ); ?>" style="color:#7fb100;"><?php echo esc_html( $item['new_version'] ); ?></a>
+                                                        <?php else : ?>
+                                                            <?php echo esc_html( $item['new_version'] ); ?>
+                                                        <?php endif; ?>
+                                                        </td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo $item['trusted'] ? '<span style="background:#7fb100;padding:3px 7px;color:#fff;">Yes</span>' : '<span style="background:#444;padding:3px 7px;color:#fff;">No</span>'; ?></td>
                                                     </tr>
                                                 <?php endforeach; ?>
@@ -131,7 +141,7 @@ if ( empty( $heading ) ) {
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;"><?php echo $item['new'] ? '<span style="background:#7fb100;padding:3px 6px;color:#fff;font-size:0.6em">NEW</span>' : ''; ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $item['id'] ) ); ?>" style="color:#7fb100;"><?php echo esc_html( $item['name'] ); ?></a></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;"><?php echo esc_html( $item['theme'] ); ?></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( $item['current'] ); ?></td>
-                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><a href="#" style="color:#7fb100;"><?php echo esc_html( $item['new_version'] ); ?></a></td>
+                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( $item['new_version'] ); ?></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo $item['trusted'] ? '<span style="background:#7fb100;padding:3px 7px;color:#fff;">Yes</span>' : '<span style="background:#444;padding:3px 7px;color:#fff;">No</span>'; ?></td>
                                                     </tr>
                                                 <?php endforeach; ?>

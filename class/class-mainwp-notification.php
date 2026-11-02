@@ -241,19 +241,83 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             )
         );
 
+        if ( $plain_text ) {
+            $formated_content = self::daily_digest_plain_text( $formated_content );
+        }
+
+        $digest_mailer   = null;
+        $set_alternative = static function ( $mailer ) use ( &$digest_mailer ) {
+            // Let mailer integrations keep an alternative they already supplied.
+            if ( 'text/html' === $mailer->ContentType && '' === $mailer->AltBody ) {
+                $mailer->AltBody = self::daily_digest_plain_text( $mailer->Body );
+                $digest_mailer   = $mailer;
+            }
+        };
+        if ( ! $plain_text ) {
+            add_action( 'phpmailer_init', $set_alternative, PHP_INT_MAX );
+        }
+
         $subject = $email_settings['subject'];
-        $sent    = static::send_wp_mail(
-            $email,
-            $subject,
-            $formated_content,
-            $content_type
-        );
+        try {
+            $sent = static::send_wp_mail(
+                $email,
+                $subject,
+                $formated_content,
+                $content_type
+            );
+        } finally {
+            remove_action( 'phpmailer_init', $set_alternative, PHP_INT_MAX );
+            // Keep generated content out of later sends through a reused mailer.
+            if ( null !== $digest_mailer ) {
+                $digest_mailer->AltBody = '';
+            }
+        }
         if ( $sent ) {
             MainWP_Logger::instance()->log_update_check( 'daily digest :: send mail :: successful :: ' . $email );
         } else {
             MainWP_Logger::instance()->log_update_check( 'daily digest :: send mail :: failed :: ' . $email );
         }
         return true;
+    }
+
+
+    /**
+     * Convert the rendered digest, including custom templates, to readable text.
+     *
+     * @param string $html Rendered email.
+     * @return string
+     */
+    private static function daily_digest_plain_text( $html ) {
+        // Custom templates may already render plain text.
+        if ( wp_strip_all_tags( $html ) === trim( $html ) ) {
+            return $html;
+        }
+
+        $text = preg_replace( '/<head\b[^>]*>.*?<\/head>/is', '', $html );
+        $text = preg_replace( '/[\r\n\t]+/', ' ', $text );
+        $text = preg_replace_callback(
+            '/<a\b[^>]*\s+href\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))[^>]*>(.*?)<\/a>/is',
+            static function ( $matches ) {
+                $url = $matches[3];
+                if ( ! empty( $matches[1] ) ) {
+                    $url = $matches[1];
+                } elseif ( ! empty( $matches[2] ) ) {
+                    $url = $matches[2];
+                }
+                $url = esc_url_raw( html_entity_decode( $url, ENT_QUOTES, 'UTF-8' ), array( 'http', 'https' ) );
+                if ( '' === $url || '#' === substr( $url, 0, 1 ) ) {
+                    return $matches[4];
+                }
+                return $matches[4] . ' (' . $url . ')';
+            },
+            $text
+        );
+        $text = preg_replace( '/<\/t[dh]>\s*<t[dh]\b[^>]*>/i', ' | ', $text );
+        $text = preg_replace( '/<br\b[^>]*>|<\/(?:p|div|h[1-6]|tr|table|li)>/i', "\n", $text );
+        $text = html_entity_decode( wp_strip_all_tags( $text ), ENT_QUOTES, 'UTF-8' );
+        $text = preg_replace( '/[^\S\n]+/u', ' ', $text );
+        $text = preg_replace( '/ *\n */', "\n", $text );
+        return trim( preg_replace( '/\n{3,}/', "\n\n", $text ) );
     }
 
 

@@ -2071,4 +2071,13 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
         return false;
     }
+
+    /**
+     * Whether WordPress can register abilities for connected tools.
+     *
+     * @return bool
+     */
+    public static function is_abilities_api_available(): bool {
+        return function_exists( 'wp_register_ability' );
+    }
 }

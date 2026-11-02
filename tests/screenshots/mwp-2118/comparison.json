@@ -1,0 +1,44 @@
+{
+  "wordpress": "7.1.2",
+  "abilities_available": true,
+  "before_revision": "7a60d091747dc371c3c7b606b79ae9f21f4eb8ac",
+  "after_source_revision": "a7a2bde80f82d5f917d2097841f3014189021b9a",
+  "pages": {
+    "ai": {
+      "same_content": true,
+      "same_png_bytes": true,
+      "before_sha256": "f3249fc2946534554e375e569bec622ee016b3c9d4fb2ae81544ed889d7eca88",
+      "after_sha256": "f3249fc2946534554e375e569bec622ee016b3c9d4fb2ae81544ed889d7eca88",
+      "screenshot": "overview.png"
+    },
+    "Knowledge": {
+      "same_content": true,
+      "same_png_bytes": true,
+      "before_sha256": "9fe27f9b06cd4f6072a1d09be6a4eb193e78b8484a89dcb4d1b9a22ef149c90d",
+      "after_sha256": "9fe27f9b06cd4f6072a1d09be6a4eb193e78b8484a89dcb4d1b9a22ef149c90d",
+      "screenshot": "knowledge.png"
+    },
+    "mainwp-mcp": {
+      "same_content": true,
+      "same_png_bytes": true,
+      "before_sha256": "0811799c05efd6bbb47f7dccbdfd020e4e50c3af6d0d894402c3323603a0faee",
+      "after_sha256": "0811799c05efd6bbb47f7dccbdfd020e4e50c3af6d0d894402c3323603a0faee",
+      "screenshot": "mcp.png"
+    },
+    "mainwp-control": {
+      "same_content": true,
+      "same_png_bytes": true,
+      "before_sha256": "27819e117dbb68cfdb8846f55917fd0da053ca551924760ea81a58489e301f52",
+      "after_sha256": "27819e117dbb68cfdb8846f55917fd0da053ca551924760ea81a58489e301f52",
+      "screenshot": "control.png"
+    }
+  },
+  "debug_logging_enabled": true,
+  "debug_log_before_bytes": 0,
+  "debug_log_after_bytes": 0,
+  "restoration": {
+    "file_differences": 0,
+    "database_differences": 0,
+    "tables": 40
+  }
+}

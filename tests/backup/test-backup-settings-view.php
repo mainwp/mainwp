@@ -18,6 +18,7 @@ use MainWP\Dashboard\MainWP_Settings;
 use MainWP\Dashboard\MainWP_System_Handler;
 
 require_once __DIR__ . '/class-mainwp-backup-settings-staff-fixtures.php';
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 
 /**
  * Class MainWP_Backup_Settings_View_Test
@@ -25,6 +26,46 @@ require_once __DIR__ . '/class-mainwp-backup-settings-staff-fixtures.php';
 class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 
 	use Backup_Settings_Staff_Fixtures;
+
+	use Backup_Private_Root_Fixture;
+
+	/**
+	 * Saving Backup Settings retries a cached failure on the next sampler check.
+	 */
+	public function test_mwp_2130_settings_save_clears_capability_cache(): void {
+		$this->set_up_private_root();
+		$this->set_current_user_as_admin();
+		$option = \MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION;
+		$cached = array(
+			'capable'    => false,
+			'reason'     => 'CREATE denied',
+			'checked_at' => time(),
+		);
+		update_option( $option, $cached );
+		$saved_post = $_POST;
+		try {
+			$_POST = array(
+				'submit'   => '1',
+				'wp_nonce' => 'invalid',
+			);
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( $cached, get_option( $option ), 'An invalid nonce must preserve the cached result.' );
+			$_POST['wp_nonce']                      = wp_create_nonce( 'BackupSettings' );
+			$_POST['mainwp_options_backupOnServer'] = '-1';
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( $cached, get_option( $option ), 'A rejected save must preserve the cached result.' );
+			unset( $_POST['mainwp_options_backupOnServer'] );
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertFalse( get_option( $option ), 'A successful save must clear the cached verdict.' );
+			$method   = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler::class, 'ensure_capable' );
+			$retry_at = time() + 5;
+			$method->invoke( \MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler::instance(), $retry_at );
+			$this->assertSame( $retry_at, get_option( $option )['checked_at'], 'The next sampler check must record a fresh probe.' );
+		} finally {
+			$this->tear_down_private_root();
+			$_POST = $saved_post;
+		}
+	}
 
 	/**
 	 * Invalid counts stay beside their field without losing other form edits.

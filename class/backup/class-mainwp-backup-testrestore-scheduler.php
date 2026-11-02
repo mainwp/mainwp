@@ -197,7 +197,7 @@ class MainWP_Backup_TestRestore_Scheduler { // phpcs:ignore Generic.Classes.Open
     }
 
     /**
-     * One-line operator notice when the host cannot host a sandbox; empty
+     * Operator notice when the host cannot host a sandbox; empty
      * otherwise. Reads only the cached verdict the lane populates - never
      * probes - so a surfacing layer can call it cheaply on every render.
      *
@@ -210,9 +210,14 @@ class MainWP_Backup_TestRestore_Scheduler { // phpcs:ignore Generic.Classes.Open
         }
 
         $reason = isset( $cached['reason'] ) ? (string) $cached['reason'] : '';
-        return '' !== $reason
-            ? $reason
-            : esc_html__( 'Test-restore needs the database CREATE privilege on this dashboard host.', 'mainwp' );
+        if ( '' === $reason ) {
+            return __( 'Test Restore stays off because the sandbox could not be set up on this Dashboard server.', 'mainwp' );
+        }
+        if ( false === strpos( $reason, 'GRANT SELECT' )
+            && ( false !== strpos( $reason, 'create database:' ) || false !== strpos( $reason, 'CREATE privilege' ) ) ) {
+            $reason .= "\n\n" . MainWP_Backup_TestRestore_Sandbox::database_privilege_guidance();
+        }
+        return $reason;
     }
 
     /**

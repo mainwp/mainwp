@@ -184,7 +184,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     MainWP_Logger::instance()->debug( 'test-restore capability :: ' . $test_restore_notice );
                     ?>
                 <div class="ui small info visible message">
-                    <?php esc_html_e( 'Test Restore is not available on this Dashboard host because the restore sandbox could not be set up. The usual cause is a database user without the CREATE privilege; ask your host to grant it. For the exact reason, set the Custom Event Monitor log level to Debug, reload this page, and check the log.', 'mainwp' ); ?>
+                    <p><?php esc_html_e( 'Test Restore stays off until the sandbox can be set up.', 'mainwp' ); ?></p>
+                    <p style="white-space: pre-line;"><?php echo esc_html( $test_restore_notice ); ?></p>
+                    <p><?php esc_html_e( 'After fixing the cause, save Backup Settings to clear the cached result. Test Restore will retry on the next automatic check.', 'mainwp' ); ?></p>
                 </div>
                 <?php endif; ?>
 

@@ -716,7 +716,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( '' !== $reason ) {
                 $warnings[] = sprintf(
                     /* translators: 1: Directory path, 2: Failure reason, 3: wp-config.php constant definition. */
-                    __( 'Private backup directory "%1$s" is unavailable: %2$s. Add this line to wp-config.php: %3$s', 'mainwp' ),
+                    __( "Private backup directory \"%1\$s\" on the Dashboard server is unavailable: %2\$s.\n\nBackups downloaded from the Child site and restore working files are stored on the Dashboard server. Check write access on the Dashboard server.\n\nAdd this line to the Dashboard wp-config.php:\n%3\$s", 'mainwp' ),
                     $backup_dir,
                     $reason,
                     "define( 'MAINWP_BACKUP_PRIVATE_DIR', '/absolute/path/outside/the/web/root' );"
@@ -745,7 +745,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         foreach ( $warnings as $warning ) {
             printf(
-                '<div class="ui yellow message">%s</div>',
+                '<div class="ui yellow message" style="white-space: pre-line;">%s</div>',
                 esc_html( $warning )
             );
         }

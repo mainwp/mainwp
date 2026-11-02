@@ -206,6 +206,9 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                 <p><?php esc_html_e( 'Activate, deactivate, or explore new tools for your MainWP Dashboard.', 'mainwp' ); ?></p>
                                 <?php if ( ! MainWP_Hooks::is_pro_member() && ! static::has_pro_extension_installed( $extensions, $extensions_disabled, $all_available_extensions ) ) : ?>
                                     <div><?php esc_html_e( 'Missing something?', 'mainwp' ); ?> <a href="#" class="ui mini green button" id="mainwp-extensions-message-bulkinstall"><?php esc_html_e( 'Install Free Add-ons', 'mainwp' ); ?></a> or <a href="https://mainwp.com/signup/" class="ui mini green basic button" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Upgrade to Pro', 'mainwp' ); ?></a></div>
+                                    <?php if ( ! empty( $mainwp_api_key ) ) : ?>
+                                        <div><?php static::render_license_refresh_prompt( false, true ); ?></div>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-extensions-info-message"></i>
@@ -875,7 +878,8 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Render Purchase Notice.
      */
     public static function render_purchase_notice() {
-        $is_pro = MainWP_Hooks::is_pro_member();
+        $is_pro  = MainWP_Hooks::is_pro_member();
+        $has_key = static::has_remembered_license_key();
         ?>
         <div id="mainwp-get-purchased-extensions-modal" class="ui first coupled modal">
         <i class="close icon"></i>
@@ -887,6 +891,9 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         <input type="button" class="ui green button" id="mainwp-extensions-installnow" value="<?php esc_attr_e( 'Install Selected Add-ons', 'mainwp' ); ?>">
                     </div>
                     <div class="right aligned column">
+                        <?php if ( $is_pro || $has_key ) : ?>
+                            <?php static::render_license_refresh_prompt( $is_pro, $has_key ); ?>
+                        <?php endif; ?>
                         <?php if ( ! $is_pro ) : ?>
                         <a href="<?php echo esc_url( 'https://mainwp.com/signup/?utm_campaign=Dashboard%20-%20Upgrade%20to%20Pro&utm_source=Dashboard&utm_medium=install%20modal&utm_term=get%20mainwp%20pro' ); ?>" class="ui green basic button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'mainwp' ); ?></a>
                         <?php endif; ?>
@@ -894,6 +901,49 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 </div>
             </div>
         </div>
+        <?php
+    }
+
+    /**
+     * Whether a license key is stored and remembered.
+     *
+     * Matches render(): a key saved without Remember Key does not count, and that
+     * path also clears the cached plan.
+     *
+     * @return bool
+     */
+    private static function has_remembered_license_key() {
+        return get_option( 'mainwp_extensions_api_save_login' ) && ! empty( MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key() );
+    }
+
+    /**
+     * Render the license refresh prompt shown next to add-on purchase prompts.
+     *
+     * Pro status comes from the plan cached at the last license check. That cache goes
+     * stale, and paying members were then told to upgrade for add-ons they already
+     * own (MWP-1584). The Refresh License button re-checks the stored key and reloads
+     * the page with the current plan.
+     *
+     * @param bool $is_pro  Whether the cached plan is an active Pro plan.
+     * @param bool $has_key Whether a remembered license key is stored.
+     */
+    public static function render_license_refresh_prompt( $is_pro, $has_key ) {
+        $can_refresh = $has_key && \mainwp_current_user_can( 'dashboard', 'manage_extensions' );
+        ?>
+        <span class="mainwp-extensions-refresh-license-prompt">
+            <span class="ui small text">
+                <?php if ( $is_pro ) : ?>
+                    <?php esc_html_e( 'MainWP Pro includes all MainWP add-ons.', 'mainwp' ); ?>
+                <?php else : ?>
+                    <?php esc_html_e( 'Already on MainWP Pro?', 'mainwp' ); ?>
+                <?php endif; ?>
+                <a href="https://docs.mainwp.com/troubleshooting/troubleshoot-extension-licensing-issues" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Licensing help', 'mainwp' ); ?></a>
+            </span>
+            <?php if ( $can_refresh ) : ?>
+                &nbsp;<a href="javascript:void(0);" class="ui basic button mainwp-extensions-refresh-license" data-failed-text="<?php esc_attr_e( 'Could not refresh your license. Please try again.', 'mainwp' ); ?>"><i class="sync icon"></i> <?php esc_html_e( 'Refresh License', 'mainwp' ); ?></a>
+                <span class="ui small red text mainwp-extensions-refresh-license-status" role="status"></span>
+            <?php endif; ?>
+        </span>
         <?php
     }
 

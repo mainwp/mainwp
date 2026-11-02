@@ -425,6 +425,46 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
         }
     }
 
+    /** A successful re-check of a remembered key replaces the cached plan, so Pro status follows the license server. */
+    public function test_test_login_refreshes_remembered_plan(): void {
+        $this->right( 'manage_extensions', true );
+        update_option( 'mainwp_extensions_api_save_login', true );
+        update_option( 'mainwp_extensions_plan_info', '' );
+        $this->assertFalse( \MainWP\Dashboard\MainWP_Hooks::is_pro_member() );
+        $plan                        = array(
+            'plan_purchased' => 'lifetime',
+            'plan_status'    => 'active',
+        );
+        $this->http_response['body'] = wp_json_encode(
+            array(
+                'success'   => true,
+                'plan_info' => $plan,
+            )
+        );
+        $response                    = json_decode( $this->ajax( 'mainwp_extension_testextensionapilogin' ), true );
+        $this->assertSame( array( 'result' => 'SUCCESS' ), $response );
+        $this->assertSame( $plan, json_decode( get_option( 'mainwp_extensions_plan_info' ), true ) );
+        $this->assertTrue( \MainWP\Dashboard\MainWP_Hooks::is_pro_member() );
+    }
+
+    /** A key the user chose not to remember keeps the plan cache empty, as the save path does. */
+    public function test_test_login_leaves_unremembered_plan_alone(): void {
+        $this->right( 'manage_extensions', true );
+        update_option( 'mainwp_extensions_plan_info', '' );
+        $this->http_response['body'] = wp_json_encode(
+            array(
+                'success'   => true,
+                'plan_info' => array(
+                    'plan_purchased' => 'lifetime',
+                    'plan_status'    => 'active',
+                ),
+            )
+        );
+        $response                    = json_decode( $this->ajax( 'mainwp_extension_testextensionapilogin' ), true );
+        $this->assertSame( array( 'result' => 'SUCCESS' ), $response );
+        $this->assertSame( '', get_option( 'mainwp_extensions_plan_info' ) );
+    }
+
     /**
      * Transport messages under enabled and disabled certificate verification.
      *

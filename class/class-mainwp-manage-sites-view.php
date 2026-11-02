@@ -944,6 +944,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <?php if ( $updated && ( ! class_exists( Api_Backups_Settings::class ) || ! Api_Backups_Settings::get_instance()->has_credential_save_failed() ) ) { ?>
             <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
+            <?php } elseif ( false === $updated && isset( $_POST['submit'], $_POST['mainwp_managesites_edit_siteadmin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- The save handler verifies the nonce; this condition only displays its outcome. ?>
+            <div class="ui red message"><?php esc_html_e( 'Some child site settings could not be saved. Review the settings and try again.', 'mainwp' ); ?></div>
             <?php } ?>
             <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data" class="ui form">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>

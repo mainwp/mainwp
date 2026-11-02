@@ -1103,6 +1103,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param object $website Child site object.
      * @param mixed  $option  Option to update.
      * @param mixed  $value   Value to update with.
+     *
+     * @return false|null False when the read or write fails; null on success.
      */
     public function update_website_option( $website, $option, $value ) {
 
@@ -1114,6 +1116,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $table_name = esc_sql( $this->table_name( 'wp_options' ) );
         $rslt       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name FROM {$table_name} WHERE wpid = %d AND name = %s", $site_id, $option ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        if ( ! empty( $this->wpdb->last_error ) ) {
+            return false;
+        }
+
         if ( empty( $rslt ) ) {
             $written = $this->wpdb->insert(
                 $this->table_name( 'wp_options' ),
@@ -1134,9 +1140,15 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
         }
 
-        if ( false !== $written && is_string( $option ) ) {
+        if ( false === $written ) {
+            return false;
+        }
+
+        if ( is_string( $option ) ) {
             MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( array( $option => $value ) );
         }
+
+        return null;
     }
 
 
@@ -3734,6 +3746,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     } else {
                         MainWP_Credential_Storage::commit_credential_intent( $staged );
                     }
+                }
+                if ( false === $updated ) {
+                    return false;
                 }
                 $this->wpdb->update(
                     $this->table_name( 'wp_settings_backup' ),

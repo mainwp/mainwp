@@ -416,12 +416,19 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param object|int $website Child site object or ID.
      * @param bool       $locked  Lock state.
+     *
+     * @return false|null False when an option write fails; null otherwise.
      */
     public static function set_lock( $website, $locked ) {
-        MainWP_DB::instance()->update_website_option( $website, self::OPTION_LOCK, $locked ? 1 : 0 );
+        $updated = false !== MainWP_DB::instance()->update_website_option( $website, self::OPTION_LOCK, $locked ? 1 : 0 );
         if ( $locked ) {
-            MainWP_DB::instance()->update_website_option( $website, self::OPTION_PENDING, '' );
+            $updated = false !== MainWP_DB::instance()->update_website_option( $website, self::OPTION_PENDING, '' ) && $updated;
         }
+        if ( ! $updated ) {
+            return false;
+        }
+
+        return null;
     }
 
     /**
@@ -432,6 +439,8 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param object|int $website Child site object ( needs id + siteurl ) or site ID.
      * @param string     $new_url The URL the user set.
+     *
+     * @return false|null False when locking fails; null otherwise.
      */
     public static function after_user_set_url( $website, $new_url ) {
         if ( is_numeric( $website ) ) {
@@ -452,7 +461,9 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return;
         }
 
-        static::set_lock( $website, true );
+        if ( false === static::set_lock( $website, true ) ) {
+            return false;
+        }
         MainWP_Logger::instance()->info_for_website( $website, 'URL AUTO-CORRECT', 'Lock enabled: user-set URL [' . $new_url . '] differs from the child-reported address [' . $reported . '].' );
     }
 

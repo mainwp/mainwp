@@ -35,7 +35,7 @@ class Api_Backups_Settings {
     public static $instance = null;
 
     /**
-     * Whether a backup credential failed to save in this request.
+     * Whether a backup setting or credential failed to save in this request.
      *
      * @var bool
      */
@@ -81,7 +81,7 @@ class Api_Backups_Settings {
     }
 
     /**
-     * Whether the current site save left a previous credential in place.
+     * Whether the current site save failed to persist a backup setting or credential.
      *
      * @return bool
      */
@@ -90,7 +90,7 @@ class Api_Backups_Settings {
     }
 
     /**
-     * Show a failed credential save in the page notice area.
+     * Show a failed backup settings save in the page notice area.
      *
      * @return void
      */
@@ -100,7 +100,7 @@ class Api_Backups_Settings {
         }
         ?>
         <div class="ui red message">
-            <?php esc_html_e( 'Some backup credentials could not be saved. Their previous values were kept.', 'mainwp' ); ?>
+            <?php esc_html_e( 'Some backup settings could not be saved. Review the settings and try again.', 'mainwp' ); ?>
         </div>
         <?php
     }
@@ -1048,27 +1048,39 @@ class Api_Backups_Settings {
         }
 
         // Store the 3rd Party Backup Provider.
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_api', $api_backup_provider_name );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_api', $api_backup_provider_name ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store the 3rd Party Backup Provider Instance ID.
         $api_backup_instance_id = isset( $_POST['edit_site_module_api_backups_provider_instance_id'] ) ? sanitize_text_field( wp_unslash( $_POST['edit_site_module_api_backups_provider_instance_id'] ) ) : '';
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_instance_id', $api_backup_instance_id );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_instance_id', $api_backup_instance_id ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store the cPanel Individual API URL.
         $cpanel_api_url = isset( $_POST['cpanel_api_url'] ) ? wp_unslash( $_POST['cpanel_api_url'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Helper::update_website_option( $website_id, 'cpanel_api_url', $cpanel_api_url );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'cpanel_api_url', $cpanel_api_url ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store cPanel Individual or Global toggle.
         $mainwp_enable_wp_toolkit = isset( $_POST['mainwp_enable_wp_toolkit'] ) ? wp_unslash( $_POST['mainwp_enable_wp_toolkit'] ) : '0'; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_enable_wp_toolkit', $mainwp_enable_wp_toolkit );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_enable_wp_toolkit', $mainwp_enable_wp_toolkit ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store cPanel Individual or Global toggle.
         $enable_cpanel_individual = isset( $_POST['mainwp_enable_cpanel_individual'] ) ? wp_unslash( $_POST['mainwp_enable_cpanel_individual'] ) : '0';//phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_enable_cpanel_individual', $enable_cpanel_individual );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_enable_cpanel_individual', $enable_cpanel_individual ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store cPanel Individual Account Username.
         $cpanel_account_username = isset( $_POST['mainwp_cpanel_account_username'] ) ? wp_unslash( $_POST['mainwp_cpanel_account_username'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Helper::update_website_option( $website_id, 'cpanel_account_username', $cpanel_account_username );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'cpanel_account_username', $cpanel_account_username ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store cPanel Individual Account Password.
         $cpanel_account_password = isset( $_POST['mainwp_cpanel_account_password'] ) ? wp_unslash( $_POST['mainwp_cpanel_account_password'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1078,19 +1090,27 @@ class Api_Backups_Settings {
 
         // Store cPanel Individual Site Path.
         $cpanel_site_path = isset( $_POST['cpanel_site_path'] ) ? wp_unslash( $_POST['cpanel_site_path'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Helper::update_website_option( $website_id, 'cpanel_site_path', $cpanel_site_path );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'cpanel_site_path', $cpanel_site_path ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store Plesk Individual or Global toggle.
         $enable_plesk_individual = isset( $_POST['mainwp_enable_plesk_individual'] ) ? wp_unslash( $_POST['mainwp_enable_plesk_individual'] ) : '0'; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_enable_plesk_individual', $enable_plesk_individual );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_enable_plesk_individual', $enable_plesk_individual ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store Plesk Individual API URL.
         $plesk_api_url = isset( $_POST['plesk_api_url'] ) ? wp_unslash( $_POST['plesk_api_url'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Helper::update_website_option( $website_id, 'plesk_api_url', rtrim( $plesk_api_url, '/' ) );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'plesk_api_url', rtrim( $plesk_api_url, '/' ) ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store Plesk Individual Installation ID.
         $plesk_installation_id = isset( $_POST['plesk_installation_id'] ) ? wp_unslash( $_POST['plesk_installation_id'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_plesk_installation_id', $plesk_installation_id );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_plesk_installation_id', $plesk_installation_id ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store Plesk Individual API Key.
         $plesk_api_key = isset( $_POST['mainwp_plesk_api_key'] ) ? wp_unslash( $_POST['mainwp_plesk_api_key'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1100,19 +1120,27 @@ class Api_Backups_Settings {
 
         // Store Kinsta Individual or Global toggle.
         $enable_kinsta_individual = isset( $_POST['mainwp_enable_kinsta_individual'] ) ? wp_unslash( $_POST['mainwp_enable_kinsta_individual'] ) : '0';
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_enable_kinsta_individual', $enable_kinsta_individual );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_enable_kinsta_individual', $enable_kinsta_individual ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store Kinsta Environment ID.
         $kinsta_environment_id = isset( $_POST['kinsta_environment_id'] ) ? wp_unslash( $_POST['kinsta_environment_id'] ) : '0';
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_kinsta_environment_id', $kinsta_environment_id );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_kinsta_environment_id', $kinsta_environment_id ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store Kinsta Account Email.
         $kinsta_account_email = isset( $_POST['kinsta_account_email'] ) ? wp_unslash( $_POST['kinsta_account_email'] ) : '0';
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_kinsta_account_email', $kinsta_account_email );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_kinsta_account_email', $kinsta_account_email ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store Kinsta Company ID.
         $kinsta_company_id = isset( $_POST['kinsta_company_id'] ) ? wp_unslash( $_POST['kinsta_company_id'] ) : '0';
-        Api_Backups_Helper::update_website_option( $website_id, 'mainwp_kinsta_company_id', $kinsta_company_id );
+        if ( false === Api_Backups_Helper::update_website_option( $website_id, 'mainwp_kinsta_company_id', $kinsta_company_id ) ) {
+            $this->credential_save_failed = true;
+        }
 
         // Store Kinsta Individual API Key.
         $kinsta_api_key = isset( $_POST['mainwp_kinsta_api_key'] ) ? wp_unslash( $_POST['mainwp_kinsta_api_key'] ) : '';

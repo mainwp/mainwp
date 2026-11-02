@@ -1547,7 +1547,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 : _x( 'Ctrl+K', 'keyboard shortcut to open the command palette', 'mainwp' );
 
             /* translators: %s: Keyboard shortcut label. */
-            $command_palette_label = sprintf( esc_attr__( 'Open command palette (%s)', 'mainwp' ), $command_palette_shortcut );
+            $command_palette_label = sprintf( esc_attr__( 'Search sites, clients and commands (%s)', 'mainwp' ), $command_palette_shortcut );
         }
 
         if ( false === $custom_theme ) {
@@ -1597,9 +1597,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         if ( $show_command_palette_trigger ) :
             ?>
             <span id="mainwp-header-command-palette-actions" class="mainwp-768-hide">
-                <a href="#" class="ui button hide-if-no-js" id="mainwp-command-palette-trigger" data-tooltip="<?php echo esc_attr( $command_palette_label ); ?>" data-inverted="" data-position="left center" aria-label="<?php echo esc_attr( $command_palette_label ); ?>" onclick='if ( window.wp && wp.data && wp.data.dispatch ) { wp.data.dispatch( "core/commands" ).open(); } return false;'>
+                <button type="button" class="ui button hide-if-no-js" id="mainwp-command-palette-trigger" aria-haspopup="dialog" aria-label="<?php echo esc_attr( $command_palette_label ); ?>" onclick='if ( window.wp && wp.data && wp.data.dispatch ) { wp.data.dispatch( "core/commands" ).open(); }'>
+                    <i class="search icon" aria-hidden="true"></i>
+                    <span class="mainwp-command-palette-trigger-label"><?php echo esc_html__( 'Search sites, clients & commands', 'mainwp' ); ?></span>
                     <kbd><?php echo esc_html( $command_palette_shortcut ); ?></kbd>
-                </a>
+                </button>
             </span>
             <?php
         endif;

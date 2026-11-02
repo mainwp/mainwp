@@ -277,8 +277,9 @@ class Log_DB_Archive extends MainWP_DB {
     /**
      * Columns to copy from the live log tables into the archive tables.
      *
-     * Creates missing archive tables first. Upgrades before log DB 1.0.1.8 could skip
-     * creating them, and the stored version then never runs the install step again.
+     * Creates missing archive tables (and a missing archived_at column) first. Upgrades
+     * before log DB 1.0.1.8 could skip creating them, and the stored version then never
+     * runs the install step again.
      *
      * @return array|false Array with 'logs' and 'meta' column lists, or false when the archive cannot hold the rows.
      */
@@ -286,7 +287,7 @@ class Log_DB_Archive extends MainWP_DB {
         $archive_columns = $this->get_table_columns( 'wp_logs_archive' );
         $meta_archive    = $this->get_table_columns( 'wp_logs_meta_archive' );
 
-        if ( empty( $archive_columns ) || empty( $meta_archive ) ) {
+        if ( empty( $archive_columns ) || empty( $meta_archive ) || ! in_array( 'archived_at', $archive_columns, true ) ) {
             Log_Install::instance()->create_archive_tables();
             $archive_columns = $this->get_table_columns( 'wp_logs_archive' );
             $meta_archive    = $this->get_table_columns( 'wp_logs_meta_archive' );

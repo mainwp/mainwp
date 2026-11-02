@@ -221,6 +221,22 @@ class Test_MWP_2140_Archive_Keeps_Rows extends \WP_UnitTestCase {
     }
 
     /**
+     * An archive table left without archived_at (failed upgrade ALTER) gets the column back on Dismiss.
+     */
+    public function test_dismiss_adds_missing_archived_at_column() {
+        $this->temporary_table_like( 'wp_logs_archive', 'wp_logs' );
+        $this->temporary_table_like( 'wp_logs_meta_archive', 'wp_logs_meta' );
+        $this->seed_logs();
+        $this->assertNotContains( 'archived_at', $this->columns( 'wp_logs_archive' ), 'Precondition: archived_at missing.' );
+
+        $response = $this->dismiss( self::LOG_ID );
+
+        $this->assertArchived( self::LOG_ID );
+        $this->assertSame( array( 'success' => 'yes' ), $response );
+        $this->assertContains( 'archived_at', $this->columns( 'wp_logs_archive' ) );
+    }
+
+    /**
      * Archive columns in another order, or fewer of them, still receive the right values.
      */
     public function test_reordered_archive_columns_receive_the_right_values() {
@@ -534,11 +550,12 @@ class Test_MWP_2140_Archive_Keeps_Rows extends \WP_UnitTestCase {
      * Copy a production log table into a temporary test table.
      *
      * @param string $suffix Table suffix.
+     * @param string $source Production table suffix to copy, defaults to $suffix.
      */
-    private function temporary_table_like( string $suffix ): void {
+    private function temporary_table_like( string $suffix, string $source = '' ): void {
         global $wpdb;
         $this->assertNotFalse(
-            $wpdb->query( 'CREATE TEMPORARY TABLE ' . $this->table( $suffix ) . ' LIKE ' . MainWP_DB::instance()->get_table_name( $suffix ) ),
+            $wpdb->query( 'CREATE TEMPORARY TABLE ' . $this->table( $suffix ) . ' LIKE ' . MainWP_DB::instance()->get_table_name( '' === $source ? $suffix : $source ) ),
             $wpdb->last_error
         );
     }

@@ -831,7 +831,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
 
         $response   = MainWP_Backup_Read_Model::get_site_backup_progress( $site_id, $since );
-        $error_code = isset( $response['status'], $response['error'] ) && 'failed' === $response['status'] ? static::on_demand_failure_code( $site_id, $since, (string) $response['error']['source_text'] ) : '';
+        $error_code = isset( $response['status'], $response['error'] ) && 'failed' === $response['status'] ? self::on_demand_failure_code( $site_id, $since, (string) $response['error']['source_text'] ) : '';
         foreach ( array( 'error', 'notice' ) as $key ) {
             if ( isset( $response[ $key ] ) ) {
                 $response[ $key ] = static::humanize_backup_errors( $response[ $key ]['source_text'] );

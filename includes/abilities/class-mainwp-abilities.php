@@ -363,5 +363,6 @@ class MainWP_Abilities {
 
         // NOTE: Extensions register their own abilities in their own codebases.
         // Total core abilities: 102 (30 sites + 14 updates + 11 clients + 7 tags + 1 batch + 7 knowledge + 32 backups).
+        // API Backups adds 2 read abilities when its module is enabled (104 total).
     }
 }

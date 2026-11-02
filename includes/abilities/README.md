@@ -8,7 +8,7 @@ Last Updated: 2025-12-03
 The MainWP Abilities API provides a standardized, schema-validated interface for managing MainWP child sites, updates, clients, tags, batch operations, knowledge records, and backups. Built on WordPress's Abilities API (introduced in WP 6.9), it enables secure, discoverable operations for MCP tools, REST API consumers, and extensions.
 
 **Key Features:**
-- 104 abilities across 7 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge, mainwp-backups
+- 102 abilities, or 104 when API Backups is enabled, across 7 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge, mainwp-backups
 - JSON Schema validation for inputs and outputs; WP_Ability::execute() rejects output that fails its schema with ability_invalid_output
 - Permission callbacks with per-site ACLs
 - Batch operation support with automatic queuing
@@ -73,7 +73,7 @@ Each write's `caller_note` describes that write. Omitting it on update clears th
 
 ## Backups
 
-The `mainwp-backups` category has 34 abilities: 15 reads and 19 actions. Reads return stored evidence without contacting a site or advancing a run. Actions require `dry_run: true` for a preview or `confirm: true` to proceed. Passing both is an error. Previews apply the same authorization and refusal rules as confirmation.
+The `mainwp-backups` category has 32 abilities: 13 reads and 19 actions. Enabling API Backups adds two reads, bringing the totals to 34 abilities and 15 reads. Reads return stored evidence without contacting a site or advancing a run. Actions require `dry_run: true` for a preview or `confirm: true` to proceed. Passing both is an error. Previews apply the same authorization and refusal rules as confirmation.
 
 Backup abilities require authentication, `manage_options`, the applicable Dashboard right, and access to every target site. Backup abilities answer a missing or inaccessible target with the same not-found code. Destination credentials, encryption keys, recovery passphrases, filesystem paths, and download links are excluded from inputs and outputs. Create destinations on the Dashboard; `mainwp/create-backup-destination-v1` is not registered.
 

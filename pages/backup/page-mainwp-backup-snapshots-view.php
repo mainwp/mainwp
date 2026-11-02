@@ -1926,7 +1926,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-backup-monitor' ).hide();
             } );
 
-            function setBackupStatus( text, isError, color, progressTick ) {
+            // A failed run's error can be several paragraphs; the message panel
+            // shows it once and the progress label only names the failure.
+            var backupFailureSummaries = {
+                '<?php echo esc_js( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ); ?>': '<?php echo esc_js( esc_html__( 'Backup failed on the Dashboard server.', 'mainwp' ) ); ?>'
+            };
+
+            function backupFailureSummary( code ) {
+                return Object.prototype.hasOwnProperty.call( backupFailureSummaries, code ) ? backupFailureSummaries[ code ] : '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>';
+            }
+
+            function setBackupStatus( text, isError, color, progressTick, label ) {
                 if ( ! progressTick ) {
                     backupStatusDismissed = false;
                 }
@@ -1939,7 +1949,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
                 updateBackupMonitor();
                 if ( ! progressTick ) {
-                    $( '#mainwp-backup-phase-label' ).text( text );
+                    $( '#mainwp-backup-phase-label' ).text( label || text );
                     if ( color === 'green' ) {
                         $( '#mainwp-backup-phase-progress' ).progress( { percent: 100, autoSuccess: false } ).removeClass( 'active' );
                         window.mainwpBackupProgressSteps( $( '#mainwp-backup-phase-steps' ), 'completed', 100, 'completed', '' );
@@ -2055,7 +2065,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     if ( data.error ) {
                         stopBackupTimers();
-                        setBackupStatus( data.error, true );
+                        // Early refusals carry no status and stay short enough for the label.
+                        setBackupStatus( data.error, true, '', false, 'failed' === data.status ? backupFailureSummary( data.error_code ) : '' );
                         reenableBackupBtn();
                         showCancelBackup( false );
                         loadSnapshots( siteId );

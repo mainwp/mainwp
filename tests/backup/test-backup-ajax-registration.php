@@ -88,29 +88,32 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 	 */
 	private function get_capability_gated_actions() {
 		return array(
-			'mainwp_addbackup'                 => 'add_backup_tasks',
-			'mainwp_updatebackup'              => 'edit_backup_tasks',
-			'mainwp_removebackup'              => 'delete_backup_tasks',
-			'mainwp_pausebackup'               => 'pause_resume_backup_tasks',
-			'mainwp_resumebackup'              => 'pause_resume_backup_tasks',
-			'mainwp_native_backup_task_reset'  => 'pause_resume_backup_tasks',
-			'mainwp_backup_run_site'           => 'run_backup_tasks',
-			'mainwp_backup'                    => 'execute_backups',
-			'mainwp_backup_checkpid'           => 'execute_backups',
-			'mainwp_createbackup_getfilesize'  => 'execute_backups',
-			'mainwp_backup_getfilesize'        => 'execute_backups',
-			'mainwp_backup_download_file'      => 'execute_backups',
-			'mainwp_backup_delete_file'        => 'execute_backups',
-			'mainwp_native_backup_initiate'    => 'execute_backups',
-			'mainwp_native_backup_progress'    => 'execute_backups',
-			'mainwp_native_backup_cancel'      => 'execute_backups',
-			'mainwp_backup_refresh_archives'   => 'execute_backups',
-			'mainwp_backup_diagnostics_export' => 'execute_backups',
-			'mainwp_restore_initiate'          => 'restore_backups',
-			'mainwp_restore_rollback'          => 'restore_backups',
-			'mainwp_restore_cancel'            => 'restore_backups',
-			'mainwp_restore_progress'          => 'execute_backups',
-			'mainwp_restore_snapshot_list'     => 'execute_backups',
+			'mainwp_addbackup'                      => 'add_backup_tasks',
+			'mainwp_updatebackup'                   => 'edit_backup_tasks',
+			'mainwp_removebackup'                   => 'delete_backup_tasks',
+			'mainwp_pausebackup'                    => 'pause_resume_backup_tasks',
+			'mainwp_resumebackup'                   => 'pause_resume_backup_tasks',
+			'mainwp_native_backup_task_reset'       => 'pause_resume_backup_tasks',
+			'mainwp_backup_run_site'                => 'run_backup_tasks',
+			'mainwp_backup'                         => 'execute_backups',
+			'mainwp_backup_checkpid'                => 'execute_backups',
+			'mainwp_createbackup_getfilesize'       => 'execute_backups',
+			'mainwp_backup_getfilesize'             => 'execute_backups',
+			'mainwp_backup_download_file'           => 'execute_backups',
+			'mainwp_backup_delete_file'             => 'execute_backups',
+			'mainwp_native_backup_initiate'         => 'execute_backups',
+			'mainwp_native_backup_progress'         => 'execute_backups',
+			'mainwp_native_backup_cancel'           => 'execute_backups',
+			'mainwp_backup_refresh_archives'        => 'execute_backups',
+			'mainwp_backup_diagnostics_export'      => 'execute_backups',
+			'mainwp_restore_initiate'               => 'restore_backups',
+			'mainwp_restore_rollback'               => 'restore_backups',
+			'mainwp_restore_cancel'                 => 'restore_backups',
+			'mainwp_restore_progress'               => 'execute_backups',
+			'mainwp_restore_snapshot_list'          => 'execute_backups',
+			'mainwp_backup_snapshot_delete_preview' => 'execute_backups',
+			'mainwp_backup_snapshot_delete'         => 'execute_backups',
+			'mainwp_snapshots_cleanup'              => 'execute_backups',
 		);
 	}
 
@@ -176,6 +179,25 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 		}
 
 		$this->assertSame( array(), $missing, 'Actions not registered although the capability is allowed: ' . implode( ', ', $missing ) );
+	}
+
+	/** Registration must wait for Team Control to support the second right. */
+	public function test_delete_actions_require_supported_second_right(): void {
+		$this->skip_when_capabilities_bypassed();
+		add_filter( 'mainwp_backups_delete_right_supported', '__return_true' );
+		try {
+			foreach ( array( 'mainwp_backup_snapshot_delete_preview', 'mainwp_backup_snapshot_delete', 'mainwp_snapshots_cleanup' ) as $action ) {
+				$this->assertFalse( $this->action_registered_with_denied_cap( $action, 'delete_backups' ), $action );
+				$this->assertFalse( $this->action_registered_with_denied_cap( $action, 'execute_backups' ), $action );
+				$this->assertTrue( $this->action_registered_with_denied_cap( $action, '' ), $action );
+			}
+			$this->assertTrue( $this->action_registered_with_denied_cap( 'mainwp_backup_delete_file', 'delete_backups' ) );
+		} finally {
+			remove_filter( 'mainwp_backups_delete_right_supported', '__return_true' );
+		}
+		foreach ( array( 'mainwp_backup_snapshot_delete_preview', 'mainwp_backup_snapshot_delete', 'mainwp_snapshots_cleanup' ) as $action ) {
+			$this->assertTrue( $this->action_registered_with_denied_cap( $action, 'delete_backups' ), $action );
+		}
 	}
 
 	/**

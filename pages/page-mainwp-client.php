@@ -1624,7 +1624,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $client_id = isset( $client_fields['client_id'] ) ? intval( $client_fields['client_id'] ) : 0;
 
         $new_suspended = isset( $client_to_add['suspended'] ) ? (int) $client_to_add['suspended'] : 0;
-        $old_suspended = $new_suspended;
+        $old_suspended = 0;
 
         if ( $client_id ) {
             $old_suspended = $current_client->suspended;
@@ -1694,6 +1694,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                  * @param bool $new_suspended true|false.
                  */
                 do_action( 'mainwp_client_suspend', $inserted, $new_suspended );
+            }
+
+            // Sites follow the client only into or out of Suspended; Lead and Lost leave them alone.
+            $was_suspended = 1 === (int) $old_suspended;
+            $is_suspended  = 1 === (int) $new_suspended;
+            if ( isset( $client_to_add['suspended'] ) && $was_suspended !== $is_suspended ) {
+                MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $inserted->client_id, $is_suspended ? 1 : 0 );
             }
         }
 

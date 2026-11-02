@@ -1302,6 +1302,10 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             );
         }
 
+        if ( 1 !== (int) $client->suspended ) {
+            MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $client->client_id, 1 );
+        }
+
         $updated_client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client->client_id );
 
         if ( ! $updated_client ) {
@@ -1392,6 +1396,10 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 __( 'Failed to unsuspend client.', 'mainwp' ),
                 array( 'status' => 500 )
             );
+        }
+
+        if ( 1 === (int) $client->suspended ) {
+            MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $client->client_id, 0 );
         }
 
         $updated_client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client->client_id );

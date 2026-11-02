@@ -119,7 +119,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
                             </div>
                         </h2>
                     </div>
-                    <div class="sixteen wide center aligned column">
+                    <div class="sixteen wide center aligned column" id="mainwp-client-status-label" data-active-label="<?php esc_attr_e( 'Active', 'mainwp' ); ?>" data-suspended-label="<?php esc_attr_e( 'Suspended', 'mainwp' ); ?>">
                         <?php echo $client_status; //phpcs:ignore -- ok. ?>
                     </div>
 
@@ -181,7 +181,7 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
             <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) : ?>
             <a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_id ); ?>" class="ui green mini button"><?php esc_html_e( 'Edit Client', 'mainwp' ); ?></a>
                 <?php if ( 0 === intval( $client_info['suspended'] ) || 1 === intval( $client_info['suspended'] ) ) : ?>
-                <a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" class="ui basic mini button client-suspend-unsuspend-sites"><?php echo empty( $client_info['suspended'] ) ? esc_html__( 'Suspend', 'mainwp' ) : esc_html__( 'Unsuspend', 'mainwp' ); ?></a>
+                <a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" data-suspend-label="<?php esc_attr_e( 'Suspend', 'mainwp' ); ?>" data-unsuspend-label="<?php esc_attr_e( 'Unsuspend', 'mainwp' ); ?>" class="ui basic mini button client-suspend-unsuspend-sites"><?php echo empty( $client_info['suspended'] ) ? esc_html__( 'Suspend', 'mainwp' ) : esc_html__( 'Unsuspend', 'mainwp' ); ?></a>
                 <?php endif; ?>
             <?php endif; ?>
             <?php

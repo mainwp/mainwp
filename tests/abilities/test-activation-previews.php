@@ -123,6 +123,55 @@ class Test_Activation_Previews extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Previews require the same operation rights as mutations.
+	 *
+	 * @dataProvider operations
+	 * @param string $operation Ability operation.
+	 * @param string $key Input key.
+	 * @param mixed  $target Requested target.
+	 * @return void
+	 */
+	public function test_preview_requires_operation_right( $operation, $key, $target ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$right   = 'theme' === $key ? 'activate_themes' : 'activate_deactivate_plugins';
+		$calls   = 0;
+		$filter  = static function ( $allowed, $cap_type, $cap ) use ( $right ) {
+			return 'dashboard' === $cap_type && $right === $cap ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $filter, 10, 3 );
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function () use ( &$calls ) {
+				++$calls;
+				return array( 'success' => true );
+			}
+		);
+		try {
+			$request = new \WP_REST_Request( 'POST', '/wp-abilities/v1/abilities/mainwp/' . $operation . '-v1/run' );
+			$request->set_header( 'Content-Type', 'application/json' );
+			$request->set_body(
+				wp_json_encode(
+					array(
+						'input' => array(
+							'site_id_or_domain' => $site_id,
+							$key                => $target,
+							'dry_run'           => true,
+						),
+					)
+				)
+			);
+			$response = rest_do_request( $request );
+			$this->assertSame( 403, $response->get_status() );
+			$this->assertSame( 'mainwp_insufficient_right', $response->get_data()['code'] );
+			$this->assertSame( 0, $calls, 'A denied preview must not contact Child.' );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $filter, 10 );
+		}
+	}
+
+	/**
 	 * Missing inventory must not be reported as an inactive target.
 	 *
 	 * @dataProvider operations
@@ -174,7 +223,8 @@ class Test_Activation_Previews extends MainWP_Abilities_Test_Case {
 		$calls   = array();
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
-			function ( $result, $site, $what, $params ) use ( &$calls ) {
+			function ( $result, $site, $what, $params ) use ( &$calls, $site_id ) {
+				$this->assertSame( $site_id, (int) $site->id );
 				$calls[] = array( $what, $params );
 				return array( 'success' => true );
 			},

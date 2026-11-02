@@ -81,6 +81,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->add_action( 'mainwp_leftmenu_filter_group', array( &$this, 'mainwp_leftmenu_filter_group' ) );
         $this->add_action( 'mainwp_widgets_order', array( &$this, 'ajax_widgets_order' ) );
         $this->add_action( 'mainwp_save_settings', array( &$this, 'ajax_mainwp_save_settings' ) );
+        $this->add_action( 'mainwp_cron_secret_rotate', array( &$this, 'mainwp_cron_secret_rotate' ) );
         $this->add_action( 'mainwp_guided_tours_option_update', array( &$this, 'ajax_guided_tours_option_update' ) );
         $this->add_action( 'mainwp_help_modal_content_update', array( &$this, 'ajax_mainwp_help_modal_content_update' ) );
         $this->add_action( 'mainwp_widgets_connections_status_details_display_rows', array( MainWP_Connection_Status::instance(), 'ajax_display_rows' ) );
@@ -752,6 +753,22 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         }
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         die( -1 );
+    }
+
+    /** Rotates the stored HTTP cron key for Dashboard settings managers. */
+    public function mainwp_cron_secret_rotate() {
+        // Same audience as the Cron page key display.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) || MainWP_System_Utility::is_team_control_staff() ) {
+            wp_send_json_error( __( 'Error - insufficient permissions!', 'mainwp' ) );
+        }
+        $this->secure_request( 'mainwp_cron_secret_rotate' );
+        if ( MainWP_Server_Information::is_cron_secret_configured() ) {
+            wp_send_json_error( __( 'The key is set by MAINWP_CRON_SECRET in wp-config.php. Change it there.', 'mainwp' ) );
+        }
+        if ( ! update_option( 'mainwp_cron_secret', MainWP_Server_Information::generate_cron_secret(), false ) ) {
+            wp_send_json_error( __( 'Could not rotate the cron key. Please try again.', 'mainwp' ) );
+        }
+        wp_send_json_success( array( 'url' => MainWP_Server_Information::get_cron_url() ) );
     }
 
     /**

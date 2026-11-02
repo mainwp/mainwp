@@ -1184,6 +1184,11 @@ table.mainwp-manage-wpsites-table .error a {
     margin-top: 1em !important;
 }
 
+.mainwp-knowledge-read-only-widget .mainwp-knowledge-section,
+.mainwp-knowledge-read-only-widget .mainwp-knowledge-records.ui.styled.accordion {
+    margin-bottom: 0;
+}
+
 .mainwp-knowledge-read-only-widget .mainwp-knowledge-add,
 .mainwp-knowledge-read-only-widget .mainwp-knowledge-edit,
 .mainwp-knowledge-read-only-widget .mainwp-knowledge-delete,

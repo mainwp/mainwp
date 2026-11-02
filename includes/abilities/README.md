@@ -8,7 +8,7 @@ Last Updated: 2025-12-03
 The MainWP Abilities API provides a standardized, schema-validated interface for managing MainWP child sites, updates, clients, tags, batch operations, knowledge records, and backups. Built on WordPress's Abilities API (introduced in WP 6.9), it enables secure, discoverable operations for MCP tools, REST API consumers, and extensions.
 
 **Key Features:**
-- 102 abilities across 7 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge, mainwp-backups
+- 104 abilities across 7 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge, mainwp-backups
 - JSON Schema validation for inputs and outputs; WP_Ability::execute() rejects output that fails its schema with ability_invalid_output
 - Permission callbacks with per-site ACLs
 - Batch operation support with automatic queuing
@@ -51,6 +51,7 @@ includes/abilities/
 ├── class-mainwp-abilities-knowledge.php # 7 knowledge abilities
 ├── class-mainwp-abilities-batch.php    # 1 batch job status ability
 ├── class-mainwp-abilities-backups.php  # 32 backup abilities
+├── class-mainwp-abilities-api-backups.php # 2 API Backups abilities
 └── README.md                           # This file
 ```
 
@@ -58,8 +59,8 @@ includes/abilities/
 
 The `mainwp-knowledge` category provides seven abilities:
 
-- `mainwp/get-site-knowledge-v1`: full context, bodyless skills and memories, and authorized client knowledge.
-- `mainwp/get-client-knowledge-v1`: the client's own context and bodyless items.
+- `mainwp/get-site-knowledge-v1`: full context, bodyless skills and memories, authorized client knowledge, and agency records.
+- `mainwp/get-client-knowledge-v1`: the client's own context, bodyless items, and agency records.
 - `mainwp/get-knowledge-record-v1`: one full record by ID.
 - `mainwp/list-knowledge-v1`: visible records without bodies, with filters, pagination, and a matching total.
 - `mainwp/create-knowledge-record-v1`: preview or create a record.
@@ -72,7 +73,7 @@ Each write's `caller_note` describes that write. Omitting it on update clears th
 
 ## Backups
 
-The `mainwp-backups` category has 32 abilities: 13 reads and 19 actions. Reads return stored evidence without contacting a site or advancing a run. Actions require `dry_run: true` for a preview or `confirm: true` to proceed. Passing both is an error. Previews apply the same authorization and refusal rules as confirmation.
+The `mainwp-backups` category has 34 abilities: 15 reads and 19 actions. Reads return stored evidence without contacting a site or advancing a run. Actions require `dry_run: true` for a preview or `confirm: true` to proceed. Passing both is an error. Previews apply the same authorization and refusal rules as confirmation.
 
 Backup abilities require authentication, `manage_options`, the applicable Dashboard right, and access to every target site. Backup abilities answer a missing or inaccessible target with the same not-found code. Destination credentials, encryption keys, recovery passphrases, filesystem paths, and download links are excluded from inputs and outputs. Create destinations on the Dashboard; `mainwp/create-backup-destination-v1` is not registered.
 
@@ -91,6 +92,8 @@ Backup abilities require authentication, `manage_options`, the applicable Dashbo
 | `mainwp/list-backup-destinations-v1` | GET | Lists destinations without credentials or filesystem paths. |
 | `mainwp/get-backup-destination-v1` | GET | Returns one destination's public configuration. |
 | `mainwp/get-backup-settings-v1` | GET | Returns backup policy settings and boolean encryption and recovery configuration flags. |
+| `mainwp/list-api-backups-providers-v1` | GET | Lists providers with stored credentials, their enabled indicators, and accessible site counts. |
+| `mainwp/list-api-backups-site-status-v1` | GET | Lists accessible sites and their stored backup request dates. Completion status is unknown. |
 | `mainwp/run-site-backup-v1` | POST | Previews or starts an on-demand backup and returns its poll target. |
 | `mainwp/run-backup-task-v1` | POST | Previews or starts a saved task and returns its poll target. |
 | `mainwp/cancel-site-backup-v1` | DELETE | Previews or requests cancellation and reports the confirmed result. |
@@ -402,7 +405,7 @@ Every ability must have these tests in `tests/abilities/test-{ability-name}-abil
    - Call with invalid input
    - Assert `ability_invalid_input` error
 
-**Note on Output Validation**: The Abilities API validates inputs at runtime but does not enforce output schemas. The `output_schema` serves as documentation for MCP tools and REST consumers. Tests must verify that actual output conforms to the documented schema. Use formatter helpers (`MainWP_Abilities_Util::format_*_for_output()`) to ensure consistency.
+**Note on Output Validation**: WordPress 6.9 validates inputs and outputs at runtime. `WP_Ability::execute()` returns `ability_invalid_output` when a result fails its `output_schema`. Tests must verify that actual output conforms to the schema. Use formatter helpers (`MainWP_Abilities_Util::format_*_for_output()`) to ensure consistency.
 
 ### Additional Tests for Destructive Abilities
 

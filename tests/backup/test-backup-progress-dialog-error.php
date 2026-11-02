@@ -182,9 +182,10 @@ class MainWP_Backup_Progress_Dialog_Error_Test extends MainWP_Abilities_Test_Cas
 	 */
 	public function test_poll_omits_code_when_progress_row_holds_run_state(): void {
 		$site_id = $this->create_test_site();
-		$this->closed_failed_run( $site_id, time() - 30, (string) wp_json_encode( array( 'reconcile_pending' => array() ) ), MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
+		$run     = time() - 30;
+		$this->closed_failed_run( $site_id, $run, (string) wp_json_encode( array( 'reconcile_pending' => array() ) ), MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
 
-		$response = $this->poll( $site_id, time() - 30 );
+		$response = $this->poll( $site_id, $run );
 
 		$this->assertSame( 'failed', $response['status'] ?? null );
 		$this->assertArrayNotHasKey( 'error_code', $response );
@@ -197,13 +198,60 @@ class MainWP_Backup_Progress_Dialog_Error_Test extends MainWP_Abilities_Test_Cas
 	 */
 	public function test_failure_code_ignores_errors_of_an_earlier_run(): void {
 		$site_id = $this->create_test_site();
-		$this->closed_failed_run( $site_id, time() - 60, 'Stored failure text.', MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
-		$code = new \ReflectionMethod( MainWP_Post_Backup_Handler::class, 'on_demand_failure_code' );
-		$code->setAccessible( true );
+		$run     = time() - 60;
+		$task    = $this->closed_failed_run( $site_id, $run, 'Stored failure text.', MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
+		$shown   = (string) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->backup_errors;
 
-		$this->assertSame( '', $code->invoke( null, $site_id, time() - 10 ), 'A newer click does not own the stored failure.' );
-		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $code->invoke( null, $site_id, time() - 60 ), 'The click that opened the run does.' );
-		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $code->invoke( null, $site_id, 0 ), 'Older pages send no since and keep the run-level answer.' );
+		$this->assertSame( '', $this->failure_code( $site_id, $run + 50, $shown ), 'A newer click does not own the stored failure.' );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $this->failure_code( $site_id, $run, $shown ), 'The click that opened the run does.' );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $this->failure_code( $site_id, 0, $shown ), 'Older pages send no since and keep the run-level answer.' );
+	}
+
+	/**
+	 * The code must describe the text the read model already chose: text
+	 * from one run and a code from another would mislabel the failure.
+	 */
+	public function test_failure_code_requires_the_shown_text(): void {
+		$site_id = $this->create_test_site();
+		$run     = time() - 30;
+		$task    = $this->closed_failed_run( $site_id, $run, 'Stored failure text.', MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
+
+		$this->assertSame( '', $this->failure_code( $site_id, $run, 'Site: <strong>child.example</strong><br />A Child timeout read earlier.' ), 'Text read before another run failed keeps no code.' );
+		$this->assertSame( '', $this->failure_code( $site_id, $run, '' ), 'The generic line has no code.' );
+
+		// Another run fails between the progress-row read and the task re-read.
+		$progress_table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+		$shown          = (string) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->backup_errors;
+		$fired          = false;
+		$interleave     = static function ( $sql ) use ( &$fired, $progress_table, $task ) {
+			if ( ! $fired && 0 === strpos( ltrim( $sql ), 'SELECT * FROM ' . $progress_table ) ) {
+				$fired = true;
+				MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'backup_errors' => '<ol><li>Site: <strong>child.example</strong><br />A later failure.</li></ol>' ) );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $interleave );
+		try {
+			$code = $this->failure_code( $site_id, $run, $shown );
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+		$this->assertTrue( $fired, 'Precondition: the interleaving ran during the progress read.' );
+		$this->assertSame( '', $code, 'A run that changed during the lookup lends no code.' );
+	}
+
+	/**
+	 * Call the private lookup the poll uses.
+	 *
+	 * @param int    $site_id Site id.
+	 * @param int    $since   Click baseline.
+	 * @param string $shown   Stored text the read model chose.
+	 * @return string
+	 */
+	private function failure_code( int $site_id, int $since, string $shown ): string {
+		$method = new \ReflectionMethod( MainWP_Post_Backup_Handler::class, 'on_demand_failure_code' );
+		$method->setAccessible( true );
+		return $method->invoke( null, $site_id, $since, $shown );
 	}
 
 	/**
@@ -211,14 +259,15 @@ class MainWP_Backup_Progress_Dialog_Error_Test extends MainWP_Abilities_Test_Cas
 	 */
 	public function test_poll_passes_registered_codes_only(): void {
 		$site_id = $this->create_test_site();
-		$this->closed_failed_run( $site_id, time() - 30, 'Stored failure text.', 'not_a_registered_code<b>' );
-		$response = $this->poll( $site_id, time() - 30 );
+		$run     = time() - 30;
+		$this->closed_failed_run( $site_id, $run, 'Stored failure text.', 'not_a_registered_code<b>' );
+		$response = $this->poll( $site_id, $run );
 		$this->assertArrayNotHasKey( 'error_code', $response );
 
 		global $wpdb;
 		$wpdb->query( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_progress' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- fixed test table.
-		$this->closed_failed_run( $site_id, time() - 30, 'Stored failure text.', MainWP_Backup_Error_Codes::ERR_TIMEOUT );
-		$response = $this->poll( $site_id, time() - 30 );
+		$this->closed_failed_run( $site_id, $run, 'Stored failure text.', MainWP_Backup_Error_Codes::ERR_TIMEOUT );
+		$response = $this->poll( $site_id, $run );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $response['error_code'] ?? null );
 	}
 

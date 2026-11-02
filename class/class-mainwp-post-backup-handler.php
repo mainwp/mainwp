@@ -830,13 +830,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             }
         }
 
-        $response = MainWP_Backup_Read_Model::get_site_backup_progress( $site_id, $since );
+        $response   = MainWP_Backup_Read_Model::get_site_backup_progress( $site_id, $since );
+        $error_code = isset( $response['status'], $response['error'] ) && 'failed' === $response['status'] ? static::on_demand_failure_code( $site_id, $since, (string) $response['error']['source_text'] ) : '';
         foreach ( array( 'error', 'notice' ) as $key ) {
             if ( isset( $response[ $key ] ) ) {
                 $response[ $key ] = static::humanize_backup_errors( $response[ $key ]['source_text'] );
             }
         }
-        $error_code = isset( $response['status'], $response['error'] ) && 'failed' === $response['status'] ? static::on_demand_failure_code( $site_id, $since ) : '';
         if ( '' !== $error_code ) {
             $response['error_code'] = $error_code;
         }
@@ -848,14 +848,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * it describes, so the code the failing site recorded rides along for the
      * dialog's short summary. Only a run that owns the shown error gets one:
      * the read model shows a paused task's notice or a generic line instead
-     * when the stored errors belong to no run of this click.
+     * when the stored errors belong to no run of this click. The task is read
+     * again after the progress row, so a run that opened and failed between
+     * these reads cannot lend its code to the text already chosen.
      *
-     * @param int $site_id Website identity.
-     * @param int $since   Click's freshness cutoff, as sent by the poll.
+     * @param int    $site_id     Website identity.
+     * @param int    $since       Click's freshness cutoff, as sent by the poll.
+     * @param string $source_text Stored error text the read model chose to show.
      *
      * @return string A registered error code, or '' when none applies.
      */
-    private static function on_demand_failure_code( int $site_id, int $since ): string {
+    private static function on_demand_failure_code( int $site_id, int $since, string $source_text ): string {
         $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
         if ( empty( $task ) || ! empty( $task->paused ) || '' === (string) $task->backup_errors || ( 0 !== $since && (int) $task->last_run < $since ) ) {
             return '';
@@ -868,6 +871,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $progress   = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
         $last_error = $progress ? (string) ( $progress->last_error ?? '' ) : '';
         if ( '' === $last_error || is_array( json_decode( $last_error, true ) ) || ! is_array( $progress->fetchResult ) ) {
+            return '';
+        }
+        $after = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        if ( empty( $after ) || (int) $after->last_run !== (int) $task->last_run || (string) $after->backup_errors !== $source_text ) {
             return '';
         }
         $code = $progress->fetchResult['error_code'] ?? '';

@@ -787,7 +787,11 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $child_version = $site->version ?? '0.0.0';
+        if ( empty( $site->version ) ) {
+            return true;
+        }
+
+        $child_version = $site->version;
         if ( version_compare( $child_version, $min_version, '<' ) ) {
             return new \WP_Error(
                 'mainwp_child_outdated',

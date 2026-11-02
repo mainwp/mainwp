@@ -331,7 +331,6 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $websiteValues     = array();
         $websiteSyncValues = array(
             'sync_errors' => $sync_errors,
-            'version'     => 0,
         );
 
         $_error = $sync_errors;
@@ -371,7 +370,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $done                     = true;
         }
 
-        if ( isset( $information['version'] ) ) {
+        if ( ! empty( $information['version'] ) ) {
             $websiteSyncValues['version'] = $information['version'];
             $done                         = true;
         }

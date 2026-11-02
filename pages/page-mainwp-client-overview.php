@@ -455,7 +455,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $default_widgets = array(
             'overview'           => esc_html__( 'Overview', 'mainwp' ),
             'note'               => esc_html__( 'Notes', 'mainwp' ),
-            'fields_info'        => esc_html__( 'Addition Info', 'mainwp' ),
+            'fields_info'        => esc_html__( 'Additional Client Info', 'mainwp' ),
             'websites'           => esc_html__( 'Websites', 'mainwp' ),
             'knowledge'          => esc_html__( 'Knowledge', 'mainwp' ),
             'recent_posts'       => esc_html__( 'Recent Posts', 'mainwp' ),

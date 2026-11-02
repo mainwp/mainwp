@@ -243,12 +243,12 @@ class Cost_Tracker_Add_Edit {
                 </div>
                 <?php if ( $edit_cost ) : ?>
                     <h2 class="ui dividing header">
-                        <?php echo esc_html__( 'Edit ', 'mainwp' ) . esc_html( $edit_cost->name ) . esc_html__( 'Product Details', 'mainwp' ); ?>
+                        <?php /* translators: %s: cost name. */ printf( esc_html__( 'Edit %s Product Details', 'mainwp' ), esc_html( $edit_cost->name ) ); ?>
                         <div class="sub header"><?php esc_html_e( 'Update your expense details to keep your cost tracking accurate and up to date.', 'mainwp' ); ?></div>
                     </h2>
                 <?php elseif ( $source_cost ) : ?>
                     <h2 class="ui dividing header">
-                        <?php echo esc_html__( 'Duplicate ', 'mainwp' ) . esc_html( $source_cost->name ) . esc_html__( 'Product Details', 'mainwp' ); ?>
+                        <?php /* translators: %s: cost name. */ printf( esc_html__( 'Duplicate %s Product Details', 'mainwp' ), esc_html( $source_cost->name ) ); ?>
                         <div class="sub header"><?php esc_html_e( 'This form is pre-filled from the existing cost so you can create a new entry faster.', 'mainwp' ); ?></div>
                     </h2>
                 <?php else : ?>

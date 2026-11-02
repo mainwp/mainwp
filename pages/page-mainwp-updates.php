@@ -2027,7 +2027,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( $show_language_updates ) {
             $header_tabs['translations-updates'] = array(
                 'slug'           => 'translations-updates',
-                'title'          => esc_html__( 'Translations Updates', 'mainwp' ),
+                'title'          => esc_html__( 'Translation Updates', 'mainwp' ),
                 'total_upgrades' => $total_translation_upgrades,
             );
         }

@@ -26,6 +26,25 @@ function disk_free_space( $directory ) {
 	return null === $free ? \disk_free_space( $directory ) : $free;
 }
 
+/**
+ * Inject a CREATE-denied connection without changing the test database grants.
+ *
+ * @return \mysqli
+ */
+function mysqli_init() {
+	return Tests\MainWP_Backup_TestRestore_Sandbox_Test::$denied_connection ?? \mysqli_init(); // phpcs:ignore WordPress.DB.RestrictedFunctions -- delegate when no fixture is active.
+}
+
+/**
+ * Leave an injected connection isolated from the real database server.
+ *
+ * @param mixed ...$args Connection arguments.
+ * @return bool
+ */
+function mysqli_real_connect( ...$args ) {
+	return null !== Tests\MainWP_Backup_TestRestore_Sandbox_Test::$denied_connection ? true : \mysqli_real_connect( ...$args ); // phpcs:ignore WordPress.DB.RestrictedFunctions -- delegate when no fixture is active.
+}
+
 namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- The production-namespace filesystem stub belongs with its tests.
 
 require_once __DIR__ . '/trait-backup-private-root-fixture.php'; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- the filesystem stub must share the production namespace.
@@ -50,6 +69,112 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 */
 	public static $free_space = null;
 
+
+	/**
+	 * Connection used only by the CREATE-denied regression.
+	 *
+	 * @var \mysqli|null
+	 */
+	public static $denied_connection = null;
+
+	/**
+	 * Both mysqli reporting modes retain the unsupported code and host guidance.
+	 *
+	 * @dataProvider mwp_2130_create_denial_modes
+	 * @param bool $strict Whether mysqli throws on query failure.
+	 */
+	public function test_mwp_2130_create_denied_explains_required_database_scope( bool $strict ): void {
+		self::$denied_connection = new class( $strict ) extends \mysqli { // phpcs:ignore WordPress.DB.RestrictedClasses -- sandbox connection test double.
+			/** Whether query failures throw.
+			 *
+			 * @var bool
+			 */
+			private $strict;
+
+			/**
+			 * Select the mysqli reporting mode.
+			 *
+			 * @param bool $strict Whether query failures throw.
+			 */
+			public function __construct( bool $strict ) {
+				parent::__construct();
+				$this->strict = $strict;
+			}
+
+			/**
+			 * Refuse the sandbox CREATE statement.
+			 *
+			 * @param string $query SQL statement.
+			 * @param int    $result_mode Result mode.
+			 * @return \mysqli_result|bool
+			 * @throws \mysqli_sql_exception On strict query failure.
+			 */
+			public function query( string $query, int $result_mode = MYSQLI_STORE_RESULT ): \mysqli_result|bool {
+				if ( $this->strict ) {
+					throw new \mysqli_sql_exception( 'CREATE denied <mysql-detail>' ); // phpcs:ignore WordPress.DB.RestrictedFunctions -- injected server error.
+				}
+				return false;
+			}
+
+			/**
+			 * Accept the charset without opening a server connection.
+			 *
+			 * @param string $charset Connection charset.
+			 * @return bool
+			 */
+			public function set_charset( string $charset ): bool {
+				return true;
+			}
+
+			/**
+			 * Close the injected connection.
+			 *
+			 * @return bool
+			 */
+			public function close(): bool {
+				return true;
+			}
+		};
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+			$caught  = null;
+			try {
+				$sandbox->bring_up();
+			} catch ( MainWP_Exception $error ) {
+				$caught = $error;
+			}
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $caught->get_message_error_code() );
+			$this->assertStringContainsString( 'create database:', $caught->get_message_extra( false ) );
+			$this->assertStringContainsString( DB_USER, $caught->getMessage(), 'The message must identify the configured Dashboard database user.' );
+			$this->assertStringContainsString( 'GRANT SELECT, INSERT, CREATE, DROP, REFERENCES ON `mainwp\\_tr\\_%`.*', $caught->getMessage() );
+			foreach ( array( 'DB_USER', 'mainwp_tr_', 'create and drop', 'Dashboard database', 'hosting provider', 'stays off' ) as $text ) {
+				$this->assertStringContainsString( $text, $caught->getMessage() );
+			}
+			$probe = MainWP_Backup_TestRestore_Sandbox::probe_capability();
+			$this->assertFalse( $probe['capable'] );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $probe['error_code'] );
+			$this->assertStringContainsString( wp_specialchars_decode( $caught->getMessage(), ENT_QUOTES ), $probe['reason'] );
+			$this->assertStringContainsString( '"' . DB_USER . '"', $probe['reason'] );
+			if ( $strict ) {
+				$this->assertStringContainsString( 'CREATE denied <mysql-detail>', $probe['reason'] );
+			}
+		} finally {
+			self::$denied_connection = null;
+		}
+	}
+
+	/**
+	 * Query reporting modes.
+	 *
+	 * @return array
+	 */
+	public static function mwp_2130_create_denial_modes(): array {
+		return array(
+			'return false'     => array( false ),
+			'strict exception' => array( true ),
+		);
+	}
 
 	/**
 	 * Scratch dir for archive fixtures.

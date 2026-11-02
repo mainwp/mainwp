@@ -97,6 +97,22 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Explain the permissions needed by the built-in backup sandbox.
+     *
+     * @return string Plain text; escape when rendering.
+     */
+    public static function database_privilege_guidance(): string {
+        $user     = defined( 'DB_USER' ) ? (string) DB_USER : '';
+        $sql_user = str_replace( array( '\\', "'" ), array( '\\\\', "''" ), $user );
+        return sprintf(
+            /* translators: %s: Dashboard database username from DB_USER. */
+            __( 'The DB_USER account "%s" in the Dashboard wp-config.php needs permission to create and drop its own mainwp_tr_ temporary databases, import backup tables, and read them. Access to the Dashboard database alone is not enough. Ask your hosting provider to grant these permissions. Test Restore stays off until they are available.', 'mainwp' ),
+            $user
+        ) . "\n\n" . __( 'For built-in backups, your hosting provider can adapt this example to the Dashboard database account and its MySQL account host:', 'mainwp' )
+            . "\nGRANT SELECT, INSERT, CREATE, DROP, REFERENCES ON `mainwp\\_tr\\_%`.* TO '" . $sql_user . "'@'account_host';";
+    }
+
+    /**
      * Scratch database name.
      *
      * @return string
@@ -132,12 +148,17 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
         $this->mysqli = $this->connect();
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.RestrictedClasses.mysql__mysqli_query -- self-generated alnum database name; low-level sandbox connection, not $wpdb.
-        $created = @$this->mysqli->query( 'CREATE DATABASE `' . $this->db_name . '` CHARACTER SET utf8mb4' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- privilege probe; failure is handled below.
+        try {
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.RestrictedClasses.mysql__mysqli_query -- self-generated alnum database name; low-level sandbox connection, not $wpdb.
+            $created = @$this->mysqli->query( 'CREATE DATABASE `' . $this->db_name . '` CHARACTER SET utf8mb4' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- privilege probe; failure is handled below.
+            $error   = false === $created ? $this->mysqli->error : '';
+        } catch ( \mysqli_sql_exception $e ) {
+            $created = false;
+            $error   = $e->getMessage();
+        }
         if ( false === $created ) {
-            $error = $this->mysqli->error;
             $this->close_connection();
-            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not create a scratch database. The dashboard database user needs the CREATE privilege.', 'mainwp' ), 'create database: ' . $error, self::ERR_UNSUPPORTED );
+            throw new MainWP_Exception( esc_html( __( 'The test-restore sandbox could not create a temporary database on the Dashboard server.', 'mainwp' ) . "\n\n" . self::database_privilege_guidance() ), 'create database: ' . $error, self::ERR_UNSUPPORTED );
         }
         $this->created_db = true;
         $this->mysqli->select_db( $this->db_name );
@@ -751,10 +772,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             // carries the debug detail: without it a month-long lockout says only that
             // the working directory could not be protected, naming neither the path nor
             // which shape refused. The one surfacing template escapes what it renders.
-            $detail = $e instanceof MainWP_Exception ? trim( (string) $e->get_message_extra( false ) ) : '';
+            $detail  = $e instanceof MainWP_Exception ? trim( (string) $e->get_message_extra( false ) ) : '';
+            $message = wp_specialchars_decode( $e->getMessage(), ENT_QUOTES );
             return array(
                 'capable'    => false,
-                'reason'     => '' === $detail ? $e->getMessage() : $e->getMessage() . ' (' . $detail . ')',
+                'reason'     => '' === $detail ? $message : $message . ' (' . $detail . ')',
                 'error_code' => $e instanceof MainWP_Exception ? (string) $e->get_message_error_code() : '',
             );
         } finally {

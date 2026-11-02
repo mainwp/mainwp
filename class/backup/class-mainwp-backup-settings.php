@@ -642,6 +642,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     self::$encryption_forced_off = true;
                 }
                 MainWP_Utility::update_option( MainWP_Backup_Encryption::ENABLED_OPTION, $enableEncryption );
+                delete_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION );
 
                 return true;
             }

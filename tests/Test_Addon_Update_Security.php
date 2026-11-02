@@ -257,6 +257,22 @@ class Test_Addon_Update_Security extends TestCase {
 		}
 	}
 
+	/** A Pro member's unowned add-on points to licensing help instead of the sales page (MWP-1584). */
+	public function test_pro_member_unowned_addon_points_to_licensing_help(): void {
+		$result = $this->probe(
+			array(
+				'mode'  => 'purchased',
+				'owned' => false,
+				'pro'   => true,
+			)
+		);
+		$this->assertSame( 'SUCCESS', $result['response']['result'] );
+		$this->assertStringNotContainsString( 'Add-on not purchased.', $result['response']['data'] );
+		$this->assertStringContainsString( 'Included with MainWP Pro. Click for licensing help.', $result['response']['data'] );
+		$this->assertStringContainsString( 'href="https://docs.mainwp.com/troubleshooting/troubleshoot-extension-licensing-issues"', $result['response']['data'] );
+		$this->assertSame( array(), $result['warnings'] );
+	}
+
 	/** Old PHP callbacks must not provide another way to turn TLS off. */
 	public function test_legacy_download_callbacks_preserve_tls(): void {
 		$result = $this->probe( array( 'mode' => 'download_filters' ) );

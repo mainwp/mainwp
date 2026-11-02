@@ -468,6 +468,14 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $return = array();
         if ( is_array( $result ) ) {
             if ( isset( $result['success'] ) && $result['success'] ) {
+                // The Add-ons page Refresh License button lands here. MainWP_Hooks::is_pro_member()
+                // reads this cache, and when it goes stale a paying member gets offered Upgrade
+                // to Pro (MWP-1584). Cache the plan exactly as save_extensions_api_login() does,
+                // and only while the key is remembered, since unchecking Remember Key clears it.
+                if ( get_option( 'mainwp_extensions_api_save_login' ) ) {
+                    $plan_info = isset( $result['plan_info'] ) ? wp_json_encode( $result['plan_info'] ) : '';
+                    MainWP_Utility::update_option( 'mainwp_extensions_plan_info', $plan_info );
+                }
                 $return['result'] = 'SUCCESS';
             } elseif ( isset( $result['error'] ) ) {
                 $return['error'] = $result['error'];

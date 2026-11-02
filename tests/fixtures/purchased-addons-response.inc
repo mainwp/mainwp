@@ -18,6 +18,9 @@ namespace MainWP\Dashboard {
 		public static function instance() { return new self(); }
 		public function secure_request( $action ) { $GLOBALS['probe_secured'] = $action; }
 	}
+	class MainWP_Hooks {
+		public static function is_pro_member() { return ! empty( $GLOBALS['input']['pro'] ); }
+	}
 	class MainWP_Extensions_Handler {
 		public static function get_extensions() { return array(); }
 		public static function get_extensions_disabled( $compatible = false ) { return array(); }

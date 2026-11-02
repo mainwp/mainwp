@@ -456,7 +456,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         try {
             $test = MainWP_Api_Manager::instance()->verify_mainwp_api( $api_key );
         } catch ( \Exception $e ) {
-            $return['error'] = $e->getMessage();
+            $return['error'] = wp_strip_all_tags( $e->getMessage() );
             die( wp_json_encode( $return ) );
         }
 
@@ -467,6 +467,10 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $result = json_decode( $test, true );
         $return = array();
         if ( is_array( $result ) ) {
+            // A rejected key invalidates its old plan; transport failures leave the cache intact.
+            if ( isset( $result['success'] ) && false === $result['success'] && get_option( 'mainwp_extensions_api_save_login' ) ) {
+                MainWP_Utility::update_option( 'mainwp_extensions_plan_info', '' );
+            }
             if ( isset( $result['success'] ) && $result['success'] ) {
                 // The Add-ons page Refresh License button lands here. MainWP_Hooks::is_pro_member()
                 // reads this cache, and when it goes stale a paying member gets offered Upgrade

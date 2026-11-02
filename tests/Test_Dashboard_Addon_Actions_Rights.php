@@ -465,6 +465,36 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
         $this->assertSame( '', get_option( 'mainwp_extensions_plan_info' ) );
     }
 
+    /** A rejected remembered key cannot keep advertising its previous Pro plan. */
+    public function test_test_login_clears_rejected_plan(): void {
+        $this->right( 'manage_extensions', true );
+        update_option( 'mainwp_extensions_api_save_login', true );
+        update_option( 'mainwp_extensions_plan_info', wp_json_encode( array( 'plan_purchased' => 'lifetime', 'plan_status' => 'active' ) ) );
+        $this->assertTrue( \MainWP\Dashboard\MainWP_Hooks::is_pro_member() );
+        $this->http_response['body'] = wp_json_encode( array( 'success' => false, 'error' => 'Invalid API key.' ) );
+
+        $response = json_decode( $this->ajax( 'mainwp_extension_testextensionapilogin' ), true );
+
+        $this->assertSame( array( 'error' => 'Invalid API key.' ), $response );
+        $this->assertSame( '', get_option( 'mainwp_extensions_plan_info' ) );
+        $this->assertFalse( \MainWP\Dashboard\MainWP_Hooks::is_pro_member() );
+        $this->assertSame( 'fixture-license-key', MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key() );
+    }
+
+    /** An unavailable server preserves the plan and returns text for the refresh status. */
+    public function test_test_login_preserves_plan_on_server_error(): void {
+        $this->right( 'manage_extensions', true );
+        update_option( 'mainwp_extensions_api_save_login', true );
+        $plan = wp_json_encode( array( 'plan_purchased' => 'lifetime', 'plan_status' => 'active' ) );
+        update_option( 'mainwp_extensions_plan_info', $plan );
+        $this->http_response['response']['code'] = 503;
+
+        $response = json_decode( $this->ajax( 'mainwp_extension_testextensionapilogin' ), true );
+
+        $this->assertSame( array( 'error' => 'Login verification could not be completed. Please contact MainWP Support so we can assist.' ), $response );
+        $this->assertSame( $plan, get_option( 'mainwp_extensions_plan_info' ) );
+    }
+
     /**
      * Transport messages under enabled and disabled certificate verification.
      *

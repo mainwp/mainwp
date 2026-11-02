@@ -200,14 +200,138 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     color: #ffffff;
 }
 
+#mainwp-top-header > .ui.grid > .left.aligned.column {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+#mainwp-top-header > .ui.grid > .right.aligned.column {
+    flex: 0 0 max-content;
+    max-width: calc(100% - 72px);
+    white-space: nowrap;
+}
+
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button:not(.red, .green) {
     background: #1c1d1b !important;
     color: #ffffff !important;
 }
 
+#mainwp-header-actions {
+    display: inline-flex;
+    align-items: center;
+    column-gap: 4px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+#mainwp-top-header #mainwp-header-secondary-actions,
+#mainwp-top-header #mainwp-header-layout-actions {
+    display: inline-flex;
+    align-items: center;
+    column-gap: 4px;
+    padding-block: 0;
+}
+
+body.mainwp-ui #mainwp-top-header #mainwp-mobile-menu-trigger {
+    display: none !important;
+}
+
+body.mainwp-header-collapsed #mainwp-top-header #mainwp-header-command-palette-actions,
+body.mainwp-header-collapsed #mainwp-top-header #mainwp-header-secondary-actions,
+body.mainwp-header-collapsed #mainwp-top-header #mainwp-user-menu-button {
+    display: none !important;
+}
+
+body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
+    display: inline-block !important;
+}
+
+@media screen and (max-width: 1140px) {
+    #mainwp-top-header #mainwp-header-command-palette-actions,
+    #mainwp-top-header #mainwp-header-secondary-actions,
+    #mainwp-top-header #mainwp-user-menu-button {
+        display: none !important;
+    }
+
+    body.mainwp-ui #mainwp-top-header #mainwp-mobile-menu-trigger {
+        display: inline-block !important;
+    }
+}
+
 #mainwp-top-header .ui.menu {
     box-shadow: none;
     padding-top: 0;
+}
+
+#mainwp-top-header .mainwp-theme-toggle {
+    --mainwp-toggle-track: #e9ecef;
+    --mainwp-toggle-thumb: #ffffff;
+    --mainwp-toggle-icon: #737b83;
+    --mainwp-toggle-selected: #805700;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    direction: ltr;
+    box-sizing: border-box;
+    vertical-align: middle;
+    width: 64px;
+    height: 32px;
+    padding: 3px;
+    margin: 0 2px 0 10px;
+    border: 1px solid var(--mainwp-border, #cbd0d5);
+    border-radius: 999px;
+    background: var(--mainwp-toggle-track);
+    color: var(--mainwp-toggle-icon);
+    cursor: pointer;
+    appearance: none;
+}
+
+#mainwp-top-header .mainwp-theme-toggle[aria-checked="true"] {
+    --mainwp-toggle-track: #121313;
+    --mainwp-toggle-thumb: #dcdee0;
+    --mainwp-toggle-icon: #9a9b9d;
+    --mainwp-toggle-selected: #1c1d1b;
+}
+
+#mainwp-top-header .mainwp-theme-toggle > .mainwp-theme-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--mainwp-toggle-thumb);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+#mainwp-top-header .mainwp-theme-toggle[aria-checked="true"] > .mainwp-theme-toggle-thumb {
+    transform: translateX(32px);
+}
+
+#mainwp-top-header .mainwp-theme-toggle > svg {
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+    pointer-events: none;
+}
+
+#mainwp-top-header .mainwp-theme-toggle[aria-checked="false"] .mainwp-theme-toggle-sun,
+#mainwp-top-header .mainwp-theme-toggle[aria-checked="true"] .mainwp-theme-toggle-moon {
+    color: var(--mainwp-toggle-selected);
+}
+
+#mainwp-top-header .mainwp-theme-toggle:hover {
+    border-color: var(--mainwp-green, #6c9800);
+}
+
+#mainwp-top-header .mainwp-theme-toggle:focus-visible {
+    outline: 2px solid var(--mainwp-green, #6c9800);
+    outline-offset: 3px;
 }
 
 .mainwp-sync-button-icon {
@@ -220,6 +344,18 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 
 .mainwp-ui #mainwp-user-menu-button {
     float: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+#mainwp-user-menu-button > .dropdown.icon {
+    margin: 0;
+}
+
+#mainwp-user-menu-button:focus-visible {
+    outline: 2px solid var(--mainwp-green, #6c9800);
+    outline-offset: 3px;
 }
 
 #mainwp-header-command-palette-actions {

@@ -33,6 +33,7 @@ class Test_MWP_1901_Daily_Digest_Format extends \WP_UnitTestCase {
                 array_merge( $item, array( 'plugin' => 'Placeholder plugin', 'change_log' => '#' ) ),
                 array_merge( $item, array( 'plugin' => 'Relative plugin', 'change_log' => '/wordpress.org/plugins/relative' ) ),
                 array_merge( $item, array( 'plugin' => 'Protocol-relative plugin', 'change_log' => '//example.org/changelog' ) ),
+                array_merge( $item, array( 'plugin' => 'Bare plugin', 'change_log' => 'changelog' ) ),
             ) : array(),
             $updates ? array( array_merge( $item, array( 'theme' => 'Example theme', 'new_version' => '3.0' ) ) ) : array(),
             array( array( 'name' => 'Disconnected site', 'url' => 'https://offline.example.org/' ) ),
@@ -184,14 +185,70 @@ class Test_MWP_1901_Daily_Digest_Format extends \WP_UnitTestCase {
         $this->assertStringNotContainsString( 'multipart/alternative', $mail->header );
     }
 
+    public function test_recursive_mail_does_not_inherit_the_digest_alternative_or_marker() {
+        $nested = false;
+        $recurse = static function ( $args ) use ( &$nested ) {
+            if ( 'Digest' === $args['subject'] && ! $nested ) {
+                $nested = true;
+                $inner = $args;
+                $inner['subject'] = 'Nested health';
+                $inner['message'] = '<p>Nested health unchanged</p>';
+                wp_mail( $inner['to'], $inner['subject'], $inner['message'], $inner['headers'] );
+            }
+            return $args;
+        };
+        add_filter( 'wp_mail', $recurse );
+        try {
+            $mailer = $this->send_digest();
+            $inner = $mailer->get_sent( 0 );
+            $outer = $mailer->get_sent( 1 );
+            $this->assertNotFalse( $inner );
+            $this->assertNotFalse( $outer );
+            $this->assertStringContainsString( '<p>Nested health unchanged</p>', $inner->body );
+            $this->assertStringNotContainsString( 'multipart/alternative', $inner->header );
+            $this->assertStringContainsString( 'multipart/alternative', $outer->header );
+            $this->assertStringContainsString( 'Disconnected site', $outer->body );
+            $this->assertStringNotContainsString( 'X-MainWP-Digest', $inner->header );
+            $this->assertStringNotContainsString( 'X-MainWP-Digest', $outer->header );
+        } finally {
+            remove_filter( 'wp_mail', $recurse );
+        }
+    }
+
+    public static function address_templates() {
+        return array(
+            'plain address' => array( 'Contact <admin@example.com>' ),
+            'HTML with literal address' => array( '<p>Contact <admin@example.com></p>' ),
+            'HTML with escaped address' => array( '<p>Contact &lt;admin@example.com&gt;</p>' ),
+        );
+    }
+
+    /** @dataProvider address_templates */
+    public function test_custom_template_keeps_angle_bracket_email_addresses( $template ) {
+        $file = tempnam( sys_get_temp_dir(), 'digest-address-' );
+        file_put_contents( $file, $template );
+        $locate = static function ( $path, $name ) use ( $file ) {
+            return 'emails/mainwp-daily-digest-email.php' === $name ? $file : $path;
+        };
+        add_filter( 'mainwp_locate_template', $locate, 10, 2 );
+        try {
+            $this->assertSame( 'Contact <admin@example.com>', $this->send_digest( true )->Body );
+        } finally {
+            remove_filter( 'mainwp_locate_template', $locate );
+            unlink( $file );
+        }
+    }
+
     public function test_mailer_integration_can_supply_its_own_alternative() {
         $callback = static function ( $mailer ) {
             $mailer->AltBody = 'Integration alternative';
+            $mailer->addCustomHeader( 'X-Integration', 'Preserved' );
         };
         add_action( 'phpmailer_init', $callback, 20 );
         try {
             $mail = $this->send_digest()->get_sent();
             $this->assertStringContainsString( 'Integration alternative', $mail->body );
+            $this->assertStringContainsString( 'X-Integration: Preserved', $mail->header );
         } finally {
             remove_action( 'phpmailer_init', $callback, 20 );
         }

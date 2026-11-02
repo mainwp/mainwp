@@ -108,11 +108,11 @@ if ( empty( $heading ) ) {
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( $item['current'] ); ?></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;">
                                                         <?php
-                                                        $changelog_url   = ! empty( $item['change_log'] ) ? esc_url( $item['change_log'], array( 'http', 'https' ) ) : '';
+                                                        $changelog_url   = isset( $item['change_log'] ) && is_string( $item['change_log'] ) ? $item['change_log'] : '';
                                                         $changelog_parts = wp_parse_url( $changelog_url );
-                                                        if ( ! empty( $changelog_parts['host'] ) && ! empty( $changelog_parts['scheme'] ) ) :
+                                                        if ( ! empty( $changelog_parts['host'] ) && isset( $changelog_parts['scheme'] ) && in_array( strtolower( $changelog_parts['scheme'] ), array( 'http', 'https' ), true ) ) :
                                                             ?>
-                                                            <a href="<?php echo esc_url( $changelog_url ); ?>" style="color:#7fb100;"><?php echo esc_html( $item['new_version'] ); ?></a>
+                                                            <a href="<?php echo esc_url( $changelog_url, array( 'http', 'https' ) ); ?>" style="color:#7fb100;"><?php echo esc_html( $item['new_version'] ); ?></a>
                                                         <?php else : ?>
                                                             <?php echo esc_html( $item['new_version'] ); ?>
                                                         <?php endif; ?>

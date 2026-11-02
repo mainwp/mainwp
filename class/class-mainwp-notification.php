@@ -245,19 +245,56 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $formated_content = self::daily_digest_plain_text( $formated_content );
         }
 
+        $subject         = $email_settings['subject'];
         $digest_mailer   = null;
-        $set_alternative = static function ( $mailer ) use ( &$digest_mailer ) {
-            // Let mailer integrations keep an alternative they already supplied.
-            if ( 'text/html' === $mailer->ContentType && '' === $mailer->AltBody ) {
-                $mailer->AltBody = self::daily_digest_plain_text( $mailer->Body );
-                $digest_mailer   = $mailer;
+        $digest_marker   = wp_generate_uuid4();
+        $marker_header   = 'X-MainWP-Digest: ' . $digest_marker;
+        $marked_digest   = false;
+        $mark_digest     = static function ( $args ) use ( &$marked_digest, $formated_content, $subject, $marker_header ) {
+            $headers  = is_array( $args['headers'] ) ? $args['headers'] : explode( "\n", str_replace( "\r\n", "\n", (string) $args['headers'] ) );
+            $filtered = array_values(
+                array_filter(
+                    $headers,
+                    static function ( $header ) use ( $marker_header ) {
+                        return ! is_string( $header ) || 0 !== strcasecmp( trim( $header ), $marker_header );
+                    }
+                )
+            );
+            // A recursive send may copy the outer message's headers.
+            if ( count( $filtered ) !== count( $headers ) ) {
+                $args['headers'] = $filtered;
+            }
+            if ( ! $marked_digest && $args['message'] === $formated_content && $args['subject'] === $subject ) {
+                $filtered[]      = $marker_header;
+                $args['headers'] = $filtered;
+                $marked_digest   = true;
+            }
+            return $args;
+        };
+        $set_alternative = static function ( $mailer ) use ( &$digest_mailer, $digest_marker ) {
+            $headers = $mailer->getCustomHeaders();
+            foreach ( $headers as $index => $header ) {
+                if ( 0 !== strcasecmp( $header[0], 'X-MainWP-Digest' ) || $header[1] !== $digest_marker ) {
+                    continue;
+                }
+                unset( $headers[ $index ] );
+                $mailer->clearCustomHeaders();
+                foreach ( $headers as $custom_header ) {
+                    $mailer->addCustomHeader( $custom_header[0], $custom_header[1] );
+                }
+                // Let mailer integrations keep an alternative they already supplied.
+                if ( 'text/html' === $mailer->ContentType && '' === $mailer->AltBody ) {
+                    $mailer->AltBody = self::daily_digest_plain_text( $mailer->Body );
+                    $digest_mailer   = $mailer;
+                }
+                break;
             }
         };
         if ( ! $plain_text ) {
+            add_filter( 'wp_mail', $mark_digest, PHP_INT_MIN );
             add_action( 'phpmailer_init', $set_alternative, PHP_INT_MAX );
         }
 
-        $subject = $email_settings['subject'];
         try {
             $sent = static::send_wp_mail(
                 $email,
@@ -267,6 +304,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             );
         } finally {
             remove_action( 'phpmailer_init', $set_alternative, PHP_INT_MAX );
+            remove_filter( 'wp_mail', $mark_digest, PHP_INT_MIN );
             // Keep generated content out of later sends through a reused mailer.
             if ( null !== $digest_mailer ) {
                 $digest_mailer->AltBody = '';
@@ -288,12 +326,20 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return string
      */
     private static function daily_digest_plain_text( $html ) {
+        // Email addresses in angle brackets are text, not HTML elements.
+        $text = preg_replace_callback(
+            '/<([^<>\s]+)>/',
+            static function ( $matches ) {
+                return is_email( $matches[1] ) ? esc_html( $matches[0] ) : $matches[0];
+            },
+            $html
+        );
         // Custom templates may already render plain text.
-        if ( wp_strip_all_tags( $html ) === trim( $html ) ) {
+        if ( wp_strip_all_tags( $text ) === trim( $text ) ) {
             return $html;
         }
 
-        $text = preg_replace( '/<head\b[^>]*>.*?<\/head>/is', '', $html );
+        $text = preg_replace( '/<head\b[^>]*>.*?<\/head>/is', '', $text );
         $text = preg_replace( '/[\r\n\t]+/', ' ', $text );
         $text = preg_replace_callback(
             '/<a\b[^>]*\s+href\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))[^>]*>(.*?)<\/a>/is',

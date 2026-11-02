@@ -175,7 +175,8 @@ class Log_DB_Archive extends MainWP_DB {
      *
      * A row is deleted only when its archive copy exists, so a failed or partial
      * copy keeps the original. A log id that is already archived (INSERT IGNORE
-     * skipped it) counts as archived.
+     * skipped it) counts as archived only when the archived row has the same
+     * created time, so a retry after a partial run still deletes.
      *
      * @param int[] $ids     Log ids.
      * @param array $columns Columns from get_archive_copy_columns().
@@ -210,10 +211,15 @@ class Log_DB_Archive extends MainWP_DB {
         $meta_placeholders     = implode( ',', array_fill( 0, count( $columns['meta'] ), '%i' ) );
         $meta_sel_placeholders = implode( ',', array_fill( 0, count( $columns['meta'] ), 'm.%i' ) );
 
+        // Only for logs whose archive row is this log: a reused id must not add meta to an older archived log.
         $result = $wpdb->query(
             $wpdb->prepare(
-                "INSERT IGNORE INTO %i ($meta_placeholders) SELECT $meta_sel_placeholders FROM %i m WHERE m.meta_log_id IN ($id_placeholders)",
-                array_merge( array( $meta_archive ), $columns['meta'], $columns['meta'], array( $meta_table ), $ids )
+                "INSERT IGNORE INTO %i ($meta_placeholders)
+                SELECT $meta_sel_placeholders FROM %i m
+                INNER JOIN %i l ON l.log_id = m.meta_log_id
+                WHERE m.meta_log_id IN ($id_placeholders)
+                AND EXISTS ( SELECT 1 FROM %i a WHERE a.log_id = l.log_id AND a.created = l.created )",
+                array_merge( array( $meta_archive ), $columns['meta'], $columns['meta'], array( $meta_table, $logs_table ), $ids, array( $archive_table ) )
             )
         );
         if ( false === $result ) {
@@ -222,12 +228,14 @@ class Log_DB_Archive extends MainWP_DB {
         }
 
         // Delete the log first, and only when it and all of its meta are in the archive.
+        // created must match too: MySQL before 8.0 resets AUTO_INCREMENT on restart, so after
+        // a Dismiss All a new log can reuse an archived id and INSERT IGNORE would skip it.
         // meta_key is compared as bytes: archive tables created at another time can have another collation.
         $result = $wpdb->query(
             $wpdb->prepare(
                 "DELETE l FROM %i l
                 WHERE l.log_id IN ($id_placeholders)
-                AND EXISTS ( SELECT 1 FROM %i a WHERE a.log_id = l.log_id )
+                AND EXISTS ( SELECT 1 FROM %i a WHERE a.log_id = l.log_id AND a.created = l.created )
                 AND NOT EXISTS (
                     SELECT 1 FROM %i m
                     WHERE m.meta_log_id = l.log_id
@@ -296,7 +304,7 @@ class Log_DB_Archive extends MainWP_DB {
         $log_columns = array_values( array_intersect( $this->get_table_columns( 'wp_logs' ), array_diff( $archive_columns, array( 'archived_at' ) ) ) );
         $meta        = array_values( array_intersect( $this->get_table_columns( 'wp_logs_meta' ), $meta_archive ) );
 
-        if ( ! in_array( 'log_id', $log_columns, true ) || ! in_array( 'archived_at', $archive_columns, true ) || ! in_array( 'meta_log_id', $meta, true ) || ! in_array( 'meta_key', $meta, true ) ) {
+        if ( ! in_array( 'log_id', $log_columns, true ) || ! in_array( 'created', $log_columns, true ) || ! in_array( 'archived_at', $archive_columns, true ) || ! in_array( 'meta_log_id', $meta, true ) || ! in_array( 'meta_key', $meta, true ) ) {
             $this->log_archive_error( 'archive tables are missing or lack required columns' );
             return false;
         }

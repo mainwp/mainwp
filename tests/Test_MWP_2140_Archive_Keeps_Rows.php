@@ -366,6 +366,62 @@ class Test_MWP_2140_Archive_Keeps_Rows extends \WP_UnitTestCase {
     }
 
     /**
+     * A new log that reuses an archived id (AUTO_INCREMENT reset on restart) is kept; an identical retry is archived.
+     */
+    public function test_reused_log_id_is_kept_and_identical_retry_is_archived() {
+        global $wpdb;
+        Log_Install::instance()->create_archive_tables();
+        $this->seed_logs();
+        $this->assertNotFalse(
+            $wpdb->insert(
+                $this->table( 'wp_logs_archive' ),
+                array(
+                    'log_id'      => self::LOG_ID,
+                    'user_login'  => 'older-event',
+                    'action'      => 'deleted',
+                    'context'     => 'plugins',
+                    'connector'   => 'plugins',
+                    'created'     => '1700000000000000',
+                    'archived_at' => 1,
+                )
+            ),
+            $wpdb->last_error
+        );
+        $this->assertNotFalse(
+            $wpdb->insert(
+                $this->table( 'wp_logs_meta_archive' ),
+                array(
+                    'meta_id'     => 1,
+                    'meta_log_id' => self::LOG_ID,
+                    'meta_key'    => 'older_key',
+                    'meta_value'  => 'older value',
+                )
+            ),
+            $wpdb->last_error
+        );
+
+        $reused = $this->dismiss( self::LOG_ID );
+
+        $this->assertKept( self::LOG_ID );
+        $this->assertSame( 'older-event', $wpdb->get_var( $wpdb->prepare( 'SELECT user_login FROM ' . $this->table( 'wp_logs_archive' ) . ' WHERE log_id = %d', self::LOG_ID ) ) );
+        $this->assertSame( array( 'older_key' ), $wpdb->get_col( $wpdb->prepare( 'SELECT meta_key FROM ' . $this->table( 'wp_logs_meta_archive' ) . ' WHERE meta_log_id = %d', self::LOG_ID ) ), 'The new log\'s meta was added to the older archived log.' );
+        $this->assertArrayHasKey( 'error', $reused );
+
+        // First attempt copies the log but not its meta, so the row is kept with an identical archive copy.
+        $meta_archive = $this->table( 'wp_logs_meta_archive' );
+        $block        = static function ( $sql ) use ( $meta_archive ) {
+            return 0 === strpos( ltrim( $sql ), 'INSERT IGNORE INTO `' . $meta_archive . '`' ) ? str_replace( '`' . $meta_archive . '`', '`mwp2140_no_such_table`', $sql ) : $sql;
+        };
+        $this->filter( 'query', $block );
+        $this->assertArrayHasKey( 'error', $this->dismiss( self::OTHER_LOG_ID ) );
+        $this->assertKept( self::OTHER_LOG_ID );
+        remove_filter( 'query', $block, 999 );
+
+        $this->assertSame( array( 'success' => 'yes' ), $this->dismiss( self::OTHER_LOG_ID ) );
+        $this->assertArchived( self::OTHER_LOG_ID );
+    }
+
+    /**
      * Dismiss All runs in bounded batches, so a large log table does not become one huge query.
      */
     public function test_dismiss_all_archives_in_bounded_batches() {

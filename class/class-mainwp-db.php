@@ -1147,6 +1147,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( is_string( $option ) ) {
             MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( array( $option => $value ) );
         }
+
+        return null;
     }
 
 

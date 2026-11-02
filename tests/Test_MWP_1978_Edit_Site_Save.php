@@ -316,6 +316,37 @@ class Test_MWP_1978_Edit_Site_Save extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Child site settings saved successfully.', $this->render_site( $site, $result ) );
 	}
 
+	/** Email settings saves must not show an error for an unsubmitted Edit Site form. */
+	public function test_email_settings_post_does_not_show_site_save_failure(): void {
+		$site     = $this->create_test_site();
+		$_GET     = array(
+			'id'              => $site,
+			'emailsettingsid' => $site,
+		);
+		$_POST    = array(
+			'submit'                                 => 'Save',
+			'wp_nonce'                               => wp_create_nonce( 'UpdateWebsiteEmailSettings' . $site ),
+			'mainwp_managesites_setting_emails_type' => 'site_health',
+			'mainwp_managesites_edit_settingEmails'  => array(
+				'site_health' => array(
+					'recipients' => 'updated@example.com',
+					'disable'    => 'on',
+				),
+			),
+		);
+		$_REQUEST = array_merge( $_GET, $_POST );
+		$method   = new \ReflectionMethod( MainWP_Manage_Sites::class, 'update_site_emails_settings_handle' );
+		$method->setAccessible( true );
+		$this->assertTrue( $method->invoke( null, MainWP_DB::instance()->get_website_by_id( $site ) ) );
+		$stored = json_decode( MainWP_DB::instance()->get_website_option( $site, 'settings_notification_emails' ), true );
+		$this->assertSame( 'updated@example.com', $stored['site_health']['recipients'] );
+		$result = $this->save_site( $site );
+		$this->assertFalse( $result, 'The Edit Site form was not submitted.' );
+		$html = $this->render_site( $site, $result );
+		$this->assertStringNotContainsString( 'Child site settings saved successfully.', $html );
+		$this->assertSame( array(), $this->error_notices( $html ) );
+	}
+
 	/**
 	 * Submit a nonce-valid form with unchanged credential placeholders.
 	 *

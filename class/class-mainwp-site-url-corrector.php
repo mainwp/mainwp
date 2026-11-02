@@ -427,6 +427,8 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( ! $updated ) {
             return false;
         }
+
+        return null;
     }
 
     /**

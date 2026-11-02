@@ -65,8 +65,8 @@ class MainWP_Abilities {
 
         add_filter( 'rest_endpoints', array( MainWP_Abilities_Backups::class, 'validate_rest_run_routes' ) );
 
-        // Hook into MainWP REST authentication to include Abilities API routes.
-        // This allows consumer_key/consumer_secret authentication to work for abilities.
+        // Preserve MainWP REST route detection without extending consumer key/secret
+        // authentication to the Abilities API.
         add_filter(
             'mainwp_rest_is_request_to_rest_api',
             array( static::class, 'include_abilities_in_rest_auth' )
@@ -312,7 +312,7 @@ class MainWP_Abilities {
             'mainwp-knowledge',
             array(
                 'label'       => __( 'MainWP Knowledge', 'mainwp' ),
-                'description' => __( 'Abilities for managing knowledge records on MainWP sites and clients.', 'mainwp' ),
+                'description' => __( 'Abilities for managing knowledge records at the agency, client and site level.', 'mainwp' ),
             )
         );
 
@@ -363,5 +363,6 @@ class MainWP_Abilities {
 
         // NOTE: Extensions register their own abilities in their own codebases.
         // Total core abilities: 102 (30 sites + 14 updates + 11 clients + 7 tags + 1 batch + 7 knowledge + 32 backups).
+        // API Backups adds 2 read abilities when its module is enabled (104 total).
     }
 }

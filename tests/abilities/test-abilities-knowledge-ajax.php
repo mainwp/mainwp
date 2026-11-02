@@ -1540,6 +1540,8 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'id="mainwp_show_widget_knowledge"', $options );
 		$html = $this->client_overview_widget();
 		$this->assertStringContainsString( 'mainwp-knowledge-read-only-widget', $html );
+		$this->assertStringNotContainsString( '<style>', $html );
+		$this->assertStringNotContainsString( 'Local recording adjustment', $html );
 		$this->assertStringContainsString( 'data-scope-type="client" data-scope-id="' . $this->client_id . '" data-can-write="0" data-read-only="1"', $html );
 		$this->assertStringNotContainsString( 'mainwp-knowledge-add', $html );
 		$this->assertSame( 1, preg_match_all( '/<h2\b[^>]*>\s*Knowledge\s*<div/', $html ) );

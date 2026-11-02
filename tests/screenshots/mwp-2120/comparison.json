@@ -1,0 +1,372 @@
+{
+  "baseline": "fa09f3ffee381cfb64a8e5095993bbba4ed5d3eb",
+  "source_diff_sha256": "a1048d43a112317b4ab5e3ff58b0f993f3fd52407f682b8ee4ed40a7033a56d6",
+  "viewport": {
+    "width": 1440,
+    "height": 1100
+  },
+  "themes": {
+    "default": {
+      "knowledge_geometry_equal": true,
+      "knowledge_screenshots_equal": true,
+      "before": {
+        "knowledge": {
+          "width": 540,
+          "height": 447.125,
+          "sections": [
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 171.875,
+              "width": 540,
+              "y": 0
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 45,
+              "width": 482,
+              "y": 97.875
+            },
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 171.875,
+              "width": 540,
+              "y": 171.875
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 45,
+              "width": 482,
+              "y": 269.75
+            },
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 168.875,
+              "width": 540,
+              "y": 343.75
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 42,
+              "width": 482,
+              "y": 441.625
+            }
+          ],
+          "titles": [
+            "Context",
+            "Skills",
+            "Memory"
+          ],
+          "theme": [
+            "mainwp-default-theme.css"
+          ]
+        },
+        "ai": {
+          "class": "ui four stackable cards",
+          "cards": [
+            {
+              "title": "Knowledge",
+              "x": 300,
+              "y": 256,
+              "width": 262.25,
+              "height": 208.578125
+            },
+            {
+              "title": "MainWP MCP",
+              "x": 583.25,
+              "y": 256,
+              "width": 262.25,
+              "height": 208.578125
+            },
+            {
+              "title": "MainWP Control",
+              "x": 866.5,
+              "y": 256,
+              "width": 262.25,
+              "height": 208.578125
+            }
+          ]
+        }
+      },
+      "after": {
+        "knowledge": {
+          "width": 540,
+          "height": 447.125,
+          "sections": [
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 171.875,
+              "width": 540,
+              "y": 0
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 45,
+              "width": 482,
+              "y": 97.875
+            },
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 171.875,
+              "width": 540,
+              "y": 171.875
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 45,
+              "width": 482,
+              "y": 269.75
+            },
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 168.875,
+              "width": 540,
+              "y": 343.75
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 42,
+              "width": 482,
+              "y": 441.625
+            }
+          ],
+          "titles": [
+            "Context",
+            "Skills",
+            "Memory"
+          ],
+          "theme": [
+            "mainwp-default-theme.css"
+          ]
+        },
+        "ai": {
+          "class": "ui three stackable cards",
+          "cards": [
+            {
+              "title": "Knowledge",
+              "x": 300,
+              "y": 256,
+              "width": 351.984375,
+              "height": 188.578125
+            },
+            {
+              "title": "MainWP MCP",
+              "x": 679.984375,
+              "y": 256,
+              "width": 351.984375,
+              "height": 188.578125
+            },
+            {
+              "title": "MainWP Control",
+              "x": 1059.96875,
+              "y": 256,
+              "width": 351.984375,
+              "height": 188.578125
+            }
+          ]
+        }
+      }
+    },
+    "default-dark": {
+      "knowledge_geometry_equal": true,
+      "knowledge_screenshots_equal": true,
+      "before": {
+        "knowledge": {
+          "width": 540,
+          "height": 447.125,
+          "sections": [
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 171.875,
+              "width": 540,
+              "y": 0
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 45,
+              "width": 482,
+              "y": 97.875
+            },
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 171.875,
+              "width": 540,
+              "y": 171.875
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 45,
+              "width": 482,
+              "y": 269.75
+            },
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 168.875,
+              "width": 540,
+              "y": 343.75
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 42,
+              "width": 482,
+              "y": 441.625
+            }
+          ],
+          "titles": [
+            "Context",
+            "Skills",
+            "Memory"
+          ],
+          "theme": [
+            "mainwp-default-dark-theme.css"
+          ]
+        },
+        "ai": {
+          "class": "ui four stackable cards",
+          "cards": [
+            {
+              "title": "Knowledge",
+              "x": 300,
+              "y": 256,
+              "width": 262.25,
+              "height": 208.578125
+            },
+            {
+              "title": "MainWP MCP",
+              "x": 583.25,
+              "y": 256,
+              "width": 262.25,
+              "height": 208.578125
+            },
+            {
+              "title": "MainWP Control",
+              "x": 866.5,
+              "y": 256,
+              "width": 262.25,
+              "height": 208.578125
+            }
+          ]
+        }
+      },
+      "after": {
+        "knowledge": {
+          "width": 540,
+          "height": 447.125,
+          "sections": [
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 171.875,
+              "width": 540,
+              "y": 0
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 45,
+              "width": 482,
+              "y": 97.875
+            },
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 171.875,
+              "width": 540,
+              "y": 171.875
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 45,
+              "width": 482,
+              "y": 269.75
+            },
+            {
+              "class": "column mainwp-knowledge-section",
+              "marginBottom": "0px",
+              "height": 168.875,
+              "width": 540,
+              "y": 343.75
+            },
+            {
+              "class": "ui styled fluid accordion mainwp-knowledge-records",
+              "marginBottom": "0px",
+              "height": 42,
+              "width": 482,
+              "y": 441.625
+            }
+          ],
+          "titles": [
+            "Context",
+            "Skills",
+            "Memory"
+          ],
+          "theme": [
+            "mainwp-default-dark-theme.css"
+          ]
+        },
+        "ai": {
+          "class": "ui three stackable cards",
+          "cards": [
+            {
+              "title": "Knowledge",
+              "x": 300,
+              "y": 256,
+              "width": 351.984375,
+              "height": 188.578125
+            },
+            {
+              "title": "MainWP MCP",
+              "x": 679.984375,
+              "y": 256,
+              "width": 351.984375,
+              "height": 188.578125
+            },
+            {
+              "title": "MainWP Control",
+              "x": 1059.96875,
+              "y": 256,
+              "width": 351.984375,
+              "height": 188.578125
+            }
+          ]
+        }
+      }
+    }
+  },
+  "javascript_errors": {
+    "before": [],
+    "after": []
+  },
+  "debug_log": {
+    "before_exists": false,
+    "after_exists": false,
+    "error_lines": 0
+  },
+  "restore": {
+    "file_differences": 0,
+    "database_differences": 0,
+    "database_tables": 40,
+    "readings_equal": true,
+    "plugin_state_equal": true,
+    "both_backup_copies_deleted": true,
+    "disposable_login_deleted": true
+  }
+}

@@ -160,7 +160,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$html = (string) strstr( $this->render_ai(), '<div id="mainwp-ai-page"' );
 		$this->assertStringContainsString( 'id="mainwp-ai-page" class="ui padded segment"', $html );
 		$this->assertStringNotContainsString( 'AI tools for your MainWP workflows', $html );
-		$this->assertStringContainsString( 'id="mainwp-ai-feature-cards" class="ui four stackable cards"', $html );
+		$this->assertStringContainsString( 'id="mainwp-ai-feature-cards" class="ui three stackable cards"', $html );
 		$this->assertSame( 3, substr_count( $html, '<div class="ui fluid card">' ) );
 		$this->assertSame( 3, substr_count( $html, '<div class="extra content">' ) );
 		$this->assertSame( 3, substr_count( $html, 'class="ui mini basic grey right floated button"' ) );

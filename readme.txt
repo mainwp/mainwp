@@ -215,7 +215,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Fixed: Client notes now preserve supported formatting while safely handling potentially unsafe content.
 * Fixed: Saving a site no longer removes its Google Analytics mapping or displays an unnecessary uptime-monitoring warning.
 * Fixed: Client imports and management now validate and safely handle client details and images.
-* Fixed: Site deletion now cleans related data consistently and avoids partially removing a site when deletion
+* Fixed: Site deletion now cleans related data consistently and avoids partially removing a site when deletion fails.
 * Fixed: Resolved an issue where successful WordPress core auto-updates were incorrectly recorded as failed.
 * Fixed: Resolved issues with automatic update notification emails by including WordPress core updates with their previous and new version numbers and preventing PHP warnings for sites with core-only updates.
 * Fixed: Improved uptime monitoring accuracy when multiple heartbeat records have the same timestamp.
@@ -281,7 +281,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 = 6.1.8 - 8-25-2026 =
 
 * Fixed: Improved self-connection checks by using the standard AJAX endpoint and more reliable request and response validation.
-* Added: Support for the Cloudways REST API v2 in "API Backups"", with secure access-token authentication and continued support for legacy API credentials.
+* Added: Support for the Cloudways REST API v2 in "API Backups", with secure access-token authentication and continued support for legacy API credentials.
 * Added: Option to bypass cache during Uptime Monitoring checks, with global and per-monitor settings to help improve the accuracy of site availability checks.
 * Added: Localized titles for Network Activity changes involving site registration, users, comments, URLs, homepage settings, date and time, updates, language, site title, and site icon.
 * Updated: Improved activity log entries for system settings and database changes with clearer, more descriptive object titles.

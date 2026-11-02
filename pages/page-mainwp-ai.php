@@ -62,7 +62,7 @@ class MainWP_AI {
         MainWP_UI::render_top_header( array( 'title' => esc_html__( 'AI', 'mainwp' ) ) );
         ?>
         <div id="mainwp-ai-page" class="ui padded segment">
-            <div id="mainwp-ai-feature-cards" class="ui four stackable cards">
+            <div id="mainwp-ai-feature-cards" class="ui three stackable cards">
                 <div class="ui fluid card">
                     <div class="content">
                         <em data-emoji=":book:" class="right floated small"></em>

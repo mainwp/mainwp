@@ -1313,7 +1313,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                         <?php else : ?>
                                         <div class="ui mini fluid buttons">
 
-                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+                                            <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) { ?>
                                             <a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                             <?php } ?>
                                             <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>
@@ -1623,7 +1623,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                                         <span data-tooltip="<?php echo esc_html__( 'Active theme on the site can not be deactivated.', 'mainwp' ); ?>" data-position="bottom left" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>
                                     <?php else : ?>
                                         <div class="ui mini fluid buttons">
-                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
+                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) { ?>
                                             <a href="javascript:void(0)" class="mainwp-manages-theme-activate ui green button"><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
                                         <?php } ?>
                                             <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) && ! $not_delete ) { ?>

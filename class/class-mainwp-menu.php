@@ -194,7 +194,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     'dashboard' => array(
                         'install_themes',
                         'delete_themes',
-                        'activate_deactivate_themes',
+                        'activate_themes',
                     ),
                 ),
                 'init_menu_callback' => array( MainWP_Themes::class, 'init_menu' ),

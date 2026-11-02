@@ -175,4 +175,24 @@ class Test_Extensions_License_Prompt extends \WP_UnitTestCase {
         $this->assertStringContainsString( self::DOC_URL, $html );
         $this->assertStringNotContainsString( self::BUTTON, $html );
     }
+
+    /** The refresh action refuses non-administrators even with the Add-ons right, so they get no button. */
+    public function test_refresh_button_needs_administrator(): void {
+        $this->store_key();
+        $this->store_plan( 'lifetime', 'active' );
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+        $allow = static function ( $can, $type, $cap ) {
+            return ( 'dashboard' === $type && 'manage_extensions' === $cap ) ? true : $can;
+        };
+        add_filter( 'mainwp_currentusercan', $allow, PHP_INT_MAX, 3 );
+        try {
+            $html = $this->modal();
+        } finally {
+            remove_filter( 'mainwp_currentusercan', $allow, PHP_INT_MAX );
+        }
+        $this->assertStringNotContainsString( 'Upgrade to Pro', $html );
+        $this->assertStringContainsString( 'includes all MainWP add-ons', $html );
+        $this->assertStringContainsString( self::DOC_URL, $html );
+        $this->assertStringNotContainsString( self::BUTTON, $html );
+    }
 }

@@ -928,7 +928,9 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param bool $has_key Whether a remembered license key is stored.
      */
     public static function render_license_refresh_prompt( $is_pro, $has_key ) {
-        $can_refresh = $has_key && \mainwp_current_user_can( 'dashboard', 'manage_extensions' );
+        // Mirror test_extensions_api_login(): it refuses non-administrators before checking
+        // the add-ons right, and the Add-ons page itself only needs `read`.
+        $can_refresh = $has_key && MainWP_System_Utility::is_admin() && \mainwp_current_user_can( 'dashboard', 'manage_extensions' );
         ?>
         <span class="mainwp-extensions-refresh-license-prompt">
             <span class="ui small text">

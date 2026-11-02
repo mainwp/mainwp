@@ -1982,6 +1982,16 @@ div.http-response-ok span.http-notok-status {
     margin-top: 0 !important;
 }
 
+/* Backup errors are inserted as text and can carry long unbroken paths and paragraph breaks. */
+#mainwp-backup-phase-label,
+#mainwp-native-backup-now-status .mainwp-backup-status-content {
+    overflow-wrap: anywhere;
+}
+
+#mainwp-native-backup-now-status .mainwp-backup-status-content {
+    white-space: pre-line;
+}
+
 .mainwp-browse-themes .theme .image>img {
     width: 100%;
 }

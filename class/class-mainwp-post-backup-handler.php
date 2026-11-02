@@ -836,7 +836,42 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 $response[ $key ] = static::humanize_backup_errors( $response[ $key ]['source_text'] );
             }
         }
+        $error_code = isset( $response['status'], $response['error'] ) && 'failed' === $response['status'] ? static::on_demand_failure_code( $site_id, $since ) : '';
+        if ( '' !== $error_code ) {
+            $response['error_code'] = $error_code;
+        }
         wp_send_json( $response );
+    }
+
+    /**
+     * The flattened error text cannot tell the progress dialog which failure
+     * it describes, so the code the failing site recorded rides along for the
+     * dialog's short summary. Only a run that owns the shown error gets one:
+     * the read model shows a paused task's notice or a generic line instead
+     * when the stored errors belong to no run of this click.
+     *
+     * @param int $site_id Website identity.
+     * @param int $since   Click's freshness cutoff, as sent by the poll.
+     *
+     * @return string A registered error code, or '' when none applies.
+     */
+    private static function on_demand_failure_code( int $site_id, int $since ): string {
+        $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        if ( empty( $task ) || ! empty( $task->paused ) || '' === (string) $task->backup_errors || ( 0 !== $since && (int) $task->last_run < $since ) ) {
+            return '';
+        }
+        // A private-root failure stops the run before its progress row is
+        // reset, so the row can still carry an older run's fields. The
+        // failure catch writes the error text to last_error together with the
+        // code; anything else there is the run-state JSON of a live or reset
+        // run, whose code would not describe this failure.
+        $progress   = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+        $last_error = $progress ? (string) ( $progress->last_error ?? '' ) : '';
+        if ( '' === $last_error || is_array( json_decode( $last_error, true ) ) || ! is_array( $progress->fetchResult ) ) {
+            return '';
+        }
+        $code = $progress->fetchResult['error_code'] ?? '';
+        return is_string( $code ) && in_array( $code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? $code : '';
     }
 
     /**
@@ -913,21 +948,27 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
-     * Flatten the task's stored HTML backup_errors into a readable single
-     * line of plain text. The errors are stored as an HTML list, so block
-     * boundaries are turned into spaces before the tags are stripped;
-     * without this the site name and the message run together. Entities are
-     * decoded last: every caller sends the result as JSON to a jQuery .text()
-     * sink, which escapes on its own, so an encoded quote would show as
-     * "&quot;".
+     * Turn the task's stored HTML backup_errors into plain text. The errors
+     * are stored as an HTML list, so line breaks become newlines and list
+     * items become paragraphs before the tags are stripped; without this the
+     * site name and the message run together. Blank lines inside a message
+     * (paragraph breaks in long guidance such as the private-root error) are
+     * kept so a pre-line sink can show them; sinks without it render every
+     * newline as a space. Entities are decoded last: every caller sends the
+     * result as JSON to a jQuery .text() sink, which escapes on its own, so an
+     * encoded quote would show as "&quot;".
      *
      * @param string $errors Stored backup_errors HTML.
      *
-     * @return string A flattened, space-separated plain-text message.
+     * @return string Plain text with single spaces, line breaks and at most one blank line between paragraphs.
      */
     public static function humanize_backup_errors( $errors ) {
-        $spaced = str_replace( array( '<br>', '<br/>', '<br />', '</li>', '<li>', '</ol>', '<ol>' ), ' ', (string) $errors );
-        return wp_specialchars_decode( trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $spaced ) ) ), ENT_QUOTES );
+        $text = str_replace( array( '</li>', '</ol>' ), "\n\n", str_replace( "\r", '', (string) $errors ) );
+        $text = str_replace( array( '<br>', '<br/>', '<br />' ), "\n", $text );
+        $text = str_replace( array( '<li>', '<ol>' ), ' ', $text );
+        $text = preg_replace( '/[^\S\n]+/', ' ', wp_strip_all_tags( $text ) );
+        $text = preg_replace( "/\n{3,}/", "\n\n", preg_replace( '/ *\n */', "\n", $text ) );
+        return wp_specialchars_decode( trim( $text ), ENT_QUOTES );
     }
 
     /*

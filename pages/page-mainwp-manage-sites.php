@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard;
 
+use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Settings;
+
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -2168,15 +2170,19 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $uniqueId          = isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_uniqueId'] ) ) : '';
             $ssl_version       = isset( $_POST['mainwp_managesites_edit_ssl_version'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_ssl_version'] ) ) : '';
 
-            MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold, $backup_method );
+            $updated = false !== MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold, $backup_method );
 
             $url_locked = isset( $_POST['mainwp_managesites_edit_url_lock'] ) ? 1 : 0;
-            MainWP_Site_Url_Corrector::set_lock( $website, $url_locked );
+            if ( false === MainWP_Site_Url_Corrector::set_lock( $website, $url_locked ) ) {
+                $updated = false;
+            }
             if ( ! $url_locked && $url !== $website->url ) {
                 // Auto-set the lock only when the user actually CHANGED the URL to
                 // something diverging from the child-reported address; saving
                 // unrelated fields must not lock a mismatched site.
-                MainWP_Site_Url_Corrector::after_user_set_url( $website, $url );
+                if ( false === MainWP_Site_Url_Corrector::after_user_set_url( $website, $url ) ) {
+                    $updated = false;
+                }
             }
 
             if ( $can_manage_clients ) {
@@ -2184,7 +2190,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     $update = array(
                         'client_id' => $new_client_id,
                     );
-                    MainWP_DB::instance()->update_website_values( $website->id, $update );
+                    if ( false === MainWP_DB::instance()->update_website_values( $website->id, $update ) ) {
+                        $updated = false;
+                    }
                 }
             }
 
@@ -2198,6 +2206,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
              * @since 3.4
              */
             do_action( 'mainwp_update_site', $website->id );
+            if ( class_exists( Api_Backups_Settings::class ) && Api_Backups_Settings::get_instance()->has_credential_save_failed() ) {
+                $updated = false;
+            }
 
             $backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;
             if ( 2 < $backup_before_upgrade ) {
@@ -2223,34 +2234,49 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $newValues['is_ignoreCoreUpdates']   = ! empty( $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
                 $newValues['is_ignorePluginUpdates'] = ! empty( $_POST['mainwp_is_ignorePluginUpdates'] ) ? 1 : 0;
                 $newValues['is_ignoreThemeUpdates']  = ! empty( $_POST['mainwp_is_ignoreThemeUpdates'] ) ? 1 : 0;
-                MainWP_DB::instance()->update_website_option( $website, 'ignored_trans_updates', ! empty( $_POST['mainwp_is_ignore_trans_updates'] ) ? 1 : 0 );
+                if ( false === MainWP_DB::instance()->update_website_option( $website, 'ignored_trans_updates', ! empty( $_POST['mainwp_is_ignore_trans_updates'] ) ? 1 : 0 ) ) {
+                    $updated = false;
+                }
             }
 
-            MainWP_DB::instance()->update_website_values( $website->id, $newValues );
+            if ( false === MainWP_DB::instance()->update_website_values( $website->id, $newValues ) ) {
+                $updated = false;
+            }
 
             $monitoring_emails = isset( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ) : '';
             $monitoring_emails = MainWP_Utility::valid_input_emails( $monitoring_emails );
-            MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', trim( $monitoring_emails ) );
+            if ( false === MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', trim( $monitoring_emails ) ) ) {
+                $updated = false;
+            }
 
             $added = isset( $_POST['mainwp_managesites_edit_dt_added'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_dt_added'] ) ) : '';
             if ( ! empty( $added ) ) {
                 $added = strtotime( $added );
             }
-            MainWP_DB::instance()->update_website_option( $website, 'added_timestamp', $added );
+            if ( false === MainWP_DB::instance()->update_website_option( $website, 'added_timestamp', $added ) ) {
+                $updated = false;
+            }
 
             $new_alg = isset( $_POST['mainwp_managesites_edit_openssl_alg'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_openssl_alg'] ) ) : '';
-            MainWP_DB::instance()->update_website_option( $website, 'signature_algo', $new_alg );
+            if ( false === MainWP_DB::instance()->update_website_option( $website, 'signature_algo', $new_alg ) ) {
+                $updated = false;
+            }
 
             $use_lib = isset( $_POST['mainwp_managesites_edit_verify_connection_method'] ) ? intval( $_POST['mainwp_managesites_edit_verify_connection_method'] ) : 0;
-            MainWP_DB::instance()->update_website_option( $website, 'verify_method', $use_lib );
+            if ( false === MainWP_DB::instance()->update_website_option( $website, 'verify_method', $use_lib ) ) {
+                $updated = false;
+            }
 
             $uploaded_site_icon = isset( $_POST['mainwp_managesites_edit_site_uploaded_icon_hidden'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_site_uploaded_icon_hidden'] ) ) : '';
             $selected_site_icon = isset( $_POST['mainwp_managesites_edit_site_selected_icon_hidden'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_site_selected_icon_hidden'] ) ) : '';
             $cust_icon_color    = isset( $_POST['mainwp_managesites_edit_site_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['mainwp_managesites_edit_site_color'] ) ) : '';
             $icon_info          = 'uploaded:' . $uploaded_site_icon . ';selected:' . $selected_site_icon . ';color:' . $cust_icon_color;
-            MainWP_DB::instance()->update_website_option( $website, 'cust_site_icon_info', $icon_info );
+            $icon_result        = MainWP_DB::instance()->update_website_option( $website, 'cust_site_icon_info', $icon_info );
+            if ( false === $icon_result ) {
+                $updated = false;
+            }
 
-            if ( ! empty( $website->cust_site_icon_info ) ) {
+            if ( false !== $icon_result && ! empty( $website->cust_site_icon_info ) ) {
                 $current_uploaded = static::get_instance()->get_cust_site_icon( $website->cust_site_icon_info, 'uploaded' );
                 if ( ! empty( $current_uploaded ) && $current_uploaded !== $uploaded_site_icon ) {
                     MainWP_Utility::instance()->delete_uploaded_icon_file( 'site-icons', $current_uploaded ); // delete old icon.
@@ -2281,7 +2307,6 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 do_action( 'mainwp_site_suspended', $website, $suspended );
             }
             MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
-            $updated = true;
         }
     // phpcs:enable
         return $updated;

@@ -424,7 +424,7 @@ class Test_Credential_Render_Sentinel extends \WP_UnitTestCase {
 			ob_start();
 			do_action( 'mainwp_after_header', [] );
 			$notice = ob_get_clean();
-			$this->assertStringContainsString( 'Some backup credentials could not be saved. Their previous values were kept.', $notice );
+			$this->assertStringContainsString( 'Some backup settings could not be saved. Review the settings and try again.', $notice );
 			$this->assertTrue( $settings->has_credential_save_failed() );
 			$failed_page = $render_site();
 			$this->assertStringContainsString( 'id="mainwp-edit-site"', $failed_page );
@@ -438,7 +438,7 @@ class Test_Credential_Render_Sentinel extends \WP_UnitTestCase {
 				$this->assertStringContainsString( 'Child site settings saved successfully.', $render_site() );
 				ob_start();
 				do_action( 'mainwp_after_header', [] );
-				$this->assertStringNotContainsString( 'Some backup credentials could not be saved.', ob_get_clean() );
+				$this->assertStringNotContainsString( 'Some backup settings could not be saved.', ob_get_clean() );
 			}
 			$stored = json_decode( \MainWP\Dashboard\MainWP_DB::instance()->get_website_option( $site_id, $option ), true );
 			$this->assertNotEmpty( $stored['encrypted_val'] );

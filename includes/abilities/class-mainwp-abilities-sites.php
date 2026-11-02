@@ -643,7 +643,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'status_url'   => array(
                     'type'        => 'string',
                     'format'      => 'uri',
-                    'description' => __( 'URL to poll for job status (only when queued=true).', 'mainwp' ),
+                    'description' => __( 'Authenticated GET URL for mainwp/get-batch-job-status-v1, including job_id (only when queued=true).', 'mainwp' ),
                 ),
                 'sites_queued' => array(
                     'type'        => 'integer',
@@ -979,7 +979,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return array(
                 'queued'       => true,
                 'job_id'       => $job_id,
-                'status_url'   => rest_url( "mainwp/v2/jobs/{$job_id}" ),
+                'status_url'   => MainWP_Abilities_Util::get_batch_job_status_url( $job_id ),
                 'sites_queued' => count( $access_check['allowed'] ),
             );
         }

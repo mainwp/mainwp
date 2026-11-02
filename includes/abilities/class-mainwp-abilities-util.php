@@ -1554,6 +1554,19 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Build the authenticated GET URL for a batch job's status ability.
+     *
+     * @param string $job_id Queued job ID.
+     * @return string Status polling URL.
+     */
+    public static function get_batch_job_status_url( string $job_id ): string {
+        return add_query_arg(
+            array( 'input' => array( 'job_id' => $job_id ) ),
+            rest_url( 'wp-abilities/v1/abilities/mainwp/get-batch-job-status-v1/run' )
+        );
+    }
+
+    /**
      * Queue a batch sync operation for background processing.
      *
      * Used when >200 sites need to be synced to avoid request timeouts.

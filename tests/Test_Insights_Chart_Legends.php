@@ -10,8 +10,11 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\Module\Log\Log_Graph_Clients_Widget;
+use MainWP\Dashboard\Module\Log\Log_Graph_Php_Widget;
 use MainWP\Dashboard\Module\Log\Log_Graph_Plugins_Widget;
+use MainWP\Dashboard\Module\Log\Log_Graph_Status_Widget;
 use MainWP\Dashboard\Module\Log\Log_Graph_Tags_Widget;
+use MainWP\Dashboard\Module\Log\Log_Graph_WP_Widget;
 
 /**
  * Covers the legend and layout options printed by the Insights chart widgets.
@@ -107,6 +110,38 @@ class Test_Insights_Chart_Legends extends \WP_UnitTestCase {
 			'/\bplotOptions:\s*\{\s*pie:\s*\{\s*dataLabels:\s*\{\s*minAngleToShowLabel:\s*25\s*\}/',
 			$script,
 			'Thin slices must not print overlapping percentage labels.'
+		);
+	}
+
+	/**
+	 * The pie legends take the widget's text color instead of a fixed grey.
+	 *
+	 * @dataProvider pie_widgets
+	 *
+	 * @param string $widget_class Pie widget class.
+	 */
+	public function test_pie_legend_follows_theme_text( string $widget_class ): void {
+		$client = $this->create_client( 'Pie legend client' );
+		$this->create_test_site( array( 'client_id' => $client->client_id ) );
+
+		$script = $this->render_script( $widget_class::instance() );
+
+		$this->assertSame( 1, preg_match( '/\blegend:\s*\{(.*?)\n\s{20}\},/s', $script, $legend ), 'The pie must have a legend block.' );
+		$this->assertMatchesRegularExpression( "/\blabels:\s*\{\s*colors:\s*'inherit',?\s*\}/", $legend[1] );
+		$this->assertStringNotContainsString( '#999', $legend[1], 'A fixed grey legend is hard to read in light and dark themes.' );
+	}
+
+	/**
+	 * Insights pie widgets.
+	 *
+	 * @return array<string, string[]>
+	 */
+	public static function pie_widgets(): array {
+		return array(
+			'php'     => array( Log_Graph_Php_Widget::class ),
+			'wp'      => array( Log_Graph_WP_Widget::class ),
+			'status'  => array( Log_Graph_Status_Widget::class ),
+			'clients' => array( Log_Graph_Clients_Widget::class ),
 		);
 	}
 

@@ -171,7 +171,7 @@ class Log_Graph_Clients_Widget {
                             return mainwp_escape_html( chars.length > 30 ? chars.slice( 0, 29 ).join( '' ) + '\u2026' : name );
                         },
                         labels: {
-                            colors: '#999'
+                            colors: 'inherit'
                         }
                     },
                     // Percentages on thin slices overlap their neighbours; the tooltip still shows those values.

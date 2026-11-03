@@ -161,7 +161,7 @@ class Log_Graph_WP_Widget {
                     } ],
                     legend: {
                         labels: {
-                            colors: '#999'
+                            colors: 'inherit'
                         }
                     },
 

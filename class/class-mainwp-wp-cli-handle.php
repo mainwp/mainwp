@@ -163,7 +163,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
 
             if ( 'site' === $cli_com && ! isset( $assoc_args['add-site'] ) ) {
                 $requires_site_id = true;
-            } elseif ( 'updates' === $cli_com && ( isset( $assoc_args['site-ignored-plugins-updates'] ) || isset( $assoc_args['site-ignored-themes-updates'] ) || isset( $assoc_args['ignore-update'] ) || isset( $assoc_args['unignore_update'] ) ) ) {
+            } elseif ( 'updates' === $cli_com && ( isset( $assoc_args['site-ignored-plugins-updates'] ) || isset( $assoc_args['site-ignored-themes-updates'] ) || isset( $assoc_args['ignore-update'] ) || isset( $assoc_args['unignore-update'] ) ) ) {
                 $requires_site_id = true;
             } elseif ( 'updates' === $cli_com && ( isset( $assoc_args['ignored-plugins-updates'] ) || isset( $assoc_args['ignored-themes-updates'] ) ) ) {
                 $site_id = isset( $args[0] ) ? intval( $args[0] ) : false;
@@ -443,7 +443,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
             try {
                 MainWP_Connect::fetch_url_authed( $website, 'disconnect' );
             } catch ( \Exception $e ) {
-                \WP_CLI::error( '  Disconnect failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
+                \WP_CLI::warning( '  Disconnect failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
                 ++$errors;
             }
         }
@@ -1879,8 +1879,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         $params = static::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
         $type   = $params['type'];
         $slug   = $params['slug'];
+        $ver    = self::get_unignore_version( $assoc_args );
 
-        MainWP_Updates_Handler::unignore_global_plugins_themes( $type, $slug );
+        MainWP_Updates_Handler::unignore_global_plugins_themes( $type, $slug, $ver );
 
         \WP_CLI::line( '' );
         \WP_CLI::line( \WP_CLI::colorize( '%g' . $slug . esc_html__( ' unignorred successfully.', 'mainwp' ) . '%n' ) );
@@ -1898,16 +1899,43 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param object $website    Object containing child site data.
      */
     public static function callback_updates_unignore_update( $args = array(), $assoc_args = array(), $website = false ) {
+        if ( empty( $website ) ) {
+            \WP_CLI::error( 'Site not found.' );
+            return;
+        }
 
         $params = static::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
         $type   = $params['type'];
         $slug   = $params['slug'];
+        $ver    = self::get_unignore_version( $assoc_args );
 
-        MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $website->id );
+        MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $website->id, $ver );
 
         \WP_CLI::line( '' );
         \WP_CLI::line( \WP_CLI::colorize( '%g' . $slug . esc_html__( ' unignorred successfully.', 'mainwp' ) . '%n' ) );
         \WP_CLI::line( '' );
+    }
+
+    /**
+     * Gets the version to unignore from --ver.
+     *
+     * The CLI ignore commands store "all_versions", which is also what the Dashboard
+     * sends when you unignore an "All" row, so it is the default here. The global
+     * handler only clears an entry on "all_versions"; an empty value leaves it ignored.
+     *
+     * @param array $assoc_args Arguments.
+     *
+     * @return string Version, or "all_versions".
+     */
+    private static function get_unignore_version( $assoc_args ) {
+        if ( ! isset( $assoc_args['ver'] ) ) {
+            return 'all_versions';
+        }
+        if ( ! is_string( $assoc_args['ver'] ) || '' === $assoc_args['ver'] ) {
+            \WP_CLI::error( '--ver needs a value. Use --ver=<version>, or leave it out to unignore all versions.' );
+            return '';
+        }
+        return sanitize_text_field( $assoc_args['ver'] );
     }
 
     /**

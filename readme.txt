@@ -193,10 +193,31 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Fixed: Improved error reporting when extensions cannot access a site or lose its connection.
 * Fixed: Improved license refresh and licensing guidance for MainWP Pro members.
 * Fixed: Restored Manage Themes access and theme activation for Team Control users with the Activate Themes permission.
+* Fixed: Resolved snapshot deletion and retention cleanup failures on some upgraded installations.
+* Fixed: Corrected license status after rejected keys and improved license refresh error messages.
+* Fixed: Network Activity events are now preserved when moving them to the archive fails.
+* Fixed: Insights charts now display names containing special characters correctly, without extra quotes or encoded text.
+* Fixed: Improved backup upload verification for Cloudflare R2 and other S3-compatible storage.
+* Fixed: Corrected theme and tag counts in Insights charts and improved the formatting and safety of CSV downloads.
+* Fixed: Dropbox and SFTP backup verification no longer treats an unavailable file size as an empty file.
+* Fixed: Successful backup uploads now clear error messages from earlier failed attempts.
+* Fixed: Corrected client tag names when tags are shared across sites or contain commas.
+* Fixed: Backup upload failures now show clearer messages with the correct storage destination details.
+* Fixed: Improved Insights chart legend colors and the display of client charts with long names.
+* Fixed: Added clearer connection failure messages and guidance across site management, setup, licensing, APIs, and WP-CLI.
+* Fixed: Improved the readability of Insights pie chart legends across light and dark themes.
+* Fixed: Prevented errors when unignoring plugin and theme updates through the REST API.
+* Fixed: Cloud restores can now use verified remote backup copies while keeping local inventory files needed for incremental backups.
+* Fixed: Automatic site sync now resumes its remaining sites correctly after Trusted Updates runs.
+* Fixed: REST API site requests now handle custom field names consistently regardless of capitalization.
+* Fixed: Trusted Updates now resumes after timed-out runs so sites on larger networks are not repeatedly skipped.
+* Fixed: Tag chips now show the correct names, links, and colors for duplicate names and names containing commas.
+* Fixed: Starting updates through the REST API no longer causes automatic site sync to skip pending sites.
 * Updated: Improved the Light/Dark mode switch and Dashboard menu accessibility.
 * Updated: Strengthened Team Control permission checks for accessing Dashboard settings through the REST API.
 * Updated: Masked passwords and other credentials in site import logs and failed-row CSV exports.
 * Updated: Updated the bundled phpseclib cryptography library to version 3.0.58.
+* Updated: Improved release checks for backup retention.
 * Maintenance: Prepared Built-In Backups for future compatibility improvements.
 * Maintenance: Improved automated backup settings and release testing.
 

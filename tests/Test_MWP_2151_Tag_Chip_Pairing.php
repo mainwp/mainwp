@@ -348,7 +348,6 @@ class Test_MWP_2151_Tag_Chip_Pairing extends \WP_UnitTestCase {
 	 */
 	private function expected_html( array $tags, $href ): string {
 		$label = new \ReflectionMethod( MainWP_System_Utility::class, 'get_site_tag_label' );
-		$label->setAccessible( true );
 		$html = '';
 		foreach ( $tags as $tag ) {
 			$html .= $label->invoke( null, $tag['name'], (string) $tag['id'], $href, $tag['color'] );

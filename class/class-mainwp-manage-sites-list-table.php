@@ -926,6 +926,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 } elseif ( 'tags' === $req_orderby ) {
                     $orderby = 'GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'update' === $req_orderby ) {
+                    // Count premium updates by type from the premium_upgrades option, as the Updates cell does.
+                    // Qualified: the wp table has an empty premium_upgrades column of the same name.
                     $orderby = 'CASE true
                                             WHEN (offline_check_result = -1)
                                                 THEN 2
@@ -935,7 +937,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                                 + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
                                                 + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
                                                 + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
+                                                + LENGTH(COALESCE(owp_premium_upgrades.value, "")) - LENGTH(REPLACE(COALESCE(owp_premium_upgrades.value, ""), "\"type\":\"plugin\"", "\"type\":\"plugin"))
+                                                + LENGTH(COALESCE(owp_premium_upgrades.value, "")) - LENGTH(REPLACE(COALESCE(owp_premium_upgrades.value, ""), "\"type\":\"theme\"", "\"type\":\"theme"))
                                             END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                    if ( ! in_array( 'premium_upgrades', $extra_view ) ) {
+                        $extra_view[] = 'premium_upgrades';
+                    }
                 } elseif ( 'phpversion' === $req_orderby ) {
                     $orderby = " INET_ATON(
                         SUBSTRING_INDEX(

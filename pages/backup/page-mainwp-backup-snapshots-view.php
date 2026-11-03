@@ -1097,7 +1097,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     var label = uploadLabels[ upload.status ] || [ 'grey', escAttr( upload.status ) ];
                     details += '<div class="item">' + escAttr( upload.name ) + ' (' + escAttr( upload.provider ) + ') <span class="ui small basic ' + label[0] + ' label">' + label[1] + '</span>';
                     if ( [ 'failed_retryable', 'failed_permanent', 'credentials_invalid' ].indexOf( upload.status ) !== -1 && upload.last_error ) {
-                        details += ' ' + escAttr( upload.last_error );
+                        details += ' ' + escAttr( upload.error_message || upload.last_error );
+                        // The provider's own message and the error code stay visible for support.
+                        var support = [ upload.error_detail, upload.error_code ? '(' + upload.error_code + ')' : '' ].filter( Boolean ).join( ' ' );
+                        if ( support ) {
+                            details += '<div><span class="ui small grey text">' + escAttr( support ) + '</span></div>';
+                        }
                     }
                     details += '</div>';
                 } );

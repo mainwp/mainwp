@@ -130,10 +130,12 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     // Upload.
     const ERR_FTP_FAILED          = 'mainwp_backup_ftp_failed';
+    const ERR_SFTP_FAILED         = 'mainwp_backup_sftp_failed';
     const ERR_DROPBOX_FAILED      = 'mainwp_backup_dropbox_failed';
     const ERR_S3_FAILED           = 'mainwp_backup_s3_failed';
     const ERR_GCS_FAILED          = 'mainwp_backup_gcs_failed';
     const ERR_LOCAL_FAILED        = 'mainwp_backup_local_failed';
+    const ERR_UPLOAD_FAILED       = 'mainwp_backup_destination_upload_failed';
     const ERR_ENCRYPTION_REQUIRED = 'mainwp_backup_encryption_required';
 
     const ERR_TASK_NOT_FOUND                                 = 'mainwp_backup_task_not_found';
@@ -252,6 +254,44 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Split a stored "[code] message" error into the parts users see.
+     *
+     * Upload jobs store the error code in front of the provider's own
+     * message. The friendly text for a registered code leads, the provider
+     * message stays as a detail, and the code is kept for support. Text
+     * without a code prefix is returned as the message unchanged.
+     *
+     * @param mixed $stored Stored error text.
+     *
+     * @return array{code:string,message:string,detail:string} Plain-text parts; escape them on output.
+     */
+    public static function stored_error_parts( $stored ) {
+        $parts  = array(
+            'code'    => '',
+            'message' => '',
+            'detail'  => '',
+        );
+        $stored = trim( (string) static::sanitize_message( $stored ) );
+        if ( '' === $stored ) {
+            return $parts;
+        }
+        if ( ! preg_match( '/^\[(mainwp_[a-z0-9_]{1,80})\]\s*(.*)$/s', $stored, $match ) ) {
+            $parts['message'] = $stored;
+            return $parts;
+        }
+        $parts['code'] = $match[1];
+        $detail        = trim( $match[2] );
+        $messages      = static::get_messages();
+        if ( ! isset( $messages[ $parts['code'] ] ) ) {
+            $parts['message'] = '' !== $detail ? $detail : wp_specialchars_decode( static::message( $parts['code'] ), ENT_QUOTES );
+            return $parts;
+        }
+        $parts['message'] = wp_specialchars_decode( $messages[ $parts['code'] ], ENT_QUOTES );
+        $parts['detail']  = $detail !== $parts['message'] ? $detail : '';
+        return $parts;
+    }
+
+    /**
      * Strip sensitive server details from a user-facing message.
      *
      * Removes the absolute site path, SQL statement fragments, table name
@@ -360,10 +400,12 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_RESTORE_CHILD_UPDATE_REQUIRED => esc_html__( 'The MainWP Child plugin on this site is too old to restore a backup safely. Update MainWP Child on the site, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_SCHEMA_REPAIR_PENDING => esc_html__( 'The Dashboard database is missing an update that restores need, and MainWP could not add it. Check the MainWP log for the database error and that the database user has permission to alter tables. MainWP retries the update on a later Dashboard request, no more than once an hour, and restores stay paused until it succeeds.', 'mainwp' ),
             self::ERR_FTP_FAILED                    => esc_html__( 'Could not upload the backup to the FTP server. Check the FTP credentials and that the server is reachable, then try again.', 'mainwp' ),
+            self::ERR_SFTP_FAILED                   => esc_html__( 'Could not upload the backup to the SFTP server. Check the SFTP credentials, that the server is reachable, and that the remote folder is writable, then try again.', 'mainwp' ),
             self::ERR_DROPBOX_FAILED                => esc_html__( 'Could not upload the backup to Dropbox. Check the Dropbox connection settings and available storage space, then try again.', 'mainwp' ),
             self::ERR_S3_FAILED                     => esc_html__( 'Could not upload the backup to Amazon S3. Check the S3 credentials, bucket name, and permissions, then try again.', 'mainwp' ),
             self::ERR_GCS_FAILED                    => esc_html__( 'Could not upload the backup to Google Cloud Storage. Check the HMAC key, bucket name, and permissions, then try again.', 'mainwp' ),
             self::ERR_LOCAL_FAILED                  => esc_html__( 'Could not write to the backup folder on the Dashboard server. Check that the folder exists and is writable, then try again.', 'mainwp' ),
+            self::ERR_UPLOAD_FAILED                 => esc_html__( 'Could not upload the backup to the storage destination. Check the destination settings on the Backup Storage page, then try again.', 'mainwp' ),
             self::ERR_ENCRYPTION_REQUIRED           => esc_html__( 'Backup encryption is on, but this backup could not be encrypted, so it was not uploaded. Check the encryption configuration in Settings > Backup Settings, then run the backup again.', 'mainwp' ),
             self::ERR_HASH_MISMATCH                 => esc_html__( 'The downloaded backup file does not match the integrity hash reported by the child site. The file may have been modified or corrupted during the transfer. The local file was removed; try the download again.', 'mainwp' ),
             self::ERR_DL_FILE_NOT_FOUND             => esc_html__( 'The backup file was not found on the child site. It may have been removed by a cleanup. Run a new backup and try again.', 'mainwp' ),

@@ -1155,10 +1155,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 return MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED;
             case 'ftp':
             case 'ftps':
-            case 'sftp':
                 return MainWP_Backup_Error_Codes::ERR_FTP_FAILED;
+            case 'sftp':
+                return MainWP_Backup_Error_Codes::ERR_SFTP_FAILED;
+            case 'local':
+                return MainWP_Backup_Error_Codes::ERR_LOCAL_FAILED;
             default:
-                return MainWP_Backup_Error_Codes::ERR_S3_FAILED;
+                return MainWP_Backup_Error_Codes::ERR_UPLOAD_FAILED;
         }
     }
 

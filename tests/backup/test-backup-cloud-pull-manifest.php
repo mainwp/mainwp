@@ -261,7 +261,7 @@ class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case 
 		);
 		$this->assertFalse(
 			$this->driver->can_use_cloud_pull( $this->website(), $local, array() ),
-			'A plan with any non-remote artifact must stage instead.'
+			'A local artifact without a remote copy must stage instead.'
 		);
 
 		$adopt_only = array(
@@ -592,5 +592,219 @@ class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case 
 		$plan = array( $this->plan_entry() );
 
 		$this->assertNull( $this->driver->generate_pull_manifest( $plan ) );
+	}
+
+	/**
+	 * The files.list entry of a snapshot whose inventory is kept on the
+	 * dashboard while its archives live only in cloud storage.
+	 *
+	 * @param int   $snapshot_id Snapshot id.
+	 * @param array $over        Overrides.
+	 *
+	 * @return array
+	 */
+	private function local_list_entry( $snapshot_id = 42, array $over = array() ) {
+		return $this->plan_entry(
+			array_merge(
+				array(
+					'role'            => 'manifest',
+					'file'            => 's' . $snapshot_id . '-files.list',
+					'source_file'     => 'files.list',
+					'snapshot_id'     => $snapshot_id,
+					'source'          => 'local',
+					'local_path'      => '/tmp/files.list',
+					'remote_key'      => '',
+					'recorded_sha256' => str_repeat( 'd', 64 ),
+				),
+				$over
+			)
+		);
+	}
+
+	/**
+	 * The upload record of a files.list copy.
+	 *
+	 * @param array $over Overrides.
+	 *
+	 * @return array
+	 */
+	private function list_record( array $over = array() ) {
+		return array_merge(
+			array(
+				'file'   => 'files.list',
+				'mode'   => 'whole',
+				'size'   => 200,
+				'sha256' => str_repeat( 'd', 64 ),
+			),
+			$over
+		);
+	}
+
+	/**
+	 * A files.list kept locally does not block cloud pull when the same
+	 * upload holds a complete copy with the backup's hash, and the
+	 * manifest carries that copy.
+	 */
+	public function test_local_inventory_with_matching_remote_copy_uses_cloud_pull() {
+		$records                      = $this->upload_record();
+		$records[42]['files.list']    = $this->list_record();
+		$this->driver->upload_records = $records;
+		$plan                         = array( $this->plan_entry(), $this->local_list_entry() );
+
+		$this->assertTrue( $this->driver->can_use_cloud_pull( $this->website(), $plan, array() ) );
+
+		$manifest = $this->driver->generate_pull_manifest( $plan );
+		$this->assertNotNull( $manifest );
+		$this->assertCount( 2, $manifest['artifacts'] );
+		$this->assertSame( 's42-files.list', $manifest['artifacts'][1]['file'] );
+		$this->assertSame( str_repeat( 'd', 64 ), $manifest['artifacts'][1]['sha256'] );
+		$this->assertStringStartsWith( 'https://bucket.example/4/42/files/files.list?', $manifest['artifacts'][1]['url'] );
+		$this->assertSame( str_repeat( 'd', 64 ), $plan[1]['sha256'] );
+
+		$this->assertFalse(
+			$this->driver->can_use_cloud_pull( $this->website(), $plan, array( 'cloud_pull_tried' => true ) ),
+			'A job that already tried cloud pull must stage instead.'
+		);
+		$this->assertFalse(
+			$this->driver->can_use_cloud_pull( $this->website( false ), $plan, array() ),
+			'A child without the capability must stage instead.'
+		);
+	}
+
+	/**
+	 * A local entry with no usable remote copy keeps the restore on the
+	 * staged transfer, and the manifest builder agrees with the gate.
+	 *
+	 * @dataProvider data_local_inventory_without_usable_remote_copy
+	 *
+	 * @param array|null $record Upload record for files.list, or null for none.
+	 * @param array      $entry  Plan entry overrides.
+	 */
+	public function test_local_inventory_without_usable_remote_copy_stages( $record, array $entry ) {
+		$records = $this->upload_record();
+		if ( null !== $record ) {
+			$records[42]['files.list'] = $this->list_record( $record );
+		}
+		$this->driver->upload_records = $records;
+		$plan                         = array( $this->plan_entry(), $this->local_list_entry( 42, $entry ) );
+
+		$this->assertFalse( $this->driver->can_use_cloud_pull( $this->website(), $plan, array() ) );
+		$this->assertNull( $this->driver->generate_pull_manifest( $plan ) );
+		$this->assertSame( '', $plan[1]['sha256'] );
+	}
+
+	/**
+	 * Remote evidence that must not authorize a pull of a local entry.
+	 *
+	 * @return array
+	 */
+	public function data_local_inventory_without_usable_remote_copy() {
+		return array(
+			'no remote copy'        => array( null, array() ),
+			'remote hash differs'   => array( array( 'sha256' => str_repeat( 'e', 64 ) ), array() ),
+			'remote hash missing'   => array( array( 'sha256' => '' ), array() ),
+			'chunk hash missing'    => array(
+				array(
+					'mode'   => 'chunked',
+					'chunks' => array( array( 'algo' => 'sha256' ) ),
+				),
+				array(),
+			),
+			'different source file' => array( array(), array( 'source_file' => 'other.list' ) ),
+		);
+	}
+
+	/**
+	 * A local entry whose source could not be resolved at all is never
+	 * pulled, even when an upload holds a file of that name.
+	 */
+	public function test_unavailable_entry_still_stages() {
+		$records                      = $this->upload_record();
+		$records[42]['files.list']    = $this->list_record();
+		$this->driver->upload_records = $records;
+		$plan                         = array( $this->plan_entry(), $this->local_list_entry( 42, array( 'source' => 'unavailable' ) ) );
+
+		$this->assertFalse( $this->driver->can_use_cloud_pull( $this->website(), $plan, array() ) );
+	}
+
+	/**
+	 * An encrypted snapshot keeps staging with a local files.list too.
+	 */
+	public function test_encrypted_snapshot_with_local_inventory_declines_cloud_pull() {
+		update_option( MainWP_Backup_Encryption::ENABLED_OPTION, '1' );
+		$enc = MainWP_Backup_Encryption::instance();
+		$enc->set_recovery_passphrase( 'cloud pull gate passphrase' );
+
+		$snapshot_id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'       => 0,
+				'site_id'       => 4,
+				'type'          => 'full',
+				'parent_id'     => null,
+				'archives'      => array(),
+				'manifest_path' => '',
+			)
+		);
+
+		$this->driver->upload_records = array(
+			$snapshot_id => array(
+				'full.zip'   => array(
+					'file'   => 'full.zip',
+					'mode'   => 'whole',
+					'size'   => 1000,
+					'sha256' => str_repeat( 'a', 64 ),
+				),
+				'files.list' => $this->list_record(),
+			),
+		);
+		$plan                         = array(
+			$this->plan_entry( array( 'snapshot_id' => $snapshot_id ) ),
+			$this->local_list_entry( $snapshot_id ),
+		);
+
+		$this->assertFalse(
+			$this->driver->can_use_cloud_pull( $this->website(), $plan, array() ),
+			'An encrypted snapshot must decline cloud pull; the child cannot decrypt.'
+		);
+
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		delete_option( MainWP_Backup_Encryption::ENABLED_OPTION );
+		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
+	}
+
+	/**
+	 * In an incremental chain every snapshot must hold a remote copy of
+	 * its own local entries; a copy in another snapshot does not count.
+	 */
+	public function test_chain_needs_remote_copy_of_each_local_entry() {
+		$records                      = $this->upload_record();
+		$records[42]['files.list']    = $this->list_record();
+		$records[43]                  = array(
+			'part.zip' => array(
+				'file'   => 'part.zip',
+				'mode'   => 'whole',
+				'size'   => 300,
+				'sha256' => str_repeat( 'f', 64 ),
+			),
+		);
+		$this->driver->upload_records = $records;
+
+		$chain_part = $this->plan_entry(
+			array(
+				'role'        => 'part',
+				'file'        => 's43-part.zip',
+				'source_file' => 'part.zip',
+				'snapshot_id' => 43,
+				'remote_key'  => '4/43/files/part.zip',
+			)
+		);
+		$plan       = array( $this->plan_entry(), $chain_part, $this->local_list_entry( 43 ) );
+
+		$this->assertFalse( $this->driver->can_use_cloud_pull( $this->website(), $plan, array() ) );
+		$this->assertNull( $this->driver->generate_pull_manifest( $plan ) );
+
+		$this->driver->upload_records[43]['files.list'] = $this->list_record();
+		$this->assertTrue( $this->driver->can_use_cloud_pull( $this->website(), $plan, array() ) );
+		$this->assertCount( 3, $this->driver->generate_pull_manifest( $plan )['artifacts'] );
 	}
 }

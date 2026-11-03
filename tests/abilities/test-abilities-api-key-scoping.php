@@ -1740,7 +1740,9 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             $controller = new \MainWP_Rest_Updates_Controller();
             $response = $controller->update_all_items_start( new \WP_REST_Request( 'POST', '/mainwp/v2/updates' ) );
             $this->assertNotWPError( $response );
-            $this->assertGreaterThan( 0, (int) MainWP_DB::instance()->get_website_by_id( $allowed )->dtsAutomaticSyncStart );
+            $this->assertSame( (int) get_option( 'mainwp_batch_updates_start_time' ), (int) MainWP_DB::instance()->get_website_option( $allowed, 'batch_updates_queue_time' ) );
+            $this->assertEmpty( MainWP_DB::instance()->get_website_option( $outside, 'batch_updates_queue_time' ) );
+            $this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $allowed )->dtsAutomaticSyncStart );
             $this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $outside )->dtsAutomaticSyncStart );
         } );
     }

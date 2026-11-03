@@ -433,34 +433,51 @@ class Test_WP_CLI_Help_Unignore_Disconnect extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A bare --ver is refused instead of unignoring every version.
+	 * --ver values that would otherwise unignore every version.
+	 *
+	 * @return array
 	 */
-	public function test_unignore_updates_refuses_bare_ver() {
+	public function empty_versions() {
+		return array(
+			'bare flag'  => array( true ),
+			'whitespace' => array( '   ' ),
+		);
+	}
+
+	/**
+	 * A bare or blank --ver is refused on a site instead of unignoring every version.
+	 *
+	 * @dataProvider empty_versions
+	 *
+	 * @param mixed $ver --ver value as WP-CLI passes it.
+	 */
+	public function test_unignore_update_refuses_empty_ver( $ver ) {
+		$site_id = $this->add_site( 'blank-ver' );
 		$this->assertNull(
 			$this->run_cli(
 				'updates',
-				array(),
+				array( (string) $site_id ),
 				array(
-					'ignore-updates' => true,
-					'type'           => 'plugin',
-					'slug'           => self::SLUG,
-					'name'           => 'Akismet',
+					'ignore-update' => true,
+					'type'          => 'plugin',
+					'slug'          => self::SLUG,
+					'name'          => 'Akismet',
 				)
 			)
 		);
 
 		$error = $this->run_cli(
 			'updates',
-			array(),
+			array( (string) $site_id ),
 			array(
-				'unignore-updates' => true,
-				'type'             => 'plugin',
-				'slug'             => self::SLUG,
-				'ver'              => true,
+				'unignore-update' => true,
+				'type'            => 'plugin',
+				'slug'            => self::SLUG,
+				'ver'             => $ver,
 			)
 		);
 		$this->assertStringStartsWith( '--ver needs a value.', (string) $error );
-		$this->assertArrayHasKey( self::SLUG, $this->global_ignored_plugins() );
+		$this->assertArrayHasKey( self::SLUG, $this->site_ignored_plugins( $site_id ) );
 	}
 
 	/**

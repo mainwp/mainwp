@@ -1931,11 +1931,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         if ( ! isset( $assoc_args['ver'] ) ) {
             return 'all_versions';
         }
-        if ( ! is_string( $assoc_args['ver'] ) || '' === $assoc_args['ver'] ) {
+        // The per-site handler reads an empty version as "all versions", so whitespace must not get through.
+        $ver = is_string( $assoc_args['ver'] ) ? sanitize_text_field( $assoc_args['ver'] ) : '';
+        if ( '' === $ver ) {
             \WP_CLI::error( '--ver needs a value. Use --ver=<version>, or leave it out to unignore all versions.' );
             return '';
         }
-        return sanitize_text_field( $assoc_args['ver'] );
+        return $ver;
     }
 
     /**

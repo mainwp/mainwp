@@ -143,9 +143,9 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 		$before = array();
 		foreach ( array( 'wp_backup', 'wp_backup_snapshot', 'wp_backup_upload_job', 'wp_backup_storage' ) as $table ) {
 			$name             = MainWP_DB::instance()->get_table_name( $table );
-			$before[ $table ] = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $name ), ARRAY_A );
+			$before[ $table ] = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id', $name ), ARRAY_A );
 		}
-		$options  = $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups'", ARRAY_A );
+		$options  = $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups' ORDER BY option_id", ARRAY_A );
 		$messages = array();
 		$requests = 0;
 		$log      = static function ( $message, $site_id, $task_id ) use ( &$messages ) {
@@ -167,9 +167,9 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 			$this->assertSame( array( $this->site_id, $task ), array_slice( $messages[0], 1 ) );
 			foreach ( $before as $table => $rows ) {
 				$name = MainWP_DB::instance()->get_table_name( $table );
-				$this->assertEquals( $rows, $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $name ), ARRAY_A ), $table );
+				$this->assertEquals( $rows, $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id', $name ), ARRAY_A ), $table );
 			}
-			$this->assertEquals( $options, $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups'", ARRAY_A ) );
+			$this->assertEquals( $options, $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups' ORDER BY option_id", ARRAY_A ) );
 			foreach ( $this->fixture_dirs as $dir ) {
 				$this->assertSame( str_repeat( 'x', 100 ), file_get_contents( $dir . '/artifact.tar' ) );
 			}

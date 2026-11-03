@@ -804,47 +804,18 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $href = 'admin.php?page=ManageClients&tags=';
         }
 
-        $groups_colors = '';
-        if ( isset( $item['wpgroups_colors'] ) ) {
-            $groups_colors = explode( ',', $item['wpgroups_colors'] );
-        }
-
-        $tags        = '';
         $tags_labels = '';
 
         if ( isset( $item['wpgroups'] ) && ! empty( $item['wpgroups'] ) ) {
+            $tags = self::get_tag_chips(
+                $item['wpgroups'],
+                isset( $item['wpgroupids'] ) ? $item['wpgroupids'] : '',
+                isset( $item['wpgroups_colors'] ) ? $item['wpgroups_colors'] : null,
+                $client_tag
+            );
 
-            if ( $client_tag ) {
-                $tags_filter = static::client_tags_filter( $item );
-                $tags        = $tags_filter['wpgroups'];
-                $tags_ids    = $tags_filter['wpgroupids'];
-            } else {
-                $tags     = $item['wpgroups'];
-                $tags     = explode( ',', $tags );
-                $tags_ids = $item['wpgroupids'];
-                $tags_ids = explode( ',', $tags_ids );
-            }
-
-            if ( is_array( $tags ) ) {
-                foreach ( $tags as $idx => $tag ) {
-                    $tag  = trim( $tag );
-                    $tagc = '';
-
-                    // to improved db query.
-                    if ( is_array( $groups_colors ) && isset( $groups_colors[ $idx ] ) ) {
-                        $tagc = $groups_colors[ $idx ];
-                    } else {
-                        $tagx = MainWP_DB_Common::instance()->get_group_by_name( $tag );
-                        $tagc = is_object( $tagx ) && '' !== $tagx->color ? $tagx->color : '';
-                    }
-
-                    $tag_id = '';
-                    if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
-                        $tag_id = $tags_ids[ $idx ];
-                    }
-
-                    $tags_labels .= self::get_site_tag_label( $tag, $tag_id, $href, $tagc );
-                }
+            foreach ( $tags as $tag ) {
+                $tags_labels .= self::get_site_tag_label( trim( $tag['name'] ), $tag['id'], $href, $tag['color'] );
             }
         }
         return $tags_labels;
@@ -865,30 +836,17 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $href = 'admin.php?page=managesites&g=';
 
-        $tags        = '';
         $tags_labels = '';
 
         if ( isset( $item['wpgroups_belong'] ) && ! empty( $item['wpgroups_belong'] ) ) {
+            $tags = self::get_tag_chips(
+                $item['wpgroups_belong'],
+                isset( $item['wpgroupids_belong'] ) ? $item['wpgroupids_belong'] : '',
+                isset( $item['wpgroupcolors_belong'] ) ? $item['wpgroupcolors_belong'] : null
+            );
 
-            $tags     = $item['wpgroups_belong'];
-            $tags     = explode( ',', $tags );
-            $tags_ids = $item['wpgroupids_belong'];
-            $tags_ids = explode( ',', $tags_ids );
-
-            $tags_colors = explode( ',', $item['wpgroupcolors_belong'] );
-
-            if ( is_array( $tags ) ) {
-                foreach ( $tags as $idx => $tag ) {
-                    $tag  = trim( $tag );
-                    $tagc = $tags_colors[ $idx ];
-
-                    $tag_id = '';
-                    if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
-                        $tag_id = $tags_ids[ $idx ];
-                    }
-
-                    $tags_labels .= self::get_site_tag_label( $tag, $tag_id, $href, $tagc );
-                }
+            foreach ( $tags as $tag ) {
+                $tags_labels .= self::get_site_tag_label( trim( $tag['name'] ), $tag['id'], $href, $tag['color'] );
             }
         }
         return $tags_labels;
@@ -1027,19 +985,88 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return mixed Single Row Classes Item.
      */
     public static function client_tags_filter( $item ) {
-        $tags = $item['wpgroups'];
-        $tags = explode( ',', $tags );
-        $tags = array_values( array_unique( $tags ) );
-
-        $tags_ids = $item['wpgroupids'];
-        $tags_ids = explode( ',', $tags_ids );
-        $tags_ids = array_values( array_unique( $tags_ids ) );
+        $tags = self::get_tag_chips(
+            $item['wpgroups'],
+            isset( $item['wpgroupids'] ) ? $item['wpgroupids'] : '',
+            isset( $item['wpgroups_colors'] ) ? $item['wpgroups_colors'] : null,
+            true
+        );
 
         $return = array();
 
-        $return['wpgroups']   = $tags;
-        $return['wpgroupids'] = $tags_ids;
+        $return['wpgroups']   = array_column( $tags, 'name' );
+        $return['wpgroupids'] = array_column( $tags, 'id' );
         return $return;
+    }
+
+    /**
+     * Method get_tag_chips()
+     *
+     * Pair each tag in a row with its own ID and color.
+     *
+     * Rows carry tag names, IDs and colors as comma-joined lists. Pairing them by
+     * position goes wrong when a name contains a comma, when two tags share a name,
+     * when a query drops repeated names or colors with DISTINCT, or when the lists
+     * are sorted differently, as in client rows. Only a site row with a single tag
+     * keeps positional pairing. Other rows resolve their tag IDs, which never contain
+     * a comma, with one query per row. A tag deleted since the row was read gets no
+     * chip. If none of the IDs has a stored tag, the row falls back to positional
+     * pairing.
+     *
+     * @param string      $names  Comma-joined tag names.
+     * @param string      $ids    Comma-joined tag IDs.
+     * @param string|null $colors Comma-joined tag colors, or null when the row has none.
+     * @param bool        $unique Merge repeated tags, for client rows that list a tag once per site.
+     *
+     * @return array List of tags, each with name, id and color.
+     */
+    private static function get_tag_chips( $names, $ids, $colors, $unique = false ) {
+        $names  = explode( ',', (string) $names );
+        $ids    = explode( ',', (string) $ids );
+        $colors = null === $colors ? array() : explode( ',', (string) $colors );
+
+        $tag_ids  = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+        $lined_up = ! $unique && 1 === count( $ids ) && 1 === count( $names ) && 1 === count( $colors );
+
+        $rows = array();
+        if ( ! $lined_up && ! empty( $tag_ids ) ) {
+            $rows = MainWP_DB_Common::instance()->get_tags( array( 'include' => $tag_ids ) );
+        }
+
+        if ( is_array( $rows ) && ! empty( $rows ) ) {
+            $tags = array();
+            foreach ( $rows as $row ) {
+                $tags[] = array(
+                    'name'  => (string) $row->name,
+                    'id'    => (string) $row->id,
+                    'color' => (string) $row->color,
+                );
+            }
+            return $tags;
+        }
+
+        if ( $unique ) {
+            $names = array_values( array_unique( $names ) );
+            $ids   = array_values( array_unique( $ids ) );
+        }
+
+        $tags = array();
+        foreach ( $names as $idx => $name ) {
+            // to improved db query.
+            if ( isset( $colors[ $idx ] ) ) {
+                $tagc = $colors[ $idx ];
+            } else {
+                $tagx = MainWP_DB_Common::instance()->get_group_by_name( trim( $name ) );
+                $tagc = is_object( $tagx ) && '' !== $tagx->color ? $tagx->color : '';
+            }
+
+            $tags[] = array(
+                'name'  => $name,
+                'id'    => isset( $ids[ $idx ] ) && ! empty( $ids[ $idx ] ) ? $ids[ $idx ] : '',
+                'color' => $tagc,
+            );
+        }
+        return $tags;
     }
 
     /**

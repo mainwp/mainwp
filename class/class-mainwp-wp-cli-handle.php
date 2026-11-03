@@ -218,6 +218,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                 }
                 return $sites;
             } elseif ( 'site_id' === $what ) {
+                if ( ! isset( $args[0] ) ) {
+                    return ''; // The caller reports "Empty site id.".
+                }
                 $site_id = $args[0];
                 if ( ! is_numeric( trim( $site_id ) ) ) {
                     \WP_CLI::error( 'Child site id should be numeric.' );

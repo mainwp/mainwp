@@ -499,6 +499,24 @@ class Test_WP_CLI_Help_Unignore_Disconnect extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * --unignore-update without a site ID stops with the empty-ID error, not a PHP warning.
+	 */
+	public function test_unignore_update_without_site_id_is_an_error() {
+		$this->assertSame(
+			'Empty site id.',
+			$this->run_cli(
+				'updates',
+				array(),
+				array(
+					'unignore-update' => true,
+					'type'            => 'plugin',
+					'slug'            => self::SLUG,
+				)
+			)
+		);
+	}
+
+	/**
 	 * The unignore-update callback refuses a missing site itself.
 	 */
 	public function test_unignore_update_callback_refuses_missing_site() {

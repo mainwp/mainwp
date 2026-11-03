@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Common;
+use MainWP\Dashboard\MainWP_Error_Helper;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Sites_Handler;
 use MainWP\Dashboard\MainWP_System;
@@ -337,6 +338,23 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 			array( 'SSL certificate problem: self-signed certificate' ),
 			array( 'SSL: no alternative certificate subject name matches target hostname' ),
 		);
+	}
+
+	/**
+	 * The readable certificate message still carries the TLS opt-out hint and reads as plain text.
+	 */
+	public function test_classified_certificate_failure_keeps_tls_hint() {
+		$args                        = $this->arguments();
+		$args['adminpassword']       = 'CliFixture42';
+		$this->untrusted_certificate = true;
+		$classified                  = MainWP_Error_Helper::classify_transport_error( 60, 'SSL certificate problem: self-signed certificate' );
+		$this->transport_error       = $classified['message'];
+		list( $status, $message )    = $this->run_command( $args );
+		$this->assertSame( 'error', $status );
+		$this->assertStringContainsString( "The site's SSL certificate could not be verified.", $message );
+		$this->assertStringNotContainsString( '&#039;', $message );
+		$this->assertStringContainsString( 'TLS certificate verification failed', $message );
+		$this->assertStringContainsString( '--ssl_verify=0', $message );
 	}
 
 	/**

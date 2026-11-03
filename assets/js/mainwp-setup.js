@@ -619,7 +619,7 @@ let mainwp_setup_managesites_add = function () {
         mainwp_onboarding_connecting = false;
         const childNotAnswering = mainwp_onboarding_decode(response) === mainwp_onboarding_decode('ERROR ' + mainwp_onboarding_copy('childNotAnswering'));
         mainwp_onboarding_connect_failure = { url, category: childNotAnswering ? 'child_not_answering' : 'other' };
-        if (!childNotAnswering) mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
+        if (!childNotAnswering) mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? (res_things.error_message ? '<p>' + mainwp_onboarding_escape(res_things.error_message) + '</p>' : '') + res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
         if (mainwp_onboarding_detection) mainwp_onboarding_detection.connectFailed(detectionState, false);
       } else {
         mainwp_set_message_zone('#mainwp-message-zone', response, 'green');

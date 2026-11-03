@@ -98,3 +98,52 @@ test('Error tooltips decode entities as attribute text and preserve the returned
     assert.equal(sandbox.getErrorMessage(error), error.message);
     assert.equal(sandbox.getErrorMessageInfo(error), error.message);
 });
+
+function addStepContext(result) {
+    const { sandbox, nodes, panelMarker } = context(result);
+    sandbox.response = 'ERROR HTTP error - escaped';
+    sandbox.show_resp = 'show response';
+    sandbox.resp_data = '';
+    sandbox.add_result = '[4] >> ';
+    sandbox.document = { createTextNode: value => ({ text: value }) };
+    sandbox.mainwp_entities_text = value => value;
+    sandbox.feedback = (zone, items) => { sandbox.feedbackItems = items; };
+    return { sandbox, nodes, panelMarker };
+}
+
+test('Add Site registration failure shows the transport text before the diagnostics panel', () => {
+    const begin = main.indexOf('let add_err = [');
+    const end = main.indexOf("feedback('mainwp-message-zone', add_err, 'red');", begin);
+    assert.ok(begin >= 0 && end > begin, 'Add Site registration branch');
+    const branch = main.slice(begin, end) + "feedback('mainwp-message-zone', add_err, 'red');";
+    let { sandbox, panelMarker } = addStepContext({ error_message: raw, failure_ux: '<div>panel</div>' });
+    vm.runInContext(branch, sandbox);
+    assert.equal(sandbox.feedbackItems[0].value, raw);
+    assert.equal(sandbox.feedbackItems[1], panelMarker);
+    ({ sandbox, panelMarker } = addStepContext({ failure_ux: '<div>panel</div>' }));
+    vm.runInContext(branch, sandbox);
+    assert.equal(sandbox.feedbackItems[0], panelMarker);
+});
+
+test('CSV import registration failure logs the transport text before the diagnostics panel', () => {
+    const begin = imports.indexOf('const importLog = ');
+    const end = imports.indexOf("'<br/>');", begin);
+    assert.ok(begin >= 0 && end > begin, 'CSV import registration branch');
+    const branch = imports.slice(begin, end) + "'<br/>');";
+    const { sandbox, nodes, panelMarker } = addStepContext({ error_message: raw, failure_ux: '<div>panel</div>' });
+    const log = nodes.get('#mainwp_managesites_import_logging .log') || sandbox.jQuery('#mainwp_managesites_import_logging .log');
+    const appended = [];
+    log.append = (...items) => { appended.push(...items); return log; };
+    vm.runInContext(branch, sandbox);
+    assert.deepEqual(appended, [{ text: '[4] >> ' }, { text: raw }, panelMarker, '<br/>']);
+});
+
+test('Wizard registration failure escapes the transport text once before the diagnostics panel', () => {
+    const expression = setup.match(/mainwp_set_message_zone\('#mainwp-message-zone', (res_things\.failure_ux \? \(res_things\.error_message[^\n]+), 'red'\);/);
+    assert.ok(expression, 'Wizard registration callback must include its transport message');
+    const { sandbox } = addStepContext({ error_message: raw, failure_ux: '<div>panel</div>' });
+    sandbox.mainwp_onboarding_escape = value => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    assert.equal(vm.runInContext(expression[1], sandbox), '<p>' + sandbox.mainwp_onboarding_escape(raw) + '</p><div>panel</div>');
+    sandbox.res_things = { failure_ux: '<div>panel</div>' };
+    assert.equal(vm.runInContext(expression[1], sandbox), '<div>panel</div>');
+});

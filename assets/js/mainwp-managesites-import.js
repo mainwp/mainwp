@@ -238,7 +238,11 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
 
                 if (response.substring(0, 5) == 'ERROR') {
                     jQuery('#mainwp_managesites_import_fail_logging').append(jQuery('<span>').text(import_line_orig));
-                    jQuery('#mainwp_managesites_import_logging .log').append(document.createTextNode(add_result), res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : document.createTextNode(mainwp_entities_text(response.substring(6))), '<br/>');
+                    const importLog = jQuery('#mainwp_managesites_import_logging .log').append(document.createTextNode(add_result));
+                    if (res_things.failure_ux && res_things.error_message) {
+                        importLog.append(document.createTextNode(res_things.error_message));
+                    }
+                    importLog.append(res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : document.createTextNode(mainwp_entities_text(response.substring(6))), '<br/>');
                     import_count_fails++;
                 } else {
                     //Message the WP was added.

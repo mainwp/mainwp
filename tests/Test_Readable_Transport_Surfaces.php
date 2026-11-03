@@ -218,8 +218,8 @@ class Test_Readable_Transport_Surfaces extends \WP_UnitTestCase {
 		return $cases;
 	}
 
-	/** The check response keeps its code and adds plain-text details. */
-	public function test_check_step_keeps_http_error_response_and_plain_message(): void {
+	/** Loads the manage-sites handler under a test name whose final exits return the response. */
+	private static function load_check_handler(): void {
 		if ( ! class_exists( '\MainWP\Dashboard\Transport_Check_Handler', false ) ) {
 			$source = file_get_contents( dirname( __DIR__ ) . '/pages/page-mainwp-manage-sites-handler.php' );
 			$source = str_replace( 'class MainWP_Manage_Sites_Handler ', 'class Transport_Check_Handler ', $source );
@@ -227,6 +227,11 @@ class Test_Readable_Transport_Surfaces extends \WP_UnitTestCase {
 			// nosemgrep: AIK_eval-use -- evaluates this repository's own handler source to capture its final response; no input reaches it.
 			eval( '?>' . $source ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- Capture the final response without changing production exits.
 		}
+	}
+
+	/** The check response keeps its code and adds plain-text details. */
+	public function test_check_step_keeps_http_error_response_and_plain_message(): void {
+		self::load_check_handler();
 		$raw        = 'getaddrinfo() thread failed to start <img src=x> > & "quoted"';
 		$classified = MainWP_Error_Helper::classify_transport_error( 2, $raw );
 		$fetch      = static function () use ( $classified ) {
@@ -244,6 +249,33 @@ class Test_Readable_Transport_Surfaces extends \WP_UnitTestCase {
 			$this->assertSame( 'HTTP error - ' . $classified['message'], $result['error_message'] );
 		} finally {
 			$_POST = $previous;
+			remove_filter( 'mainwp_fetch_url_not_authed_pre', $fetch );
+		}
+	}
+
+	/** A registration failure sends its readable text beside the diagnostics panel. */
+	public function test_add_step_sends_plain_transport_message(): void {
+		self::load_check_handler();
+		$raw        = 'getaddrinfo() thread failed to start <img src=x> > & "quoted"';
+		$classified = MainWP_Error_Helper::classify_transport_error( 2, $raw );
+		$fetch      = static function () use ( $classified ) {
+			throw new MainWP_Exception( 'HTTPERROR', $classified['message'] );
+		};
+		$previous   = $_POST;
+		$_POST      = array(
+			'managesites_add_wpurl'   => 'https://not-connected.example.com/',
+			'managesites_add_wpadmin' => 'admin',
+		);
+		add_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
+		add_filter( 'mainwp_fetch_url_not_authed_pre', $fetch );
+		try {
+			$result = \MainWP\Dashboard\Transport_Check_Handler::add_site();
+			$this->assertSame( 'ERROR ' . esc_html( 'HTTP error - ' . $classified['message'] ), $result['response'] );
+			$this->assertSame( 'HTTP error - ' . $classified['message'], $result['error_message'] );
+			$this->assertNotEmpty( $result['failure_ux'] );
+		} finally {
+			$_POST = $previous;
+			remove_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
 			remove_filter( 'mainwp_fetch_url_not_authed_pre', $fetch );
 		}
 	}

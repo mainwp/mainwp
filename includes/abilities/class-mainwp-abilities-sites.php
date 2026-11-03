@@ -1448,16 +1448,19 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         // Add site using REST API method (not AJAX handler which calls die()).
-        $result = MainWP_Manage_Sites_Handler::rest_api_add_site( $site_data );
+        $output = array();
+        $result = MainWP_Manage_Sites_Handler::rest_api_add_site( $site_data, $output );
 
         // Handle error response from rest_api_add_site.
         if ( ! empty( $result['error'] ) ) {
             $message = $result['error'];
+            // Readable transport text mentions connections for unrelated causes; pick the code from the raw cURL text.
+            $match = 0 === strpos( $message, 'HTTP error' ) && isset( $output['error_detail'] ) ? (string) $output['error_detail'] : $message;
 
-            if ( strpos( $message, 'connection' ) !== false || strpos( $message, 'connect' ) !== false ) {
+            if ( strpos( $match, 'connection' ) !== false || strpos( $match, 'connect' ) !== false ) {
                 return new \WP_Error( 'mainwp_connection_failed', $message, array( 'status' => 503 ) );
             }
-            if ( strpos( $message, 'credentials' ) !== false || strpos( $message, 'invalid' ) !== false ) {
+            if ( strpos( $match, 'credentials' ) !== false || strpos( $match, 'invalid' ) !== false ) {
                 return new \WP_Error( 'mainwp_invalid_credentials', $message, array( 'status' => 401 ) );
             }
 

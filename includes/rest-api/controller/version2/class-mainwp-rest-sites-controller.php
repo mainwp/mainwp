@@ -3554,7 +3554,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     $resp_data['message'] = wp_strip_all_tags( $message );
                 }
             } elseif ( ! empty( $error ) ) {
-                $resp_data['error'] = wp_strip_all_tags( $error );
+                $resp_data['error'] = html_entity_decode( wp_strip_all_tags( $error ), ENT_QUOTES, 'UTF-8' );
             } else {
                 $resp_data['error'] = esc_html__( 'Add site failed. Please try again.', 'mainwp' );
             }

@@ -2019,6 +2019,9 @@ let mainwp_managesites_add = function () {
                 if (response.substring(0, 5) == 'ERROR') {
                     mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
                     let add_err = [res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : response.substring(6)];
+                    if (res_things.failure_ux && res_things.error_message) {
+                        add_err.unshift(jQuery('<span>').text(res_things.error_message));
+                    }
                     if (resp_data != '') {
                         add_err.push(show_resp);
                     } else {

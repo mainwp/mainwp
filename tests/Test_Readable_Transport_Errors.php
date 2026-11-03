@@ -135,6 +135,7 @@ class Test_Readable_Transport_Errors extends \WP_UnitTestCase {
 		$this->assertSame( 'http_request_failed', $result['output']['error_code'] );
 		$this->assertSame( 'server_resources', $result['output']['error_reason'] );
 		$this->assertSame( $result['extra'], $result['output']['error_message'] );
+		$this->assertSame( $raw, $result['output']['error_detail'] );
 		$this->assertStringContainsString( 'Details: ' . $raw, $result['extra'] );
 	}
 

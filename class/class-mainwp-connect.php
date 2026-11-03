@@ -2667,6 +2667,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $output['error_code']     = 'http_request_failed';
                 $output['error_message']  = $transport_message;
                 $output['error_reason']   = $transport_reason;
+                $output['error_detail']   = (string) $err;
             }
         } elseif ( empty( $data ) && ! empty( $err ) ) {
             if ( '' !== $timeout_kind ) {
@@ -2679,6 +2680,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $output['error_code']     = 'http_request_failed';
                 $output['error_message']  = $transport_message;
                 $output['error_reason']   = $transport_reason;
+                $output['error_detail']   = (string) $err;
             }
         } elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
             $output['connection_step'] = 'verify_credentials';
@@ -2727,6 +2729,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $output['error_code']     = 'http_request_failed';
                 $output['error_message']  = $transport_message;
                 $output['error_reason']   = $transport_reason;
+                $output['error_detail']   = (string) $err;
                 MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $safe_url . '] error [' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . ']' );
             }
         } elseif ( $raw_response ) {

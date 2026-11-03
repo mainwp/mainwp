@@ -97,6 +97,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                 $this->log_start_auto_updates();
 
                 MainWP_Utility::update_option( 'mainwp_automatic_updates_start_lasttime', $local_timestamp );
+                MainWP_Utility::update_option( 'mainwp_automatic_updates_last_site_id', 0 );
                 MainWP_Utility::update_option( 'mainwp_automatic_updates_is_running', 1 );
                 MainWP_Updates_Report_Manager::init();
 
@@ -144,14 +145,12 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
         $lasttime_start = get_option( 'mainwp_automatic_updates_start_lasttime' );
 
-        $autoupdates_websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_continue_auto_updates( $sites_limit, $lasttime_start, false, true ); // included disconnected sites.
+        $autoupdates_websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_continue_auto_updates( $sites_limit, $lasttime_start, false, true, (int) get_option( 'mainwp_automatic_updates_resume_site_id', 0 ) ); // included disconnected sites.
 
         MainWP_Logger::instance()->log_events( 'debug-updates-crons', 'Auto updates :: found :: ' . ( ! empty( $autoupdates_websites ) ? count( $autoupdates_websites ) : 0 ) );
 
         if ( empty( $autoupdates_websites ) ) { // not found automatic sites to updates.
             $this->finished_auto_updates();
-            MainWP_Logger::instance()->info( 'Automatic updates finished' );
-            MainWP_Logger::instance()->log_update_check( 'Automatic updates finished' );
             MainWP_Logger::instance()->log_events( 'debug-updates-crons', 'Auto Updates: Finished.' );
 
             // Legacy logs.
@@ -170,6 +169,8 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
             // @since 5.4.0.2 +.
             $sync_before = apply_filters( 'mainwp_auto_updates_sync_data_before_run', true );
             foreach ( $autoupdates_websites as $website ) {
+                // Saved before the attempt: if this site kills the request, the next run starts after it.
+                MainWP_Utility::update_option( 'mainwp_automatic_updates_last_site_id', (int) $website->id );
                 if ( ! empty( $website->sync_errors ) ) {
                     if ( ! MainWP_Sync::sync_site( $website, false, true ) ) {
                         $this->finished_site_auto_updates( $website );  // to skip sync error sites.
@@ -1042,6 +1043,37 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
      * Method finished_auto_updates()
      */
     public function finished_auto_updates() {
+        $lasttime_start = (int) get_option( 'mainwp_automatic_updates_start_lasttime', 0 );
+        // Without a start time there is no queue to judge; keep the resume point for the next run.
+        if ( ! empty( $lasttime_start ) ) {
+            $run_from_id    = (int) get_option( 'mainwp_automatic_updates_resume_site_id', 0 );
+            $last_site_id   = (int) get_option( 'mainwp_automatic_updates_last_site_id', 0 );
+            $resume_site_id = 0;
+            $message        = 'Automatic updates finished. Every site was processed.';
+
+            $pending_websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_continue_auto_updates( 1, $lasttime_start, false, true, $last_site_id > 0 ? $last_site_id + 1 : $run_from_id );
+            if ( ! empty( $pending_websites ) ) {
+                $resume_site_id = (int) $pending_websites[0]->id;
+                // The run walks site IDs from $run_from_id and wraps; the first pending site may lie behind the furthest one reached.
+                $next_wrapped = $resume_site_id < $run_from_id;
+                $last_wrapped = $last_site_id < $run_from_id;
+                $reached      = $last_site_id > 0 && ( $next_wrapped === $last_wrapped ? $resume_site_id <= $last_site_id : ! $next_wrapped );
+                if ( $reached ) {
+                    // The rest of the pending sites are ones this run kept retrying (an update the Child keeps reporting, a
+                    // deferred backup) or ones that became eligible behind the cursor. Starting after the furthest site
+                    // keeps the retried ones from taking the next run's budget first.
+                    $resume_site_id = $last_site_id + 1;
+                    $message        = 'Automatic updates went once through the site list, but some sites are still pending. Next run starts after site ID ' . $last_site_id . '.';
+                } else {
+                    $message = 'Automatic updates ended before every site was processed. Next run starts with site ID ' . $resume_site_id . '.';
+                }
+            }
+            MainWP_Utility::update_option( 'mainwp_automatic_updates_resume_site_id', $resume_site_id );
+            MainWP_Logger::instance()->log_events( 'auto-updates', $message );
+            MainWP_Logger::instance()->info( $message );
+            MainWP_Logger::instance()->log_update_check( $message );
+        }
+
         MainWP_Utility::update_option( 'mainwp_automatic_updates_is_running', 0 );
         MainWP_Utility::update_option( 'mainwp_automatic_updates_ready_to_send_notification', 1 );
         MainWP_Logger::instance()->log_events( 'auto-updates', 'Auto updates :: ready to send notification' );

@@ -179,7 +179,7 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
 
 
     /**
-     * Get child sites to continue automatic updates.
+     * Get pending child sites in ID order, wrapping at the resume site.
      *
      * Regular automatic sync owns dtsAutomaticSyncStart, so this query uses dtsAutomaticSync only.
      *
@@ -187,10 +187,11 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
      * @param int  $lasttime_start Lasttime start automatic update.
      * @param bool $connected Requires sites connected.
      * @param bool $not_suspended Requires sites unsuspended.
+     * @param int  $resume_site_id First site ID to consider before wrapping to lower IDs.
      *
      * @return array|false Sites still pending in this run, or false without a run start.
      */
-    public function get_websites_to_continue_auto_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false ) {
+    public function get_websites_to_continue_auto_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false, $resume_site_id = 0 ) {
 
         if ( empty( $lasttime_start ) ) {
             return false;
@@ -204,28 +205,39 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
             $where .= ' wp.suspended = 0 AND';
         }
 
-        $orderby = ' wp_sync.dtsAutomaticSync ASC ';
-
         $where = rtrim( $where, 'AND' );
 
-        $params = array(
-            'view'    => 'updates_view',
-            'where'   => $where,
-            'limit'   => $limit,
-            'orderby' => $orderby,
-        );
-
-        $sql = MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params );
-
-        $results = MainWP_DB::instance()->query( $sql );
-
-        $websites = array();
-        while ( $results && $website = static::fetch_object( $results ) ) {
-            $websites[] = $website;
+        $where_segments = array( '' );
+        if ( $resume_site_id > 0 ) {
+            $where_segments = array(
+                ' AND wp.id >= ' . intval( $resume_site_id ),
+                ' AND wp.id < ' . intval( $resume_site_id ),
+            );
         }
 
-        if ( $results ) {
-            static::free_result( $results );
+        $websites = array();
+        foreach ( $where_segments as $where_segment ) {
+            $params = array(
+                'view'    => 'updates_view',
+                'where'   => $where . $where_segment,
+                'limit'   => $limit - count( $websites ),
+                'orderby' => ' wp.id ASC ',
+            );
+
+            $sql     = MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params );
+            $results = MainWP_DB::instance()->query( $sql );
+
+            while ( $results && $website = static::fetch_object( $results ) ) {
+                $websites[] = $website;
+            }
+
+            if ( $results ) {
+                static::free_result( $results );
+            }
+
+            if ( count( $websites ) >= $limit ) {
+                break;
+            }
         }
 
         return $websites;

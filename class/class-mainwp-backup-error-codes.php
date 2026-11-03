@@ -266,16 +266,17 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array{code:string,message:string,detail:string} Plain-text parts; escape them on output.
      */
     public static function stored_error_parts( $stored ) {
-        $parts  = array(
+        $parts = array(
             'code'    => '',
             'message' => '',
             'detail'  => '',
         );
-        $stored = trim( (string) static::sanitize_message( $stored ) );
+        // Registry messages are stored HTML-escaped, so decode once before comparing or showing.
+        $stored = is_string( $stored ) ? trim( (string) static::sanitize_message( wp_specialchars_decode( $stored, ENT_QUOTES ) ) ) : '';
         if ( '' === $stored ) {
             return $parts;
         }
-        if ( ! preg_match( '/^\[(mainwp_[a-z0-9_]{1,80})\]\s*(.*)$/s', $stored, $match ) ) {
+        if ( ! preg_match( '/^\[(mainwp_[a-z0-9_]+)\]\s*(.*)$/s', $stored, $match ) ) {
             $parts['message'] = $stored;
             return $parts;
         }

@@ -327,6 +327,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
             $destination_names[ (int) $destination->id ] = (string) $destination->name;
         }
+        $registered_codes = MainWP_Backup_Error_Codes::get_registered_codes();
         foreach ( $entries as $entry ) {
             $uploads = array();
             foreach ( $entry['uploads'] as $job ) {
@@ -340,7 +341,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     'updated'        => (int) $job->updated,
                     'last_error'     => mb_substr( $job->last_error['source_text'], 0, 200 ),
                     'error_code'     => $error['code'],
-                    'error_message'  => $error['message'],
+                    // Registry text is complete; text without a known code keeps last_error's bound.
+                    'error_message'  => in_array( $error['code'], $registered_codes, true ) ? $error['message'] : mb_substr( $error['message'], 0, 200 ),
                     'error_detail'   => mb_substr( $error['detail'], 0, 200 ),
                 );
             }

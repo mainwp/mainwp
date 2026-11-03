@@ -10747,6 +10747,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				'status'         => 'pending',
 				'updated'        => (int) $store->get_job( (int) $jobs[0]->id )->updated,
 				'last_error'     => '',
+				'error_code'     => '',
+				'error_message'  => '',
+				'error_detail'   => '',
 			),
 			$uploads[0]
 		);
@@ -10756,6 +10759,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( 'failed_permanent', $uploads[1]['status'] );
 		$this->assertIsInt( $uploads[1]['updated'] );
 		$this->assertSame( '<error>' . str_repeat( 'é', 193 ), $uploads[1]['last_error'] );
+		$this->assertSame( '', $uploads[1]['error_code'] );
+		$this->assertSame( '<error>' . str_repeat( 'é', 193 ), $uploads[1]['error_message'] );
 	}
 
 	/**

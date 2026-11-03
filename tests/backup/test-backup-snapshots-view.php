@@ -60,7 +60,8 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'ui mini divided list', $output );
 		$this->assertStringContainsString( 'escAttr( upload.name )', $output );
 		$this->assertStringContainsString( 'escAttr( upload.provider )', $output );
-		$this->assertStringContainsString( 'escAttr( upload.last_error )', $output );
+		$this->assertStringContainsString( 'escAttr( upload.error_message || upload.last_error )', $output );
+		$this->assertStringContainsString( 'escAttr( support )', $output );
 	}
 
 	/**

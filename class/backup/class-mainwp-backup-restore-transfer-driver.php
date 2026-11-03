@@ -125,8 +125,11 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      *
      * All four gates must hold: cloud pull was not already tried for
      * this job, the child advertised the capability, every artifact the
-     * child needs is remote-sourced, and every involved destination can
-     * presign GET URLs.
+     * child needs is in cloud storage, and every involved destination can
+     * presign GET URLs. An artifact still kept on the dashboard (files.list
+     * stays local for incremental backups) counts as in cloud storage when
+     * its snapshot's presignable upload holds a complete copy with the
+     * backup's hash.
      *
      * @param object $website    Website object.
      * @param array  $plan       Plan entries.
@@ -146,11 +149,14 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         }
 
         $snapshot_ids = array();
+        $local        = array();
         foreach ( $plan as $entry ) {
             if ( ! empty( $entry['adopt_only'] ) ) {
                 continue;
             }
-            if ( ! in_array( $entry['source'], array( 'remote', 'remote_chunked' ), true ) ) {
+            if ( 'local' === $entry['source'] ) {
+                $local[] = $entry;
+            } elseif ( ! in_array( $entry['source'], array( 'remote', 'remote_chunked' ), true ) ) {
                 return false;
             }
             $snapshot_ids[ (int) $entry['snapshot_id'] ] = true;
@@ -159,6 +165,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             return false;
         }
 
+        $uploads = array();
         foreach ( array_keys( $snapshot_ids ) as $snapshot_id ) {
             // An encrypted snapshot must stage and decrypt on the dashboard:
             // the child has no key, so it cannot pull ciphertext straight from
@@ -174,9 +181,49 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             if ( is_wp_error( $metadata ) || ! empty( $metadata ) ) {
                 return false;
             }
+            $uploads[ $snapshot_id ] = $upload;
+        }
+
+        foreach ( $local as $entry ) {
+            if ( null === $this->pullable_record( $entry, $uploads[ (int) $entry['snapshot_id'] ] ) ) {
+                return false;
+            }
         }
 
         return true;
+    }
+
+    /**
+     * The upload record the child can pull for a plan entry.
+     *
+     * The record must carry the artifact's hash (and every chunk's, for a
+     * chunked copy), and that hash must match the backup's recorded one
+     * when the backup has it: a copy uploaded after the local file changed
+     * is not this backup.
+     *
+     * @param array $entry  Plan entry.
+     * @param array $upload Presignable upload from presignable_upload_for_snapshot().
+     *
+     * @return array|null The upload record, or null when the entry must stage.
+     */
+    private function pullable_record( array $entry, array $upload ): ?array {
+        $source = isset( $entry['source_file'] ) ? (string) $entry['source_file'] : '';
+        $record = isset( $upload['artifacts'][ $source ] ) ? $upload['artifacts'][ $source ] : null;
+        if ( null === $record || empty( $record['sha256'] ) ) {
+            return null; // Uploaded before hashes were recorded: stage instead.
+        }
+        $recorded = isset( $entry['recorded_sha256'] ) ? (string) $entry['recorded_sha256'] : '';
+        if ( '' !== $recorded && ! hash_equals( $recorded, (string) $record['sha256'] ) ) {
+            return null;
+        }
+        if ( 'chunked' === ( isset( $record['mode'] ) ? $record['mode'] : '' ) ) {
+            foreach ( (array) ( $record['chunks'] ?? array() ) as $chunk ) {
+                if ( empty( $chunk['hash'] ) ) {
+                    return null;
+                }
+            }
+        }
+        return $record;
     }
 
     /**
@@ -230,17 +277,12 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 $uploads[ $snapshot_id ] = $upload;
             }
 
-            $source = isset( $entry['source_file'] ) ? (string) $entry['source_file'] : '';
-            $record = isset( $uploads[ $snapshot_id ]['artifacts'][ $source ] ) ? $uploads[ $snapshot_id ]['artifacts'][ $source ] : null;
-            if ( null === $record || empty( $record['sha256'] ) ) {
-                return null; // Uploaded before hashes were recorded: stage instead.
-            }
-            // A copy uploaded after the local file changed is not this backup; staging uses the catalog's matching copies.
-            $recorded = isset( $entry['recorded_sha256'] ) ? (string) $entry['recorded_sha256'] : '';
-            if ( '' !== $recorded && ! hash_equals( $recorded, (string) $record['sha256'] ) ) {
-                return null;
+            $record = $this->pullable_record( $entry, $uploads[ $snapshot_id ] );
+            if ( null === $record ) {
+                return null; // Staging uses the catalog's matching copies.
             }
 
+            $source        = (string) $entry['source_file'];
             $prefix        = $this->snapshot_prefix( $snapshot_id );
             $provider      = $uploads[ $snapshot_id ]['provider'];
             $expected_host = $provider->object_host();
@@ -253,9 +295,6 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             if ( 'chunked' === ( isset( $record['mode'] ) ? $record['mode'] : '' ) && ! empty( $record['chunks'] ) ) {
                 $chunks = array();
                 foreach ( (array) $record['chunks'] as $chunk ) {
-                    if ( empty( $chunk['hash'] ) ) {
-                        return null;
-                    }
                     $url = $provider->presigned_get_url( $prefix . 'chunks/' . $chunk['hash'] . '.bin', static::PRESIGN_TTL_SECONDS );
                     if ( 0 !== strpos( $url, 'https://' ) || wp_parse_url( $url, PHP_URL_HOST ) !== $expected_host ) {
                         return null;

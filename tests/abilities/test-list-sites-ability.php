@@ -197,6 +197,52 @@ class MainWP_List_Sites_Ability_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Test that the available_update total counts only sites with updates (MWP-2169).
+	 *
+	 * The count helper has no available_update filter, so total used to count every
+	 * site while items held only the sites with updates.
+	 *
+	 * @return void
+	 */
+	public function test_list_sites_available_update_total_matches_items() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$plugin_update = wp_json_encode( array( 'hello/hello.php' => array( 'Name' => 'Hello' ) ) );
+		$theme_update  = wp_json_encode( array( 'twentyten' => array( 'Name' => 'Twenty Ten' ) ) );
+
+		$plugin_id = $this->create_test_site( array( 'name' => 'MWP2169 Plugin Update', 'plugin_upgrades' => $plugin_update ) );
+		$theme_id  = $this->create_test_site( array( 'name' => 'MWP2169 Theme Update', 'theme_upgrades' => $theme_update ) );
+		$no_update = $this->create_test_site( array( 'name' => 'MWP2169 No Update' ) );
+
+		$all = $this->execute_ability( 'mainwp/list-sites-v1', array(
+			'page'     => 1,
+			'per_page' => 100,
+			'status'   => 'available_update',
+			'search'   => 'MWP2169',
+		) );
+
+		$this->assertNotWPError( $all );
+		$ids = array_map( 'intval', array_column( $all['items'], 'id' ) );
+		sort( $ids );
+		$this->assertSame( array( $plugin_id, $theme_id ), $ids, 'Only the sites with updates should be listed.' );
+		$this->assertNotContains( $no_update, $ids );
+		$this->assertSame( 2, $all['total'], 'total should count only the sites with updates.' );
+
+		// A short page still reports the full filtered total.
+		$page = $this->execute_ability( 'mainwp/list-sites-v1', array(
+			'page'     => 1,
+			'per_page' => 1,
+			'status'   => 'available_update',
+			'search'   => 'MWP2169',
+		) );
+
+		$this->assertNotWPError( $page );
+		$this->assertCount( 1, $page['items'] );
+		$this->assertSame( 2, $page['total'] );
+	}
+
+	/**
 	 * Test that list-sites search filter works.
 	 *
 	 * @return void

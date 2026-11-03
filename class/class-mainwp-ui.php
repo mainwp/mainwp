@@ -2077,7 +2077,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php
         }
         ?>
-        <div id="mainwp-grid-stack-wrapper" class="grid-stack">
+        <div id="mainwp-grid-stack-wrapper" class="grid-stack mainwp-grid-stack-loading">
         <?php
         if ( isset( $mainwp_widget_boxes[ $page ] ) ) {
             foreach ( (array) $mainwp_widget_boxes[ $page ] as $box ) {
@@ -2143,6 +2143,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         ?>
         </div>
         <script type="text/javascript">
+                if ( 'undefined' === typeof jQuery ) {
+                    // The ready callback below can't run, so show the widgets unarranged instead of hidden.
+                    document.getElementById( 'mainwp-grid-stack-wrapper' ).classList.remove( 'mainwp-grid-stack-loading' );
+                }
                 let page_sortablewidgets = '<?php echo esc_js( $page ); ?>';
                 let page_widget = '<?php echo esc_js( $page_widget ); ?>';
                 jQuery( document ).ready( function( $ ) {
@@ -2165,17 +2169,21 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     breakpoints: [{w:768, c:1}],
                 },
             }
-            let grid = GridStack.init(gsOpts);
+            try {
+                let grid = GridStack.init(gsOpts);
 
-            grid.on('change', function() {
-                mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>, grid);
-            });
+                grid.on('change', function() {
+                    mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>, grid);
+                });
 
-            if (jQuery('#mainwp-widgets-selected-layout[data-save-on-load="true"]').length) {
-                mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>, grid);
+                if (jQuery('#mainwp-widgets-selected-layout[data-save-on-load="true"]').length) {
+                    mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>, grid);
+                }
+            } finally {
+                // Show the widgets even when GridStack failed, unarranged rather than a blank page.
+                jQuery('#mainwp-grid-stack-wrapper').removeClass('mainwp-grid-stack-loading');
+                jQuery('#mainwp-widgets-placeholder').dimmer('hide');
             }
-
-            jQuery('#mainwp-widgets-placeholder').dimmer('hide');
         });
         </script>
         <?php

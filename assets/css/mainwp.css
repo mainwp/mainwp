@@ -2267,6 +2267,11 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 
 /* Gridstack Customization */
 
+/* Hide the widgets until GridStack has arranged them; the page script removes the class. */
+.js #mainwp-grid-stack-wrapper.mainwp-grid-stack-loading {
+    visibility: hidden;
+}
+
 .mainwp-ui .grid-stack .ui-resizable-e {
     right: 0.2rem !important;
 }

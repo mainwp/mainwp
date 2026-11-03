@@ -131,7 +131,7 @@ class Log_Graph_Themes_Widget {
             }
             $theme = isset( $site_info['themeactivated'] ) ? $site_info['themeactivated'] : 'N/A';
             if ( ! isset( $themes[ $theme ] ) ) {
-                $themes[ $theme ] = 1;
+                $themes[ $theme ] = 0;
             }
             $themes[ $theme ] += 1;
         }
@@ -140,10 +140,21 @@ class Log_Graph_Themes_Widget {
         <div id="mainwp-module-log-chart-themes-wrapper"></div>
         <script type="text/javascript">
             jQuery( document ).ready( function() {
+                // ApexCharts drops commas from names and writes CSV fields unquoted.
+                let csvCategories = new Map( <?php echo wp_json_encode( Log_Graph_Csv_Labels::get_csv_categories( array_map( 'strval', array_keys( $themes ) ) ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?> );
                 let options = {
                     chart: {
                         type: 'bar',
                         height: 350,
+                        toolbar: {
+                            export: {
+                                csv: {
+                                    categoryFormatter: function( name ) {
+                                        return csvCategories.has( String( name ) ) ? csvCategories.get( String( name ) ) : '"\'' + String( name ).replace( /"/g, '""' ) + '"';
+                                    },
+                                },
+                            },
+                        },
                     },
                     series: [ {
                         name: 'Sites',

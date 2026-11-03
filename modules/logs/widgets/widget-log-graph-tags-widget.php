@@ -126,84 +126,77 @@ class Log_Graph_Tags_Widget {
     public function render_widget_content() { //phpcs:ignore -- NOSONAR - complex method.
 
         $groups         = MainWP_DB_Common::instance()->get_groups_and_count();
+        $tags_names     = array();
         $groups_nrsites = array();
         if ( ! empty( $groups ) ) {
             foreach ( $groups as $group ) {
-                $groups_nrsites[ $group->name ] = ! empty( $group->nrsites ) ? $group->nrsites : 0;
-
+                if ( 'Staging Sites' === $group->name ) {
+                    continue;
+                }
+                $tags_names[ $group->id ]     = $group->name;
+                $groups_nrsites[ $group->id ] = ! empty( $group->nrsites ) ? $group->nrsites : 0;
             }
         }
-        ksort( $groups_nrsites );
+        asort( $tags_names );
 
         $params  = array(
             'with_tags' => true,
         );
         $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all', null, ARRAY_A, $params );
 
-        $tags_names = array();
+        // Count each client once per tag. The query's name and ID lists are sorted differently, so only the IDs are used.
         $tags_count = array();
         if ( ! empty( $clients ) ) {
             foreach ( $clients as $client ) {
-                $tags     = ! empty( $client['wpgroups'] ) ? explode( ',', $client['wpgroups'] ) : array();
-                $tags_ids = ! empty( $client['wpgroupids'] ) ? explode( ',', $client['wpgroupids'] ) : array();
-
-                if ( ! is_array( $tags ) ) {
-                    $tags = array();
-                }
-
-                if ( ! is_array( $tags_ids ) ) {
-                    $tags_ids = array();
-                }
-
-                foreach ( $tags_ids as $idx => $tagid ) {
+                $tags_ids = ! empty( $client['wpgroupids'] ) ? array_unique( explode( ',', $client['wpgroupids'] ) ) : array();
+                foreach ( $tags_ids as $tagid ) {
                     if ( ! isset( $tags_count[ $tagid ] ) ) {
-
-                        $tags_count[ $tagid ] = 1;
-                    } else {
-                        $tags_count[ $tagid ] += 1;
+                        $tags_count[ $tagid ] = 0;
                     }
-
-                    if ( ! isset( $tags_names[ $tagid ] ) ) {
-                        $tags_names[ $tagid ] = $tags[ $idx ];
-                    }
+                    $tags_count[ $tagid ] += 1;
                 }
             }
         }
-
-        asort( $tags_names );
         ?>
         <div id="mainwp-module-log-chart-tags-wrapper" ></div>
         <script type="text/javascript">
             jQuery( document ).ready( function() {
+                // ApexCharts drops commas from names and writes CSV fields unquoted.
+                let csvCategories = new Map( <?php echo wp_json_encode( Log_Graph_Csv_Labels::get_csv_categories( array_map( 'strval', array_values( $tags_names ) ) ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?> );
                 let options = {
                     chart: {
                         type: 'bar',
                         height: 350,
+                        toolbar: {
+                            export: {
+                                csv: {
+                                    categoryFormatter: function( name ) {
+                                        return csvCategories.has( String( name ) ) ? csvCategories.get( String( name ) ) : '"\'' + String( name ).replace( /"/g, '""' ) + '"';
+                                    },
+                                },
+                            },
+                        },
                     },
                     series: [ {
                         name: 'Sites',
                         data: [
-                            <?php foreach ( $groups_nrsites as $group => $nrsites ) : ?>
-                                <?php if ( 'Staging Sites' !== $group ) : ?>
+                            <?php foreach ( $tags_names as $tagid => $tagname ) : ?>
                                 {
-                                x: <?php echo wp_json_encode( (string) $group, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
-                                y: <?php echo intval( $nrsites ); ?>,
+                                x: <?php echo wp_json_encode( (string) $tagname, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
+                                y: <?php echo intval( $groups_nrsites[ $tagid ] ); ?>,
                                 fillColor: "#18a4e0",
                                 },
-                                <?php endif; ?>
                             <?php endforeach; ?>
                         ]
                     },{
                         name: 'Clients',
                         data: [
                             <?php foreach ( $tags_names as $tagid => $tagname ) : ?>
-                                <?php if ( 'Staging Sites' !== $tagname ) : ?>
                                 {
                                 x: <?php echo wp_json_encode( (string) $tagname, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                                 y: <?php echo isset( $tags_count[ $tagid ] ) ? intval( $tags_count[ $tagid ] ) : 0; ?>,
                                 fillColor: "#7fb100",
                                 },
-                                <?php endif; ?>
                             <?php endforeach; ?>
                         ]
                     } ],

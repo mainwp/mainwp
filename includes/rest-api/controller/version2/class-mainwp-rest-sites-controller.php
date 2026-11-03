@@ -694,7 +694,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * health_site_status is dropped as well: every caller adds it explicitly for the
      * health_score fast-path, and $never_in_response_fields reserves it out of the
-     * response, so accepting it here would only duplicate the entry.
+     * response, so accepting it here would only duplicate the entry. Reserved names
+     * and duplicates are matched without regard to case, as MySQL matches aliases.
      *
      * @param WP_REST_Request $request Request object.
      *
@@ -711,11 +712,26 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $fields,
             function ( $name ) {
                 // The raw tag aggregates would bypass the scoped tags field.
-                return ! in_array( $name, array( 'health_site_status', 'wpgroups', 'wpgroupids', 'wpgroups_colors' ), true ) && preg_match( '/^[A-Za-z0-9_]+$/', $name );
+                return preg_match( '/^[A-Za-z0-9_]+$/', $name ) && ! in_array( strtolower( $name ), array( 'health_site_status', 'wpgroups', 'wpgroupids', 'wpgroups_colors' ), true );
             }
         );
 
-        return array_values( array_unique( $fields ) );
+        // Option columns the sites query adds on its own (MainWP_DB::get_wp_options_join()
+        // and get_websites_for_current_user()). It skips them only when the exact
+        // spelling is already requested.
+        $query_columns = array( 'recent_comments', 'recent_posts', 'recent_pages', 'phpversion', 'added_timestamp', 'wp_upgrades', 'signature_algo', 'verify_method', 'cust_site_icon_info', 'security_stats' );
+
+        // MySQL compares these aliases without regard to case, so FOO after foo is
+        // the same column twice. Keep the first spelling, or the query's own.
+        $unique = array();
+        foreach ( $fields as $name ) {
+            $key = strtolower( $name );
+            if ( ! isset( $unique[ $key ] ) ) {
+                $unique[ $key ] = in_array( $key, $query_columns, true ) ? $key : $name;
+            }
+        }
+
+        return array_values( $unique );
     }
 
     /**

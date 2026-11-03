@@ -115,15 +115,32 @@ class Test_MWP_2151_Tag_Chip_Pairing extends \WP_UnitTestCase {
 		$this->assertSame( $clients, MainWP_System_Utility::get_site_tags( $this->client_row( $client ), true ) );
 	}
 
-	/** Ordinary site rows keep pairing from the row itself, with no extra query. */
-	public function test_ordinary_site_row_needs_no_query(): void {
+	/** The Manage Sites and screenshots query drops repeated names and colors with DISTINCT. */
+	public function test_distinct_site_row_chips_pair_by_tag_id(): void {
+		$tags    = $this->create_problem_tags();
+		$site_id = $this->create_tagged_site( 0, $tags );
+
+		$row = $this->search_row( $site_id );
+		$this->assertCount( 3, explode( ',', $row['wpgroups'] ), 'DISTINCT names plus the comma split give as many pieces as IDs.' );
+
+		$html = MainWP_System_Utility::get_site_tags( $row );
+
+		$this->assertSame( $this->expected_chips( $tags ), $this->parse_chips( $html, 'admin.php?page=managesites&g=' ) );
+	}
+
+	/** A single-tag row pairs from the row itself; a multi-tag row costs one query, not one per chip. */
+	public function test_tag_lookup_query_count(): void {
 		global $wpdb;
-		$site = $this->create_tagged_site( 0, array( $this->create_tag( 'Alpha', '#1b5e20' ), $this->create_tag( 'Beta', '#ffeb3b' ) ) );
-		$row  = $this->site_row( $site );
+		$single = $this->site_row( $this->create_tagged_site( 0, array( $this->create_tag( 'Alpha', '#1b5e20' ) ) ) );
+		$multi  = $this->site_row( $this->create_tagged_site( 0, $this->create_problem_tags() ) );
 
 		$before = $wpdb->num_queries;
-		MainWP_System_Utility::get_site_tags( $row );
+		MainWP_System_Utility::get_site_tags( $single );
 		$this->assertSame( $before, $wpdb->num_queries );
+
+		$before = $wpdb->num_queries;
+		MainWP_System_Utility::get_site_tags( $multi );
+		$this->assertSame( $before + 1, $wpdb->num_queries );
 	}
 
 	/**
@@ -183,7 +200,6 @@ class Test_MWP_2151_Tag_Chip_Pairing extends \WP_UnitTestCase {
 	 */
 	private function create_tagged_site( $client_id, array $tags ): int {
 		$site_id = $this->create_test_site( array( 'client_id' => (int) $client_id ) );
-		$this->create_test_site_sync( $site_id );
 		foreach ( $tags as $tag ) {
 			MainWP_DB_Common::instance()->update_group_site( $tag['id'], $site_id );
 		}
@@ -200,6 +216,33 @@ class Test_MWP_2151_Tag_Chip_Pairing extends \WP_UnitTestCase {
 		$row = MainWP_DB::instance()->get_website_by_id( $site_id, true, array(), ARRAY_A );
 		$this->assertIsArray( $row );
 		return $row;
+	}
+
+	/**
+	 * The site row from the query behind the Manage Sites list and the screenshots view.
+	 *
+	 * @param int $site_id Site ID.
+	 * @return array
+	 */
+	private function search_row( $site_id ): array {
+		global $wpdb;
+		$sql  = MainWP_DB::instance()->get_sql_search_websites_for_current_user(
+			array(
+				'selectgroups'   => true,
+				'selected_sites' => array( $site_id ),
+			)
+		);
+		$rows = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query built by the Dashboard.
+		$rows = array_values(
+			array_filter(
+				(array) $rows,
+				function ( $row ) use ( $site_id ) {
+					return (int) $row['id'] === (int) $site_id;
+				}
+			)
+		);
+		$this->assertCount( 1, $rows );
+		return $rows[0];
 	}
 
 	/**

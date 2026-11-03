@@ -711,7 +711,8 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
     }
 
     /**
-     * Mark a job complete and release its lock.
+     * Mark a job complete and release its lock. Clears the error an
+     * earlier retryable attempt left, so a completed job reports none.
      *
      * @param int         $job_id     Job id.
      * @param string|null $lock_token Fence the transition on this lease token; null skips the fence.
@@ -725,6 +726,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
             $job_id,
             array(
                 'status'       => static::STATUS_COMPLETE,
+                'last_error'   => '',
                 'locked_until' => 0,
                 'locked_by'    => '',
             ),

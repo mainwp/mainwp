@@ -500,6 +500,85 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * An upload that fails once and then succeeds no longer reports the
+	 * earlier attempt's error. The attempt count still shows the retry.
+	 *
+	 * @return void
+	 */
+	public function test_complete_after_retryable_failure_clears_last_error() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98211, array( 7 ) );
+
+		$now = time();
+		$job = $store->acquire_next_job( 'token-a', 300, $now );
+		$this->assertTrue( $store->fail_retryable( (int) $job->id, '[mainwp_backup_s3_failed] Connection reset', $now - 1, 'token-a' ) );
+		$this->assertSame( '[mainwp_backup_s3_failed] Connection reset', $store->get_job( (int) $job->id )->last_error );
+
+		$retry = $store->acquire_next_job( 'token-b', 300, $now );
+		$this->assertSame( (int) $job->id, (int) $retry->id );
+		$this->assertTrue( $store->complete_job( (int) $retry->id, 'token-b' ) );
+
+		$stored = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $stored->status );
+		$this->assertSame( '', $stored->last_error );
+		$this->assertSame( 1, (int) $stored->attempt_count );
+		$this->assertSame( '', $stored->locked_by );
+		$this->assertSame( 0, (int) $stored->locked_until );
+	}
+
+	/**
+	 * A retryable failure keeps its error while the job waits, while it
+	 * runs again, and when the next attempt fails for good.
+	 *
+	 * @return void
+	 */
+	public function test_retryable_failure_keeps_last_error_until_completion() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98212, array( 7 ) );
+
+		$now = time();
+		$job = $store->acquire_next_job( 'token-a', 300, $now );
+		$this->assertTrue( $store->fail_retryable( (int) $job->id, 'first attempt failed', $now - 1, 'token-a' ) );
+
+		$waiting = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $waiting->status );
+		$this->assertSame( 'first attempt failed', $waiting->last_error );
+
+		$retry = $store->acquire_next_job( 'token-b', 300, $now );
+		$this->assertSame( (int) $job->id, (int) $retry->id );
+		$this->assertSame( 'first attempt failed', $store->get_job( (int) $job->id )->last_error, 'A running retry still shows the last failure.' );
+
+		$this->assertTrue( $store->fail_permanent( (int) $job->id, 'second attempt failed', 'token-b' ) );
+		$failed = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $failed->status );
+		$this->assertSame( 'second attempt failed', $failed->last_error );
+	}
+
+	/**
+	 * A job that never failed completes with the same row it had, apart
+	 * from the status, lock and updated time.
+	 *
+	 * @return void
+	 */
+	public function test_complete_without_failure_leaves_row_unchanged() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98213, array( 7 ) );
+
+		$job    = $store->acquire_next_job( 'token-a', 300, time() );
+		$before = (array) $store->get_job( (int) $job->id );
+		$this->assertSame( '', $before['last_error'] );
+
+		$this->assertTrue( $store->complete_job( (int) $job->id, 'token-a' ) );
+
+		$after = (array) $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $after['status'] );
+		$this->assertSame( '', $after['locked_by'] );
+		$this->assertSame( 0, (int) $after['locked_until'] );
+		unset( $before['status'], $before['locked_by'], $before['locked_until'], $before['updated'], $after['status'], $after['locked_by'], $after['locked_until'], $after['updated'] );
+		$this->assertSame( $before, $after );
+	}
+
+	/**
 	 * A permanently failed job stays failed: completion loses the race,
 	 * and a credentials-parked job is not overwritten either.
 	 *

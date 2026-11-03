@@ -9,6 +9,7 @@
 
 use MainWP\Dashboard\MainWP_Sync;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Database_Schema_Checker;
 use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Manage_Sites_Handler;
@@ -721,12 +722,27 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // spelling is already requested.
         $query_columns = array( 'recent_comments', 'recent_posts', 'recent_pages', 'phpversion', 'added_timestamp', 'wp_upgrades', 'signature_algo', 'verify_method', 'cust_site_icon_info', 'security_stats' );
 
+        // The aliases are selected after wp.* and wp_sync.*, so a name like id or url
+        // would replace the site's own value with the option's, NULL when the site has
+        // no such option (MWP-2163). The schema checker already caches these columns.
+        $site_columns = array();
+        $schema       = MainWP_Database_Schema_Checker::get_core_db_schema_info();
+        foreach ( array( 'wp', 'wp_sync' ) as $table ) {
+            $columns = $schema[ MainWP_DB::instance()->get_table_name( $table ) ]['columns'] ?? array();
+            if ( is_array( $columns ) ) {
+                $site_columns = array_merge( $site_columns, array_map( 'strtolower', array_keys( $columns ) ) );
+            }
+        }
+        // Nothing writes the premium_upgrades column; the sync stores the live value as a
+        // site option, so here the alias is the real data and callers rely on it.
+        $site_columns = array_diff( $site_columns, array( 'premium_upgrades' ) );
+
         // MySQL compares these aliases without regard to case, so FOO after foo is
         // the same column twice. Keep the first spelling, or the query's own.
         $unique = array();
         foreach ( $fields as $name ) {
             $key = strtolower( $name );
-            if ( ! isset( $unique[ $key ] ) ) {
+            if ( ! isset( $unique[ $key ] ) && ! in_array( $key, $site_columns, true ) ) {
                 $unique[ $key ] = in_array( $key, $query_columns, true ) ? $key : $name;
             }
         }

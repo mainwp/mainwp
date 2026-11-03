@@ -617,6 +617,43 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * HEAD reports a size Dropbox did not send in a usable form as unknown
+	 * (null), never as 0, keeps a real size (including a real 0), and still
+	 * reports a missing path as absent.
+	 *
+	 * @return void
+	 */
+	public function test_head_object_reports_a_missing_size_as_unknown() {
+		$file  = array( '.tag' => 'file' );
+		$cases = array(
+			'no size'      => array( wp_json_encode( $file ), null ),
+			'null size'    => array( wp_json_encode( $file + array( 'size' => null ) ), null ),
+			'non-numeric'  => array( wp_json_encode( $file + array( 'size' => 'abc' ) ), null ),
+			'negative'     => array( wp_json_encode( $file + array( 'size' => -1 ) ), null ),
+			'fraction'     => array( wp_json_encode( $file + array( 'size' => 1.5 ) ), null ),
+			'boolean'      => array( wp_json_encode( $file + array( 'size' => true ) ), null ),
+			'not JSON'     => array( 'not json', null ),
+			'JSON scalar'  => array( '"file"', null ),
+			'real zero'    => array( wp_json_encode( $file + array( 'size' => 0 ) ), 0 ),
+			'real size'    => array( wp_json_encode( $file + array( 'size' => 4194304 ) ), 4194304 ),
+			'digit string' => array( wp_json_encode( $file + array( 'size' => '12' ) ), 12 ),
+		);
+
+		foreach ( $cases as $label => $case ) {
+			$provider = $this->make_provider( array( $this->token_response(), $this->response( 200, $case[0] ) ) );
+			$this->assertSame( array( 'size' => $case[1] ), $provider->head_object( 'k.bin' ), $label );
+		}
+
+		$provider = $this->make_provider(
+			array(
+				$this->token_response(),
+				$this->response( 409, '{"error_summary": "path/not_found/..", "error": {".tag": "path", "path": {".tag": "not_found"}}}' ),
+			)
+		);
+		$this->assertFalse( $provider->head_object( 'k.bin' ) );
+	}
+
+	/**
 	 * Downloads stream to a file through the content endpoint.
 	 *
 	 * @return void

@@ -50,8 +50,9 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
 
     // The sites, site and updates help blocks indent each description instead of
     // using WP-CLI's ": description" lines. A ":" line makes WP-CLI build a synopsis
-    // and validate arguments against it, which would reject the positional site IDs
-    // these commands take and drop a bare --adminpassword before --add-site can refuse it.
+    // and validate arguments against it. That would turn the undocumented --list and
+    // --count, which still print the site table, into errors, and would drop a bare
+    // --adminpassword or --ver before the handler can refuse it.
 
     /**
      * Lists, counts, syncs, checks or disconnects child sites.
@@ -221,7 +222,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      *     Run an HTTP status check on the site.
      *
      * [--site-health-score]
-     *     Show the site health score.
+     *     Show whether the site health is Good or Should be improved.
      *
      * [--site-security-issues]
      *     List the results of the basic security checks.
@@ -242,7 +243,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      *     Child site administrator password, for --add-site when the MainWP Child plugin asks for it. Needs HTTPS unless --ssl_verify=0.
      *
      * [--ssl_verify=<value>]
-     *     Certificate check for --add-site: 1 or 2 verify the HTTPS certificate, 0 turns the check off. Use 0 only if you accept the risk.
+     *     Certificate check for --add-site: 1 verifies the HTTPS certificate, 2 uses the Dashboard's global SSL setting, 0 turns the check off. Defaults to 2, or to 1 with --adminpassword. Use 0 only if you accept the risk.
      *
      * [--uniqueid=<id>]
      *     Unique security ID set in the MainWP Child plugin, for --add-site and --edit-site.
@@ -305,13 +306,13 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      *     Activate, deactivate or delete a plugin. Needs --plugin and --action.
      *
      * [--plugin=<plugin>]
-     *     Plugin file, such as akismet/akismet.php, for --site-manage-plugin.
+     *     Plugin file, such as akismet/akismet.php, for --site-manage-plugin. Separate several with ||.
      *
      * [--site-manage-theme]
      *     Activate or delete a theme. Needs --theme and --action.
      *
      * [--theme=<theme>]
-     *     Theme folder name, for --site-manage-theme.
+     *     Theme folder name, for --site-manage-theme. Separate several with ||.
      *
      * [--action=<action>]
      *     activate, deactivate or delete for --site-manage-plugin; activate or delete for --site-manage-theme.

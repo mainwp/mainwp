@@ -99,20 +99,35 @@ class Test_MWP_2151_Tag_Chip_Pairing extends \WP_UnitTestCase {
 		$this->assertSame( $expected, $pairs );
 	}
 
-	/** Ordinary tags render the same bytes as before, in name order. */
-	public function test_ordinary_tags_render_unchanged(): void {
+	/** Ordinary site tags render the same bytes as before, in name order whatever order they were created in. */
+	public function test_ordinary_site_tags_render_unchanged(): void {
+		$plain = $this->create_tag( 'Gamma', '' );
+		$alpha = $this->create_tag( 'Alpha', '#1b5e20' );
+		$beta  = $this->create_tag( 'Beta', '#ffeb3b' );
+		$site  = $this->create_tagged_site( 0, array( $plain, $alpha, $beta ) );
+
+		$html = $this->expected_html( array( $alpha, $beta, $plain ), 'admin.php?page=managesites&g=' );
+		$this->assertStringStartsWith(
+			'<span style="background-color:#1b5e20;color:#ffffff" tag_id="' . $alpha['id'] . '" class="ui tag mini label"><a style="color:#ffffff!important;opacity:1;" href="admin.php?page=managesites&#038;g=' . $alpha['id'] . '">Alpha</a></span>',
+			$html
+		);
+
+		$this->assertSame( $html, MainWP_System_Utility::get_site_tags( $this->site_row( $site ) ) );
+		$this->assertSame( $html, MainWP_System_Utility::get_site_tags( $this->search_row( $site ) ) );
+		$this->assertSame( $html, MainWP_System_Utility::get_site_tags_belong( $this->belong_row( $site ) ) );
+	}
+
+	/** Ordinary client tags whose IDs already sort like their names render the same bytes as before. */
+	public function test_ordinary_client_tags_render_unchanged(): void {
 		$alpha  = $this->create_tag( 'Alpha', '#1b5e20' );
 		$beta   = $this->create_tag( 'Beta', '#ffeb3b' );
 		$plain  = $this->create_tag( 'Gamma', '' );
 		$client = $this->create_client();
-		$site   = $this->create_tagged_site( $client->client_id, array( $alpha, $beta, $plain ) );
+		$this->create_tagged_site( $client->client_id, array( $alpha, $beta, $plain ) );
 
-		$sites   = $this->expected_html( array( $alpha, $beta, $plain ), 'admin.php?page=managesites&g=' );
-		$clients = $this->expected_html( array( $alpha, $beta, $plain ), 'admin.php?page=ManageClients&tags=' );
+		$html = $this->expected_html( array( $alpha, $beta, $plain ), 'admin.php?page=ManageClients&tags=' );
 
-		$this->assertSame( $sites, MainWP_System_Utility::get_site_tags( $this->site_row( $site ) ) );
-		$this->assertSame( $sites, MainWP_System_Utility::get_site_tags_belong( $this->belong_row( $site ) ) );
-		$this->assertSame( $clients, MainWP_System_Utility::get_site_tags( $this->client_row( $client ), true ) );
+		$this->assertSame( $html, MainWP_System_Utility::get_site_tags( $this->client_row( $client ), true ) );
 	}
 
 	/** The Manage Sites and screenshots query drops repeated names and colors with DISTINCT. */

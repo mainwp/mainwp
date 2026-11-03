@@ -224,6 +224,7 @@ class Test_Readable_Transport_Surfaces extends \WP_UnitTestCase {
 			$source = file_get_contents( dirname( __DIR__ ) . '/pages/page-mainwp-manage-sites-handler.php' );
 			$source = str_replace( 'class MainWP_Manage_Sites_Handler ', 'class Transport_Check_Handler ', $source );
 			$source = str_replace( 'die( wp_json_encode( $ret ) );', 'return $ret;', $source );
+			// nosemgrep: AIK_eval-use -- evaluates this repository's own handler source to capture its final response; no input reaches it.
 			eval( '?>' . $source ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- Capture the final response without changing production exits.
 		}
 		$raw        = 'getaddrinfo() thread failed to start <img src=x> > & "quoted"';

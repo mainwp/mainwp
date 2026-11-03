@@ -96,6 +96,10 @@ class Test_Readable_Transport_Errors extends \WP_UnitTestCase {
 		$exception  = new MainWP_Exception( 'HTTPERROR', $classified['message'] );
 		$plain      = 'HTTP error - ' . $classified['message'];
 		$this->assertSame( $plain, MainWP_Error_Helper::get_error_message( $exception, false, true ) );
+		$this->assertStringContainsString( '<img src=x>', MainWP_Error_Helper::get_error_message( $exception, false, true ) );
+		$nomainwp = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP' ), false, true );
+		$this->assertStringNotContainsString( '<', $nomainwp );
+		$this->assertStringContainsString( 'MainWP Community', $nomainwp );
 		$this->assertSame( $plain, MainWP_Error_Helper::get_console_error_message( $exception ) );
 		$this->assertSame( esc_html( $plain ), MainWP_Error_Helper::get_error_message( $exception ) );
 		$wrapped = new MainWP_Exception( esc_html( $plain ) );

@@ -1286,7 +1286,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         return self::add_export_labels_to_rows(
             array(
                 array(
-                    'label'  => __( 'Outbound connections', 'mainwp' ),
+                    'label'  => esc_html__( 'Outbound connections', 'mainwp' ),
                     'value'  => $outbound['value'],
                     'status' => $outbound['status'],
                 ),
@@ -1349,6 +1349,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 ),
             ),
             array(
+                'Outbound connections',
                 'Dashboard home URL',
                 'Dashboard site URL',
                 'Public Dashboard IP',

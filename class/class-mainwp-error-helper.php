@@ -118,7 +118,7 @@ class MainWP_Error_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             return esc_html( wp_strip_all_tags( $error ) );
         }
 
-        return $plain_text ? html_entity_decode( $error, ENT_QUOTES, 'UTF-8' ) : $error;
+        return $plain_text ? html_entity_decode( wp_strip_all_tags( $error ), ENT_QUOTES, 'UTF-8' ) : $error;
     }
 
     /**

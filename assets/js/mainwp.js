@@ -1940,6 +1940,9 @@ let mainwp_managesites_add = function () {
 
         if (response == 'HTTPERROR' && res_things.error_message) {
             errors.push(jQuery('<span>').text(res_things.error_message));
+            if (res_things.failure_ux) {
+                errors.push(mainwp_failure_ux_nodes(res_things.failure_ux));
+            }
         } else if (res_things.failure_ux) {
             errors.push(mainwp_failure_ux_nodes(res_things.failure_ux));
         } else if (response == 'HTTPERROR') {
@@ -4087,7 +4090,7 @@ globalThis.getErrorMessageInfo = function (repError, outputType) { // NOSONAR - 
         }
 
         if (msg != '') {
-            msgUI = jQuery('<span data-inverted="" data-position="left center">').attr('data-tooltip', msg).append('<i class="red times icon"></i>').prop('outerHTML');
+            msgUI = jQuery('<span data-inverted="" data-position="left center">').attr('data-tooltip', mainwp_entities_text(msg)).append('<i class="red times icon"></i>').prop('outerHTML');
         }
     }
 

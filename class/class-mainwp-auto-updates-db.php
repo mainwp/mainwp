@@ -129,6 +129,8 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
     /**
      * Get child sites to continue updates.
      *
+     * The batch uses its own per-site queue option because regular automatic sync owns dtsAutomaticSyncStart.
+     *
      * @param int  $limit limit sites to continue updates.
      * @param int  $lasttime_start Lasttime start automatic update.
      * @param bool $connected Requires sites connected.
@@ -142,7 +144,7 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
             return false;
         }
 
-        $where = ' ( wp_sync.dtsAutomaticSyncStart > 0 AND wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart <= ' . intval( $lasttime_start ) . ' ) AND'; // less than to sure that exactly trigger start updates timestamp.
+        $where = ' owp_batch_updates_queue_time.value >= ' . intval( $lasttime_start ) . ' AND wp_sync.dtsAutomaticSync < ' . intval( $lasttime_start ) . ' AND';
         if ( true === $connected ) {
             $where .= ' wp_sync.sync_errors = "" AND';
         }
@@ -150,15 +152,16 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
             $where .= ' wp.suspended = 0 AND';
         }
 
-        $orderby = ' wp_sync.dtsAutomaticSyncStart ASC ';
+        $orderby = ' wp.id ASC ';
 
         $where = rtrim( $where, 'AND' );
 
         $params = array(
-            'view'    => 'updates_view',
-            'where'   => $where,
-            'limit'   => $limit,
-            'orderby' => $orderby, // to fix.
+            'view'          => 'updates_view',
+            'where'         => $where,
+            'limit'         => $limit,
+            'orderby'       => $orderby,
+            'others_fields' => array( 'batch_updates_queue_time' ),
         );
 
         $sql = MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params );
@@ -172,6 +175,72 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
 
         if ( $results ) {
             static::free_result( $results );
+        }
+
+        return $websites;
+    }
+
+
+    /**
+     * Get pending child sites in ID order, wrapping at the resume site.
+     *
+     * Regular automatic sync owns dtsAutomaticSyncStart, so this query uses dtsAutomaticSync only.
+     *
+     * @param int  $limit limit sites to continue updates.
+     * @param int  $lasttime_start Lasttime start automatic update.
+     * @param bool $connected Requires sites connected.
+     * @param bool $not_suspended Requires sites unsuspended.
+     * @param int  $resume_site_id First site ID to consider before wrapping to lower IDs.
+     *
+     * @return array|false Sites still pending in this run, or false without a run start.
+     */
+    public function get_websites_to_continue_auto_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false, $resume_site_id = 0 ) {
+
+        if ( empty( $lasttime_start ) ) {
+            return false;
+        }
+
+        $where = ' wp_sync.dtsAutomaticSync < ' . intval( $lasttime_start ) . ' AND';
+        if ( true === $connected ) {
+            $where .= ' wp_sync.sync_errors = "" AND';
+        }
+        if ( true === $not_suspended ) {
+            $where .= ' wp.suspended = 0 AND';
+        }
+
+        $where = rtrim( $where, 'AND' );
+
+        $where_segments = array( '' );
+        if ( $resume_site_id > 0 ) {
+            $where_segments = array(
+                ' AND wp.id >= ' . intval( $resume_site_id ),
+                ' AND wp.id < ' . intval( $resume_site_id ),
+            );
+        }
+
+        $websites = array();
+        foreach ( $where_segments as $where_segment ) {
+            $params = array(
+                'view'    => 'updates_view',
+                'where'   => $where . $where_segment,
+                'limit'   => $limit - count( $websites ),
+                'orderby' => ' wp.id ASC ',
+            );
+
+            $sql     = MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params );
+            $results = MainWP_DB::instance()->query( $sql );
+
+            while ( $results && $website = static::fetch_object( $results ) ) {
+                $websites[] = $website;
+            }
+
+            if ( $results ) {
+                static::free_result( $results );
+            }
+
+            if ( count( $websites ) >= $limit ) {
+                break;
+            }
         }
 
         return $websites;

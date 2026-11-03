@@ -149,6 +149,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_advanced_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_update_advanced_allowed_fields(),
                 ),
@@ -174,6 +175,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_monitoring_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_update_monitoring_allowed_fields(),
                 ),
@@ -199,6 +201,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_emails_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_update_emails_allowed_fields(),
                 ),
@@ -224,6 +227,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'edit_cost_tracker_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_cost_tracker_allowed_fields(),
                 ),
@@ -248,6 +252,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_cost_tracker_product_type' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_cost_tracker_product_type_allowed_fields(),
                 ),
@@ -284,6 +289,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_cost_tracker_payment_method' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_cost_tracker_payment_method_allowed_fields(),
                 ),
@@ -321,6 +327,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_dashboard_insights_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_dashboard_insight_allowed_fields(),
                 ),
@@ -346,6 +353,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_api_backup_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_api_backup_allowed_fields(),
                 ),
@@ -396,6 +404,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_tools_settings' ),
+                    'validate_callback'   => array( $this, 'validate_content_type' ),
                     'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_tools_allowed_fields(),
                 ),
@@ -517,6 +526,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_general_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get general settings data.
         $settings = $this->get_general_settings_data();
 
@@ -642,7 +655,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             do_action( 'mainwp_debug_log', 'Update general settings error: ' . $e->getMessage() );
             return new WP_Error(
                 'rest_invalid_param',
-                /* translators: %s: Error message */ sprintf( __( 'Update general settings error: %s', 'mainwp' ), $e->getMessage() ),
+                /* translators: %s: Error message */ sprintf( __( 'Update general settings error: %s', 'mainwp' ), ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) ),
                 array( 'status' => 500 )
             );
         }
@@ -664,6 +677,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_advanced_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get advanced settings data.
         $settings = $this->get_advanced_settings_data();
 
@@ -760,7 +777,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             do_action( 'mainwp_debug_log', 'Update advanced settings error: ' . $e->getMessage() );
             return new WP_Error(
                 'rest_invalid_param',
-                /* translators: %s: Error message */ sprintf( __( 'Update advanced settings error: %s', 'mainwp' ), $e->getMessage() ),
+                /* translators: %s: Error message */ sprintf( __( 'Update advanced settings error: %s', 'mainwp' ), ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) ),
                 array( 'status' => 500 )
             );
         }
@@ -782,6 +799,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_monitoring_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get monitoring settings data.
         $settings = $this->get_monitoring_settings_data();
 
@@ -906,6 +927,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_emails_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get notification email types.
         $notification_emails = MainWP_Notification_Settings::get_notification_types();
         // Get email settings.
@@ -1482,6 +1507,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_dashboard_insights_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         $options  = get_option( 'mainwp_module_log_settings', array() );
         $settings = array(
             'enable_insights_logging' => $options['enabled'] ?? 0,
@@ -1549,6 +1578,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_api_backup_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_api_backups' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Masked token.
         $masked = static function ( $token ) {
             $token = (string) $token;
@@ -1776,7 +1809,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             do_action( 'mainwp_debug_log', 'Update backup settings error: ' . $e->getMessage() );
             return new WP_Error(
                 'rest_invalid_param',
-                /* translators: %s: Error message */ sprintf( __( 'Update backup settings error: %s', 'mainwp' ), $e->getMessage() ),
+                /* translators: %s: Error message */ sprintf( __( 'Update backup settings error: %s', 'mainwp' ), ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) ),
                 array( 'status' => 500 )
             );
         }
@@ -1798,6 +1831,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_tool_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Get tool settings.
         $settings = $this->get_tool_settings_data();
 
@@ -1929,7 +1966,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_destroy_sessions_status( $request ) {  // phpcs:ignore -- NOSONAR - complex.
-
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         $destroy_id = $request->get_param( 'destroy_id' ); // Get id from url.
         if ( empty( $destroy_id ) ) {
             return new WP_Error(
@@ -2016,7 +2056,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ++$destroy_data['failed'];
                 ++$destroy_data['processed'];
                 // Same cap and cleaning as the Child error above; the NOMAINWP text carries an anchor tag.
-                $error_message            = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e ) : $e->getMessage();
+                $error_message            = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage();
                 $destroy_data['errors'][] = array(
                     'site_id' => $website_id,
                     'error'   => self::sanitize_batch_error_message( $error_message ),
@@ -2114,6 +2154,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_renew_connection_status( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         $renew_id = $request->get_param( 'renew_id' ); // Get id from url.
 
         if ( empty( $renew_id ) ) {
@@ -2213,7 +2257,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ++$renew_data['processed'];
                 $renew_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => $e->getMessage(),
+                    'error'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }
@@ -2350,7 +2394,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ++$disconnect_data['processed'];
                 $disconnect_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => $e->getMessage(),
+                    'error'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }
@@ -2381,6 +2425,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_REST_Response|WP_Error Response or error.
      */
     public function get_disconnect_status( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         $disconnect_id = $request->get_param( 'disconnect_id' ); // Get id from url.
 
         if ( empty( $disconnect_id ) ) {
@@ -4254,6 +4302,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return bool|WP_Error
      */
     public function validate_update_backup_params( $request ) {
+        $valid = $this->validate_content_type( $request );
+        if ( is_wp_error( $valid ) ) {
+            return $valid;
+        }
+
         $body = $this->get_request_body( $request );
         $body = is_array( $body ) ? $body : array();
         $sent = array();
@@ -4314,6 +4367,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return bool|WP_Error
      */
     public function validate_update_general_params( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $valid = $this->validate_content_type( $request );
+        if ( is_wp_error( $valid ) ) {
+            return $valid;
+        }
+
         $primary_backup = $request->get_param( 'mainwp_primary_backup' );
         $backup_feature = $request->get_param( 'mainwp_enable_legacy_backup_feature' );
         $native_backups = $request->get_param( 'mainwp_enable_native_backups' );
@@ -4429,17 +4487,25 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * Validate content type.
+     * Validate the JSON media type and object body before parameter sanitization.
      *
      * @param WP_REST_Request $request Full details about the request.
      * @return bool|WP_Error
      */
-    private function validate_content_type( $request ) {
-        $content_type = (string) $request->get_header( 'content-type' );
-        if ( 'application/json' !== $content_type ) {
+    public function validate_content_type( $request ) {
+        $content_type = explode( ';', (string) $request->get_header( 'content-type' ), 2 );
+        if ( 'application/json' !== strtolower( trim( $content_type[0] ) ) ) {
             return new WP_Error(
                 'invalid_content_type',
                 __( 'Invalid content type. Expected application/json.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+        $body = $request->get_body();
+        if ( '' !== $body && ! ( json_decode( $body ) instanceof \stdClass ) ) {
+            return new WP_Error(
+                'invalid_body',
+                __( 'Request body must be a JSON object.', 'mainwp' ),
                 array( 'status' => 400 )
             );
         }

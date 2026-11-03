@@ -107,7 +107,12 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertSame( ! $expired, $store->save_checkpoint( (int) $job->id, array( 'cursor' => 9 ), 'holder' ) );
 		$this->assertSame( ! $expired, $store->set_status( (int) $job->id, $store::STATUS_UPLOADING, 'holder' ) );
 		$after = $store->get_job( (int) $job->id );
-		$this->assertSame( $expired ? $before->checkpoint : array( 'cursor' => 9 ), $after->checkpoint );
+		$saved = $after->checkpoint;
+		$this->assertArrayHasKey( 'last_attempt_at', $saved );
+		$this->assertGreaterThan( 0, $saved['last_attempt_at'] );
+		$expected = $expired ? $before->checkpoint : array( 'cursor' => 9 );
+		unset( $expected['last_attempt_at'], $saved['last_attempt_at'] );
+		$this->assertSame( $expected, $saved );
 		$this->assertSame( $expired ? $before->status : $store::STATUS_UPLOADING, $after->status );
 		$this->assertSame( ! $expired, $store->save_checkpoint( (int) $job->id, $after->checkpoint, 'holder' ), 'An unchanged write must still check lease freshness.' );
 		if ( $expired ) {
@@ -293,7 +298,11 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$checkpoint = array( 'metadata' => (object) array( 'cursor' => 4 ) );
 		$this->assertNotNull( $job );
 		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint, 'object-holder' ) );
-		$this->assertSame( array( 'metadata' => array( 'cursor' => 4 ) ), $store->get_job( (int) $job->id )->checkpoint );
+		$saved = $store->get_job( (int) $job->id )->checkpoint;
+		$this->assertArrayHasKey( 'last_attempt_at', $saved );
+		$this->assertGreaterThan( 0, $saved['last_attempt_at'] );
+		unset( $saved['last_attempt_at'] );
+		$this->assertSame( array( 'metadata' => array( 'cursor' => 4 ) ), $saved );
 		$this->assertFalse( $store->save_checkpoint( (int) $job->id, $checkpoint, 'other-holder' ) );
 	}
 
@@ -310,7 +319,11 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$before = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $job->id ) );
 		try {
 			$this->assertFalse( $store->save_checkpoint( (int) $job->id, array( 'metadata' => $handle ), 'encoding-holder' ) );
-			$this->assertSame( array(), $store->get_job( (int) $job->id )->checkpoint );
+			$saved = $store->get_job( (int) $job->id )->checkpoint;
+			$this->assertArrayHasKey( 'last_attempt_at', $saved );
+			$this->assertGreaterThan( 0, $saved['last_attempt_at'] );
+			unset( $saved['last_attempt_at'] );
+			$this->assertSame( array(), $saved );
 			$this->assertEquals( $before, $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $job->id ) ), 'A failed encoding must not replace the raw checkpoint with an empty string.' );
 		} finally {
 			fclose( $handle );
@@ -351,7 +364,11 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 
 		$store->save_checkpoint( (int) $job->id, $checkpoint );
 
-		$this->assertSame( $checkpoint, $store->get_job( (int) $job->id )->checkpoint );
+		$saved = $store->get_job( (int) $job->id )->checkpoint;
+		$this->assertArrayHasKey( 'last_attempt_at', $saved );
+		$this->assertSame( 1000000, $saved['last_attempt_at'] );
+		unset( $saved['last_attempt_at'] );
+		$this->assertSame( $checkpoint, $saved );
 	}
 
 	/**
@@ -480,6 +497,85 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$fresh = $store->get_job( (int) $job->id );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $fresh->status );
 		$this->assertSame( '', (string) $fresh->last_error );
+	}
+
+	/**
+	 * An upload that fails once and then succeeds no longer reports the
+	 * earlier attempt's error. The attempt count still shows the retry.
+	 *
+	 * @return void
+	 */
+	public function test_complete_after_retryable_failure_clears_last_error() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98211, array( 7 ) );
+
+		$now = time();
+		$job = $store->acquire_next_job( 'token-a', 300, $now );
+		$this->assertTrue( $store->fail_retryable( (int) $job->id, '[mainwp_backup_s3_failed] Connection reset', $now - 1, 'token-a' ) );
+		$this->assertSame( '[mainwp_backup_s3_failed] Connection reset', $store->get_job( (int) $job->id )->last_error );
+
+		$retry = $store->acquire_next_job( 'token-b', 300, $now );
+		$this->assertSame( (int) $job->id, (int) $retry->id );
+		$this->assertTrue( $store->complete_job( (int) $retry->id, 'token-b' ) );
+
+		$stored = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $stored->status );
+		$this->assertSame( '', $stored->last_error );
+		$this->assertSame( 1, (int) $stored->attempt_count );
+		$this->assertSame( '', $stored->locked_by );
+		$this->assertSame( 0, (int) $stored->locked_until );
+	}
+
+	/**
+	 * A retryable failure keeps its error while the job waits, while it
+	 * runs again, and when the next attempt fails for good.
+	 *
+	 * @return void
+	 */
+	public function test_retryable_failure_keeps_last_error_until_completion() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98212, array( 7 ) );
+
+		$now = time();
+		$job = $store->acquire_next_job( 'token-a', 300, $now );
+		$this->assertTrue( $store->fail_retryable( (int) $job->id, 'first attempt failed', $now - 1, 'token-a' ) );
+
+		$waiting = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $waiting->status );
+		$this->assertSame( 'first attempt failed', $waiting->last_error );
+
+		$retry = $store->acquire_next_job( 'token-b', 300, $now );
+		$this->assertSame( (int) $job->id, (int) $retry->id );
+		$this->assertSame( 'first attempt failed', $store->get_job( (int) $job->id )->last_error, 'A running retry still shows the last failure.' );
+
+		$this->assertTrue( $store->fail_permanent( (int) $job->id, 'second attempt failed', 'token-b' ) );
+		$failed = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $failed->status );
+		$this->assertSame( 'second attempt failed', $failed->last_error );
+	}
+
+	/**
+	 * A job that never failed completes with the same row it had, apart
+	 * from the status, lock and updated time.
+	 *
+	 * @return void
+	 */
+	public function test_complete_without_failure_leaves_row_unchanged() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98213, array( 7 ) );
+
+		$job    = $store->acquire_next_job( 'token-a', 300, time() );
+		$before = (array) $store->get_job( (int) $job->id );
+		$this->assertSame( '', $before['last_error'] );
+
+		$this->assertTrue( $store->complete_job( (int) $job->id, 'token-a' ) );
+
+		$after = (array) $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $after['status'] );
+		$this->assertSame( '', $after['locked_by'] );
+		$this->assertSame( 0, (int) $after['locked_until'] );
+		unset( $before['status'], $before['locked_by'], $before['locked_until'], $before['updated'], $after['status'], $after['locked_by'], $after['locked_until'], $after['updated'] );
+		$this->assertSame( $before, $after );
 	}
 
 	/**
@@ -650,7 +746,11 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 
 		$checkpoint = array( 'artifact_cursor' => 3 );
 		$this->assertFalse( $store->save_checkpoint( $job_id, $checkpoint, 'token-zombie' ), 'A checkpoint fenced with a stale token must be refused.' );
-		$this->assertSame( array(), $store->get_job( $job_id )->checkpoint, 'The refused checkpoint must not persist.' );
+		$saved = $store->get_job( $job_id )->checkpoint;
+		$this->assertArrayHasKey( 'last_attempt_at', $saved );
+		$this->assertSame( $now + 301, $saved['last_attempt_at'] );
+		unset( $saved['last_attempt_at'] );
+		$this->assertSame( array(), $saved, 'The refused checkpoint must not persist.' );
 
 		$this->assertFalse( $store->set_status( $job_id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING, 'token-zombie' ), 'A status write fenced with a stale token must be refused.' );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $store->get_job( $job_id )->status );

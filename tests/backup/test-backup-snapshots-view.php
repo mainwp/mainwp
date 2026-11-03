@@ -60,7 +60,8 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'ui mini divided list', $output );
 		$this->assertStringContainsString( 'escAttr( upload.name )', $output );
 		$this->assertStringContainsString( 'escAttr( upload.provider )', $output );
-		$this->assertStringContainsString( 'escAttr( upload.last_error )', $output );
+		$this->assertStringContainsString( 'escAttr( upload.error_message || upload.last_error )', $output );
+		$this->assertStringContainsString( 'escAttr( support )', $output );
 	}
 
 	/**
@@ -524,13 +525,11 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 			MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION,
 			array(
 				'capable'    => false,
-				'reason'     => 'CREATE denied for db_user_private on scratch_db_private: raw_mysql_error_private',
+				'reason'     => 'The dashboard database user needs the CREATE privilege. (create database: CREATE denied for db_user_private on scratch_db_private: <script>raw_mysql_error_private</script>)',
 				'checked_at' => time(),
 			),
 			false
 		);
-		// The notice sends the reader to the Debug log for the exact reason,
-		// so the raw reason must reach the log at that level.
 		$logger      = MainWP_Logger::instance();
 		$priority    = new \ReflectionProperty( $logger, 'logPriority' );
 		$specific    = new \ReflectionProperty( $logger, 'logSpecific' );
@@ -546,10 +545,14 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$logger->set_log_priority( $saved_level[0], $saved_level[1] );
 		$this->assertStringContainsString( 'db_user_private', implode( "\n", $logged ), 'The raw reason goes to the debug log.' );
 		$this->assertStringContainsString( 'class="ui small info visible message"', $incapable );
-		$this->assertStringContainsString( 'Test Restore is not available on this Dashboard host because the restore sandbox could not be set up. The usual cause is a database user without the CREATE privilege; ask your host to grant it. For the exact reason, set the Custom Event Monitor log level to Debug, reload this page, and check the log.', $incapable );
-		foreach ( array( 'db_user_private', 'scratch_db_private', 'raw_mysql_error_private' ) as $private_text ) {
-			$this->assertStringNotContainsString( $private_text, $incapable, 'Cached database details must not appear anywhere in the HTML.' );
-		}
+		$this->assertStringContainsString( 'Test Restore stays off until the sandbox can be set up.', $incapable );
+		$this->assertStringContainsString( 'save Backup Settings', $incapable );
+		$this->assertStringContainsString( 'next automatic check', $incapable );
+		$this->assertStringContainsString( 'ON `mainwp\\_tr\\_%`.*', $incapable );
+		$this->assertStringContainsString( esc_html( DB_USER ), $incapable, 'Old cached errors still identify the configured database user.' );
+		$this->assertStringContainsString( '&lt;script&gt;raw_mysql_error_private&lt;/script&gt;', $incapable );
+		$this->assertStringNotContainsString( '<script>raw_mysql_error_private</script>', $incapable );
+		$this->assertStringNotContainsString( '&amp;quot;', $incapable );
 
 		update_option(
 			MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION,
@@ -562,9 +565,56 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		);
 		$capable = $this->render_page();
 		$this->assertStringNotContainsString( 'class="ui small info visible message"', $capable );
-		$this->assertStringNotContainsString( 'Test Restore is not available on this Dashboard host because the restore sandbox could not be set up. The usual cause is a database user without the CREATE privilege; ask your host to grant it. For the exact reason, set the Custom Event Monitor log level to Debug, reload this page, and check the log.', $capable, 'A capable host shows no notice.' );
+		$this->assertStringNotContainsString( 'Test Restore stays off until the sandbox can be set up.', $capable, 'A capable host shows no notice.' );
 
 		delete_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION );
+	}
+
+	/**
+	 * The cached cause stays visible and CREATE guidance appears once.
+	 *
+	 * @dataProvider mwp_2130_capability_causes
+	 * @param string $reason Cached setup failure.
+	 * @param int    $grants Expected grant examples.
+	 */
+	public function test_mwp_2130_capability_cause_visible_without_unrelated_guidance( string $reason, int $grants ): void {
+		$cached = array(
+			'capable'    => false,
+			'reason'     => $reason,
+			'checked_at' => time(),
+		);
+		update_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION, $cached );
+		$notice = MainWP_Backup_TestRestore_Scheduler::instance()->get_capability_notice();
+		$this->assertSame( $grants, substr_count( $notice, 'GRANT SELECT' ), 'Only CREATE failures need grant guidance, once.' );
+		$output = $this->render_page();
+		$dom    = new \DOMDocument();
+		@$dom->loadHTML( '<meta charset="utf-8">' . $output, LIBXML_NONET );
+		$xpath    = new \DOMXPath( $dom );
+		$warnings = $xpath->query( '//div[@class="ui small info visible message"]' );
+		$this->assertSame( 1, $warnings->length );
+		$warning = $warnings->item( 0 );
+		$this->assertSame( 0, $warning->getElementsByTagName( 'details' )->length, 'The actual cause must be visible without opening details.' );
+		$this->assertStringContainsString( $reason, $warning->textContent );
+		$this->assertSame( $grants, substr_count( $warning->textContent, 'GRANT SELECT' ), 'The view must not duplicate grant guidance.' );
+		if ( 0 === $grants ) {
+			$this->assertStringNotContainsString( 'DB_USER', $warning->textContent );
+		}
+		$this->assertSame( $cached, get_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION ), 'Rendering must not re-probe or rewrite the cached verdict.' );
+	}
+
+	/**
+	 * Old and new CREATE errors share the view with unrelated setup failures.
+	 *
+	 * @return array
+	 */
+	public static function mwp_2130_capability_causes(): array {
+		return array(
+			'new CREATE'               => array( \MainWP\Dashboard\MainWP_Backup_TestRestore_Sandbox::database_privilege_guidance(), 1 ),
+			'legacy CREATE'            => array( 'The dashboard database user needs the CREATE privilege. (create database: denied)', 1 ),
+			'translated legacy CREATE' => array( 'Temporäre Datenbank konnte nicht erstellt werden. (create database: denied)', 1 ),
+			'directory'                => array( 'Private backup directory "/private/backups" on the Dashboard server is unavailable: could not create directory.', 0 ),
+			'connection'               => array( 'The test-restore sandbox could not connect to the database server. (connect: connection refused)', 0 ),
+		);
 	}
 
 	/**

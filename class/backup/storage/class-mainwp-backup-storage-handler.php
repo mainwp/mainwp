@@ -631,6 +631,12 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             }
         }
 
+        // The form lists None as 'none' (Fomantic hides an empty-value
+        // option); the S3 provider sends no encryption header for ''.
+        if ( 's3' === $provider && isset( $settings['sse'] ) && 'none' === $settings['sse'] ) {
+            $settings['sse'] = '';
+        }
+
         $stored_minimum = isset( $existing ) && is_array( $existing->settings ) ? array_intersect_key( $existing->settings, array( 'minimum_remote_retention_days' => true ) ) : array();
         if ( array_key_exists( 'minimum_remote_retention_days', $settings ) || $stored_minimum ) {
             $minimum = array_key_exists( 'minimum_remote_retention_days', $settings ) ? $settings['minimum_remote_retention_days'] : $stored_minimum['minimum_remote_retention_days'];

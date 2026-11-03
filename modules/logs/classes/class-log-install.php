@@ -424,17 +424,17 @@ class Log_Install extends MainWP_Install {
     /**
      * Create archive_ logs tables.
      *
-     * @param string $currentVersion Current db version.
-     * @param bool   $create_if_not_exist Whether to force creation of archive tables if they don't exist.
+     * The tables are created whenever they are missing. Upgrades from a log DB older
+     * than 1.0.1.8 skipped the create step, and Dismiss then had nowhere to copy rows.
+     *
+     * @param string $currentVersion Current db version. Kept for backward compatibility.
+     * @param bool   $create_if_not_exist Kept for backward compatibility; missing tables are always created.
      */
     public function create_archive_tables( $currentVersion = '', $create_if_not_exist = false ) {
-
         $archive = $this->table_name( 'wp_logs_archive' );
 
-        if ( empty( $currentVersion ) || $create_if_not_exist ) {
-            $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $archive . ' LIKE ' . $this->table_name( 'wp_logs' ) ); //phpcs:ignore -- ok.
-            $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $this->table_name( 'wp_logs_meta_archive' ) . ' LIKE ' . $this->table_name( 'wp_logs_meta' ) ); //phpcs:ignore -- ok.
-        }
+        $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $archive . ' LIKE ' . $this->table_name( 'wp_logs' ) ); //phpcs:ignore -- ok.
+        $this->wpdb->query( 'CREATE TABLE IF NOT EXISTS ' . $this->table_name( 'wp_logs_meta_archive' ) . ' LIKE ' . $this->table_name( 'wp_logs_meta' ) ); //phpcs:ignore -- ok.
 
         $column_archived_at = $this->wpdb->get_results( // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $archive is an internal MainWP table identifier; column name is bound via prepare().
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table identifiers cannot be placeholders; $archive comes from table_name().

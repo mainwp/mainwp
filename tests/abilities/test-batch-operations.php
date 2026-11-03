@@ -620,39 +620,70 @@ class MainWP_Abilities_Batch_Operations_Test extends MainWP_Abilities_Test_Case 
 	/**
 	 * Test that queued response includes status_url.
 	 *
-	 * Uses filter to lower threshold to 5 for efficient testing.
+	 * Dispatch the URL and verify it returns the queued job.
 	 *
+	 * @dataProvider queued_status_url_abilities
+	 * @param string $ability_name Ability to queue.
+	 * @param string $job_type Expected job type.
 	 * @return void
 	 */
-	public function test_queued_response_includes_status_url() {
+	public function test_queued_response_status_url_resolves( $ability_name, $job_type ) {
 		$this->skip_if_no_abilities_api();
 		$this->set_current_user_as_admin();
 
-		// Lower threshold to 5 for efficient testing.
-		$threshold_callback = function() { return 5; };
+		$threshold_callback = function () {
+			return 1;
+		};
 		add_filter( 'mainwp_abilities_batch_threshold', $threshold_callback );
 
 		try {
-			$site_ids = [];
-			for ( $i = 0; $i < 6; $i++ ) {
-				$site_ids[] = $this->create_test_site( [
-					'name'                 => "Status URL Site {$i}",
-					'offline_check_result' => 1,
-				] );
+			$site_ids = array( $this->create_test_site(), $this->create_test_site() );
+			$input    = array( 'site_ids_or_domains' => $site_ids );
+			if ( 'update' === $job_type ) {
+				$input['confirm'] = true;
 			}
-
-			$result = $this->execute_ability( 'mainwp/sync-sites-v1', [
-				'site_ids_or_domains' => $site_ids,
-			] );
+			$result = $this->execute_ability( $ability_name, $input );
 
 			$this->assertNotWPError( $result );
 			$this->assertTrue( $result['queued'] );
 			$this->assertArrayHasKey( 'status_url', $result );
-			$this->assertStringContainsString( $result['job_id'], $result['status_url'] );
-			$this->assertStringContainsString( 'mainwp/v2/jobs/', $result['status_url'] );
+			if ( 'sync' === $job_type ) {
+				$this->track_sync_job( $result['job_id'] );
+			} else {
+				$this->track_update_job( $result['job_id'] );
+			}
+
+			$url   = wp_parse_url( $result['status_url'] );
+			$query = array();
+			wp_parse_str( $url['query'] ?? '', $query );
+			$route = $query['rest_route'] ?? substr( $url['path'], strlen( wp_parse_url( rest_url(), PHP_URL_PATH ) ) );
+			unset( $query['rest_route'] );
+			$request = new \WP_REST_Request( 'GET', '/' . ltrim( $route, '/' ) );
+			$request->set_query_params( $query );
+			$response = rest_do_request( $request );
+
+			$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+			$status = $response->get_data();
+			$this->assertSame( $result['job_id'], $status['job_id'] );
+			$this->assertSame( $job_type, $status['type'] );
+			$this->assertSame( 'queued', $status['status'] );
+			$this->assertSame( 2, $status['total'] );
 		} finally {
 			remove_filter( 'mainwp_abilities_batch_threshold', $threshold_callback );
 		}
+	}
+
+	/**
+	 * Queued response producers.
+	 *
+	 * @return array
+	 */
+	public function queued_status_url_abilities() {
+		return array(
+			'sync'        => array( 'mainwp/sync-sites-v1', 'sync' ),
+			'run-updates' => array( 'mainwp/run-updates-v1', 'update' ),
+			'update-all'  => array( 'mainwp/update-all-v1', 'update' ),
+		);
 	}
 
 	// =========================================================================

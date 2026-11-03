@@ -75,8 +75,12 @@ jQuery(function () {
         $button.prop('disabled', false);
 
         if (response === 'success') {
-            $button.text(new_status === 0 ? MainWP.I18n.t('Suspend Sites') : MainWP.I18n.t('Unsuspend Sites'));
+            $button.text(new_status === 0 ? $button.attr('data-suspend-label') : $button.attr('data-unsuspend-label'));
             $button.attr('suspend-status', new_status);
+            // Keep the status badge in step with the button without a reload.
+            const $status = jQuery('#mainwp-client-status-label');
+            const label = new_status === 0 ? $status.attr('data-active-label') : $status.attr('data-suspended-label');
+            $status.empty().append(jQuery('<span>').addClass(new_status === 0 ? 'ui green basic button' : 'ui yellow button').text(label));
         } else if (response === 'Error - insufficient permissions!') {
             mainwp_set_message_zone('#mainwp-message-zone', jQuery('<div>').text(response).html(), 'red');
         }

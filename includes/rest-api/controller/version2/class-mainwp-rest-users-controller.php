@@ -904,7 +904,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
 
             return $output;
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'update_admin_password_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'update_admin_password_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
     }
 
@@ -958,7 +958,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
             }
             return new WP_Error( 'user_deletion_error', __( 'User deletion failed.', 'mainwp' ) );
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'user_deletion_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'user_deletion_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
     }
     /**
@@ -1087,7 +1087,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
         } catch ( MainWP_Exception $e ) {
             return new WP_Error(
                 'user_update_exception',
-                MainWP_Error_Helper::get_error_message( $e )
+                MainWP_Error_Helper::get_error_message( $e, false, true )
             );
         }
     }
@@ -1191,7 +1191,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
 
             return $output;
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'fetch_users_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'fetch_users_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
     }
 
@@ -1367,7 +1367,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
 
             return $output;
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'create_user_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'create_user_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
     }
 
@@ -1906,7 +1906,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
 
             return new WP_Error( 'user_not_found', __( 'User not found.', 'mainwp' ) );
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'get_user_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'get_user_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
     }
 

@@ -1405,7 +1405,9 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $output->users += static::users_search_handler_renderer( $users, $website );
             unset( $users );
         } else {
-            $output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+            $output->errors[ $website->id ] = isset( $output->transport_errors[ $website->id ]['message'] )
+                ? esc_html( $output->transport_errors[ $website->id ]['message'] )
+                : MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
         }
     }
 
@@ -1468,7 +1470,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( function_exists( '\mb_convert_encoding' ) ) {
             $pass = \mb_convert_encoding( $pass, 'ISO-8859-1', 'UTF-8' );
         } else {
-            $pass = utf8_decode( $pass ); // to compatible.
+            $pass = utf8_decode( $pass ); // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- PHP 7.4 fallback when mbstring is unavailable.
         }
 
         if ( empty( $userId ) || empty( $websiteId ) ) {

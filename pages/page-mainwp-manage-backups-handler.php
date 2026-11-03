@@ -899,7 +899,6 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             'destination_ids' => array_key_exists( 'destinations', $input ) ? $input['destinations'] : array(),
             'archive_format'  => $input['archiveFormat'] ?? 'site',
             'exclude'         => $input['exclude'] ?? '',
-            'subfolder'       => $input['subfolder'] ?? '',
             'filename'        => $input['filename'] ?? '',
             'exclude_flags'   => array(
                 'backup_archives' => ! empty( $input['excludebackup'] ),

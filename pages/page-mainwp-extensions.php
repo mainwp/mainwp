@@ -509,6 +509,8 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
             }
         }
 
+        $is_pro = MainWP_Hooks::is_pro_member();
+
         foreach ( $all_available_extensions_compatible_api_response as $product_id => $ext ) {
 
             $item_html        = '';
@@ -615,12 +617,21 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 }
             } elseif ( isset( $not_purchased_exts[ $product_id ] ) ) {
                 if ( 'free' === $type || 'pro' === $type ) {
+                    // Pro covers every MainWP add-on, so for a Pro member a "not purchased" reply
+                    // means the license data is out of date, not that a purchase is needed (MWP-1584).
+                    if ( $is_pro ) {
+                        $info_link    = 'https://docs.mainwp.com/troubleshooting/troubleshoot-extension-licensing-issues';
+                        $info_tooltip = __( 'Included with MainWP Pro. Click for licensing help.', 'mainwp' );
+                    } else {
+                        $info_link    = $ext['link'];
+                        $info_tooltip = __( 'Add-on not purchased. Click to find out more.', 'mainwp' );
+                    }
                     $item_html = '
                         <div class="item extension ' . esc_attr( $add_on_model ) . '" product-id="' . esc_attr( $product_id ) . '" software-title="' . esc_attr( $software_title ) . '" slug="' . esc_attr( $ext['slug'] ) . '">
                             <div class="ui stackable grid">
                                 <div class="two column row">
                                     <div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext_source_label . ' <a href="' . esc_url( $ext['link'] ) . '" target="_blank">' . esc_html( $software_title ) . '</a>' . $privacy . ' ' . $notice . ' ' . $new . '</label></span></div>
-                                    <div class="right aligned column"><a href="' . $ext['link'] . '" target="_blank" data-tooltip="' . esc_html__( 'Add-on not purchased. Click to find out more.', 'mainwp' ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
+                                    <div class="right aligned column"><a href="' . esc_url( $info_link ) . '" target="_blank" rel="noopener noreferrer" data-tooltip="' . esc_attr( $info_tooltip ) . '" data-position="left center" data-inverted=""><i class="info blue icon"></i></a></div>
                                 </div>
                             </div>
                         </div>';

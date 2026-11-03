@@ -202,6 +202,9 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
             if ( in_array( $ability_name, array( 'mainwp/restore-site-snapshot-v1', 'mainwp/cancel-restore-v1', 'mainwp/rollback-restore-v1' ), true ) ) {
                 $required[] = 'restore_backups';
             }
+            if ( in_array( $ability_name, array( 'mainwp/delete-backup-snapshot-v1', 'mainwp/cleanup-site-backups-v1' ), true ) && MainWP_Backup_Operations::delete_right_applies() ) {
+                $required[] = 'delete_backups';
+            }
         } elseif ( 'mainwp/run-updates-v1' === $ability_name || 'mainwp/update-all-v1' === $ability_name ) {
             $types = ( is_array( $input ) && ! empty( $input['types'] ) && is_array( $input['types'] ) )
                 ? array_map( 'strval', $input['types'] )
@@ -787,7 +790,11 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $child_version = $site->version ?? '0.0.0';
+        if ( empty( $site->version ) ) {
+            return true;
+        }
+
+        $child_version = $site->version;
         if ( version_compare( $child_version, $min_version, '<' ) ) {
             return new \WP_Error(
                 'mainwp_child_outdated',
@@ -1088,11 +1095,24 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Map a cost tracker entry to the standard output format.
      *
-     * @param object $cost Cost tracker object from database.
+     * The next renewal and the share use the same Cost Tracker helpers as the
+     * Costs list and the site and client cost widgets.
+     *
+     * @param object $cost  Cost tracker object from the by-sites or by-clients producer.
+     * @param string $share 'site' adds site_share, 'client' adds client_share.
      * @return array Formatted cost data.
      */
-    public static function format_cost_for_output( $cost ): array {
-        return array(
+    public static function format_cost_for_output( $cost, string $share = '' ): array {
+        $purchase_date = isset( $cost->last_renewal ) && $cost->last_renewal > 0
+            ? gmdate( 'c', (int) $cost->last_renewal )
+            : null;
+
+        $next_renewal = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Admin::calc_next_renewal_today(
+            $cost,
+            \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Admin::get_next_renewal( (int) $cost->last_renewal, $cost->renewal_type )
+        );
+
+        $output = array(
             'id'             => (int) $cost->id,
             'name'           => (string) $cost->name,
             'type'           => isset( $cost->type ) ? (string) $cost->type : '',
@@ -1100,12 +1120,85 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
             'renewal_type'   => isset( $cost->renewal_type ) ? (string) $cost->renewal_type : '',
             'payment_method' => isset( $cost->payment_method ) ? (string) $cost->payment_method : '',
             'product_type'   => isset( $cost->product_type ) ? (string) $cost->product_type : '',
-            'last_renewal'   => isset( $cost->last_renewal ) && $cost->last_renewal > 0
-                ? gmdate( 'c', (int) $cost->last_renewal )
-                : null,
-            'next_renewal'   => isset( $cost->next_renewal ) && $cost->next_renewal > 0
-                ? gmdate( 'c', (int) $cost->next_renewal )
-                : null,
+            'last_renewal'   => $purchase_date,
+            'next_renewal'   => $next_renewal > 0 ? gmdate( 'c', (int) $next_renewal ) : null,
+            'purchase_date'  => $purchase_date,
+            'license_type'   => isset( $cost->license_type ) ? (string) $cost->license_type : '',
+            'sites_count'    => isset( $cost->count_sites ) ? (int) $cost->count_sites : 0,
+        );
+
+        $per_site = (float) \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Admin::get_cost_price_per_site( $cost );
+        if ( 'site' === $share ) {
+            $output['site_share'] = $per_site;
+        } elseif ( 'client' === $share ) {
+            $client_sites           = isset( $cost->number_client_costs_sites ) && is_array( $cost->number_client_costs_sites ) ? $cost->number_client_costs_sites : array();
+            $output['client_share'] = $per_site * count( $client_sites );
+        }
+
+        return $output;
+    }
+
+    /**
+     * JSON Schema for one item returned by format_cost_for_output().
+     *
+     * @param string $share 'site' or 'client', matching format_cost_for_output().
+     * @return array Item schema.
+     */
+    public static function get_cost_output_item_schema( string $share = '' ): array {
+        $properties = array(
+            'id'             => array( 'type' => 'integer' ),
+            'name'           => array( 'type' => 'string' ),
+            'type'           => array(
+                'type'        => 'string',
+                'description' => __( 'subscription (recurring) or lifetime (one-time).', 'mainwp' ),
+            ),
+            'price'          => array(
+                'type'        => 'number',
+                'description' => __( 'Full price of the cost for one renewal period, across all its sites.', 'mainwp' ),
+            ),
+            'renewal_type'   => array(
+                'type'        => 'string',
+                'description' => __( 'Renewal frequency: weekly, monthly, quarterly, yearly or disabled.', 'mainwp' ),
+            ),
+            'payment_method' => array( 'type' => 'string' ),
+            'product_type'   => array( 'type' => 'string' ),
+            'last_renewal'   => array(
+                'type'        => array( 'string', 'null' ),
+                'description' => __( 'The purchase date. Kept for existing callers; same value as purchase_date. It is not updated as renewals pass.', 'mainwp' ),
+            ),
+            'next_renewal'   => array(
+                'type'        => array( 'string', 'null' ),
+                'description' => __( 'Next renewal date as the Cost Tracker shows it, worked out from the purchase date and renewal frequency. Null for lifetime costs and costs that are not active.', 'mainwp' ),
+            ),
+            'purchase_date'  => array(
+                'type'        => array( 'string', 'null' ),
+                'description' => __( 'Date the cost was purchased (ISO 8601).', 'mainwp' ),
+            ),
+            'license_type'   => array(
+                'type'        => 'string',
+                'description' => __( 'single_site (full price per site) or multi_site (price split across the sites the cost is assigned to).', 'mainwp' ),
+            ),
+            'sites_count'    => array(
+                'type'        => 'integer',
+                'description' => __( 'Number of sites the cost is assigned to, directly or through groups and clients.', 'mainwp' ),
+            ),
+        );
+
+        if ( 'site' === $share ) {
+            $properties['site_share'] = array(
+                'type'        => 'number',
+                'description' => __( "This site's part of the price per renewal period: the full price for a single-site license, the price divided by sites_count for a multiple-site license, 0 when the cost is not active.", 'mainwp' ),
+            );
+        } elseif ( 'client' === $share ) {
+            $properties['client_share'] = array(
+                'type'        => 'number',
+                'description' => __( "This client's part of the price per renewal period: the per-site amount times the number of the client's sites the cost is assigned to, 0 when the cost is not active.", 'mainwp' ),
+            );
+        }
+
+        return array(
+            'type'       => 'object',
+            'properties' => $properties,
         );
     }
 
@@ -1465,6 +1558,19 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         return 'connected';
+    }
+
+    /**
+     * Build the authenticated GET URL for a batch job's status ability.
+     *
+     * @param string $job_id Queued job ID.
+     * @return string Status polling URL.
+     */
+    public static function get_batch_job_status_url( string $job_id ): string {
+        return add_query_arg(
+            array( 'input' => array( 'job_id' => $job_id ) ),
+            rest_url( 'wp-abilities/v1/abilities/mainwp/get-batch-job-status-v1/run' )
+        );
     }
 
     /**
@@ -1964,5 +2070,14 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         return false;
+    }
+
+    /**
+     * Whether WordPress can register abilities for connected tools.
+     *
+     * @return bool
+     */
+    public static function is_abilities_api_available(): bool {
+        return function_exists( 'wp_register_ability' );
     }
 }

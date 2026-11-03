@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.4'; // NOSONAR.
+    public static $version = '6.4.1'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -1048,7 +1048,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
         wp_enqueue_script( 'mainwp-cache-warm', MAINWP_PLUGIN_URL . 'assets/js/mainwp-cache-warm.js', array(), $this->current_version, true );
 
-        $disable_backup_checking = true; // removed option.
+        $disable_backup_checking = 1 !== (int) get_option( 'mainwp_backup_before_upgrade' );
         $mainwpParams            = array(
             'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',
             'backup_before_upgrade'            => 1 === (int) get_option( 'mainwp_backup_before_upgrade' ),
@@ -1392,16 +1392,23 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $palette_data = $this->get_command_palette_data();
 
-        if ( empty( $palette_data['commands'] ) && empty( $palette_data['unregister'] ) ) {
+        if ( empty( $palette_data['commands'] ) && empty( $palette_data['unregister'] ) && empty( $palette_data['siteSearch'] ) ) {
             return;
         }
 
         wp_enqueue_script(
             'mainwp-command-palette',
             MAINWP_PLUGIN_URL . 'assets/js/mainwp-command-palette.js',
-            array( 'wp-core-commands', 'wp-data' ),
+            array( 'wp-core-commands', 'wp-data', 'wp-element', 'wp-a11y', 'wp-i18n' ),
             $this->current_version,
             true
+        );
+
+        wp_enqueue_style(
+            'mainwp-command-palette',
+            MAINWP_PLUGIN_URL . 'assets/css/mainwp-command-palette.css',
+            array( 'wp-commands' ),
+            $this->current_version
         );
 
         wp_add_inline_script(
@@ -1414,7 +1421,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     /**
      * Build the MainWP command palette configuration.
      *
-     * @return array<string, array<int, mixed>> Command palette configuration.
+     * @return array<string, mixed> Command palette configuration.
      */
     private function get_command_palette_data() {
         $registered_pages     = $this->get_command_palette_registered_pages();
@@ -1430,6 +1437,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return array(
                 'commands'   => array(),
                 'unregister' => array(),
+                'siteSearch' => MainWP_Command_Palette::get_search_config(),
             );
         }
 
@@ -1445,6 +1453,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         return array(
             'commands'   => array_values( array_filter( $commands ) ),
             'unregister' => array_values( array_filter( $unregister ) ),
+            'siteSearch' => MainWP_Command_Palette::get_search_config(),
         );
     }
 

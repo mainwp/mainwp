@@ -100,6 +100,17 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 		$prop->setValue( null, $value );
 	}
 
+	/**
+	 * The category describes every supported knowledge level.
+	 *
+	 * @return void
+	 */
+	public function test_knowledge_category_describes_all_three_levels(): void {
+		$category = wp_get_ability_category( 'mainwp-knowledge' );
+		$this->assertNotNull( $category );
+		$this->assertSame( 'Abilities for managing knowledge records at the agency, client and site level.', $category->get_description() );
+	}
+
 	private function input( string $scope_type, int $scope_id, array $overrides = array() ): array {
 		$input = array_merge(
 			array( 'scope_type' => $scope_type, 'scope_id' => $scope_id, 'type' => 'context', 'title' => 'Knowledge title', 'body' => 'Knowledge body' ),

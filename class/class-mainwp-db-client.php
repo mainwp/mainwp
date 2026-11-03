@@ -696,7 +696,6 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         $table_wp               = esc_sql( $this->table_name( 'wp' ) );
         $table_wp_group         = esc_sql( $this->table_name( 'wp_group' ) );
-        $table_group            = esc_sql( $this->table_name( 'group' ) );
         $table_clients          = esc_sql( $this->table_name( 'wp_clients' ) );
         $table_clients_contacts = esc_sql( $this->table_name( 'wp_clients_contacts' ) );
 
@@ -747,15 +746,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( $with_tags ) {
-            $select_tags .= ", ( SELECT GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ',') FROM " . $table_wp . ' wp ';
-            $select_tags .= ' LEFT JOIN ' . $table_wp_group . ' wpgr ON wp.id = wpgr.wpid ';
-            $select_tags .= ' LEFT JOIN ' . $table_group . ' gr ON wpgr.groupid = gr.id ';
-            $select_tags .= ' WHERE wp.client_id = wc.client_id ) as wpgroups ';
-
-            $select_tags .= ", ( SELECT GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ',') FROM " . $table_wp . ' wp ';
-            $select_tags .= ' LEFT JOIN ' . $table_wp_group . ' wpgr ON wp.id = wpgr.wpid ';
-            $select_tags .= ' LEFT JOIN ' . $table_group . ' gr ON wpgr.groupid = gr.id ';
-            $select_tags .= ' WHERE wp.client_id = wc.client_id ) as wpgroupids ';
+            $select_tags .= $this->get_client_tag_columns_sql();
         }
 
         $join_contact = ' LEFT JOIN ' . $table_clients_contacts . ' cc ON wc.primary_contact_id = cc.contact_id ';
@@ -831,10 +822,8 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $where       = '';
         $select_tags = '';
 
-        $table_wp       = esc_sql( $this->table_name( 'wp' ) );
-        $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-        $table_group    = esc_sql( $this->table_name( 'group' ) );
-        $table_clients  = esc_sql( $this->table_name( 'wp_clients' ) );
+        $table_wp      = esc_sql( $this->table_name( 'wp' ) );
+        $table_clients = esc_sql( $this->table_name( 'wp_clients' ) );
 
         if ( $params && is_array( $params ) ) {
             $client = isset( $params['client'] ) ? sanitize_text_field( wp_unslash( $params['client'] ) ) : '';
@@ -915,15 +904,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( $with_tags ) {
-            $select_tags .= ", ( SELECT GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ',') FROM " . $table_wp . ' wp ';
-            $select_tags .= ' LEFT JOIN ' . $table_wp_group . ' wpgr ON wp.id = wpgr.wpid ';
-            $select_tags .= ' LEFT JOIN ' . $table_group . ' gr ON wpgr.groupid = gr.id ';
-            $select_tags .= ' WHERE wp.client_id = wc.client_id ) as wpgroups ';
-
-            $select_tags .= ", ( SELECT GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ',') FROM " . $table_wp . ' wp ';
-            $select_tags .= ' LEFT JOIN ' . $table_wp_group . ' wpgr ON wp.id = wpgr.wpid ';
-            $select_tags .= ' LEFT JOIN ' . $table_group . ' gr ON wpgr.groupid = gr.id ';
-            $select_tags .= ' WHERE wp.client_id = wc.client_id ) as wpgroupids ';
+            $select_tags .= $this->get_client_tag_columns_sql();
         }
 
         if ( $count_only ) {
@@ -956,6 +937,17 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         $output = array();
 
+        $client_tags = array();
+        if ( $with_tags && is_array( $result ) ) {
+            $tagged_client_ids = array();
+            foreach ( $result as $rst ) {
+                if ( ! empty( $rst['wpgroupids'] ) ) {
+                    $tagged_client_ids[] = (int) $rst['client_id'];
+                }
+            }
+            $client_tags = $this->get_client_tags_by_client_ids( $tagged_client_ids );
+        }
+
         foreach ( $result as $rst ) {
 
             if ( $custom_field ) {
@@ -966,20 +958,8 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                     }
                 }
             }
-            if ( $with_tags && ! empty( $rst['wpgroupids'] ) && ! empty( $rst['wpgroups'] ) ) {
-                $wpgroupids = explode( ',', $rst['wpgroupids'] );
-                $wpgroups   = explode( ',', $rst['wpgroups'] );
-
-                $tags = array();
-                if ( is_array( $wpgroupids ) ) {
-                    foreach ( $wpgroupids as $gidx => $groupid ) {
-                        if ( $groupid && ! isset( $tags[ $groupid ] ) ) {
-                            $tags[ $groupid ] = isset( $wpgroups[ $gidx ] ) ? $wpgroups[ $gidx ] : '';
-                        }
-                    }
-                }
-
-                $rst['tags'] = $tags;
+            if ( ! empty( $client_tags[ (int) $rst['client_id'] ] ) ) {
+                $rst['tags'] = $client_tags[ (int) $rst['client_id'] ];
             }
 
             if ( $with_contacts ) {
@@ -998,6 +978,71 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $output[] = $rst;
         }
         return $output;
+    }
+
+    /**
+     * Build the wpgroups and wpgroupids subquery columns for a client row.
+     *
+     * The Manage Clients Tags column (MainWP_System_Utility::get_site_tags()) and the logs Tag Allocation
+     * widget pair these two lists by position, so both must walk the same rows in the same order. The gr.id
+     * tiebreak keeps that order fixed when two tags share a name. A comma inside a tag name still splits
+     * the list for those readers; the `tags` map in get_wp_clients() does not depend on this.
+     *
+     * @return string SQL select fragment, starting with a comma.
+     */
+    private function get_client_tag_columns_sql() {
+        $table_wp       = $this->table_name( 'wp' );
+        $table_wp_group = $this->table_name( 'wp_group' );
+        $table_group    = $this->table_name( 'group' );
+
+        return $this->wpdb->prepare(
+            ", ( SELECT GROUP_CONCAT(gr.name ORDER BY gr.name, gr.id SEPARATOR ',') FROM %i wp LEFT JOIN %i wpgr ON wp.id = wpgr.wpid LEFT JOIN %i gr ON wpgr.groupid = gr.id WHERE wp.client_id = wc.client_id ) as wpgroups" .
+            ", ( SELECT GROUP_CONCAT(gr.id ORDER BY gr.name, gr.id SEPARATOR ',') FROM %i wp LEFT JOIN %i wpgr ON wp.id = wpgr.wpid LEFT JOIN %i gr ON wpgr.groupid = gr.id WHERE wp.client_id = wc.client_id ) as wpgroupids ",
+            $table_wp,
+            $table_wp_group,
+            $table_group,
+            $table_wp,
+            $table_wp_group,
+            $table_group
+        );
+    }
+
+    /**
+     * Get the tags carried by each client's sites, read as (id, name) rows.
+     *
+     * The comma-joined columns cannot be split safely, since a tag name may contain a comma.
+     *
+     * @param int[] $client_ids Client IDs.
+     *
+     * @return array client_id => array( tag_id => tag_name ), tags in ID order.
+     */
+    private function get_client_tags_by_client_ids( $client_ids ) {
+        $client_ids = array_values( array_unique( array_filter( array_map( 'intval', (array) $client_ids ) ) ) );
+        if ( empty( $client_ids ) ) {
+            return array();
+        }
+
+        $sql = 'SELECT DISTINCT wp.client_id, gr.id, gr.name FROM %i wp'
+            . ' JOIN %i wpgr ON wp.id = wpgr.wpid'
+            . ' JOIN %i gr ON wpgr.groupid = gr.id'
+            . ' WHERE wp.client_id IN (' . implode( ',', array_fill( 0, count( $client_ids ), '%d' ) ) . ')'
+            . ' ORDER BY wp.client_id, gr.id';
+
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                $sql,
+                array_merge( array( $this->table_name( 'wp' ), $this->table_name( 'wp_group' ), $this->table_name( 'group' ) ), $client_ids )
+            ),
+            ARRAY_A
+        );
+
+        $tags = array();
+        if ( is_array( $rows ) ) {
+            foreach ( $rows as $row ) {
+                $tags[ (int) $row['client_id'] ][ (int) $row['id'] ] = $row['name'];
+            }
+        }
+        return $tags;
     }
 
     /**
@@ -1261,6 +1306,8 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                     $this->wpdb->update( $table_field_values, array( 'field_value' => $value ), array( 'value_id' => $row->value_id ) );
                 }
                 return true;
+            } elseif ( '' === $value ) {
+                return true; // Nothing to store for a field left blank.
             } else {
                 return $this->wpdb->insert(
                     $table_field_values,

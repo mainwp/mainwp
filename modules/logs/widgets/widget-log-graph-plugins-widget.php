@@ -153,11 +153,22 @@ class Log_Graph_Plugins_Widget {
 
         <script type="text/javascript">
             jQuery( document ).ready( function() {
+                // ApexCharts drops commas from names and writes CSV fields unquoted.
+                let csvCategories = new Map( <?php echo wp_json_encode( Log_Graph_Csv_Labels::get_csv_categories( array_map( 'strval', array_column( $wp_plugins, 'name' ) ) ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?> );
                 let options = {
                     chart: {
                         type: 'bar',
                         stacked: true,
                         height: '100%',
+                        toolbar: {
+                            export: {
+                                csv: {
+                                    categoryFormatter: function( name ) {
+                                        return csvCategories.has( String( name ) ) ? csvCategories.get( String( name ) ) : '"\'' + String( name ).replace( /"/g, '""' ) + '"';
+                                    },
+                                },
+                            },
+                        },
                     },
                     plotOptions: {
                         bar: {
@@ -169,9 +180,8 @@ class Log_Graph_Plugins_Widget {
                         data: [
                             <?php foreach ( $wp_plugins as $value ) : ?>
                             {
-                            x: '<?php echo esc_js( $value['name'] ) . '"'; ?>',
+                            x: <?php echo wp_json_encode( (string) $value['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                             y: <?php echo intval( $value['active'] ); ?>,
-                            fillColor: "#18a4e0",
                             },
                             <?php endforeach; ?>
                         ]
@@ -180,13 +190,22 @@ class Log_Graph_Plugins_Widget {
                         data: [
                             <?php foreach ( $wp_plugins as $value ) : ?>
                             {
-                            x: '<?php echo esc_js( $value['name'] ) . '"'; ?>',
+                            x: <?php echo wp_json_encode( (string) $value['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                             y: <?php echo intval( $value['inactive'] ); ?>,
                             },
                             <?php endforeach; ?>
                         ]
                     }
                     ],
+                    // Legend swatches only read the series colors, so the bars take theirs from here too.
+                    // #00e396 is the color the Inactive bars already had (ApexCharts' default second color).
+                    colors: [ '#18a4e0', '#00e396' ],
+                    // ApexCharts writes legend text as HTML in a fixed dark grey; inherit picks up the theme's text color.
+                    legend: {
+                        labels: {
+                            colors: 'inherit',
+                        }
+                    },
                     xaxis: {
                         labels: {
                             style: {
@@ -201,8 +220,10 @@ class Log_Graph_Plugins_Widget {
                             }
                         }
                     },
+                    // ApexCharts inserts these labels as HTML.
                     tooltip: {
-                        theme: 'dark'
+                        theme: 'dark',
+                        x: { formatter: function( value ) { return mainwp_escape_html( value ); } },
                     },
                 }
                 let plugin = new ApexCharts(document.querySelector("#mainwp-module-log-chart-plugins-wrapper"), options);

@@ -1142,8 +1142,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             $result['errors'][] = sprintf( 'Snapshots %s: a restore in progress uses this backup, so it was kept. Try again once the restore finishes.', implode( ',', $ids ) );
             return $result;
         }
-        if ( MainWP_DB_Backup::instance()->has_inflight_incremental_for_site( $site_id ) ) {
-            $result['errors'][] = $this->incremental_hold_message( $ids );
+        $inflight = MainWP_DB_Backup::instance()->get_inflight_incremental_state( $site_id );
+        if ( false !== $inflight ) {
+            $result['errors'][] = $this->incremental_hold_message( $ids, null === $inflight );
             return $result;
         }
 
@@ -1187,8 +1188,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     $result['errors'][] = MainWP_Backup_Operations::snapshot_delete_hold_message( false );
                     break;
                 }
-                if ( MainWP_DB_Backup::instance()->has_inflight_incremental_for_site( $site_id ) ) {
-                    $result['errors'][] = $this->incremental_hold_message( array_values( array_diff( $ids, $result['deleted_ids'] ) ) );
+                $inflight = MainWP_DB_Backup::instance()->get_inflight_incremental_state( $site_id );
+                if ( false !== $inflight ) {
+                    $result['errors'][] = $this->incremental_hold_message( array_values( array_diff( $ids, $result['deleted_ids'] ) ), null === $inflight );
                     break;
                 }
                 $inserted_deletes = array();
@@ -1308,9 +1310,14 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * Hold message for snapshots kept while an incremental backup runs.
      *
      * @param int[] $ids Snapshot ids kept.
+     * @param bool  $read_failed Whether the running-backup check itself failed.
      * @return string Translated message.
      */
-    private function incremental_hold_message( array $ids ): string {
+    private function incremental_hold_message( array $ids, bool $read_failed = false ): string {
+        if ( $read_failed ) {
+            /* translators: %s: Snapshot IDs. */
+            return sprintf( __( "Snapshots %s: couldn't check whether a backup is running on this site, so they were kept. Check the server error log for the database error.", 'mainwp' ), implode( ',', $ids ) );
+        }
         /* translators: %s: Snapshot IDs. */
         return sprintf( __( 'Snapshots %s: an incremental backup is running on this site, so they were kept. Try the cleanup again once that backup finishes.', 'mainwp' ), implode( ',', $ids ) );
     }

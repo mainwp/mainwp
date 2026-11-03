@@ -500,7 +500,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         }
                         $encoded = wp_json_encode( $import_data );
                         ?>
-                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( sanitize_text_field( $originalLine ) ); ?>" />
+                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( str_replace( '&', '&amp;', self::import_display_line( array_slice( $items, 0, 10 ) ) ) ); ?>" />
                         <?php
                         ++$row;
                     }
@@ -552,12 +552,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
                 // Import website if import data is not empty.
                 if ( ! empty( $import_data ) ) {
-                    $header_line = trim( 'Site Name, Url, Admin Name, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
+                    $header_line = trim( 'Site Name, Url, Admin Name,Admin Password, Tag,Security ID,HTTP Username,HTTP Password,Verify Certificate,SSL Version' ); // Set Header Line.
                     // Map import data to input html.
                     foreach ( $import_data as $key_import => $val_import ) {
-                        $line = trim( implode( ',', $val_import ) )
+                        $line = self::import_display_line( array_values( $val_import ) );
                         ?>
-                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $key_import + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_import ) ); ?>" original="<?php echo esc_attr( $line ); ?>" />
+                        <input type="hidden" id="mainwp_managesites_import_csv_line_<?php echo esc_attr( $key_import + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( wp_json_encode( $val_import ) ); ?>" original="<?php echo esc_attr( str_replace( '&', '&amp;', $line ) ); ?>" />
                         <?php
                     }
                     $hd_id1       = 'mainwp_managesites_do_import';
@@ -599,6 +599,31 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             </div>
             <?php
         }
+    }
+
+    /**
+     * Format an import row for logs and failed-row downloads.
+     *
+     * @param array $fields Parsed CSV fields in import order.
+     * @return string
+     */
+    private static function import_display_line( $fields ) {
+        foreach ( array( 3, 5, 7 ) as $index ) {
+            if ( '' !== (string) $fields[ $index ] ) {
+                $fields[ $index ] = '********';
+            }
+        }
+
+        return implode(
+            ',',
+            array_map(
+                static function ( $field ) {
+                    $field = sanitize_text_field( $field );
+                    return strpbrk( $field, ",\"\r\n" ) !== false ? '"' . str_replace( '"', '""', $field ) . '"' : $field;
+                },
+                $fields
+            )
+        );
     }
 
     /**
@@ -944,6 +969,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <?php if ( $updated && ( ! class_exists( Api_Backups_Settings::class ) || ! Api_Backups_Settings::get_instance()->has_credential_save_failed() ) ) { ?>
             <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
+            <?php } elseif ( false === $updated && isset( $_POST['submit'], $_POST['mainwp_managesites_edit_siteadmin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- The save handler verifies the nonce; this condition only displays its outcome. ?>
+            <div class="ui red message"><?php esc_html_e( 'Some child site settings could not be saved. Review the settings and try again.', 'mainwp' ); ?></div>
             <?php } ?>
             <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data" class="ui form">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
@@ -2133,7 +2160,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {
-                    $_error = 'HTTP error' . ( null !== $e->get_message_extra( false ) ? ' - ' . esc_html( $e->get_message_extra( false ) ) : '' );
+                    $_error = MainWP_Error_Helper::get_error_message( $e );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $_error = MainWP_Error_Helper::get_error_not_detected_connect(); // phpcs:ignore WordPress.Security.EscapeOutput
                 } elseif ( 'TIMEOUT' === $e->getMessage() ) {
@@ -2613,7 +2640,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {
-                    $error = 'HTTP error' . ( null !== $e->get_message_extra( false ) ? ' - ' . esc_html( $e->get_message_extra( false ) ) : '' );
+                    $error = MainWP_Error_Helper::get_error_message( $e );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $error = MainWP_Error_Helper::get_error_not_detected_connect();
                 } elseif ( 'TIMEOUT' === $e->getMessage() ) {

@@ -594,7 +594,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $renderItems[] = array(
                 'title'  => esc_html__( 'Import Clients', 'mainwp' ),
                 'href'   => 'admin.php?page=ClientImport',
-                'active' => ( 'Add' === $shownPage ) ? true : false,
+                'active' => ( 'ImportClients' === $shownPage ) ? true : false,
             );
         }
 
@@ -1456,31 +1456,34 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </table>
 
                 <script type="text/javascript">
-                // Init datatables
-                jQuery( '#mainwp-clients-custom-fields-table' ).DataTable( {
-                    "stateSave": true,
-                    "stateDuration": 0,
-                    "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-                    "columnDefs": [ { "orderable": false, "targets": "no-sort" } ],
-                    "order": [ [ 0, "asc" ] ],
-                    "language": { "emptyTable": "No fields found." },
-                    "drawCallback" : function( settings ) {
-                        jQuery( '#mainwp-clients-custom-fields-table .ui.dropdown').dropdown();
-                        jQuery( '#mainwp-clients-custom-fields-table .ui.checkbox').checkbox();
-                    },
-                    stateSaveParams: function (settings, data) {
-                        data._mwpv = mainwpParams.mainwpVersion || 'dev';
-                    },
-                    stateLoadParams: function (settings, data) {
-                        if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
-                    },
-                    search: { regex: false, smart: false },
-                    orderMulti: false,
-                    searchDelay: 350
-                } );
+                // Init after the deferred DataTables Fomantic UI integration loads, as the Clients list does.
+                jQuery( document ).ready( function() {
+                    // Init datatables
+                    jQuery( '#mainwp-clients-custom-fields-table' ).DataTable( {
+                        "stateSave": true,
+                        "stateDuration": 0,
+                        "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+                        "columnDefs": [ { "orderable": false, "targets": "no-sort" } ],
+                        "order": [ [ 0, "asc" ] ],
+                        "language": { "emptyTable": "No fields found." },
+                        "drawCallback" : function( settings ) {
+                            jQuery( '#mainwp-clients-custom-fields-table .ui.dropdown').dropdown();
+                            jQuery( '#mainwp-clients-custom-fields-table .ui.checkbox').checkbox();
+                        },
+                        stateSaveParams: function (settings, data) {
+                            data._mwpv = mainwpParams.mainwpVersion || 'dev';
+                        },
+                        stateLoadParams: function (settings, data) {
+                            if ((mainwpParams.mainwpVersion || 'dev') !== data._mwpv) return false;
+                        },
+                        search: { regex: false, smart: false },
+                        orderMulti: false,
+                        searchDelay: 350
+                    } );
 
-                // Initialize header checkbox
-                jQuery( '#mainwp-clients-custom-fields-table thead .ui.checkbox' ).checkbox();
+                    // Initialize header checkbox
+                    jQuery( '#mainwp-clients-custom-fields-table thead .ui.checkbox' ).checkbox();
+                } );
                 </script>
             <?php endif; ?>
         </div>
@@ -1624,14 +1627,19 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $client_id = isset( $client_fields['client_id'] ) ? intval( $client_fields['client_id'] ) : 0;
 
         $new_suspended = isset( $client_to_add['suspended'] ) ? (int) $client_to_add['suspended'] : 0;
-        $old_suspended = $new_suspended;
+        $old_suspended = 0;
 
         if ( $client_id ) {
             $old_suspended = $current_client->suspended;
 
             $client_to_add['client_id'] = $client_id; // update client.
             if ( isset( $client_to_add['created'] ) && ! empty( $client_to_add['created'] ) ) {
-                $client_to_add['created'] = strtotime( $client_to_add['created'] );
+                // The form shows only the day, so keep the stored time unless the day was changed.
+                if ( ! empty( $current_client->created ) && date( 'Y-m-d', (int) $current_client->created ) === $client_to_add['created'] ) { // phpcs:ignore -- local time, matches the form.
+                    unset( $client_to_add['created'] );
+                } else {
+                    $client_to_add['created'] = strtotime( $client_to_add['created'] );
+                }
             }
             $add_new = false;
 
@@ -1694,6 +1702,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                  * @param bool $new_suspended true|false.
                  */
                 do_action( 'mainwp_client_suspend', $inserted, $new_suspended );
+            }
+
+            // Sites follow the client only into or out of Suspended; Lead and Lost leave them alone.
+            $was_suspended = 1 === (int) $old_suspended;
+            $is_suspended  = 1 === (int) $new_suspended;
+            if ( isset( $client_to_add['suspended'] ) && $was_suspended !== $is_suspended ) {
+                MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $inserted->client_id, $is_suspended ? 1 : 0 );
             }
         }
 

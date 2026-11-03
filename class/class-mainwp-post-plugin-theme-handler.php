@@ -514,6 +514,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      *
      * Update a specific WP core.
      *
+     * @throws MainWP_Exception When the backup gate refuses the update.
+     *
      * @uses \MainWP\Dashboard\MainWP_Exception
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::upgrade_site()
      */
@@ -524,8 +526,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         $this->secure_request( 'mainwp_upgradewp' );
 
+        $ignore_backup_gate = isset( $_POST['ignore_backup_gate'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['ignore_backup_gate'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- secure_request() verifies the update nonce above.
+
         try {
             $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if ( $this->update_backup_gate_blocked( MainWP_DB::instance()->get_website_by_id( $id ), $ignore_backup_gate ) ) {
+                $message = MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'];
+                throw new MainWP_Exception( $message, $message, MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The existing error path JSON-encodes this fixed safe error.
+            }
             die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::upgrade_site( $id ) ) ) ); // ok.
         } catch ( MainWP_Exception $e ) {
             die(
@@ -542,6 +550,46 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         }
     }
 
+
+    /**
+     * Mirrors MainWP_Updates_Overview::check_backups(), so the server never refuses an update the prompt let through.
+     *
+     * @param object|null $website Stored site, if found.
+     * @param bool        $ignore_backup_gate Explicit override for this update run.
+     * @return bool
+     */
+    private function update_backup_gate_blocked( $website, bool $ignore_backup_gate ): bool {
+        if ( empty( $website ) ) {
+            return false;
+        }
+
+        $backup_method = '';
+        if ( property_exists( $website, 'primary_backup_method' ) ) {
+            $backup_method = $website->primary_backup_method;
+            if ( '' === $backup_method || 'global' === $backup_method ) {
+                $backup_method = MainWP_System_Utility::get_primary_backup();
+            }
+        }
+        if ( ! empty( $backup_method ) ) {
+            // The browser only runs the preflight when the global setting is on, so the third-party rule follows that too.
+            if ( $ignore_backup_gate || 1 !== (int) get_option( 'mainwp_backup_before_upgrade', 0 ) || 0 === (int) $website->backup_before_upgrade ) {
+                return false;
+            }
+            $last_backup = MainWP_DB::instance()->get_website_option( $website, 'primary_lasttime_backup' );
+            // -1 means the provider's plugin is not installed on the Child; the preflight does not hold those sites.
+            return -1 !== $last_backup && $last_backup < ( time() - MainWP_Updates_Overview::get_backup_before_upgrade_days() * DAY_IN_SECONDS );
+        }
+
+        $gate = MainWP_Backup_Operations::update_gate_for_site( $website );
+        if ( ! $gate['applies'] || 'pass' === $gate['verdict'] ) {
+            return false;
+        }
+        if ( $ignore_backup_gate ) {
+            MainWP_Backup_Run_History::record_gate_override( (int) $website->id, $gate['verdict'] );
+            return false;
+        }
+        return true;
+    }
 
     /**
      * Method ajax_prepare_upgradeall()
@@ -643,6 +691,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         $this->secure_request( 'mainwp_upgradeplugintheme' );
 
+        $ignore_backup_gate = isset( $_POST['ignore_backup_gate'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['ignore_backup_gate'] ) );
+
         // support chunk update for manage sites page only.
         $chunk_support = ! empty( $_POST['chunk_support'] ) ? true : false;
         $max_update    = 0;
@@ -685,6 +735,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             die( wp_json_encode( array( 'error' => esc_html__( 'Backup process in progress on the child site. Please, try again later.', 'mainwp' ) ) ) );
         }
 
+        $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+        if ( $this->update_backup_gate_blocked( $website, $ignore_backup_gate ) ) {
+            die( wp_json_encode( array( 'error' => MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'] ) ) );
+        }
+
         $chunk_slugs = array();
 
         if ( $chunk_support && $max_update ) {
@@ -697,7 +752,6 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         if ( empty( $slugs ) && ! $chunk_support ) {
             die( wp_json_encode( array( 'message' => esc_html__( 'Item slug could not be found. Update process could not be executed.', 'mainwp' ) ) ) );
         }
-        $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
         try {
             $info = array(
                 'result'         => array(),

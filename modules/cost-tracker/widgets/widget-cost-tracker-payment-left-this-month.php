@@ -58,7 +58,7 @@ class Cost_Tracker_Payment_Left_This_Month {
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
-                <?php esc_html_e( 'Payments Left For the Month', 'mainwp' ); ?>
+                <?php esc_html_e( 'Payment Left For This Month', 'mainwp' ); ?>
                 <div class="sub header">
                 <?php esc_html_e( 'See upcoming costs left for this month.', 'mainwp' ); ?>
                 </div>
@@ -169,7 +169,7 @@ class Cost_Tracker_Payment_Left_This_Month {
         $chart_data = static::get_costs_widgets_data( $costs_data );
         ?>
         <?php if ( empty( $costs_data ) ) : ?>
-            <?php MainWP_UI::render_empty_element_placeholder( __( 'No Upcoming Payment', 'mainwp' ), '<a href="admin.php?page=CostTrackerAdd">' .  __( 'Add your costs to see remaining payments for this month.', 'mainwp' ) . '</a>', '<em data-emoji=":bar_chart:" class="medium"></em>' ); ?>
+            <?php MainWP_UI::render_empty_element_placeholder( __( 'No Upcoming Payment', 'mainwp' ), '<a href="admin.php?page=CostTrackerAdd">' . __( 'Add your costs to see remaining payments for this month.', 'mainwp' ) . '</a>', '<em data-emoji=":bar_chart:" class="medium"></em>' ); ?>
         <?php else : ?>
         <div id="mainwp-module-cost-tracker-payment-left-for-this-month-wrapper"></div>
         <script type="text/javascript">

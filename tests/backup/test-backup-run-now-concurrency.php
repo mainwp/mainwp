@@ -45,6 +45,7 @@ class MainWP_Backup_Run_Now_Concurrency_Test extends MainWP_Abilities_Test_Case 
 		$this->purge_slot_rows();
 		delete_option( 'mainwp_backup_max_concurrent' );
 		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
 	}
 
 	/**

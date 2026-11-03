@@ -24,6 +24,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const WARNING = 1;
     const ERROR   = 2;
 
+    const CRON_KEY_GRACE_DAYS = 60;
+
     /**
      * The Info page sub-pages.
      *
@@ -1214,7 +1216,14 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     <?php
                 }
                 static::render_row_with_description( esc_html__( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
+                $outbound = MainWP_Server_Information_Handler::get_outbound_connections_data();
                 ?>
+                <tr>
+                    <td><?php esc_html_e( 'Outbound connections', 'mainwp' ); ?></td>
+                    <td><?php esc_html_e( 'HTTPS', 'mainwp' ); ?></td>
+                    <td style="white-space: normal;"><?php echo esc_html( $outbound['value'] ); ?></td>
+                    <td><?php echo 'pass' === $outbound['status'] ? static::get_pass_html() : static::get_warning_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed status markup. ?></td>
+                </tr>
             </tbody>
         </table>
         <?php
@@ -1280,6 +1289,152 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Whether wp-config.php supplies a usable MAINWP_CRON_SECRET.
+     *
+     * @return bool True when the constant overrides the stored key.
+     */
+    public static function is_cron_secret_configured(): bool {
+        return defined( 'MAINWP_CRON_SECRET' ) && is_string( MAINWP_CRON_SECRET ) && '' !== MAINWP_CRON_SECRET;
+    }
+
+    /**
+     * Returns the configured key or persists a generated key for HTTP cron callers.
+     *
+     * @return string Cron key.
+     */
+    public static function get_cron_secret(): string {
+        if ( static::is_cron_secret_configured() ) {
+            return MAINWP_CRON_SECRET;
+        }
+
+        $secret = get_option( 'mainwp_cron_secret' );
+        if ( ! is_string( $secret ) || '' === $secret ) {
+            $secret = static::generate_cron_secret();
+            // update_option() also replaces a corrupted stored value, which add_option() would keep.
+            update_option( 'mainwp_cron_secret', $secret, false );
+        }
+
+        return $secret;
+    }
+
+    /**
+     * Creates a 32-character alphanumeric key.
+     *
+     * The installer runs before pluggable.php loads, so wp_generate_password() is not available there.
+     *
+     * @return string New cron key.
+     */
+    public static function generate_cron_secret(): string {
+        $chars  = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $secret = '';
+        for ( $i = 0; $i < 32; $i++ ) {
+            $secret .= $chars[ random_int( 0, 61 ) ];
+        }
+        return $secret;
+    }
+
+    /**
+     * Shell jobs remain keyless, including CGI binaries invoked without an HTTP request.
+     *
+     * @param string   $sapi   PHP interface.
+     * @param array    $server Request metadata.
+     * @param mixed    $key    Caller-supplied key.
+     * @param string   $script Cron script basename.
+     * @param int|null $now    Request timestamp, defaults to the current time.
+     * @return bool Whether the cron job may run.
+     */
+    public static function is_cron_request_allowed( string $sapi, array $server, $key, string $script = '', ?int $now = null ): bool {
+        if ( 'cli' === $sapi || ! isset( $server['REQUEST_METHOD'] ) ) {
+            return true;
+        }
+
+        $state = get_option( 'mainwp_cron_key_state', array() );
+        $state = is_array( $state ) ? $state : array();
+        if ( null !== $key && '' !== $key ) {
+            if ( ! is_string( $key ) || ! hash_equals( static::get_cron_secret(), $key ) ) {
+                return false;
+            }
+            if ( array_intersect_key( $state, array_flip( array( 'keyless_seen', 'keyless_script', 'keyless_blocked' ) ) ) ) {
+                unset( $state['keyless_seen'], $state['keyless_script'], $state['keyless_blocked'] );
+                update_option( 'mainwp_cron_key_state', $state, true );
+            }
+            return true;
+        }
+
+        $now       = $now ?? time();
+        $script    = static::sanitize_cron_script( $script );
+        $grace_end = static::get_cron_key_grace_end( $state );
+        $allowed   = $now < $grace_end;
+        $blocked   = ! $allowed;
+
+        // Without a mode, install() has not run for this request; leave the option for it to seed.
+        if ( ! empty( $state['mode'] ) && ( empty( $state['keyless_seen'] ) || $now - (int) $state['keyless_seen'] >= HOUR_IN_SECONDS
+            || ( $state['keyless_script'] ?? '' ) !== $script || ! empty( $state['keyless_blocked'] ) !== $blocked ) ) {
+            $state['keyless_seen']   = $now;
+            $state['keyless_script'] = $script;
+            if ( $allowed ) {
+                unset( $state['keyless_blocked'] );
+            } else {
+                $state['keyless_blocked'] = true;
+            }
+            update_option( 'mainwp_cron_key_state', $state, true );
+        }
+
+        $transient = 'mainwp_cron_keyless_' . $script;
+        $last_log  = $allowed ? get_transient( $transient ) : false;
+        if ( $allowed && ( false === $last_log || $now - (int) $last_log >= HOUR_IN_SECONDS ) ) {
+            set_transient( $transient, $now, HOUR_IN_SECONDS );
+            $logger   = MainWP_Logger::instance();
+            $priority = apply_filters( 'mainwp_log_status', $logger->get_log_status() );
+            $specific = apply_filters( 'mainwp_log_specific', $logger->get_log_specific() );
+            // Record this migration warning even when optional action logging is disabled.
+            $logger->set_log_priority( MainWP_Logger::WARNING );
+            try {
+                $logger->warning(
+                    sprintf( 'Cron script %s was called by web address without a key. It still runs until %s; after that it will be blocked.', $script, date_i18n( get_option( 'date_format' ), $grace_end ) )
+                );
+            } finally {
+                $logger->set_log_priority( $priority, $specific );
+            }
+        }
+        return $allowed;
+    }
+
+    /**
+     * Returns zero for installations that require a key immediately.
+     *
+     * @param array $state Installation cron key state.
+     * @return int Grace deadline.
+     */
+    public static function get_cron_key_grace_end( array $state ): int {
+        if ( 'grace' !== ( $state['mode'] ?? '' ) || empty( $state['grace_start'] ) ) {
+            return 0;
+        }
+        $days = max( 0, (int) apply_filters( 'mainwp_cron_key_grace_days', static::CRON_KEY_GRACE_DAYS ) );
+        return (int) $state['grace_start'] + $days * DAY_IN_SECONDS;
+    }
+
+    /**
+     * Restricts stored and request-supplied script names to cron basenames.
+     *
+     * @param string $script Cron script basename.
+     * @return string Safe basename.
+     */
+    public static function sanitize_cron_script( string $script ): string {
+        return preg_match( '/^[a-z_]+\.php$/D', $script ) ? $script : 'updatescheck.php';
+    }
+
+    /**
+     * Builds a keyed HTTP cron address.
+     *
+     * @param string $script Cron script basename.
+     * @return string Cron URL.
+     */
+    public static function get_cron_url( string $script = 'updatescheck.php' ): string {
+        return MAINWP_PLUGIN_URL . 'cron/' . static::sanitize_cron_script( $script ) . '?key=' . rawurlencode( static::get_cron_secret() );
+    }
+
+    /**
      * Renders the Cron Schedule page.
      *
      * @return void
@@ -1296,6 +1451,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         static::render_header( 'ServerInformationCron' );
 
         $local_timestamp = MainWP_Utility::get_timestamp();
+        $useWPCron       = ( false === get_option( 'mainwp_wp_cron' ) ) || ( 1 === (int) get_option( 'mainwp_wp_cron' ) );
 
         $freq = (int) get_option( 'mainwp_frequencyDailyUpdate', 2 );
         if ( $freq <= 0 ) {
@@ -1341,6 +1497,54 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Make sure scheduled actions are working correctly. If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/customization/disable-wp-cron" target="_blank">', '</a> <i class="external alternate icon"></i>' ); ?>
             </div>
         <?php endif; ?>
+        <?php if ( ! $useWPCron ) : ?>
+            <div class="ui blue message">
+                <div class="header"><?php echo esc_html__( 'System cron', 'mainwp' ); ?></div>
+                <p><?php echo esc_html__( 'Command line (no key needed):', 'mainwp' ); ?></p>
+                <div class="ui fluid input">
+                    <input type="text" readonly aria-label="<?php echo esc_attr( __( 'Cron command', 'mainwp' ) ); ?>" value="<?php echo esc_attr( 'php ' . MAINWP_PLUGIN_DIR . 'cron/updatescheck.php' ); ?>">
+                </div>
+                <?php if ( MainWP_System_Utility::is_admin() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && ! MainWP_System_Utility::is_team_control_staff() ) : ?>
+                    <p><?php echo esc_html__( 'URL for wget or curl (key included):', 'mainwp' ); ?></p>
+                    <div class="ui fluid input">
+                        <input type="text" readonly aria-label="<?php echo esc_attr( __( 'Cron URL', 'mainwp' ) ); ?>" value="<?php echo esc_attr( static::get_cron_url() ); ?>" id="mainwp-cron-url" class="mainwp-cron-key-url">
+                    </div>
+                    <p><?php echo esc_html__( 'Use the same pattern for the other scripts in the cron folder. To set your own key, define MAINWP_CRON_SECRET in wp-config.php.', 'mainwp' ); ?></p>
+                    <?php if ( static::is_cron_secret_configured() ) : ?>
+                        <p><?php esc_html_e( 'The key is set by MAINWP_CRON_SECRET in wp-config.php. Change it there.', 'mainwp' ); ?></p>
+                    <?php else : ?>
+                        <button type="button" class="ui small button" id="mainwp-cron-secret-rotate"><?php esc_html_e( 'Rotate key', 'mainwp' ); ?></button>
+                        <p id="mainwp-cron-secret-rotate-status" role="status"></p>
+                        <script>
+                        jQuery(function ($) {
+                            $('#mainwp-cron-secret-rotate').on('click', function () {
+                                if (!confirm(<?php echo wp_json_encode( __( 'Rotate the cron key? Cron jobs that use the current URLs stop working right away, so update them afterwards.', 'mainwp' ) ); ?>)) {
+                                    return;
+                                }
+                                const button = $(this).prop('disabled', true);
+                                const status = $('#mainwp-cron-secret-rotate-status').text('');
+                                const error = <?php echo wp_json_encode( __( 'Could not rotate the cron key. Please try again.', 'mainwp' ) ); ?>;
+                                $.post(ajaxurl, mainwp_secure_data({action: 'mainwp_cron_secret_rotate'}), null, 'json')
+                                    .done(function (response) {
+                                        if (!response.success) {
+                                            status.text(typeof response.data === 'string' ? response.data : error);
+                                            return;
+                                        }
+                                        const key = response.data.url.split('?key=')[1];
+                                        $('.mainwp-cron-key-url').each(function () {
+                                            $(this).val($(this).val().split('?key=')[0] + '?key=' + key);
+                                        });
+                                        status.text(<?php echo wp_json_encode( __( 'New key created. The old URLs no longer work.', 'mainwp' ) ); ?>);
+                                    })
+                                    .fail(function () { status.text(error); })
+                                    .always(function () { button.prop('disabled', false); });
+                            });
+                        });
+                        </script>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
         <table class="ui single line unstackable table" id="mainwp-cron-jobs-table">
             <thead>
                 <tr>
@@ -1353,8 +1557,6 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             </thead>
             <tbody>
                 <?php
-                $useWPCron = ( false === get_option( 'mainwp_wp_cron' ) ) || ( 1 === (int) get_option( 'mainwp_wp_cron' ) );
-
                 foreach ( $cron_jobs as $cron_job => $hook ) {
 
                     if ( is_array( $hook ) && isset( $hook['title'] ) && isset( $hook['action'] ) ) {

@@ -194,7 +194,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     'dashboard' => array(
                         'install_themes',
                         'delete_themes',
-                        'activate_deactivate_themes',
+                        'activate_themes',
                     ),
                 ),
                 'init_menu_callback' => array( MainWP_Themes::class, 'init_menu' ),
@@ -1156,7 +1156,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     <a class="item" href="admin.php?page=UpdatesManage&tab=themes-updates"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></a>
                                     <a class="item" href="admin.php?page=UpdatesManage&tab=wordpress-updates"><?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?></a>
                                 <?php if ( $mainwp_show_language_updates ) : ?>
-                                    <a class="item" href="admin.php?page=UpdatesManage&tab=translations-updates"><?php esc_html_e( 'Translation Plugins', 'mainwp' ); ?></a>
+                                    <a class="item" href="admin.php?page=UpdatesManage&tab=translations-updates"><?php esc_html_e( 'Translation Updates', 'mainwp' ); ?></a>
                                 <?php endif; ?>
                                     <a class="item" href="admin.php?page=PluginsAbandoned"><?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?></a>
                                     <a class="item" href="admin.php?page=ThemesAbandoned"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?></a>

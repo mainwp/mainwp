@@ -1154,7 +1154,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         $output = array();
         $data   = MainWP_Manage_Sites_Handler::rest_api_add_site( $fields, $output );
         if ( isset( $fields['adminpassword'], $data['error'], $output['error_category'] ) && ! empty( $fields['ssl_verify'] ) && 'http_error' === $output['error_category'] && is_string( $data['error'] ) ) {
-            if ( 0 === strpos( $data['error'], 'HTTP error - SSL certificate problem:' ) || 0 === strpos( $data['error'], 'HTTP error - SSL: no alternative certificate subject name' ) ) {
+            // Classified transport errors keep the cURL diagnostic after their readable text.
+            if ( false !== strpos( $data['error'], 'SSL certificate problem:' ) || false !== strpos( $data['error'], 'SSL: no alternative certificate subject name' ) ) {
                 $data['error'] .= ' TLS certificate verification failed. Fix the site certificate, or use --ssl_verify=0 only if you accept an unverified connection.';
             }
         }
@@ -1236,7 +1237,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         try {
             MainWP_Manage_Sites_View::m_reconnect_site( $website );
         } catch ( \Exception $e ) {
-            $error = $e->getMessage();
+            // Reconnect messages are escaped for the AJAX screen; the console needs them as plain text.
+            $error = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_console_error_message( $e ) : $e->getMessage();
         }
 
         if ( empty( $error ) ) {

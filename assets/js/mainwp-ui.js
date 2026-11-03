@@ -916,6 +916,66 @@ jQuery(document).on('click', '#mainwp-select-dark-theme-button', function (e) {
     globalThis.location.href = url.toString();
 });
 
+jQuery(function ($) {
+    const $header = $('#mainwp-top-header');
+    const $actions = $('#mainwp-header-actions');
+    const $mobileTrigger = $('#mainwp-mobile-menu-trigger');
+    if (!$header.length || !$actions.length || !$mobileTrigger.length) {
+        return;
+    }
+
+    const $body = $('body');
+    // Reserve the logo (72px), a readable title (160px), and grid gutters (48px).
+    const headerContextWidth = 280;
+    let collapsed = false;
+    let requiredWidth = 0;
+    let frame = 0;
+
+    const setCollapsed = function (nextCollapsed) {
+        if (nextCollapsed !== collapsed) {
+            if (nextCollapsed) {
+                $('#mainwp-user-menu-button').dropdown('hide');
+            } else if ($mobileTrigger.find('.times.icon').length) {
+                $mobileTrigger.trigger('click');
+            }
+        }
+        collapsed = nextCollapsed;
+        $body.toggleClass('mainwp-header-collapsed', collapsed);
+    };
+
+    const updateHeader = function () {
+        const availableWidth = $header[0].getBoundingClientRect().width;
+        if (window.innerWidth <= 1140) {
+            setCollapsed(true);
+            return;
+        }
+        if (collapsed && requiredWidth > availableWidth) {
+            return;
+        }
+        $body.removeClass('mainwp-header-collapsed');
+        requiredWidth = $actions[0].getBoundingClientRect().width + headerContextWidth;
+        setCollapsed(requiredWidth > availableWidth);
+    };
+
+    const scheduleHeader = function () {
+        window.cancelAnimationFrame(frame);
+        frame = window.requestAnimationFrame(updateHeader);
+    };
+
+    $(window).on('resize.mainwpHeader', scheduleHeader);
+    if (typeof ResizeObserver !== 'undefined') {
+        const observer = new ResizeObserver(scheduleHeader);
+        observer.observe($actions[0]);
+    }
+    if (document.fonts) {
+        document.fonts.ready.then(function () {
+            requiredWidth = 0;
+            scheduleHeader();
+        });
+    }
+    updateHeader();
+});
+
 /**
  * Widget layout UI handler object.
  *

@@ -30,6 +30,37 @@ jQuery(document).on('click', '#mainwp-extension-update-check-retry', function ()
     return false;
 });
 
+// Re-check the stored license key so the page renders with the current plan.
+jQuery(document).on('click', '.mainwp-extensions-refresh-license', function () {
+    let button = jQuery(this);
+    let status = button.closest('.mainwp-extensions-refresh-license-prompt').find('.mainwp-extensions-refresh-license-status');
+    let failedText = button.data('failed-text');
+
+    if (button.hasClass('loading')) {
+        return false;
+    }
+
+    button.addClass('loading disabled');
+    status.text('');
+
+    jQuery.post(ajaxurl, mainwp_secure_data({
+        action: 'mainwp_extension_testextensionapilogin'
+    }), function (response) {
+        if (response && response.result === 'SUCCESS') {
+            location.reload();
+            return;
+        }
+
+        status.text(response && response.error ? mainwp_entities_text(response.error) : failedText);
+        button.removeClass('loading disabled');
+    }, 'json').fail(function () {
+        status.text(failedText);
+        button.removeClass('loading disabled');
+    });
+
+    return false;
+});
+
 jQuery(document).on('click', '#mainwp-extensions-show-all', function () {
     jQuery(this).addClass('green');
     jQuery('#mainwp-extensions-show-extensions').removeClass('green');

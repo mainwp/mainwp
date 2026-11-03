@@ -9,6 +9,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+// phpcs:disable Generic.WhiteSpace.DisallowSpaceIndent -- Preserve the existing four-space indentation.
 /**
  * Tests for mainwp/add-site-v1 ability.
  *
@@ -96,6 +97,66 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
     }
 
     /**
+     * Readable transport text reaches the caller as plain text without changing the error code.
+     *
+     * @dataProvider transport_failures
+     * @param int    $errno  cURL error number.
+     * @param string $raw    Raw cURL message.
+     * @param string $code   Expected WP_Error code.
+     * @param int    $status Expected HTTP status.
+     * @return void
+     */
+    public function test_add_site_transport_failure_keeps_error_code( $errno, $raw, $code, $status ) {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $classified = \MainWP\Dashboard\MainWP_Error_Helper::classify_transport_error( $errno, $raw );
+        $fail       = function ( $pre, $url, $admin, $what, $params, $force, $policy, $http_user, $http_pass, $ssl_version, $others, &$output ) use ( $classified, $raw ) {
+            // Same fields fetch_url_site() records before it throws.
+            $output['error_category'] = 'http_error';
+            $output['error_code']     = 'http_request_failed';
+            $output['error_message']  = $classified['message'];
+            $output['error_reason']   = $classified['reason'];
+            $output['error_detail']   = $raw;
+            throw new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR', $classified['message'] ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        };
+        add_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
+        add_filter( 'mainwp_fetch_url_not_authed_pre', $fail, 10, 12 );
+
+        try {
+            $result = $this->execute_ability(
+                'mainwp/add-site-v1',
+                array(
+                    'url'            => 'https://transport-failure.example.com/',
+                    'name'           => 'Transport failure fixture',
+                    'admin_username' => 'admin',
+                )
+            );
+
+            $this->assertWPError( $result );
+            $this->assertSame( array( $code, $status ), array( $result->get_error_code(), $result->get_error_data()['status'] ) );
+            $this->assertSame( 'HTTP error - ' . $classified['message'], $result->get_error_message() );
+        } finally {
+            remove_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
+            remove_filter( 'mainwp_fetch_url_not_authed_pre', $fail, 10 );
+        }
+    }
+
+    /**
+     * Raw cURL text decides the code exactly as it did before the readable copy.
+     *
+     * @return array
+     */
+    public static function transport_failures() {
+        return array(
+            'resolver thread' => array( 2, 'getaddrinfo() thread failed to start', 'mainwp_site_add_failed', 500 ),
+            'dns'             => array( 6, 'Could not resolve host: transport-failure.example.com', 'mainwp_site_add_failed', 500 ),
+            'refused'         => array( 7, "Failed to connect to transport-failure.example.com port 443 after 3 ms: Couldn't connect to server", 'mainwp_connection_failed', 503 ),
+            'certificate'     => array( 60, 'SSL certificate problem: self-signed certificate', 'mainwp_site_add_failed', 500 ),
+        );
+    }
+
+    /**
      * Test that the ability is registered.
      *
      * @return void
@@ -133,11 +194,14 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
 		// Expect the "doing it wrong" notice from WP_Ability::execute.
 		$this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
 
-        $result = $this->execute_ability( 'mainwp/add-site-v1', [
-            'url'            => 'https://example.com',
-            'name'           => 'Test Site',
-            'admin_username' => 'admin',
-        ] );
+        $result = $this->execute_ability(
+            'mainwp/add-site-v1',
+            array(
+                'url'            => 'https://example.com',
+                'name'           => 'Test Site',
+                'admin_username' => 'admin',
+            )
+        );
 
         $this->assertWPError( $result, 'Unauthenticated request should return WP_Error.' );
         $this->assertEquals(
@@ -159,11 +223,14 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
 
         $this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
 
-        $result = $this->execute_ability( 'mainwp/add-site-v1', [
-            'url'            => 'https://example.com',
-            'name'           => 'Test Site',
-            'admin_username' => 'admin',
-        ] );
+        $result = $this->execute_ability(
+            'mainwp/add-site-v1',
+            array(
+                'url'            => 'https://example.com',
+                'name'           => 'Test Site',
+                'admin_username' => 'admin',
+            )
+        );
 
         $this->assertWPError( $result, 'Subscriber should be denied.' );
         $this->assertEquals(
@@ -182,9 +249,12 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();
 
-        $result = $this->execute_ability( 'mainwp/add-site-v1', [
-            'url' => '', // Empty required field
-        ] );
+        $result = $this->execute_ability(
+            'mainwp/add-site-v1',
+            array(
+                'url' => '', // Empty required field.
+            )
+        );
 
         $this->assertWPError( $result, 'Invalid input should return WP_Error.' );
     }
@@ -202,17 +272,22 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
         $this->set_current_user_as_admin();
 
         // Create a site with lowercase URL.
-        $site_id = $this->create_test_site( [
-            'name' => 'Original Site',
-            'url'  => 'https://test-case-duplicate.example.com/',
-        ] );
+        $site_id = $this->create_test_site(
+            array(
+                'name' => 'Original Site',
+                'url'  => 'https://test-case-duplicate.example.com/',
+            )
+        );
 
         // Try to add a site with uppercase URL variation.
-        $result = $this->execute_ability( 'mainwp/add-site-v1', [
-            'url'            => 'https://TEST-CASE-DUPLICATE.EXAMPLE.COM/',
-            'name'           => 'Duplicate Site',
-            'admin_username' => 'admin',
-        ] );
+        $result = $this->execute_ability(
+            'mainwp/add-site-v1',
+            array(
+                'url'            => 'https://TEST-CASE-DUPLICATE.EXAMPLE.COM/',
+                'name'           => 'Duplicate Site',
+                'admin_username' => 'admin',
+            )
+        );
 
         $this->assertWPError( $result, 'Case-variant URL should be rejected as duplicate.' );
         $this->assertEquals(
@@ -234,17 +309,22 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
         $this->set_current_user_as_admin();
 
         // Create a site with trailing slash.
-        $site_id = $this->create_test_site( [
-            'name' => 'Original Site',
-            'url'  => 'https://test-slash-duplicate.example.com/',
-        ] );
+        $site_id = $this->create_test_site(
+            array(
+                'name' => 'Original Site',
+                'url'  => 'https://test-slash-duplicate.example.com/',
+            )
+        );
 
         // Try to add a site without trailing slash.
-        $result = $this->execute_ability( 'mainwp/add-site-v1', [
-            'url'            => 'https://test-slash-duplicate.example.com',
-            'name'           => 'Duplicate Site',
-            'admin_username' => 'admin',
-        ] );
+        $result = $this->execute_ability(
+            'mainwp/add-site-v1',
+            array(
+                'url'            => 'https://test-slash-duplicate.example.com',
+                'name'           => 'Duplicate Site',
+                'admin_username' => 'admin',
+            )
+        );
 
         $this->assertWPError( $result, 'Trailing slash variant URL should be rejected as duplicate.' );
         $this->assertEquals(
@@ -310,12 +390,15 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
 
         $url = 'https://test-add-site-bad-tag.example.com/';
 
-        $result = $this->execute_ability( 'mainwp/add-site-v1', [
-            'url'            => $url,
-            'name'           => 'Bad Tag Site',
-            'admin_username' => 'admin',
-            'tag_ids'        => [ 999999 ],
-        ] );
+        $result = $this->execute_ability(
+            'mainwp/add-site-v1',
+            array(
+                'url'            => $url,
+                'name'           => 'Bad Tag Site',
+                'admin_username' => 'admin',
+                'tag_ids'        => array( 999999 ),
+            )
+        );
 
         $this->assertWPError( $result, 'A nonexistent tag must be rejected.' );
         $this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
@@ -333,19 +416,22 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();
 
-        $allowed_tag = $this->create_test_tag( [ 'name' => 'Add Site Allowed Tag' ] );
-        $denied_tag  = $this->create_test_tag( [ 'name' => 'Add Site Denied Tag' ] );
+        $allowed_tag = $this->create_test_tag( array( 'name' => 'Add Site Allowed Tag' ) );
+        $denied_tag  = $this->create_test_tag( array( 'name' => 'Add Site Denied Tag' ) );
 
-        $this->restrict_current_user_to_groups( [ $allowed_tag ] );
+        $this->restrict_current_user_to_groups( array( $allowed_tag ) );
 
         $url = 'https://test-add-site-scoped-tag.example.com/';
 
-        $result = $this->execute_ability( 'mainwp/add-site-v1', [
-            'url'            => $url,
-            'name'           => 'Scoped Tag Site',
-            'admin_username' => 'admin',
-            'tag_ids'        => [ $denied_tag ],
-        ] );
+        $result = $this->execute_ability(
+            'mainwp/add-site-v1',
+            array(
+                'url'            => $url,
+                'name'           => 'Scoped Tag Site',
+                'admin_username' => 'admin',
+                'tag_ids'        => array( $denied_tag ),
+            )
+        );
 
         $this->assertWPError( $result, 'An out-of-scope tag must be rejected.' );
         $this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
@@ -364,12 +450,15 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
 
         $url = 'https://test-add-site-bad-client.example.com/';
 
-        $result = $this->execute_ability( 'mainwp/add-site-v1', [
-            'url'            => $url,
-            'name'           => 'Bad Client Site',
-            'admin_username' => 'admin',
-            'client_id'      => 999999,
-        ] );
+        $result = $this->execute_ability(
+            'mainwp/add-site-v1',
+            array(
+                'url'            => $url,
+                'name'           => 'Bad Client Site',
+                'admin_username' => 'admin',
+                'client_id'      => 999999,
+            )
+        );
 
         $this->assertWPError( $result, 'A nonexistent client must be rejected.' );
         $this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
@@ -387,20 +476,23 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();
 
-        $denied_client = $this->create_test_client( [ 'name' => 'Add Site Denied Client' ] );
-        $client_site   = $this->create_test_site( [ 'client_id' => $denied_client ] );
+        $denied_client = $this->create_test_client( array( 'name' => 'Add Site Denied Client' ) );
+        $client_site   = $this->create_test_site( array( 'client_id' => $denied_client ) );
         $allowed_site  = $this->create_test_site();
 
-        $this->restrict_current_user_to_sites( [ $allowed_site ] );
+        $this->restrict_current_user_to_sites( array( $allowed_site ) );
 
         $url = 'https://test-add-site-scoped-client.example.com/';
 
-        $result = $this->execute_ability( 'mainwp/add-site-v1', [
-            'url'            => $url,
-            'name'           => 'Scoped Client Site',
-            'admin_username' => 'admin',
-            'client_id'      => $denied_client,
-        ] );
+        $result = $this->execute_ability(
+            'mainwp/add-site-v1',
+            array(
+                'url'            => $url,
+                'name'           => 'Scoped Client Site',
+                'admin_username' => 'admin',
+                'client_id'      => $denied_client,
+            )
+        );
 
         $this->assertWPError( $result, 'An out-of-scope client must be rejected.' );
         $this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );

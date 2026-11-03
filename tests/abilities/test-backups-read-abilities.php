@@ -363,6 +363,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		return array(
 			'cancelled before start' => array( 'mainwp_restore_cancelled_before_start', 'This restore was cancelled before the site started it.' ),
 			'native disabled'        => array( 'mainwp_restore_native_backups_disabled', 'Built-In Backups were turned off, so this restore stopped before changing the site.' ),
+			'transfer stalled'       => array( 'mainwp_restore_transfer_stalled', 'The restore stopped because the site received no backup data from the Dashboard for 15 minutes. Check that the Dashboard can still reach the site, then start the restore again.' ),
 		);
 	}
 

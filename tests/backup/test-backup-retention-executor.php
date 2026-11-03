@@ -78,7 +78,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$protection                        = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
 		$now                               = time();
 		$first                             = $protection::observe_remote_protection( array( $id ), $now );
-		$this->assertSame( $now + DAY_IN_SECONDS, $first['protected_until'] );
+		$this->assertSame( $now + $protection::LATE_WRITE_SECONDS + DAY_IN_SECONDS, $first['protected_until'] );
 		$this->assertFalse( $first['unknown_age'] );
 		$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $now + DAY_IN_SECONDS - 1 ) );
 		$this->assertFalse( $protection::holds_automatic_removal( array( $id ), $now + 2 * DAY_IN_SECONDS ) );
@@ -107,7 +107,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$protection          = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
 		$now                 = time();
 		$first               = $protection::observe_remote_protection( array( $id ), $now );
-		$this->assertSame( $now + DAY_IN_SECONDS, $first['protected_until'] );
+		$this->assertSame( $now + $protection::LATE_WRITE_SECONDS + DAY_IN_SECONDS, $first['protected_until'] );
 		foreach ( array( 'prune:first', 'prune:second' ) as $offset => $token ) {
 			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now + ( 5 + $offset ) * DAY_IN_SECONDS;
 			try {
@@ -121,6 +121,180 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $store->save_checkpoint( $job_id, $stale ) );
 		$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['storage_age_floor'] );
 		$this->assertFalse( $protection::holds_automatic_removal( array( $id ), $now + 2 * DAY_IN_SECONDS ) );
+	}
+
+	/** A worker whose lease runs out after the floor can still land a write; the minimum covers it. */
+	public function test_unknown_upload_hold_covers_late_write_from_expired_worker(): void {
+		list( $id, $job_id ) = $this->make_unknown_age_upload( 'failed_retryable' );
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$protection          = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
+		$lease               = \MainWP\Dashboard\MainWP_Backup_Upload_Driver::DEFAULT_BUDGET_SECONDS + 60;
+		$window              = $lease + MainWP_Backup_Upload_Job_Store::PRUNE_STALE_LEASE_SECONDS;
+		$now                 = time();
+		$worker              = $store->acquire_next_job( 'late-worker', $lease, $now - 1 );
+		$this->assertSame( $job_id, (int) $worker->id );
+		$protection::observe_remote_protection( array( $id ), $now );
+		$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['storage_age_floor'] );
+		// The provider request returns after the lease ran out; fencing refuses the save but not the remote write.
+		$late_write                                        = $now + $lease + 5 * MINUTE_IN_SECONDS;
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $late_write;
+		try {
+			$this->assertFalse( $store->save_checkpoint( $job_id, array( 'phase' => 'uploading' ), 'late-worker' ) );
+		} finally {
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+		}
+		$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['storage_age_floor'], 'The floor itself never moves.' );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $late_write + DAY_IN_SECONDS - 1 ), 'The late write must still get its full minimum.' );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $now + $window + DAY_IN_SECONDS - 1 ) );
+		$this->assertFalse( $protection::holds_automatic_removal( array( $id ), $now + $window + DAY_IN_SECONDS ), 'The bounded hold still ends.' );
+	}
+
+	/** A resumed upload needs the destination minimum after its newest write. */
+	public function test_resumed_upload_after_window_holds_minimum_from_resume(): void {
+		list( $id, $job_id ) = $this->make_unknown_age_upload( 'failed_retryable' );
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$protection          = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
+		$now                 = time();
+		$protection::observe_remote_protection( array( $id ), $now );
+		$resume = $now + $protection::LATE_WRITE_SECONDS + 2 * HOUR_IN_SECONDS;
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $resume;
+		try {
+			$worker = $store->acquire_next_job( 'resumed-upload', 300, $resume );
+			$this->assertNotNull( $worker );
+			$this->assertSame( $job_id, (int) $worker->id );
+			$this->assertTrue( $store->save_checkpoint( $job_id, array( 'phase' => 'uploading' ), 'resumed-upload' ) );
+			$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $resume + DAY_IN_SECONDS - 1 ), 'The resumed write must get its full minimum.' );
+			$until = $resume + $protection::LATE_WRITE_SECONDS + DAY_IN_SECONDS;
+			$this->assertSame( $until, $protection::remote_protection( array( $id ), $resume )['protected_until'] );
+			$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $until - 1 ) );
+			$this->assertFalse( $protection::holds_automatic_removal( array( $id ), $until ) );
+			$saved = $store->get_job( $job_id )->checkpoint;
+			$this->assertSame( $now, $saved['storage_age_floor'] );
+			$this->assertSame( $resume, $saved['last_attempt_at'] );
+		} finally {
+			$store->release_lock( $job_id, 'resumed-upload' );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+		}
+	}
+
+	/** Renewals keep long uploads protected without stamping every provider request. */
+	public function test_long_running_upload_renewal_extends_hold(): void {
+		list( $id, $job_id ) = $this->make_unknown_age_upload( 'failed_retryable' );
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$protection          = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
+		$now                 = time();
+		$acquired            = $now - 1;
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $acquired;
+		try {
+			$worker = $store->acquire_next_job( 'long-upload', 300, $acquired );
+			$this->assertNotNull( $worker );
+			$this->assertSame( $job_id, (int) $worker->id );
+			$this->assertArrayHasKey( 'last_attempt_at', $worker->checkpoint );
+			$this->assertSame( $acquired, $worker->checkpoint['last_attempt_at'] );
+			$this->assertTrue( $protection::upload_age_evidence( $worker, null, $acquired )['unknown_age'], 'An attempt alone cannot establish storage age.' );
+			$protection::observe_remote_protection( array( $id ), $now );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $acquired + 59;
+			$this->assertTrue( $store->renew_lease( $job_id, 'long-upload', 300, $acquired + 59 ) );
+			$this->assertSame( $acquired, $store->get_job( $job_id )->checkpoint['last_attempt_at'] );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $acquired + 60;
+			$this->assertTrue( $store->renew_lease( $job_id, 'long-upload', 300, $acquired + 60 ) );
+			$this->assertSame( $acquired + 60, $store->get_job( $job_id )->checkpoint['last_attempt_at'] );
+			$last_renewal = $now + $protection::LATE_WRITE_SECONDS + 2 * HOUR_IN_SECONDS;
+			$renewed      = $acquired + 60;
+			while ( $renewed < $last_renewal - 60 ) {
+				$renewed = min( $renewed + 240, $last_renewal - 60 );
+				MainWP_Backup_Incremental_Sender_Test::$fixed_time = $renewed;
+				$this->assertTrue( $store->renew_lease( $job_id, 'long-upload', 300, $renewed ), 'Intermediate renewals must keep the lease live.' );
+			}
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $last_renewal;
+			$this->assertTrue( $store->renew_lease( $job_id, 'long-upload', 300, $last_renewal ) );
+			$this->assertSame( $last_renewal, $store->get_job( $job_id )->checkpoint['last_attempt_at'] );
+			$until = $last_renewal + $protection::LATE_WRITE_SECONDS + DAY_IN_SECONDS;
+			$this->assertSame( $until, $protection::remote_protection( array( $id ), $last_renewal )['protected_until'] );
+			$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $until - 1 ) );
+			$this->assertFalse( $protection::holds_automatic_removal( array( $id ), $until ) );
+			$fresh_store = new MainWP_Backup_Upload_Job_Store();
+
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $last_renewal + 1;
+			$this->assertTrue( $fresh_store->renew_lease( $job_id, 'long-upload', 300, $last_renewal + 1 ) );
+			$this->assertSame( $last_renewal + 1, $store->get_job( $job_id )->checkpoint['last_attempt_at'], 'A store without a token memo must stamp its first renewal.' );
+			$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['storage_age_floor'] );
+		} finally {
+			$store->release_lock( $job_id, 'long-upload' );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+		}
+	}
+
+	/** Stale checkpoints and expired workers cannot erase newer attempt evidence. */
+	public function test_attempt_stamp_never_moves_backward(): void {
+		list( , $job_id ) = $this->make_unknown_age_upload( 'failed_retryable' );
+		$store            = MainWP_Backup_Upload_Job_Store::instance();
+		$now              = time();
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now;
+		try {
+			$worker = $store->acquire_next_job( 'monotonic-upload', 300, $now );
+			$this->assertNotNull( $worker );
+			$this->assertSame( $job_id, (int) $worker->id );
+			$this->assertArrayHasKey( 'last_attempt_at', $worker->checkpoint );
+			$this->assertSame( $now, $worker->checkpoint['last_attempt_at'] );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now + 60;
+			$this->assertTrue( $store->renew_lease( $job_id, 'monotonic-upload', 300, $now + 60 ) );
+			$this->assertSame( $now + 60, $store->get_job( $job_id )->checkpoint['last_attempt_at'] );
+			foreach ( array( array( 'last_attempt_at' => $now - 1 ), array(), array( 'last_attempt_at' => $now + 120 ) ) as $checkpoint ) {
+				$this->assertTrue( $store->save_checkpoint( $job_id, $checkpoint, 'monotonic-upload' ) );
+				$this->assertSame( max( $now + 60, $checkpoint['last_attempt_at'] ?? 0 ), $store->get_job( $job_id )->checkpoint['last_attempt_at'] );
+			}
+			$before = $store->get_job( $job_id );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now + 361;
+			$this->assertFalse( $store->renew_lease( $job_id, 'monotonic-upload', 300, $now + 361 ) );
+			$this->assertFalse( $store->save_checkpoint( $job_id, array( 'last_attempt_at' => $now + 361 ), 'monotonic-upload' ) );
+			$this->assertEquals( $before, $store->get_job( $job_id ), 'An expired token cannot renew or stamp.' );
+		} finally {
+			$store->release_lock( $job_id, 'monotonic-upload' );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+		}
+	}
+
+	/** Unstamped workers must stop before another provider request. */
+	public function test_failed_attempt_stamp_stops_the_worker(): void {
+		global $wpdb;
+		list( , $job_id ) = $this->make_unknown_age_upload( 'failed_retryable' );
+		$store            = MainWP_Backup_Upload_Job_Store::instance();
+		$table            = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$now              = time();
+		$filter           = static function ( $sql ) use ( $table ) {
+			return str_contains( $sql, 'UPDATE ' ) && str_contains( $sql, $table )
+				&& str_contains( $sql, 'SET checkpoint = ' ) && str_contains( $sql, 'last_attempt_at' )
+				&& str_contains( $sql, 'AND MD5(checkpoint)' ) && str_contains( $sql, 'AND locked_by = ' )
+				? 'INVALID ATTEMPT STAMP' : $sql;
+		};
+		$old              = $wpdb->suppress_errors( true );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now;
+		try {
+			$worker = $store->acquire_next_job( 'stamp-renewal', 300, $now );
+			$this->assertNotNull( $worker );
+			$this->assertSame( $job_id, (int) $worker->id );
+			$this->assertArrayHasKey( 'last_attempt_at', $worker->checkpoint );
+			$this->assertSame( $now, $worker->checkpoint['last_attempt_at'] );
+			add_filter( 'query', $filter );
+			$this->assertTrue( $store->save_checkpoint( $job_id, array( 'phase' => 'uploading' ), 'stamp-renewal' ), 'The failing-query filter must leave checkpoint saves alone.' );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now + 60;
+			$this->assertFalse( $store->renew_lease( $job_id, 'stamp-renewal', 300, $now + 60 ) );
+			$this->assertSame( $now, $store->get_job( $job_id )->checkpoint['last_attempt_at'] );
+			$store->release_lock( $job_id, 'stamp-renewal' );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now + 61;
+			$this->assertNull( $store->acquire_next_job( 'stamp-acquisition', 300, $now + 61 ) );
+			$saved = $store->get_job( $job_id );
+			$this->assertSame( '', $saved->locked_by );
+			$this->assertSame( 0, (int) $saved->locked_until );
+			$this->assertSame( $now, $saved->checkpoint['last_attempt_at'] );
+		} finally {
+			remove_filter( 'query', $filter );
+			$wpdb->suppress_errors( $old );
+			$store->release_lock( $job_id, 'stamp-renewal' );
+			$store->release_lock( $job_id, 'stamp-acquisition' );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+		}
 	}
 
 	/** The query preview and direct protection expose the same persisted date. */
@@ -240,7 +414,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
 		$deletes = $store->get_jobs_for_snapshot( $id, 'delete' );
 		$this->assertCount( 1, $deletes );
-		$this->assertSame( $job->checkpoint['storage_age_floor'], $deletes[0]->checkpoint['storage_age']['uploaded_at'] );
+		$this->assertSame( $job->checkpoint['storage_age_floor'] + $protection::LATE_WRITE_SECONDS, $deletes[0]->checkpoint['storage_age']['uploaded_at'] );
 	}
 
 	/** A failed floor write keeps the upload held until evidence is durable. */
@@ -3644,7 +3818,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$store->set_status( $job->id, 'failed_permanent' );
 		$failed = $protection::observe_remote_protection( array( $id ), $now );
 		$this->assertFalse( $failed['unknown_age'] );
-		$this->assertSame( $now + 30 * DAY_IN_SECONDS, $failed['protected_until'] );
+		$this->assertSame( $now + $protection::LATE_WRITE_SECONDS + 30 * DAY_IN_SECONDS, $failed['protected_until'] );
 	}
 
 	/** A failed destination read cannot make its unknown minimum disappear. */

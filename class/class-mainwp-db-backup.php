@@ -54,17 +54,70 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return bool True while a started incremental run has no snapshot, or the read fails.
      */
     public function has_inflight_incremental_for_site( int $site_id ): bool {
-        // While the run_key column repair is pending the column may be missing, and a
-        // failed read would hold every prune; finished sites then wait for the run to close.
-        $finished = MainWP_Install::backup_snapshot_run_key_ready() ? ' AND NOT EXISTS (SELECT 1 FROM ' . $this->table_name( 'wp_backup_snapshot' ) . " s WHERE s.site_id = p.wp_id AND s.task_id = b.id AND s.run_key = CONCAT(p.wp_id, ':', b.id, ':c:', p.child_backup_task_id))" : '';
-        $found    = $this->wpdb->get_var(
+        return false !== $this->get_inflight_incremental_state( $site_id );
+    }
+
+    /**
+     * Like has_inflight_incremental_for_site(), but tells a failed read apart
+     * so callers can keep snapshots without claiming a backup is running.
+     *
+     * @param int $site_id Candidate site.
+     * @return bool|null True while a started incremental run has no snapshot, false when none, null when the read failed.
+     */
+    public function get_inflight_incremental_state( int $site_id ): ?bool {
+        $runs = $this->wpdb->get_results(
             $this->wpdb->prepare(
-                'SELECT p.task_id FROM ' . $this->table_name( 'wp_backup_progress' ) . ' p JOIN ' . $this->table_name( 'wp_backup' ) . " b ON b.id = p.task_id WHERE p.wp_id = %d AND b.type = 'incremental' AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> '' AND p.child_phase <> %s" . $finished . ' LIMIT 1',
+                "SELECT b.id AS task_id, p.child_backup_task_id FROM %i p JOIN %i b ON b.id = p.task_id WHERE p.wp_id = %d AND b.type = 'incremental' AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> '' AND p.child_phase <> %s",
+                $this->table_name( 'wp_backup_progress' ),
+                $this->table_name( 'wp_backup' ),
                 $site_id,
                 MainWP_Backup_Task_Phase::FAILED
             )
         );
-        return null !== $found || '' !== $this->wpdb->last_error;
+        if ( '' !== $this->wpdb->last_error ) {
+            return $this->inflight_read_failed( $site_id );
+        }
+        if ( empty( $runs ) ) {
+            return false;
+        }
+        // While the run_key column repair is pending the column may be missing, and a
+        // failed read would hold every prune; finished sites then wait for the run to close.
+        if ( ! MainWP_Install::backup_snapshot_run_key_ready() ) {
+            return true;
+        }
+        foreach ( $runs as $run ) {
+            // The run key is built in PHP because installs upgraded from older releases can
+            // keep the progress table in a different collation from the snapshot table, and
+            // MySQL refuses to compare columns across them. A string literal takes the
+            // snapshot column's collation instead.
+            $recorded = $this->wpdb->get_var(
+                $this->wpdb->prepare(
+                    'SELECT 1 FROM %i WHERE site_id = %d AND task_id = %d AND run_key = %s LIMIT 1',
+                    $this->table_name( 'wp_backup_snapshot' ),
+                    $site_id,
+                    (int) $run->task_id,
+                    $site_id . ':' . (int) $run->task_id . ':c:' . $run->child_backup_task_id
+                )
+            );
+            if ( '' !== $this->wpdb->last_error ) {
+                return $this->inflight_read_failed( $site_id );
+            }
+            if ( null === $recorded ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Log a failed in-flight read; callers keep the site's snapshots.
+     *
+     * @param int $site_id Candidate site.
+     * @return null The unknown state.
+     */
+    private function inflight_read_failed( int $site_id ) {
+        MainWP_Logger::instance()->warning( 'Backup in-flight check failed for site ' . $site_id . ': ' . $this->wpdb->last_error );
+        return null;
     }
 
     /**

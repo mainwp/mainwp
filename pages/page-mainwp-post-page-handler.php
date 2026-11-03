@@ -1305,7 +1305,15 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         if ( ! empty( $post_featured_image ) ) {
             try {
-                $upload = static::upload_image( $post_featured_image );
+                // Reopening the same child post reuses the image imported from that site and URL.
+                $source = is_object( $website ) && ! empty( $website->id ) ? $website->id . '|' . $post_featured_image : '';
+                $upload = static::get_imported_featured_image( $source );
+                if ( null === $upload ) {
+                    $upload = static::upload_image( $post_featured_image );
+                    if ( null !== $upload && '' !== $source ) {
+                        update_post_meta( $upload['id'], '_mainwp_featured_image_source', $source );
+                    }
+                }
 
                 if ( null !== $upload ) {
                     update_post_meta( $new_post_id, '_thumbnail_id', $upload['id'] );
@@ -1438,6 +1446,47 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $content = strtr( $content, $image_replacements );
         }
         return $content;
+    }
+
+    /**
+     * Method get_imported_featured_image()
+     *
+     * Find the attachment the current user already imported for a child site's featured image.
+     *
+     * @param string $source Child site ID and source image URL, joined by "|".
+     *
+     * @return array|null Attachment ID and URL, or null when there is none or its file is gone.
+     */
+    public static function get_imported_featured_image( $source ) {
+        if ( '' === $source ) {
+            return null;
+        }
+        $ids = get_posts(
+            array(
+                'post_type'      => 'attachment',
+                'post_status'    => 'inherit',
+                'author'         => get_current_user_id(),
+                'fields'         => 'ids',
+                'posts_per_page' => 1,
+                'orderby'        => 'ID',
+                'order'          => 'DESC',
+                'no_found_rows'  => true,
+                'meta_key'       => '_mainwp_featured_image_source', // phpcs:ignore WordPress.DB.SlowDBQuery
+                'meta_value'     => $source, // phpcs:ignore WordPress.DB.SlowDBQuery
+                'meta_type'      => 'BINARY', // Child URLs are case-sensitive.
+            )
+        );
+        if ( empty( $ids ) ) {
+            return null;
+        }
+        $file = get_attached_file( $ids[0] );
+        if ( empty( $file ) || ! file_exists( $file ) ) {
+            return null;
+        }
+        return array(
+            'id'  => $ids[0],
+            'url' => wp_get_attachment_url( $ids[0] ),
+        );
     }
 
     /**

@@ -33,13 +33,15 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_CHILD_UNREACHABLE = 'mainwp_backup_child_unreachable';
 
     // Child environment.
-    const ERR_DISK_FULL                = 'mainwp_backup_disk_full';
-    const ERR_MEMORY_LIMIT             = 'mainwp_backup_memory_limit';
-    const ERR_PERMISSIONS              = 'mainwp_backup_permissions';
-    const ERR_DIR_NOT_WRITABLE         = 'mainwp_backup_dir_not_writable';
-    const ERR_PRIVATE_ROOT_UNAVAILABLE = 'mainwp_backup_private_root_unavailable';
-    const ERR_MISSING_EXTENSION        = 'mainwp_backup_missing_extension';
-    const ERR_UNSUPPORTED_LAYOUT       = 'mainwp_backup_unsupported_layout';
+    const ERR_DISK_FULL                 = 'mainwp_backup_disk_full';
+    const ERR_MEMORY_LIMIT              = 'mainwp_backup_memory_limit';
+    const ERR_PERMISSIONS               = 'mainwp_backup_permissions';
+    const ERR_DIR_NOT_WRITABLE          = 'mainwp_backup_dir_not_writable';
+    const ERR_PRIVATE_ROOT_UNAVAILABLE  = 'mainwp_backup_private_root_unavailable';
+    const ERR_MISSING_EXTENSION         = 'mainwp_backup_missing_extension';
+    const ERR_UNSUPPORTED_LAYOUT        = 'mainwp_backup_unsupported_layout';
+    const ERR_UNSUPPORTED_BACKUP_FORMAT = 'mainwp_backup_format_unsupported';
+    const ERR_LAYOUT_CHANGED            = 'mainwp_backup_layout_changed';
 
     // Database.
     const ERR_DB_CONNECTION_LOST = 'mainwp_backup_db_connection_lost';
@@ -97,6 +99,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_RESTORE_DECRYPT_CORRUPT = 'mainwp_restore_decrypt_corrupt';
     const ERR_RESTORE_DECRYPT_KEY     = 'mainwp_restore_decrypt_key';
 
+    // Restore transfer: the Child stopped a restore that received no backup data within its stall window.
+    const ERR_RESTORE_TRANSFER_STALLED = 'mainwp_restore_transfer_stalled';
+
     // Restore apply.
     const ERR_RESTORE_TARGET_NOT_WRITABLE = 'mainwp_restore_target_not_writable';
 
@@ -128,10 +133,12 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     // Upload.
     const ERR_FTP_FAILED          = 'mainwp_backup_ftp_failed';
+    const ERR_SFTP_FAILED         = 'mainwp_backup_sftp_failed';
     const ERR_DROPBOX_FAILED      = 'mainwp_backup_dropbox_failed';
     const ERR_S3_FAILED           = 'mainwp_backup_s3_failed';
     const ERR_GCS_FAILED          = 'mainwp_backup_gcs_failed';
     const ERR_LOCAL_FAILED        = 'mainwp_backup_local_failed';
+    const ERR_UPLOAD_FAILED       = 'mainwp_backup_destination_upload_failed';
     const ERR_ENCRYPTION_REQUIRED = 'mainwp_backup_encryption_required';
 
     const ERR_TASK_NOT_FOUND                                 = 'mainwp_backup_task_not_found';
@@ -250,6 +257,45 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Split a stored "[code] message" error into the parts users see.
+     *
+     * Upload jobs store the error code in front of the provider's own
+     * message. The friendly text for a registered code leads, the provider
+     * message stays as a detail, and the code is kept for support. Text
+     * without a code prefix is returned as the message unchanged.
+     *
+     * @param mixed $stored Stored error text.
+     *
+     * @return array{code:string,message:string,detail:string} Plain-text parts; escape them on output.
+     */
+    public static function stored_error_parts( $stored ) {
+        $parts = array(
+            'code'    => '',
+            'message' => '',
+            'detail'  => '',
+        );
+        // Registry messages are stored HTML-escaped, so decode once before comparing or showing.
+        $stored = is_string( $stored ) ? trim( (string) static::sanitize_message( wp_specialchars_decode( $stored, ENT_QUOTES ) ) ) : '';
+        if ( '' === $stored ) {
+            return $parts;
+        }
+        if ( ! preg_match( '/^\[(mainwp_[a-z0-9_]+)\]\s*(.*)$/s', $stored, $match ) ) {
+            $parts['message'] = $stored;
+            return $parts;
+        }
+        $parts['code'] = $match[1];
+        $detail        = trim( $match[2] );
+        $messages      = static::get_messages();
+        if ( ! isset( $messages[ $parts['code'] ] ) ) {
+            $parts['message'] = '' !== $detail ? $detail : wp_specialchars_decode( static::message( $parts['code'] ), ENT_QUOTES );
+            return $parts;
+        }
+        $parts['message'] = wp_specialchars_decode( $messages[ $parts['code'] ], ENT_QUOTES );
+        $parts['detail']  = $detail !== $parts['message'] ? $detail : '';
+        return $parts;
+    }
+
+    /**
      * Strip sensitive server details from a user-facing message.
      *
      * Removes the absolute site path, SQL statement fragments, table name
@@ -312,6 +358,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_DIR_NOT_WRITABLE              => esc_html__( 'The backup directory is not writable. Set the directory permissions to allow the web server to write, or contact your hosting provider.', 'mainwp' ),
             self::ERR_PRIVATE_ROOT_UNAVAILABLE      => esc_html__( 'Private backup storage could not be set up. The Dashboard needs a writable directory outside the web root for backup archives. Set MAINWP_BACKUP_PRIVATE_DIR in wp-config.php to such a directory and try again.', 'mainwp' ),
             self::ERR_MISSING_EXTENSION             => esc_html__( 'A required PHP extension is not available. Ask your host to enable the missing extension, such as cURL, OpenSSL, or ZipArchive.', 'mainwp' ),
+            self::ERR_UNSUPPORTED_BACKUP_FORMAT     => esc_html__( 'This backup format is not supported. Update the backup reader before restoring it. Nothing was restored.', 'mainwp' ),
+            self::ERR_LAYOUT_CHANGED                => esc_html__( 'The site layout changed during this backup or restore. Start a new full backup before continuing.', 'mainwp' ),
             self::ERR_UNSUPPORTED_LAYOUT            => esc_html__( 'This file backup or restore cannot run on this site yet. Its wp-content or uploads folder is outside the WordPress core folder, either directly or through a symlink. Some managed hosts, such as Pressable and WordPress.com, and Bedrock installs use this layout. No backup or restore was started and nothing on the site was changed. Database-only backups and restores still work on this site. Use the backups your host provides for files for now.', 'mainwp' ),
             self::ERR_DB_CONNECTION_LOST            => esc_html__( 'The database connection was lost during the backup. The database server may be overloaded. Try running the backup again during low-traffic hours.', 'mainwp' ),
             self::ERR_DB_QUERY_FAILED               => esc_html__( 'Database backup did not complete. The child site may have run out of memory or the database connection was interrupted. Check the child site PHP memory limit and error log.', 'mainwp' ),
@@ -345,6 +393,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_RESTORE_TARGET_NOT_WRITABLE   => esc_html__( 'The restore stopped because a folder on the site is not writable. Files restored before that point may already have been replaced. Ask your host to give the web server write access to the site files, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_CANCELLED_BEFORE_START
                 => esc_html__( 'This restore was cancelled before the site started it.', 'mainwp' ),
+            self::ERR_RESTORE_TRANSFER_STALLED
+                => esc_html__( 'The restore stopped because the site received no backup data from the Dashboard for 15 minutes. Check that the Dashboard can still reach the site, then start the restore again.', 'mainwp' ),
             self::ERR_RESTORE_WOO_LEGACY_ORDERS     => esc_html__( 'Keeping live orders needs both this store and the backup to use the WooCommerce High-Performance Order Storage tables, and one of them still uses the older post-based order storage. Run the restore again without the keep-orders option, or move the store to High-Performance Order Storage and use a backup taken afterwards.', 'mainwp' ),
             self::ERR_RESTORE_WOO_SYNC_MODE         => esc_html__( 'Keeping live orders needs the WooCommerce High-Performance Order Storage tables to be the only source of orders, and this store still synchronizes orders to the older posts table. Turn off the WooCommerce orders-table synchronization setting, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_WOO_VERSION_SKEW      => esc_html__( 'Keeping live orders needs the store to run the same WooCommerce version as the backup, and the WooCommerce version changed since this backup was taken. Run the restore again without the keep-orders option, or use a backup from the current WooCommerce version.', 'mainwp' ),
@@ -356,10 +406,12 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_RESTORE_CHILD_UPDATE_REQUIRED => esc_html__( 'The MainWP Child plugin on this site is too old to restore a backup safely. Update MainWP Child on the site, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_SCHEMA_REPAIR_PENDING => esc_html__( 'The Dashboard database is missing an update that restores need, and MainWP could not add it. Check the MainWP log for the database error and that the database user has permission to alter tables. MainWP retries the update on a later Dashboard request, no more than once an hour, and restores stay paused until it succeeds.', 'mainwp' ),
             self::ERR_FTP_FAILED                    => esc_html__( 'Could not upload the backup to the FTP server. Check the FTP credentials and that the server is reachable, then try again.', 'mainwp' ),
+            self::ERR_SFTP_FAILED                   => esc_html__( 'Could not upload the backup to the SFTP server. Check the SFTP credentials, that the server is reachable, and that the remote folder is writable, then try again.', 'mainwp' ),
             self::ERR_DROPBOX_FAILED                => esc_html__( 'Could not upload the backup to Dropbox. Check the Dropbox connection settings and available storage space, then try again.', 'mainwp' ),
             self::ERR_S3_FAILED                     => esc_html__( 'Could not upload the backup to Amazon S3. Check the S3 credentials, bucket name, and permissions, then try again.', 'mainwp' ),
             self::ERR_GCS_FAILED                    => esc_html__( 'Could not upload the backup to Google Cloud Storage. Check the HMAC key, bucket name, and permissions, then try again.', 'mainwp' ),
             self::ERR_LOCAL_FAILED                  => esc_html__( 'Could not write to the backup folder on the Dashboard server. Check that the folder exists and is writable, then try again.', 'mainwp' ),
+            self::ERR_UPLOAD_FAILED                 => esc_html__( 'Could not upload the backup to the storage destination. Check the destination settings on the Backup Storage page, then try again.', 'mainwp' ),
             self::ERR_ENCRYPTION_REQUIRED           => esc_html__( 'Backup encryption is on, but this backup could not be encrypted, so it was not uploaded. Check the encryption configuration in Settings > Backup Settings, then run the backup again.', 'mainwp' ),
             self::ERR_HASH_MISMATCH                 => esc_html__( 'The downloaded backup file does not match the integrity hash reported by the child site. The file may have been modified or corrupted during the transfer. The local file was removed; try the download again.', 'mainwp' ),
             self::ERR_DL_FILE_NOT_FOUND             => esc_html__( 'The backup file was not found on the child site. It may have been removed by a cleanup. Run a new backup and try again.', 'mainwp' ),

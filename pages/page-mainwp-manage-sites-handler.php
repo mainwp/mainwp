@@ -110,7 +110,10 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                     $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 }
             } catch ( MainWP_Exception $e ) {
-                $ret['response']   = $e->getMessage();
+                $ret['response'] = $e->getMessage();
+                if ( 'HTTPERROR' === $e->getMessage() ) {
+                    $ret['error_message'] = MainWP_Error_Helper::get_error_message( $e, false, true );
+                }
                 $ret['resp_data']  = MainWP_Connect_Failure_Ux::readable_response_from_output( $output, $e );
                 $ret['failure_ux'] = MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( $e, $output ) );
                 if ( 'TIMEOUT' === $e->getMessage() ) {
@@ -228,7 +231,11 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
         if ( '' !== $error ) {
-            $ret['response']   = 'ERROR ' . $error;
+            $ret['response'] = 'ERROR ' . $error;
+            // The diagnostics panel replaces the response text on screen, so transport failures also send their readable text.
+            if ( 0 === strpos( $error, 'HTTP error' ) ) {
+                $ret['error_message'] = html_entity_decode( $error, ENT_QUOTES, 'UTF-8' );
+            }
             $ret['resp_data']  = isset( $output['fetch_data'] ) ? $output['fetch_data'] : MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
             $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
             die( wp_json_encode( $ret ) );
@@ -282,7 +289,8 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $params, $output );
 
         if ( '' !== $error ) {
-            return array( 'error' => $error );
+            // add_wp_site() returns escaped UI text; REST, Abilities and WP-CLI callers expect plain text.
+            return array( 'error' => html_entity_decode( wp_strip_all_tags( $error ), ENT_QUOTES, 'UTF-8' ) );
         }
         return array(
             'response' => $message,

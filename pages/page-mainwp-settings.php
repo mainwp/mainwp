@@ -1144,10 +1144,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <label class="six wide column middle aligned">
                         <?php
                         MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_before_upgrade_days', (int) $mainwp_backup_before_upgrade_days );
-                        esc_html_e( 'Days without of a full backup tolerance', 'mainwp' );
+                        esc_html_e( 'Days without a full backup (tolerance)', 'mainwp' );
                         ?>
                         </label>
-                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the number of days without of backup tolerance.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how many days without a full backup to tolerate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <input type="text"  class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade_days" id="mainwp_backup_before_upgrade_days" value="<?php echo esc_attr( $mainwp_backup_before_upgrade_days ); ?>" />
                         </div>
                     </div>
@@ -1285,7 +1285,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <option value="0" <?php echo 0 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Mon', 'mainwp' ); ?></option>
                         <option value="1" <?php echo 1 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Tue', 'mainwp' ); ?></option>
                         <option value="2" <?php echo 2 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Wed', 'mainwp' ); ?></option>
-                        <option value="3" <?php echo 3 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Thus', 'mainwp' ); ?></option>
+                        <option value="3" <?php echo 3 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Thu', 'mainwp' ); ?></option>
                         <option value="4" <?php echo 4 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Fri', 'mainwp' ); ?></option>
                         <option value="5" <?php echo 5 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Sat', 'mainwp' ); ?></option>
                         <option value="6" <?php echo 6 === $dayinweek_AutoUpdate ? 'selected' : ''; ?>><?php esc_html_e( 'Sun', 'mainwp' ); ?></option>

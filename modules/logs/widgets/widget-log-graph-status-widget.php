@@ -150,7 +150,7 @@ class Log_Graph_Status_Widget {
                     },
                     legend: {
                         labels: {
-                            colors: '#999'
+                            colors: 'inherit'
                         }
                     },
                     stroke: {

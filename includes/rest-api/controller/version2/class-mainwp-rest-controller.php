@@ -1973,7 +1973,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                 )
             );
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'get_post_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'get_post_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         // Validate response.

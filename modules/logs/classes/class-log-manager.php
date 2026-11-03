@@ -487,7 +487,11 @@ class Log_Manager {
             do_action( 'mainwp_log_action', 'Module Log :: Archive logs schedule start.', MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY );
             $time   = time();
             $before = $time - $ttl;
-            Log_DB_Archive::instance()->archive_sites_changes( $before );
+            if ( false === Log_DB_Archive::instance()->archive_sites_changes( $before ) ) {
+                // Leave the run times alone so the schedule does not report an archive that did not happen.
+                do_action( 'mainwp_log_action', 'Module Log :: Archive logs schedule failed. The logs were kept; see the server error log.', MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY );
+                return;
+            }
             update_option( 'mainwp_module_log_last_time_auto_archive_logs', $time );
             update_option( 'mainwp_module_log_next_time_auto_archive_logs', $time + $ttl );
         }

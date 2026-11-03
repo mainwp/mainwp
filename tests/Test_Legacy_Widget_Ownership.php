@@ -233,7 +233,7 @@ class Test_Legacy_Widget_Ownership extends \WP_UnitTestCase {
 			$this->assertSame( $total, array_sum( $rows[1] ) );
 			$this->assertMatchesRegularExpression( '/shield alternate icon"><\/i>\s*' . $total . '<\/span>/', $body );
 		} elseif ( 'plugins' === $widget ) {
-			preg_match_all( '/x:\s*\x27Ownership(\w+)"\x27,\s*y:\s*(\d+)/', $body, $points, PREG_SET_ORDER );
+			preg_match_all( '/x:\s*"Ownership(\w+)",\s*y:\s*(\d+)/', $body, $points, PREG_SET_ORDER );
 			$this->assertCount( 2 * count( $expected ), $points );
 			foreach ( $expected as $name ) {
 				$counts = array();

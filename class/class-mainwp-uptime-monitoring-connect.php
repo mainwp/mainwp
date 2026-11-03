@@ -200,6 +200,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $mo_apply_method = $chk_http_method;
         }
 
+        $mo_apply_method = static::get_apply_request_method( $mo_apply_type, $mo_apply_method );
+
         if ( 'head' !== $mo_apply_method ) {
             curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
         }
@@ -308,7 +310,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $http_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
         $http_error = '';
-        if ( curl_errno( $ch ) ) {
+        $http_errno = (int) curl_errno( $ch );
+        if ( $http_errno ) {
             $http_error = curl_error( $ch );
         }
 
@@ -392,6 +395,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $resp_info = array(
             'http_code'        => $http_code,
             'http_error'       => $http_error,
+            'http_errno'       => $http_errno,
             'down_count'       => $down_count,
             'retry'            => $set_retry,
             'is_pending'       => $is_pending ? 1 : 0,
@@ -555,7 +559,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             $mo_apply_type   = static::get_apply_setting( 'type', $website->type, $global_settings, 'useglobal', 'http' );
             $mo_apply_method = static::get_apply_setting( 'method', $website->method, $global_settings, 'useglobal', 'get' );
-            $mo_apply_method = strtolower( $mo_apply_method );
+            $mo_apply_method = static::get_apply_request_method( $mo_apply_type, $mo_apply_method );
 
             if ( 'head' !== $mo_apply_method ) {
                 curl_setopt( $ch, CURLOPT_POST, 'post' === $mo_apply_method ? true : false );
@@ -748,10 +752,12 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                     if ( isset( $requestMonitorIds[ $resource_id ] ) ) {
                         $mo_id      = $requestMonitorIds[ $resource_id ];
                         $http_error = '';
-                        if ( curl_errno( $info['handle'] ) ) {
+                        $http_errno = (int) curl_errno( $info['handle'] );
+                        if ( $http_errno ) {
                             $http_error = curl_error( $info['handle'] );
                         }
                         $output->requests_info[ $mo_id ]['http_error'] = $http_error;
+                        $output->requests_info[ $mo_id ]['http_errno'] = $http_errno;
                         $output->requests_info[ $mo_id ]['http_code']  = $http_code;
 
                         $output->requests_info[ $mo_id ]['is_pending'] = $is_pending ? 1 : 0;
@@ -816,15 +822,16 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $http_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
         $http_error = '';
+        $http_errno = (int) curl_errno( $ch );
 
-        if ( curl_errno( $ch ) ) {
+        if ( $http_errno ) {
             $http_error = curl_error( $ch );
         }
 
         $retry_later      = static::is_http_code_type( 'retry', $http_code );
         $is_notallowed    = static::is_http_code_type( 'notallowed', $http_code );
         $mo_apply_type    = static::get_apply_setting( 'type', $website->type, $global_settings, 'useglobal', 'http' );
-        $mo_apply_method  = static::get_apply_setting( 'method', $website->method, $global_settings, 'useglobal', 'get' );
+        $mo_apply_method  = static::get_apply_request_method( $mo_apply_type, static::get_apply_setting( 'method', $website->method, $global_settings, 'useglobal', 'get' ) );
         $mo_apply_timeout = static::get_apply_setting( 'timeout', (int) $website->timeout, $global_settings, -1, 60 );
 
         if ( $retry_later && empty( $website->issub ) ) {
@@ -850,11 +857,13 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             if ( $_try_second ) {
                 static::fetch_single_uptime_url( $ch, $handler, $website, $output, $params, true );
+                return; // The retry handled the final response.
             }
         }
 
         $output->requests_info[ $mo_id ]['http_code']  = $http_code;
         $output->requests_info[ $mo_id ]['http_error'] = $http_error;
+        $output->requests_info[ $mo_id ]['http_errno'] = $http_errno;
 
         $output->requests_info[ $mo_id ]['is_pending'] = $is_pending ? 1 : 0;
         $output->requests_info[ $mo_id ]['retry']      = $set_retry ? 1 : 0;
@@ -895,6 +904,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $http_code  = isset( $resp_info['http_code'] ) ? $resp_info['http_code'] : 0;
         $http_error = isset( $resp_info['http_error'] ) ? $resp_info['http_error'] : '';
+        $http_errno = isset( $resp_info['http_errno'] ) ? (int) $resp_info['http_errno'] : 0;
         $start      = isset( $resp_info['start'] ) ? $resp_info['start'] : 0;
         $end        = isset( $resp_info['end'] ) ? $resp_info['end'] : 0;
 
@@ -907,7 +917,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $ping = $end - $start; // ms - millisecond.
 
-        $parsed = $this->parse_response_status( $http_code, $http_error );
+        $parsed = $this->parse_response_status( $http_code, $http_error, $http_errno );
 
         $status  = $parsed['status'];
         $error   = $parsed['error'];
@@ -981,8 +991,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 $keyword = $monitor->keyword;
             }
 
-            if ( ! empty( $keyword ) && ! empty( $data ) ) {
-                $keywordFound = false !== stripos( $data, $keyword );
+            if ( ! empty( $keyword ) ) {
+                $keywordFound = is_string( $data ) && false !== stripos( $data, $keyword );
                 $heart_msg   .= '. Keyword ' . ( $keywordFound ? 'is' : 'not' ) . ' found.';
             }
         }
@@ -990,6 +1000,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         // forced status down.
         if ( ! $keywordFound ) {
             $status = static::DOWN;
+            // The status word was written before the keyword check.
+            $heart_msg = "{$http_code} - down." . substr( $heart_msg, strlen( "{$http_code} - {$_status_str}" ) );
         }
 
         $max_retries = static::get_apply_setting( 'maxretries', (int) $monitor->maxretries, $global_settings, -1, 0 );
@@ -1171,31 +1183,33 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      *
      * @param  mixed $httpCode http code.
      * @param  mixed $error error.
+     * @param  int   $errno cURL error number.
      * @return mixed
      */
-    public function parse_response_status( $httpCode, $error = false ) {
+    public function parse_response_status( $httpCode, $error = false, $errno = 0 ) {
 
         $httpCode     = (int) $httpCode;
         $status       = '';
         $status_error = '';
 
-        if ( ! empty( $error ) ) {
-            switch ( $error ) {
+        if ( ! empty( $error ) || 0 !== (int) $errno ) {
+            $classified = MainWP_Error_Helper::classify_transport_error( $errno, $error );
+            switch ( (int) $errno ) {
                 case CURLE_OPERATION_TIMEOUTED:
-                    $status_error = 'Error: Request timed out.';
+                    $status_error = $classified['message'];
                     $status       = static::TIMEOUTED_ERROR;
                     break;
                 case CURLE_SSL_CACERT:
                 case CURLE_SSL_CERTPROBLEM:
-                    $status_error = 'Error: SSL certificate expired or invalid.';
+                    $status_error = $classified['message'];
                     $status       = static::CERT_ERROR;
                     break;
                 case CURLE_COULDNT_RESOLVE_HOST:
-                    $status_error = 'Error: DNS resolution failed, could not resolve host.';
+                    $status_error = $classified['message'];
                     $status       = static::RESOLVEHOST_ERROR;
                     break;
                 default:
-                    $status_error = 'Error: ' . $error;
+                    $status_error = null !== $classified ? $classified['message'] : 'Error: ' . $error;
                     $status       = static::UNDEFINED_ERROR;
                     break;
             }
@@ -1391,6 +1405,22 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
         // NOTE: need to match type of values.
         return ( $indi_value === $apply_global_value ) ? $glo_value : $indi_value; //phpcs:ignore -- NOSONAR - compatible.
+    }
+
+    /**
+     * Get the request method a monitor check uses.
+     *
+     * A keyword monitor needs the response body to look for its keyword, so it always uses GET.
+     *
+     * @param  string $mo_apply_type   Monitor type in use.
+     * @param  string $mo_apply_method Method from the monitor or global settings.
+     * @return string Lowercase request method.
+     */
+    public static function get_apply_request_method( $mo_apply_type, $mo_apply_method ) {
+        if ( 'keyword' === $mo_apply_type ) {
+            return 'get';
+        }
+        return strtolower( (string) $mo_apply_method );
     }
 
     /**

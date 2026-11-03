@@ -26,6 +26,30 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Private_Root_Fixture;
 
 	/**
+	 * A failed destination setup identifies which server owns the path.
+	 */
+	public function test_mwp_2130_directory_failure_names_dashboard_destination(): void {
+		$this->assertSame( 7, file_put_contents( $this->private_root, 'blocked' ) );
+		ob_start();
+		try {
+			\MainWP\Dashboard\MainWP_Backup_Page::render_backup_environment_notices();
+		} finally {
+			$notice = ob_get_clean();
+		}
+		$this->assertStringContainsString( 'Dashboard server', $notice );
+		$this->assertStringContainsString( 'Child site', $notice );
+		$this->assertStringContainsString( esc_html( $this->private_root ), $notice );
+		$this->assertStringContainsString( 'white-space: pre-line;', $notice );
+		$error = MainWP_Backup_Private_Root::site_dir( 7 );
+		$this->assertWPError( $error );
+		$this->assertSame( 'mainwp_backup_private_root_unavailable', $error->get_error_code() );
+		$this->assertStringContainsString( $this->private_root, $error->get_error_message() );
+		$this->assertStringContainsString( 'Dashboard server', $error->get_error_message() );
+		$this->assertStringContainsString( 'Child site', $error->get_error_message() );
+		$this->assertStringContainsString( "\n\n", $error->get_error_message() );
+	}
+
+	/**
 	 * Map temporary storage through the same ancestor calculation as a subdirectory install.
 	 */
 	private function map_probe_root(): void {

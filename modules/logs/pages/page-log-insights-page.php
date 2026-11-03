@@ -926,7 +926,10 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         if ( $user_cancel ) {
             $status = 'cancelled';
         } else {
-            Log_DB_Archive::instance()->archive_sites_changes( 0, 200, 1 );
+            if ( false === Log_DB_Archive::instance()->archive_sites_changes( 0, 200, 1 ) ) {
+                // Keep the stored status so the update is offered again instead of being marked finished.
+                die( wp_json_encode( array( 'error' => esc_html__( 'Could not move these events to the archive, so they were kept. Check the server error log.', 'mainwp' ) ) ) );
+            }
             $count = Log_DB_Helper::instance()->count_legacy_dismissed();
             if ( $count ) {
                 $status = 'running';

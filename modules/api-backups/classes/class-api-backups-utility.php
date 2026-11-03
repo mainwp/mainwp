@@ -849,7 +849,9 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         // If post $value is empty, delete option.
         if ( empty( $value ) ) {
             // Delete the site serviceapi key.
-            Api_Backups_Helper::update_website_option( $website_id, $opt_name, '' );
+            if ( false === Api_Backups_Helper::update_website_option( $website_id, $opt_name, '' ) ) {
+                return false;
+            }
             if ( ! empty( $key_file ) ) {
                 do_action( 'mainwp_delete_key_file', $key_file );
             }
@@ -885,7 +887,7 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( ! empty( $encrypted ) ) {
             Api_Backups_Helper::update_website_option( $website_id, $opt_name, $encrypted );
-            // The native option writer returns null on both success and failure.
+            // Confirm the stored envelope before retiring the previous key file.
             $saved = Api_Backups_Helper::get_website_options( $website_id, array( $opt_name ) );
             if ( isset( $saved[ $opt_name ] ) && $encrypted === $saved[ $opt_name ] ) {
                 if ( ! empty( $key_file ) && $key_file !== $new_key_file ) {

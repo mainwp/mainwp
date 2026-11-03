@@ -128,17 +128,58 @@ class Log_Graph_Clients_Widget {
         <div id="mainwp-module-log-chart-clients-wrapper" ></div>
         <script type="text/javascript">
             jQuery( document ).ready( function() {
+                // A client with no sites has no slice to hover, so a shortened legend name keeps the full name as a title.
+                // ApexCharts turns off pointer events inside the legend text, so the title goes on the legend item.
+                let set_legend_titles = function( chart ) {
+                    chart.el.querySelectorAll( '.apexcharts-legend-series' ).forEach( function( item ) {
+                        let point = options.series[0].data[ parseInt( item.getAttribute( 'rel' ), 10 ) - 1 ];
+                        if ( point && Array.from( String( point.x ) ).length > 30 ) {
+                            item.title = String( point.x );
+                        }
+                    } );
+                };
                 let options = {
                     chart: {
                         type: 'pie',
-                        height: 350,
+                        // Fit the widget's visible area so the legend below the pie isn't scrolled out of view.
+                        height: '100%',
+                        // ApexCharts rebuilds the legend on each update.
+                        events: { mounted: set_legend_titles, updated: set_legend_titles },
                     },
+                    // ApexCharts inserts these labels as HTML.
                     tooltip: {
-                        theme: 'dark'
+                        theme: 'dark',
+                        y: {
+                            title: { formatter: function( name ) { return name ? mainwp_escape_html( name ) + ': ' : ''; } },
+                            // Thin slices print no percentage label. When every client has no sites the percentage is NaN, so show the count alone.
+                            // For a pie slice ApexCharts 5.3.3 passes the chart's own fields in opts, with no opts.w.
+                            formatter: function( value, opts ) {
+                                let globals = ( opts.w || opts ).globals;
+                                let percent = globals ? globals.seriesPercent[ opts.seriesIndex ] : null;
+                                percent = percent ? Number( percent[0] ) : NaN;
+                                return isFinite( percent ) ? value + ' (' + percent.toFixed( 1 ) + '%)' : value;
+                            },
+                        },
+                        // A cursor-centred tooltip runs past the widget edge with long names; this one wraps inside the chart (admin.css).
+                        fixed: { enabled: true, position: 'topLeft' },
                     },
+                    // A side legend takes the width the pie needs, so long names go below it, shortened; the tooltip keeps the full name.
                     legend: {
+                        position: 'bottom',
+                        formatter: function( name ) {
+                            let chars = Array.from( String( name ) );
+                            return mainwp_escape_html( chars.length > 30 ? chars.slice( 0, 29 ).join( '' ) + '\u2026' : name );
+                        },
                         labels: {
-                            colors: '#999'
+                            colors: 'inherit'
+                        }
+                    },
+                    // Percentages on thin slices overlap their neighbours; the tooltip still shows those values.
+                    plotOptions: {
+                        pie: {
+                            dataLabels: {
+                                minAngleToShowLabel: 25
+                            }
                         }
                     },
                     stroke: {
@@ -149,7 +190,7 @@ class Log_Graph_Clients_Widget {
                         data: [
                             <?php foreach ( $clients as $client ) : ?>
                             {
-                            x: '<?php echo esc_js( $client['name'] ); ?>',
+                            x: <?php echo wp_json_encode( (string) $client['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                             y: <?php echo ! empty( $client['selected_sites'] ) ? count( explode( ',', $client['selected_sites'] ) ) : 0; ?>,
                             fillColor: "#18a4e0",
                             },

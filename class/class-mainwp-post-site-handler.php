@@ -73,6 +73,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
 
         // Widget: RightNow.
         $this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
+        $this->add_action( 'mainwp_command_palette_search_sites', array( MainWP_Command_Palette::class, 'ajax_search_sites' ) );
 
         $this->add_action( 'mainwp_checksites', array( &$this, 'ajax_checksites' ) );
         $this->add_action( 'mainwp_manage_sites_suspend_site', array( &$this, 'manage_suspend_site' ) );

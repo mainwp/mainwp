@@ -1733,7 +1733,8 @@ KEY idx_wpid_issub (wpid, issub)";
         $start = gmdate( 'Y-m-d 00:00:00', $start_ts );
         $end   = gmdate( 'Y-m-d 23:59:59', $end_ts );
 
-        $sum_total = ', SUM(he.ping_ms) as resp_total_ms ';
+        // Average the checks in each hour/day group; resp_total_ms keeps its name for existing callers.
+        $sum_total = ', AVG(he.ping_ms) as resp_total_ms ';
 
         if ( 'hour' === $group_time ) {
             $group_by = ' GROUP BY HOUR(he.time) ';

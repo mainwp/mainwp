@@ -24,6 +24,17 @@ class MainWP_Backup_Retention_Protection {
     const DROPBOX_IDENTITY_FIELD = '_mainwp_retention_identity';
 
     /**
+     * Bound on late writes after the later of the age floor and latest attempt
+     * stamp. Acquisition stamps immediately; renewal stamps lag by at most 60
+     * seconds. A stale worker can finish an in-flight provider request after its
+     * lease expires. HTTP request sequences take at most 600 seconds, including
+     * a Dropbox token refresh; the abandoned-lease age leaves margin for the
+     * throttle and covers the existing SFTP window. The lease term mirrors the
+     * cron lane's `budget + 60`; keep it in step if DEFAULT_BUDGET_SECONDS changes.
+     */
+    const LATE_WRITE_SECONDS = MainWP_Backup_Upload_Driver::DEFAULT_BUDGET_SECONDS + 60 + MainWP_Backup_Upload_Job_Store::PRUNE_STALE_LEASE_SECONDS;
+
+    /**
      * Read the absent-by-default task opt-in.
      *
      * @param int $task_id Task identity.
@@ -400,10 +411,14 @@ class MainWP_Backup_Retention_Protection {
     /**
      * Preserve upload age when upload rows are replaced by delete jobs.
      *
+     * Unfinished uploads need a retention floor. Their latest attempt stamp
+     * extends the write window and lags renewal by at most 60 seconds.
+     *
      * @param object      $job Upload job.
      * @param object|null $snapshot Snapshot row.
      * @param int|null    $now Reserved for compatibility; reads do not establish age.
-     * @return array Immutable storage age or an explicit unknown marker.
+     * @return array Upload time for complete uploads, the latest possible write
+     *               for unfinished ones, or an explicit unknown marker.
      */
     public static function upload_age_evidence( object $job, ?object $snapshot, ?int $now = null ): array {
         unset( $now );
@@ -423,9 +438,11 @@ class MainWP_Backup_Retention_Protection {
         }
         // Only retention execution records this floor. Unobserved uploads stay
         // unknown to previews; prune claims and resumed saves preserve the floor.
-        $floor = (int) ( $job->checkpoint['storage_age_floor'] ?? 0 );
+        // Delete jobs copy the latest possible write so their holds match.
+        $floor        = (int) ( $job->checkpoint['storage_age_floor'] ?? 0 );
+        $last_attempt = (int) ( $job->checkpoint['last_attempt_at'] ?? 0 );
         return array(
-            'uploaded_at' => $floor,
+            'uploaded_at' => $floor > 0 ? max( $floor, $last_attempt ) + self::LATE_WRITE_SECONDS : 0,
             'unknown_age' => $floor <= 0,
         );
     }

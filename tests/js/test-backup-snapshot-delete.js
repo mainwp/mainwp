@@ -11,6 +11,7 @@ const load = name => {
 };
 const context = {
     snapshotDeleteBusy: false,
+    canDelete: true,
     snapshotsTable: null,
     deleteLabels: {
         action: 'Delete',
@@ -33,7 +34,14 @@ context.snapshotDeleteBusy = true;
 assert.match( context.deleteButton( { id: 17, status: 'complete' } ), /disabled/ );
 assert.match( context.deleteButton( { id: 17, status: 'complete' } ), /aria-disabled="true"/ );
 assert.equal( context.deleteButton( { id: 17, status: 'pruned' } ), '' );
-console.log( 'OK (5 snapshot Delete row cases)' );
+context.canDelete = false;
+for ( const status of [ 'complete', 'damaged', 'pruned' ] ) {
+    assert.equal( context.deleteButton( { id: 17, status } ), '', status + ' rows hide Delete without the right.' );
+}
+context.canDelete = true;
+context.snapshotDeleteBusy = false;
+assert.match( context.deleteButton( { id: 17, status: 'damaged' } ), /mainwp-delete-snapshot/ );
+console.log( 'OK (9 snapshot Delete row cases)' );
 
 [ 'snapshotIdList', 'cloudQueueLabel', 'deleteResultLines', 'setDeleteMessages', 'deletePreviewItem', 'showDeletePreview', 'showDeleteResponse' ].forEach( load );
 assert.equal( context.snapshotIdList( [ 171, 172 ] ), '#171, #172' );

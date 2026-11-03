@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Common;
+use MainWP\Dashboard\MainWP_Error_Helper;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Sites_Handler;
 use MainWP\Dashboard\MainWP_System;
@@ -45,6 +46,25 @@ class Add_Site_CLI_Output_Double {
 	public static function error( $message ) {
 		self::$messages[] = array( 'error', $message );
 		throw new Add_Site_CLI_Error();
+	}
+
+	/**
+	 * Capture a plain output line.
+	 *
+	 * @param string $message Command output.
+	 */
+	public static function line( $message ) {
+		self::$messages[] = array( 'line', $message );
+	}
+
+	/**
+	 * Return text without color tokens.
+	 *
+	 * @param string $message Command output with color tokens.
+	 * @return string Uncolored output.
+	 */
+	public static function colorize( $message ) {
+		return str_replace( array( '%g', '%r', '%n' ), '', $message );
 	}
 }
 
@@ -337,6 +357,39 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 			array( 'SSL certificate problem: self-signed certificate' ),
 			array( 'SSL: no alternative certificate subject name matches target hostname' ),
 		);
+	}
+
+	/**
+	 * The readable certificate message still carries the TLS opt-out hint and reads as plain text.
+	 */
+	public function test_classified_certificate_failure_keeps_tls_hint() {
+		$args                        = $this->arguments();
+		$args['adminpassword']       = 'CliFixture42';
+		$this->untrusted_certificate = true;
+		$classified                  = MainWP_Error_Helper::classify_transport_error( 60, 'SSL certificate problem: self-signed certificate' );
+		$this->transport_error       = $classified['message'];
+		list( $status, $message )    = $this->run_command( $args );
+		$this->assertSame( 'error', $status );
+		$this->assertStringContainsString( "The site's SSL certificate could not be verified.", $message );
+		$this->assertStringNotContainsString( '&#039;', $message );
+		$this->assertStringContainsString( 'TLS certificate verification failed', $message );
+		$this->assertStringContainsString( '--ssl_verify=0', $message );
+	}
+
+	/**
+	 * A failed reconnect prints its message as plain text, not HTML entities.
+	 */
+	public function test_reconnect_failure_prints_plain_text() {
+		$translate = static function ( $translation, $text ) {
+			return 'This operation is not allowed!' === $text ? "You can't reconnect this site." : $translation;
+		};
+		add_filter( 'gettext', $translate, 10, 2 );
+		try {
+			MainWP_WP_CLI_Handle::callback_site_reconnect_site( array(), array(), false );
+		} finally {
+			remove_filter( 'gettext', $translate, 10 );
+		}
+		$this->assertSame( array( 'line', "You can't reconnect this site." ), end( Add_Site_CLI_Output_Double::$messages ) );
 	}
 
 	/**

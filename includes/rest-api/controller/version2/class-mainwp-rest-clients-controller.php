@@ -569,7 +569,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 $resp_data['error'] = esc_html__( 'Add client failed. Please try again.', 'mainwp' );
             }
         } catch ( Exception $e ) {
-            $resp_data['error'] = wp_strip_all_tags( $e->getMessage() );
+            $resp_data['error'] = ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : wp_strip_all_tags( $e->getMessage() ) );
         }
         return rest_ensure_response( $resp_data );
     }
@@ -622,7 +622,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 $resp_data['error'] = esc_html__( 'Update client failed. Please try again.', 'mainwp' );
             }
         } catch ( Exception $e ) {
-            $resp_data['error'] = wp_strip_all_tags( $e->getMessage() );
+            $resp_data['error'] = ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : wp_strip_all_tags( $e->getMessage() ) );
         }
         return rest_ensure_response( $resp_data );
     }
@@ -773,7 +773,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'suspended' => 1,
         );
 
-        MainWP_DB_Client::instance()->update_client( $params );
+        $updated = MainWP_DB_Client::instance()->update_client( $params );
+
+        if ( $updated && 1 !== (int) $item->suspended ) {
+            MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $item->client_id, 1 );
+        }
 
         $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $item->client_id );
 
@@ -808,7 +812,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'suspended' => 0,
         );
 
-        MainWP_DB_Client::instance()->update_client( $params );
+        $updated = MainWP_DB_Client::instance()->update_client( $params );
+
+        if ( $updated && 1 === (int) $item->suspended ) {
+            MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $item->client_id, 0 );
+        }
 
         $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $item->client_id );
 
@@ -849,6 +857,12 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'include' => ! empty( $args['include'] ) ? $args['include'] : '',
             'search'  => ! empty( $args['s'] ) ? $args['s'] : '',
         );
+
+        // A scoped key sees the general fields (client 0) and the fields of clients it reaches through an allowed site.
+        $allowed_sites = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' !== $allowed_sites ) {
+            $params['client_id'] = array_merge( array( 0 ), \MainWP\Dashboard\MainWP_Abilities_Util::get_accessible_client_ids( $allowed_sites ) );
+        }
 
         // Get client fields.
         $fields = MainWP_DB_Client::instance()->get_client_fields_by_params( $params );

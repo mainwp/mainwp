@@ -26,3 +26,10 @@
         height: calc(100% - 120px) !important;
     }
 }
+
+/* The clients pie tooltip is pinned inside the chart; long client names wrap instead of running past the widget edge. */
+#mainwp-module-log-chart-clients-wrapper .apexcharts-tooltip {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}

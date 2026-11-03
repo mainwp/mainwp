@@ -200,6 +200,8 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 			'cancel-restore'         => 'restore_backups',
 			'update-backup-settings' => 'manage_dashboard_settings',
 			'list-backup-tasks'      => 'execute_backups',
+			'delete-backup-snapshot' => 'delete_backups',
+			'cleanup-site-backups'   => 'delete_backups',
 		) as $name => $right ) {
 			foreach ( array( 'application-password', 'application-password-cookie', 'cookie-nonce', 'cookie-only' ) as $state ) {
 				foreach ( array( true, false ) as $granted ) {
@@ -219,9 +221,15 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 	private function input( string $name ): array {
 		switch ( $name ) {
 			case 'restore-site-snapshot':
+			case 'delete-backup-snapshot':
 				return array(
 					'site_id_or_domain' => $this->fixture['site'],
 					'snapshot_id'       => $this->fixture['snapshot'],
+					'dry_run'           => true,
+				);
+			case 'cleanup-site-backups':
+				return array(
+					'site_id_or_domain' => $this->fixture['site'],
 					'dry_run'           => true,
 				);
 			case 'rollback-restore':
@@ -288,6 +296,9 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 	 * @param bool   $granted Whether the right is held.
 	 */
 	public function test_rights_over_real_rest_authentication( $name, $right, $state, $granted ) {
+		if ( 'delete_backups' === $right ) {
+			add_filter( 'mainwp_backups_delete_right_supported', '__return_true' );
+		}
 		$GLOBALS['wp']->query_vars['rest_route'] = '/wp-abilities/v1/abilities/mainwp/' . $name . '-v1/run';
 		$this->authenticate( $state );
 		$filter = static function ( $allowed, $type, $cap ) use ( $right, $granted ) {
@@ -325,6 +336,7 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 			}
 		} finally {
 			remove_filter( 'mainwp_currentusercan', $filter, 10 );
+			remove_filter( 'mainwp_backups_delete_right_supported', '__return_true' );
 		}
 	}
 
@@ -493,6 +505,44 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 			remove_filter( 'mainwp_currentusercan', $deny, 10 );
 		}
 		$this->assertIsArray( MainWP_Abilities_Backups::execute_list_backup_tasks( array() ) );
+	}
+
+	/** Direct integrations must not bypass delete rights by skipping permission callbacks. */
+	public function test_delete_second_right_at_permission_and_execute(): void {
+		$deny = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'delete_backups' === $right ? false : $allowed;
+		};
+		add_filter( 'mainwp_backups_delete_right_supported', '__return_true' );
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			foreach ( array( 'delete-backup-snapshot', 'cleanup-site-backups' ) as $name ) {
+				$method = 'execute_' . str_replace( '-', '_', $name );
+				foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+					$input = $this->input( $name );
+					unset( $input['dry_run'] );
+					$input[ $mode ] = true;
+					$errors         = $this->guarded(
+						static function () use ( $name, $method, $input ) {
+							return array( wp_get_ability( 'mainwp/' . $name . '-v1' )->check_permissions( $input ), MainWP_Abilities_Backups::$method( $input ) );
+						}
+					);
+					foreach ( $errors as $error ) {
+						$this->assertWPError( $error );
+						$this->assertSame( 'mainwp_insufficient_right', $error->get_error_code() );
+						$this->assertSame(
+							array(
+								'status' => 403,
+								'right'  => 'delete_backups',
+							),
+							$error->get_error_data()
+						);
+					}
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			remove_filter( 'mainwp_backups_delete_right_supported', '__return_true' );
+		}
 	}
 
 	/**

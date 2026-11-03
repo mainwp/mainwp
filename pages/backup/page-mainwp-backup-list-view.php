@@ -400,7 +400,13 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             return '<span class="ui small red label">' . $label . '</span>';
         }
 
-        $reason = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( MainWP_Backup_Error_Codes::sanitize_message( $reason ) ) ) );
+        // Friendly text first; the provider's message and the code follow for support.
+        $parts  = MainWP_Backup_Error_Codes::stored_error_parts( $reason );
+        $reason = $parts['message'] . ' ' . $parts['detail'];
+        if ( '' !== $parts['code'] ) {
+            $reason .= ' (' . $parts['code'] . ')';
+        }
+        $reason = trim( (string) preg_replace( '/\s+/', ' ', wp_strip_all_tags( $reason ) ) );
         return '<span class="ui small red label" data-tooltip="' . esc_attr( $reason ) . '" data-position="left center" data-inverted="">' . $label . '</span>';
     }
 

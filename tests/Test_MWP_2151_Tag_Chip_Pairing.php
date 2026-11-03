@@ -63,6 +63,21 @@ class Test_MWP_2151_Tag_Chip_Pairing extends \WP_UnitTestCase {
 		$this->assertSame( $this->expected_chips( $tags ), $this->parse_chips( $html, 'admin.php?page=ManageClients&tags=' ) );
 	}
 
+	/** A client row is paired by ID even when it carries a color list and its names are unique. */
+	public function test_client_row_with_colors_still_pairs_by_id(): void {
+		$beta  = $this->create_tag( 'Beta', '#1565c0' );
+		$alpha = $this->create_tag( 'Alpha', '#c62828' );
+		$row   = array(
+			'wpgroups'        => 'Alpha,Beta',
+			'wpgroupids'      => $beta['id'] . ',' . $alpha['id'],
+			'wpgroups_colors' => '#c62828,#1565c0',
+		);
+
+		$html = MainWP_System_Utility::get_site_tags( $row, true );
+
+		$this->assertSame( $this->expected_chips( array( $alpha, $beta ) ), $this->parse_chips( $html, 'admin.php?page=ManageClients&tags=' ) );
+	}
+
 	/** client_tags_filter() returns one entry per tag, with each name next to its own ID. */
 	public function test_client_tags_filter_lines_up_names_and_ids(): void {
 		$tags   = $this->create_problem_tags();

@@ -1006,10 +1006,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Rows carry tag names, IDs and colors as comma-joined lists. Pairing them by
      * position goes wrong when a name contains a comma, when two tags share a name,
-     * or when the lists are sorted differently, as in client rows. A row whose lists
-     * line up one to one keeps positional pairing; any other row is resolved by tag
-     * ID, since IDs never contain a comma. If some IDs have no stored tag, the row
-     * falls back to positional pairing.
+     * or when the lists are sorted differently, as in client rows. A site row whose
+     * lists line up one to one keeps positional pairing; client rows and any other
+     * site row are resolved by tag ID, since IDs never contain a comma. If some IDs
+     * have no stored tag, the row falls back to positional pairing.
      *
      * @param string      $names  Comma-joined tag names.
      * @param string      $ids    Comma-joined tag IDs.
@@ -1026,7 +1026,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $tag_ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
         $folded  = array_unique( array_map( 'strtolower', array_map( 'trim', $names ) ) );
 
-        $lined_up = count( $names ) === count( $ids ) && count( $colors ) === count( $ids ) && count( $folded ) === count( $names );
+        $lined_up = ! $unique && count( $names ) === count( $ids ) && count( $colors ) === count( $ids ) && count( $folded ) === count( $names );
 
         $rows = array();
         if ( ! $lined_up && ! empty( $tag_ids ) ) {

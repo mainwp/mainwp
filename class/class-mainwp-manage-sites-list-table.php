@@ -904,7 +904,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $req_orderby = null;
         $req_order   = null;
 
-        $extra_view = apply_filters( 'mainwp_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status' ) );
+        // premium_upgrades: sync stores it as a site option; the wp table column of the same name stays empty.
+        $extra_view = apply_filters( 'mainwp_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status', 'premium_upgrades' ) );
         $extra_view = array_unique( $extra_view );
 
         if ( $optimize ) {

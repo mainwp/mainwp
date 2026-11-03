@@ -99,6 +99,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_RESTORE_DECRYPT_CORRUPT = 'mainwp_restore_decrypt_corrupt';
     const ERR_RESTORE_DECRYPT_KEY     = 'mainwp_restore_decrypt_key';
 
+    // Restore transfer: the Child stopped a restore that received no backup data within its stall window.
+    const ERR_RESTORE_TRANSFER_STALLED = 'mainwp_restore_transfer_stalled';
+
     // Restore apply.
     const ERR_RESTORE_TARGET_NOT_WRITABLE = 'mainwp_restore_target_not_writable';
 
@@ -349,6 +352,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_RESTORE_TARGET_NOT_WRITABLE   => esc_html__( 'The restore stopped because a folder on the site is not writable. Files restored before that point may already have been replaced. Ask your host to give the web server write access to the site files, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_CANCELLED_BEFORE_START
                 => esc_html__( 'This restore was cancelled before the site started it.', 'mainwp' ),
+            self::ERR_RESTORE_TRANSFER_STALLED
+                => esc_html__( 'The restore stopped because the site received no backup data from the Dashboard for 15 minutes. Check that the Dashboard can still reach the site, then start the restore again.', 'mainwp' ),
             self::ERR_RESTORE_WOO_LEGACY_ORDERS     => esc_html__( 'Keeping live orders needs both this store and the backup to use the WooCommerce High-Performance Order Storage tables, and one of them still uses the older post-based order storage. Run the restore again without the keep-orders option, or move the store to High-Performance Order Storage and use a backup taken afterwards.', 'mainwp' ),
             self::ERR_RESTORE_WOO_SYNC_MODE         => esc_html__( 'Keeping live orders needs the WooCommerce High-Performance Order Storage tables to be the only source of orders, and this store still synchronizes orders to the older posts table. Turn off the WooCommerce orders-table synchronization setting, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_WOO_VERSION_SKEW      => esc_html__( 'Keeping live orders needs the store to run the same WooCommerce version as the backup, and the WooCommerce version changed since this backup was taken. Run the restore again without the keep-orders option, or use a backup from the current WooCommerce version.', 'mainwp' ),

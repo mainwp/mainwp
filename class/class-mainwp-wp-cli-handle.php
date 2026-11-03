@@ -1934,9 +1934,10 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         if ( ! isset( $assoc_args['ver'] ) ) {
             return 'all_versions';
         }
-        // The per-site handler reads an empty version as "all versions", so whitespace must not get through.
+        // The per-site handler treats any empty() version, including "0" and whitespace
+        // after sanitizing, as "all versions", so refuse those here.
         $ver = is_string( $assoc_args['ver'] ) ? sanitize_text_field( $assoc_args['ver'] ) : '';
-        if ( '' === $ver ) {
+        if ( empty( $ver ) ) {
             \WP_CLI::error( '--ver needs a value. Use --ver=<version>, or leave it out to unignore all versions.' );
             return '';
         }

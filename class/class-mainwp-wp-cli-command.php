@@ -240,7 +240,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      *     Child site administrator username, for --add-site and --edit-site.
      *
      * [--adminpassword=<password>]
-     *     Child site administrator password, for --add-site when the MainWP Child plugin asks for it. Needs HTTPS unless --ssl_verify=0.
+     *     Child site administrator password, for --add-site when the MainWP Child plugin asks for it. Needs an https:// site URL. With --ssl_verify=0 an http:// URL is also accepted, and the password is then sent unencrypted.
      *
      * [--ssl_verify=<value>]
      *     Certificate check for --add-site: 1 verifies the HTTPS certificate, 2 uses the Dashboard's global SSL setting, 0 turns the check off. Defaults to 2, or to 1 with --adminpassword. Use 0 only if you accept the risk.

@@ -441,6 +441,7 @@ class Test_WP_CLI_Help_Unignore_Disconnect extends \WP_UnitTestCase {
 		return array(
 			'bare flag'  => array( true ),
 			'whitespace' => array( '   ' ),
+			'zero'       => array( '0' ),
 		);
 	}
 

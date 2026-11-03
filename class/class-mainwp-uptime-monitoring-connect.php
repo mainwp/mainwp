@@ -310,7 +310,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $http_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
         $http_error = '';
-        if ( curl_errno( $ch ) ) {
+        $http_errno = (int) curl_errno( $ch );
+        if ( $http_errno ) {
             $http_error = curl_error( $ch );
         }
 
@@ -394,6 +395,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $resp_info = array(
             'http_code'        => $http_code,
             'http_error'       => $http_error,
+            'http_errno'       => $http_errno,
             'down_count'       => $down_count,
             'retry'            => $set_retry,
             'is_pending'       => $is_pending ? 1 : 0,
@@ -750,10 +752,12 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                     if ( isset( $requestMonitorIds[ $resource_id ] ) ) {
                         $mo_id      = $requestMonitorIds[ $resource_id ];
                         $http_error = '';
-                        if ( curl_errno( $info['handle'] ) ) {
+                        $http_errno = (int) curl_errno( $info['handle'] );
+                        if ( $http_errno ) {
                             $http_error = curl_error( $info['handle'] );
                         }
                         $output->requests_info[ $mo_id ]['http_error'] = $http_error;
+                        $output->requests_info[ $mo_id ]['http_errno'] = $http_errno;
                         $output->requests_info[ $mo_id ]['http_code']  = $http_code;
 
                         $output->requests_info[ $mo_id ]['is_pending'] = $is_pending ? 1 : 0;
@@ -818,8 +822,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $http_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
         $http_error = '';
+        $http_errno = (int) curl_errno( $ch );
 
-        if ( curl_errno( $ch ) ) {
+        if ( $http_errno ) {
             $http_error = curl_error( $ch );
         }
 
@@ -858,6 +863,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $output->requests_info[ $mo_id ]['http_code']  = $http_code;
         $output->requests_info[ $mo_id ]['http_error'] = $http_error;
+        $output->requests_info[ $mo_id ]['http_errno'] = $http_errno;
 
         $output->requests_info[ $mo_id ]['is_pending'] = $is_pending ? 1 : 0;
         $output->requests_info[ $mo_id ]['retry']      = $set_retry ? 1 : 0;
@@ -898,6 +904,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $http_code  = isset( $resp_info['http_code'] ) ? $resp_info['http_code'] : 0;
         $http_error = isset( $resp_info['http_error'] ) ? $resp_info['http_error'] : '';
+        $http_errno = isset( $resp_info['http_errno'] ) ? (int) $resp_info['http_errno'] : 0;
         $start      = isset( $resp_info['start'] ) ? $resp_info['start'] : 0;
         $end        = isset( $resp_info['end'] ) ? $resp_info['end'] : 0;
 
@@ -910,7 +917,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $ping = $end - $start; // ms - millisecond.
 
-        $parsed = $this->parse_response_status( $http_code, $http_error );
+        $parsed = $this->parse_response_status( $http_code, $http_error, $http_errno );
 
         $status  = $parsed['status'];
         $error   = $parsed['error'];
@@ -1176,31 +1183,33 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      *
      * @param  mixed $httpCode http code.
      * @param  mixed $error error.
+     * @param  int   $errno cURL error number.
      * @return mixed
      */
-    public function parse_response_status( $httpCode, $error = false ) {
+    public function parse_response_status( $httpCode, $error = false, $errno = 0 ) {
 
         $httpCode     = (int) $httpCode;
         $status       = '';
         $status_error = '';
 
-        if ( ! empty( $error ) ) {
-            switch ( $error ) {
+        if ( ! empty( $error ) || 0 !== (int) $errno ) {
+            $classified = MainWP_Error_Helper::classify_transport_error( $errno, $error );
+            switch ( (int) $errno ) {
                 case CURLE_OPERATION_TIMEOUTED:
-                    $status_error = 'Error: Request timed out.';
+                    $status_error = $classified['message'];
                     $status       = static::TIMEOUTED_ERROR;
                     break;
                 case CURLE_SSL_CACERT:
                 case CURLE_SSL_CERTPROBLEM:
-                    $status_error = 'Error: SSL certificate expired or invalid.';
+                    $status_error = $classified['message'];
                     $status       = static::CERT_ERROR;
                     break;
                 case CURLE_COULDNT_RESOLVE_HOST:
-                    $status_error = 'Error: DNS resolution failed, could not resolve host.';
+                    $status_error = $classified['message'];
                     $status       = static::RESOLVEHOST_ERROR;
                     break;
                 default:
-                    $status_error = 'Error: ' . $error;
+                    $status_error = null !== $classified ? $classified['message'] : 'Error: ' . $error;
                     $status       = static::UNDEFINED_ERROR;
                     break;
             }

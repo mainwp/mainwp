@@ -1052,7 +1052,17 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return array<int,array<string,string>>
      */
     public static function get_primary_issues() {
-        $issues = array();
+        $issues   = array();
+        $outbound = static::get_outbound_connections_data();
+        if ( in_array( $outbound['reason'], array( 'server_resources', 'dns' ), true ) ) {
+            $issues[] = array(
+                'severity' => 'error',
+                'title'    => __( 'Outbound connections', 'mainwp' ),
+                'detail'   => $outbound['value'],
+                'anchor'   => 'mainwp-system-report-connectivity-table',
+                'kb_url'   => 'https://docs.mainwp.com/troubleshooting/potential-issues/',
+            );
+        }
 
         if ( ! static::filesize_compare( static::get_wordpress_memory_limit(), '64M', '>=' ) ) {
             $issues[] = array(
@@ -1085,7 +1095,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         }
 
         $rest_api = static::get_rest_api_reachability_data();
-        if ( 'pass' !== $rest_api['status'] ) {
+        if ( 'pass' !== $rest_api['status'] && ( 'server_resources' !== $outbound['reason'] || 'server_resources' !== ( $rest_api['reason'] ?? '' ) ) ) {
             $issues[] = array(
                 'severity' => $rest_api['status'],
                 'title'    => esc_html__( 'WordPress REST API is not fully reachable', 'mainwp' ),
@@ -1107,7 +1117,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         }
 
         $self_connect = static::get_server_self_connect_data();
-        if ( 'pass' !== $self_connect['status'] ) {
+        if ( 'pass' !== $self_connect['status'] && ( 'server_resources' !== $outbound['reason'] || 'server_resources' !== ( $self_connect['reason'] ?? '' ) ) ) {
             $issue_title  = esc_html__( 'Dashboard self-connect check failed', 'mainwp' );
             $issue_detail = $self_connect['value'];
             $issue_html   = '';
@@ -1264,6 +1274,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return array<int,array<string,mixed>>
      */
     public static function get_connectivity_report_rows() {
+        $outbound     = static::get_outbound_connections_data();
         $permalink    = static::get_permalink_structure_data();
         $rest_api     = static::get_rest_api_reachability_data();
         $self_connect = static::get_server_self_connect_data();
@@ -1274,6 +1285,11 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         return self::add_export_labels_to_rows(
             array(
+                array(
+                    'label'  => __( 'Outbound connections', 'mainwp' ),
+                    'value'  => $outbound['value'],
+                    'status' => $outbound['status'],
+                ),
                 array(
                     'label'      => esc_html__( 'Dashboard home URL', 'mainwp' ),
                     'value'      => home_url( '/' ),
@@ -2815,6 +2831,44 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Checks the license host once per page request, before any sites are added.
+     *
+     * @return array<string,string> Connectivity status and plain-text details.
+     */
+    public static function get_outbound_connections_data() {
+        static $cached_data = null;
+        if ( null !== $cached_data ) {
+            return $cached_data;
+        }
+
+        $host     = wp_parse_url( MainWP_Api_Manager::instance()->get_upgrade_url(), PHP_URL_HOST );
+        $response = wp_remote_get(
+            'https://' . $host . '/',
+            array(
+                'sslverify'   => true,
+                'redirection' => 0,
+            )
+        );
+        if ( is_wp_error( $response ) ) {
+            $classified  = MainWP_Error_Helper::classify_transport_error( null, $response->get_error_message(), 'mainwp_api' );
+            $cached_data = array(
+                'value'  => null !== $classified ? $classified['message'] : $response->get_error_message(),
+                'status' => 'error',
+                'reason' => null !== $classified ? $classified['reason'] : '',
+            );
+        } else {
+            $cached_data = array(
+                /* translators: %d: HTTP status code */
+                'value'  => sprintf( __( 'Reachable (HTTP %d)', 'mainwp' ), (int) wp_remote_retrieve_response_code( $response ) ),
+                'status' => 'pass',
+                'reason' => '',
+            );
+        }
+
+        return $cached_data;
+    }
+
+    /**
      * Get REST API reachability data.
      *
      * @return array<string,string>
@@ -2836,13 +2890,15 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         );
 
         if ( is_wp_error( $response ) ) {
+            $classified  = MainWP_Error_Helper::classify_transport_error( null, $response->get_error_message() );
             $cached_data = array(
                 'value'  => sprintf(
                     /* translators: %s: error message */
-                    esc_html__( 'Request failed: %s', 'mainwp' ),
-                    $response->get_error_message()
+                    __( 'Request failed: %s', 'mainwp' ),
+                    null !== $classified && in_array( $classified['reason'], array( 'server_resources', 'ssl_local' ), true ) ? $classified['message'] : $response->get_error_message()
                 ),
                 'status' => 'error',
+                'reason' => null !== $classified ? $classified['reason'] : '',
                 'code'   => 'request_failed',
             );
             return $cached_data;
@@ -2928,13 +2984,15 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         $response = MainWP_System_Utility::test_self_connect( $url );
 
         if ( is_wp_error( $response ) ) {
+            $classified  = MainWP_Error_Helper::classify_transport_error( null, $response->get_error_message() );
             $cached_data = array(
                 'value'  => sprintf(
                     /* translators: %s: error message */
-                    esc_html__( 'Request failed: %s', 'mainwp' ),
-                    $response->get_error_message()
+                    __( 'Request failed: %s', 'mainwp' ),
+                    null !== $classified && in_array( $classified['reason'], array( 'server_resources', 'ssl_local' ), true ) ? $classified['message'] : $response->get_error_message()
                 ),
                 'status' => 'error',
+                'reason' => null !== $classified ? $classified['reason'] : '',
             );
             return $cached_data;
         }

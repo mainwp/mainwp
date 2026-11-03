@@ -51,7 +51,7 @@ jQuery(document).on('click', '.mainwp-extensions-refresh-license', function () {
             return;
         }
 
-        status.text(response && response.error ? response.error : failedText);
+        status.text(response && response.error ? mainwp_entities_text(response.error) : failedText);
         button.removeClass('loading disabled');
     }, 'json').fail(function () {
         status.text(failedText);

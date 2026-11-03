@@ -569,7 +569,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 $resp_data['error'] = esc_html__( 'Add client failed. Please try again.', 'mainwp' );
             }
         } catch ( Exception $e ) {
-            $resp_data['error'] = wp_strip_all_tags( $e->getMessage() );
+            $resp_data['error'] = ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : wp_strip_all_tags( $e->getMessage() ) );
         }
         return rest_ensure_response( $resp_data );
     }
@@ -622,7 +622,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 $resp_data['error'] = esc_html__( 'Update client failed. Please try again.', 'mainwp' );
             }
         } catch ( Exception $e ) {
-            $resp_data['error'] = wp_strip_all_tags( $e->getMessage() );
+            $resp_data['error'] = ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : wp_strip_all_tags( $e->getMessage() ) );
         }
         return rest_ensure_response( $resp_data );
     }

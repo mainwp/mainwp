@@ -420,6 +420,34 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Adds transport diagnostics without changing the callback's response body.
+     *
+     * @param mixed  $data         Original response body.
+     * @param mixed  $handler_data Body after timeout handling.
+     * @param int    $errno        cURL error number.
+     * @param string $message     Raw transport message.
+     * @param int    $site_id      Site receiving the response.
+     * @param mixed  $output       Shared batch results.
+     * @return void
+     */
+    protected static function record_batch_transport_error( $data, $handler_data, $errno, $message, $site_id, &$output ) {
+        if ( 0 === (int) $errno || static::body_has_complete_mainwp_envelope( $data ) || $handler_data !== $data ) {
+            return;
+        }
+
+        $classified = MainWP_Error_Helper::classify_transport_error( $errno, $message );
+        if ( null === $classified ) {
+            return;
+        }
+
+        if ( is_object( $output ) ) {
+            $output->transport_errors[ $site_id ] = $classified;
+        } elseif ( is_array( $output ) ) {
+            $output['transport_errors'][ $site_id ] = $classified;
+        }
+    }
+
+    /**
      * Method try visit.
      *
      * Try connecting to Child Site via cURL.
@@ -541,6 +569,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         MainWP_Logger::instance()->debug( ' :: trying Visit :: [url=' . MainWP_Connect_Failure_Ux::redact_url( $url ) . ']' );
 
         $http_version = false;
+        $curl_errno   = 0;
 
         $disabled_functions = ini_get( 'disable_functions' );
         if ( empty( $disabled_functions ) || ( stristr( $disabled_functions, 'curl_multi_exec' ) === false ) ) {
@@ -563,6 +592,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 while ( $info = curl_multi_info_read( $mh ) ) {
                     $data        = curl_multi_getcontent( $info['handle'] );
                     $err         = curl_error( $info['handle'] );
+                    $curl_errno  = (int) curl_errno( $info['handle'] );
                     $http_status = curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
                     $realurl     = curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );
                     if ( defined( 'CURLINFO_HTTP_VERSION' ) ) {
@@ -582,6 +612,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         } else {
             $data        = curl_exec( $ch );
             $err         = curl_error( $ch );
+            $curl_errno  = (int) curl_errno( $ch );
             $http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
             $realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
 
@@ -669,6 +700,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $found     = true;
         }
 
+        $transport_error = MainWP_Error_Helper::classify_transport_error( $curl_errno, $err );
+        if ( null !== $transport_error ) {
+            $err = $transport_error['message'];
+        }
         $out['error'] = ( '' === $err && false === $found ? 'Invalid host.' : $err );
 
         $response_body = '';
@@ -689,6 +724,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             )
         );
 
+        $out['error'] = esc_html( $out['error'] );
         return $out;
     }
 
@@ -1703,6 +1739,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     if ( null !== $handler ) {
                         $site         = &$handleToWebsite[ static::get_resource_id( $info['handle'] ) ];
                         $handler_data = static::batch_handler_response_data( $data, $batch_errno, $batch_err, $batch_status );
+                        static::record_batch_transport_error( $data, $handler_data, $batch_errno, $batch_err, $site->id, $output );
                         call_user_func_array( $handler, array( $handler_data, $site, &$output, $params ) );
                     }
 
@@ -1728,6 +1765,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 if ( null !== $handler ) {
                     $site         = &$handleToWebsite[ static::get_resource_id( $ch ) ];
                     $handler_data = static::batch_handler_response_data( $data, $batch_errno, $batch_err, $batch_status );
+                    static::record_batch_transport_error( $data, $handler_data, $batch_errno, $batch_err, $site->id, $output );
                     call_user_func_array( $handler, array( $handler_data, $site, &$output, $params ) );
                 }
             }
@@ -2613,7 +2651,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response received: [bytes=' . $response_bytes . ']' );
         }
 
-        $timeout_kind = static::child_request_timeout_kind( $curl_errno, $err, $http_status, $data );
+        $transport_error   = MainWP_Error_Helper::classify_transport_error( $curl_errno, $err );
+        $transport_message = null !== $transport_error ? $transport_error['message'] : $err;
+        $transport_reason  = null !== $transport_error ? $transport_error['reason'] : '';
+        $timeout_kind      = static::child_request_timeout_kind( $curl_errno, $err, $http_status, $data );
 
         if ( ( false === $data ) && empty( $http_status ) ) {
             if ( '' !== $timeout_kind ) {
@@ -2621,8 +2662,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $thr_error = static::new_timeout_exception( $timeout_kind, $output );
             } else {
                 MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $safe_url . '] HTTP Error: [status=0][' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . ']' );
-                $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                $thr_error                = new MainWP_Exception( 'HTTPERROR', $transport_message ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 $output['error_category'] = 'http_error';
+                $output['error_code']     = 'http_request_failed';
+                $output['error_message']  = $transport_message;
+                $output['error_reason']   = $transport_reason;
             }
         } elseif ( empty( $data ) && ! empty( $err ) ) {
             if ( '' !== $timeout_kind ) {
@@ -2630,10 +2674,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $thr_error = static::new_timeout_exception( $timeout_kind, $output );
             } else {
                 MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $safe_url . '] HTTP Error: [status=' . $http_status . '][' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . ']' );
-                $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                $thr_error                = new MainWP_Exception( 'HTTPERROR', $transport_message ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 $output['error_category'] = 'http_error';
                 $output['error_code']     = 'http_request_failed';
-                $output['error_message']  = $err;
+                $output['error_message']  = $transport_message;
+                $output['error_reason']   = $transport_reason;
             }
         } elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
             $output['connection_step'] = 'verify_credentials';
@@ -2677,10 +2722,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', 'Error: TIMEOUT' );
                 $thr_error = static::new_timeout_exception( $timeout_kind, $output );
             } else {
-                $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                $thr_error                = new MainWP_Exception( 'HTTPERROR', $transport_message ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 $output['error_category'] = 'http_error';
                 $output['error_code']     = 'http_request_failed';
-                $output['error_message']  = $err;
+                $output['error_message']  = $transport_message;
+                $output['error_reason']   = $transport_reason;
                 MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $safe_url . '] error [' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . ']' );
             }
         } elseif ( $raw_response ) {

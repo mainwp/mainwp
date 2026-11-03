@@ -1938,7 +1938,9 @@ let mainwp_managesites_add = function () {
         }
         jQuery('#mainwp-response-data-container').attr('resp-data', resp_data);
 
-        if (res_things.failure_ux) {
+        if (response == 'HTTPERROR' && res_things.error_message) {
+            errors.push(jQuery('<span>').text(res_things.error_message));
+        } else if (res_things.failure_ux) {
             errors.push(mainwp_failure_ux_nodes(res_things.failure_ux));
         } else if (response == 'HTTPERROR') {
             errors.push(mainwp_feedback_linked_message(MainWP.I18n.t('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review this %1Knowledgebase document%2, and if you still have issues, please let us know in the %3MainWP Community%4.'), [{ href: 'https://docs.mainwp.com/troubleshooting/potential-issues/' }, { href: 'https://managers.mainwp.com/c/community-support/5' }]));

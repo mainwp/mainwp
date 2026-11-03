@@ -194,7 +194,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         }
 
         if (response == 'HTTPERROR') {
-            errors.push(check_result + MainWP.I18n.t('HTTP error: website does not exist!'));
+            errors.push(jQuery('<span>').text(check_result + (res_things.error_message || MainWP.I18n.t('HTTP error: website does not exist!'))));
         } else if (response == 'NOMAINWP') {
             let message = jQuery('<span>').html(MainWP.I18n.t('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation)', '#', '#'));
             message.find('a').attr('href', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins');

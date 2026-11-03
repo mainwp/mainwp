@@ -1255,7 +1255,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             }
             unset( $pages );
         } else {
-            $output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            $output->errors[ $website->id ] = isset( $output->transport_errors[ $website->id ]['message'] )
+                ? esc_html( $output->transport_errors[ $website->id ]['message'] )
+                : MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
 

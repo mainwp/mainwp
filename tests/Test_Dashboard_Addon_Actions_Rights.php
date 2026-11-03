@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName.NotHyphenatedLowercase -- PHPUnit discovers this class by filename.
 /**
  * Add-on AJAX rights and license API TLS verification.
  *
@@ -27,6 +27,7 @@ use MainWP\Dashboard\MainWP_Keys_Manager;
 /** Keep captured exits outside handlers that catch Exception. */
 class Addon_Rights_Response_Stop extends \Error {}
 
+// phpcs:disable Generic.WhiteSpace.DisallowSpaceIndent -- Preserve the existing four-space indentation.
 /** Exercise registered AJAX callbacks with administrator capabilities. */
 class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
 
@@ -480,21 +481,21 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
         $protocol    = 'cURL error 35: error:0A000102:SSL routines::unsupported protocol';
         $read        = 'cURL error 56: OpenSSL SSL_read: Connection reset by peer, errno 104';
         return array(
-            'cURL 60'               => array( 1, $certificate, self::TLS_ERROR ),
-            'cURL 77'               => array( 1, 'cURL error 77: error setting certificate verify locations', self::TLS_ERROR ),
+            'cURL 60'               => array( 1, $certificate, 'The MainWP license server\'s SSL certificate could not be verified. The CA certificates on the Dashboard server are probably out of date. Ask your host to update them. Details: ' . $certificate ),
+            'cURL 77'               => array( 1, 'cURL error 77: error setting certificate verify locations', 'The Dashboard server\'s own SSL setup is broken. It could not load its CA certificate bundle or client certificate. Ask your host to fix it. Details: cURL error 77: error setting certificate verify locations' ),
             'certificate mismatch'  => array( 1, 'SSL certificate did not match the requested domain name', self::TLS_ERROR ),
             'cURL 51'               => array( 1, 'cURL error 51: SSL: no alternative certificate subject name matches target host name', self::TLS_ERROR ),
             'uppercase certificate' => array( 1, 'CERTIFICATE validation failed', self::TLS_ERROR ),
             'streams transport'     => array( 1, 'The SSL certificate for the host could not be verified.', self::TLS_ERROR ),
-            'cURL 35 syscall'       => array( 1, $handshake, $handshake ),
-            'cURL 35 reset'         => array( 1, $reset, $reset ),
-            'cURL 35 protocol'      => array( 1, $protocol, $protocol ),
+            'cURL 35 syscall'       => array( 1, $handshake, 'The secure connection to the MainWP license server could not be set up. The Dashboard server\'s TLS support is probably too old, or a firewall is cutting the connection. Contact your host. Details: ' . $handshake ),
+            'cURL 35 reset'         => array( 1, $reset, 'The secure connection to the MainWP license server could not be set up. The Dashboard server\'s TLS support is probably too old, or a firewall is cutting the connection. Contact your host. Details: ' . $reset ),
+            'cURL 35 protocol'      => array( 1, $protocol, 'The secure connection to the MainWP license server could not be set up. The Dashboard server\'s TLS support is probably too old, or a firewall is cutting the connection. Contact your host. Details: ' . $protocol ),
             'cURL 56'               => array( 1, $read, $read ),
-            'cURL 28'               => array( 1, $timeout, $timeout ),
-            'cURL 6'                => array( 1, $dns, $dns ),
-            'cURL 7'                => array( 1, $connection, $connection ),
-            'unverified cURL 60'    => array( 0, $certificate, $certificate ),
-            'unverified cURL 28'    => array( 0, $timeout, $timeout ),
+            'cURL 28'               => array( 1, $timeout, 'The MainWP license server did not respond in time. Try again in a few minutes. If it keeps failing, ask your host whether outbound connections from the Dashboard server are slow or filtered. Details: ' . $timeout ),
+            'cURL 6'                => array( 1, $dns, 'The Dashboard server could not look up the address of the MainWP license server. DNS on the Dashboard server is broken, or a firewall is blocking lookups. Contact your host. Details: ' . $dns ),
+            'cURL 7'                => array( 1, $connection, 'The Dashboard server could not connect to the MainWP license server. A firewall on the Dashboard server is probably blocking outbound connections. Contact your host. Details: ' . $connection ),
+            'unverified cURL 60'    => array( 0, $certificate, 'The MainWP license server\'s SSL certificate could not be verified. The CA certificates on the Dashboard server are probably out of date. Ask your host to update them. Details: ' . $certificate ),
+            'unverified cURL 28'    => array( 0, $timeout, 'The MainWP license server did not respond in time. Try again in a few minutes. If it keeps failing, ask your host whether outbound connections from the Dashboard server are slow or filtered. Details: ' . $timeout ),
             'HTML message'          => array( 1, '<b>Transport failure</b>', '&lt;b&gt;Transport failure&lt;/b&gt;' ),
         );
     }
@@ -520,7 +521,7 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
         } catch ( MainWP_Exception $exception ) {
             $error = $exception->getMessage();
         }
-        $this->assertSame( $expected, $error );
+        $this->assertSame( esc_html( $expected ), $error );
         $this->assertNull( $result, 'No retry_action response may escape.' );
         $this->assertSame( 1, (int) get_option( 'mainwp_api_sslVerifyCertificate' ) );
         $this->assertCount( 1, $this->http );
@@ -531,15 +532,15 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
     public function test_login_consumers_return_transport_error(): void {
         $this->right( 'manage_extensions', true );
         $errors = array(
-            'cURL error 60: SSL certificate problem: unable to get local issuer certificate' => self::TLS_ERROR,
-            'cURL error 28: Operation timed out after 50001 milliseconds' => 'cURL error 28: Operation timed out after 50001 milliseconds',
+            'cURL error 60: SSL certificate problem: unable to get local issuer certificate' => 'The MainWP license server\'s SSL certificate could not be verified. The CA certificates on the Dashboard server are probably out of date. Ask your host to update them. Details: cURL error 60: SSL certificate problem: unable to get local issuer certificate',
+            'cURL error 28: Operation timed out after 50001 milliseconds' => 'The MainWP license server did not respond in time. Try again in a few minutes. If it keeps failing, ask your host whether outbound connections from the Dashboard server are slow or filtered. Details: cURL error 28: Operation timed out after 50001 milliseconds',
         );
         foreach ( $errors as $message => $expected ) {
             $this->http          = array();
             $this->http_response = new \WP_Error( 'http_request_failed', $message );
             foreach ( array( 'mainwp_extension_testextensionapilogin', 'mainwp_extension_saveextensionapilogin' ) as $action ) {
                 $response = json_decode( $this->ajax( $action, array( 'api_key' => 'fixture-license-key' ) ), true );
-                $this->assertSame( array( 'error' => $expected ), $response );
+                $this->assertSame( array( 'error' => esc_html( $expected ) ), $response );
                 $this->assertSame( 1, (int) get_option( 'mainwp_api_sslVerifyCertificate' ) );
             }
             $this->assertCount( 2, $this->http );

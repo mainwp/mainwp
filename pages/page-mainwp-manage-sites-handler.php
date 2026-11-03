@@ -110,7 +110,10 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                     $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 }
             } catch ( MainWP_Exception $e ) {
-                $ret['response']   = $e->getMessage();
+                $ret['response'] = $e->getMessage();
+                if ( 'HTTPERROR' === $e->getMessage() ) {
+                    $ret['error_message'] = MainWP_Error_Helper::get_error_message( $e, false, true );
+                }
                 $ret['resp_data']  = MainWP_Connect_Failure_Ux::readable_response_from_output( $output, $e );
                 $ret['failure_ux'] = MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( $e, $output ) );
                 if ( 'TIMEOUT' === $e->getMessage() ) {

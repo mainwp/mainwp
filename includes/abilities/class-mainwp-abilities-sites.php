@@ -1040,7 +1040,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 $errors[] = array(
                     'identifier' => (int) $site->id,
                     'code'       => 'mainwp_sync_exception',
-                    'message'    => $e->getMessage(),
+                    'message'    => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }
@@ -2030,7 +2030,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         } catch ( \Exception $e ) {
             return new \WP_Error(
                 'mainwp_reconnect_failed',
-                $e->getMessage(),
+                ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 array( 'status' => 503 )
             );
         }
@@ -4631,7 +4631,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 $errors[] = array(
                     'identifier' => $site->url,
                     'code'       => 'mainwp_reconnect_failed',
-                    'message'    => $e->getMessage(),
+                    'message'    => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
                 continue;
             }

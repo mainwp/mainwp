@@ -807,7 +807,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $tags_labels = '';
 
         if ( isset( $item['wpgroups'] ) && ! empty( $item['wpgroups'] ) ) {
-            $tags = static::get_tag_chips(
+            $tags = self::get_tag_chips(
                 $item['wpgroups'],
                 isset( $item['wpgroupids'] ) ? $item['wpgroupids'] : '',
                 isset( $item['wpgroups_colors'] ) ? $item['wpgroups_colors'] : null,
@@ -839,7 +839,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $tags_labels = '';
 
         if ( isset( $item['wpgroups_belong'] ) && ! empty( $item['wpgroups_belong'] ) ) {
-            $tags = static::get_tag_chips(
+            $tags = self::get_tag_chips(
                 $item['wpgroups_belong'],
                 isset( $item['wpgroupids_belong'] ) ? $item['wpgroupids_belong'] : '',
                 isset( $item['wpgroupcolors_belong'] ) ? $item['wpgroupcolors_belong'] : null
@@ -985,7 +985,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return mixed Single Row Classes Item.
      */
     public static function client_tags_filter( $item ) {
-        $tags = static::get_tag_chips(
+        $tags = self::get_tag_chips(
             $item['wpgroups'],
             isset( $item['wpgroupids'] ) ? $item['wpgroupids'] : '',
             isset( $item['wpgroups_colors'] ) ? $item['wpgroups_colors'] : null,
@@ -1009,8 +1009,9 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * when a query drops repeated names or colors with DISTINCT, or when the lists
      * are sorted differently, as in client rows. Only a site row with a single tag
      * keeps positional pairing. Other rows resolve their tag IDs, which never contain
-     * a comma, with one query per row. If some IDs have no stored tag, the row falls
-     * back to positional pairing.
+     * a comma, with one query per row. A tag deleted since the row was read gets no
+     * chip. If none of the IDs has a stored tag, the row falls back to positional
+     * pairing.
      *
      * @param string      $names  Comma-joined tag names.
      * @param string      $ids    Comma-joined tag IDs.
@@ -1032,7 +1033,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $rows = MainWP_DB_Common::instance()->get_tags( array( 'include' => $tag_ids ) );
         }
 
-        if ( is_array( $rows ) && ! empty( $rows ) && count( $rows ) === count( $tag_ids ) ) {
+        if ( is_array( $rows ) && ! empty( $rows ) ) {
             $tags = array();
             foreach ( $rows as $row ) {
                 $tags[] = array(

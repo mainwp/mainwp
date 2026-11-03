@@ -143,6 +143,20 @@ class Test_MWP_2151_Tag_Chip_Pairing extends \WP_UnitTestCase {
 		$this->assertSame( $this->expected_chips( $tags ), $this->parse_chips( $html, 'admin.php?page=managesites&g=' ) );
 	}
 
+	/** A tag deleted after the row was read drops its chip without shifting the others. */
+	public function test_deleted_tag_drops_only_its_own_chip(): void {
+		global $wpdb;
+		$tags    = $this->create_problem_tags();
+		$site_id = $this->create_tagged_site( 0, $tags );
+		$row     = $this->site_row( $site_id );
+
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'group' ), array( 'id' => $tags[1]['id'] ), array( '%d' ) );
+
+		$html = MainWP_System_Utility::get_site_tags( $row );
+
+		$this->assertSame( $this->expected_chips( array( $tags[0], $tags[2] ) ), $this->parse_chips( $html, 'admin.php?page=managesites&g=' ) );
+	}
+
 	/** A single-tag row pairs from the row itself; a multi-tag row costs one query, not one per chip. */
 	public function test_tag_lookup_query_count(): void {
 		global $wpdb;

@@ -791,7 +791,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $expected_remote = $size + $this->seal_overhead( $enc );
 
         $head = $provider->head_object( $key );
-        if ( is_array( $head ) && (int) $head['size'] === $expected_remote ) {
+        if ( is_array( $head ) && isset( $head['size'] ) && (int) $head['size'] === $expected_remote ) {
             return; // Verified present.
         }
 
@@ -863,12 +863,20 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      *
      * @return void
      *
-     * @throws \RuntimeException When the destination did not return the expected size.
+     * @throws \RuntimeException When the object is missing, its size was not reported, or the size differs.
      */
     private function confirm_remote_object( MainWP_Backup_Storage_Provider $provider, string $key, int $expected_size ): void {
         $head = $provider->head_object( $key );
-        if ( ! is_array( $head ) || ! isset( $head['size'] ) || (int) $head['size'] !== $expected_size ) {
-            throw new \RuntimeException( 'Upload verification failed; the destination did not confirm ' . $key . ' at the expected size.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
+        // Each case gets its own message so a diagnostics export shows which
+        // one happened. A missing size never counts as a match.
+        if ( ! is_array( $head ) ) {
+            throw new \RuntimeException( 'Upload verification failed; ' . $key . ' was not found at the destination after it was uploaded.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
+        }
+        if ( ! isset( $head['size'] ) ) {
+            throw new \RuntimeException( 'Upload verification failed; the storage provider did not report the size of ' . $key . ', so the upload could not be checked.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
+        }
+        if ( (int) $head['size'] !== $expected_size ) {
+            throw new \RuntimeException( 'Upload verification failed; the destination reported ' . $key . ' as ' . (int) $head['size'] . ' bytes, but ' . $expected_size . ' bytes were uploaded.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
         }
     }
 

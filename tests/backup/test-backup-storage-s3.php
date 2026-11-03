@@ -1389,4 +1389,79 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		$this->assertSame( 'https://backups.example.com.s3.wasabisys.com/k.bin', $this->requests[0]['url'] );
 		$this->assertStringStartsWith( 'https://backups.example.com.s3.wasabisys.com/k.bin?', $provider->presigned_get_url( 'k.bin', 600 ) );
 	}
+
+	/**
+	 * HEAD asks for the stored bytes, not a compressed reply, so R2 keeps
+	 * Content-Length on compressible objects (MWP-2129). The header stays out
+	 * of the signature, like the Accept-Encoding libcurl already sends, and
+	 * other methods keep the transport's default.
+	 *
+	 * @return void
+	 */
+	public function test_head_requests_identity_encoding_outside_the_signature() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 200, '', array( 'content-length' => '12' ) ),
+				$this->response( 200 ),
+			)
+		);
+		$provider->head_object( 'snap/manifest.json' );
+		$provider->put_object( 'snap/manifest.json', '{"format":1}', 'application/json' );
+
+		$head_headers = $this->requests[0]['args']['headers'];
+		$this->assertSame( 'HEAD', $this->requests[0]['args']['method'] );
+		$this->assertSame( 'identity', $head_headers['Accept-Encoding'] );
+		$this->assertMatchesRegularExpression( '/SignedHeaders=host;x-amz-content-sha256;x-amz-date,/', $head_headers['Authorization'] );
+		$this->assertArrayNotHasKey( 'Accept-Encoding', $this->requests[1]['args']['headers'] );
+	}
+
+	/**
+	 * A HEAD that follows a redirect asks for identity on the second hop too.
+	 *
+	 * @return void
+	 */
+	public function test_redirected_head_keeps_identity_encoding() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => 'https://example-bucket.s3.amazonaws.com/k.bin?hop=2' ) ),
+				$this->response( 200, '', array( 'content-length' => '5' ) ),
+			)
+		);
+		$this->assertSame( array( 'size' => 5 ), $provider->head_object( 'k.bin' ) );
+		$this->assertCount( 2, $this->requests );
+		$this->assertSame( 'identity', $this->requests[1]['args']['headers']['Accept-Encoding'] );
+	}
+
+	/**
+	 * A 200 without a usable Content-Length is an unknown size, never 0.
+	 * A real 0 is still a size.
+	 *
+	 * @dataProvider content_length_headers
+	 * @param array    $headers  Response headers.
+	 * @param int|null $expected Reported size.
+	 *
+	 * @return void
+	 */
+	public function test_head_without_a_usable_content_length_reports_unknown_size( array $headers, $expected ) {
+		$provider = $this->make_provider( array( $this->response( 200, '', $headers ) ) );
+		$this->assertSame( array( 'size' => $expected ), $provider->head_object( 'k.json' ) );
+	}
+
+	/**
+	 * Content-Length cases.
+	 *
+	 * @return array
+	 */
+	public static function content_length_headers() {
+		return array(
+			'gzip, no length' => array( array( 'content-encoding' => 'gzip' ), null ),
+			'no headers'      => array( array(), null ),
+			'empty length'    => array( array( 'content-length' => '' ), null ),
+			'not a number'    => array( array( 'content-length' => 'abc' ), null ),
+			'negative'        => array( array( 'content-length' => '-5' ), null ),
+			'repeated header' => array( array( 'content-length' => array( '5', '5' ) ), null ),
+			'zero'            => array( array( 'content-length' => '0' ), 0 ),
+			'padded number'   => array( array( 'content-length' => ' 42 ' ), 42 ),
+		);
+	}
 }

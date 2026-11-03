@@ -43,7 +43,8 @@ interface MainWP_Backup_Storage_Provider {
      *
      * @param string $key Object key.
      *
-     * @return array|false {size: int} when present, false when absent.
+     * @return array|false {size: int|null} when present, false when absent. A null
+     *                     size means the object exists but its size was not reported.
      *
      * @throws \RuntimeException On transport or service errors.
      */

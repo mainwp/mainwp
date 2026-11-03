@@ -3077,4 +3077,236 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			remove_filter( 'pre_http_request', $transport );
 		}
 	}
+
+	/**
+	 * An S3 destination for the MWP-2129 manifest verification cases.
+	 *
+	 * @return int Destination id.
+	 */
+	private function make_s3_destination() {
+		return MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'R2',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'auto',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+	}
+
+	/**
+	 * Answer S3 requests from an in-memory bucket. PUT stores the body
+	 * length; HEAD asks $head first and falls back to an honest reply.
+	 *
+	 * @param array    $requests Captured method, path and headers, by reference.
+	 * @param callable $head     fn( string $path, ?int $stored ): ?array, a response or null for the default.
+	 *
+	 * @return callable The registered filter.
+	 */
+	private function fake_s3_bucket( array &$requests, callable $head ) {
+		$stored    = array();
+		$transport = function ( $pre, $args, $url ) use ( &$stored, &$requests, $head ) {
+			$path       = (string) wp_parse_url( $url, PHP_URL_PATH );
+			$requests[] = array(
+				'method'  => $args['method'],
+				'path'    => $path,
+				'headers' => $args['headers'],
+			);
+			$reply      = function ( $code, array $headers = array() ) {
+				return array(
+					'headers'  => $headers,
+					'body'     => '',
+					'response' => array(
+						'code'    => $code,
+						'message' => '',
+					),
+					'cookies'  => array(),
+					'filename' => null,
+				);
+			};
+			if ( 'PUT' === $args['method'] ) {
+				$stored[ $path ] = strlen( (string) $args['body'] );
+				return $reply( 200 );
+			}
+			if ( 'HEAD' === $args['method'] ) {
+				$size     = isset( $stored[ $path ] ) ? $stored[ $path ] : null;
+				$override = $head( $path, $size );
+				if ( is_array( $override ) ) {
+					return $reply( $override[0], $override[1] );
+				}
+				return null === $size ? $reply( 404 ) : $reply( 200, array( 'content-length' => (string) $size ) );
+			}
+			return $reply( 500 );
+		};
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		return $transport;
+	}
+
+	/**
+	 * Run one upload of a small snapshot to the fake bucket.
+	 *
+	 * @param callable $head  HEAD override, see fake_s3_bucket().
+	 * @param array    $files Snapshot files.
+	 *
+	 * @return array{0: object, 1: array, 2: int} Job row, captured requests, snapshot id.
+	 */
+	private function run_s3_upload( callable $head, array $files = array() ) {
+		$dest_id     = $this->make_s3_destination();
+		$snapshot_id = $this->make_snapshot(
+			$files ? $files : array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		$requests  = array();
+		$transport = $this->fake_s3_bucket( $requests, $head );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		} finally {
+			remove_filter( 'pre_http_request', $transport, 10 );
+		}
+
+		return array( $store->get_jobs_for_snapshot( $snapshot_id )[0], $requests, $snapshot_id );
+	}
+
+	/**
+	 * Every HEAD the driver sends asks for identity encoding (MWP-2129).
+	 *
+	 * @param array $requests Captured requests.
+	 *
+	 * @return void
+	 */
+	private function assert_heads_ask_for_identity( array $requests ) {
+		$heads = array_filter(
+			$requests,
+			function ( $request ) {
+				return 'HEAD' === $request['method'];
+			}
+		);
+		$this->assertNotEmpty( $heads );
+		foreach ( $heads as $request ) {
+			$this->assertSame( 'identity', $request['headers']['Accept-Encoding'] ?? null, 'HEAD ' . $request['path'] );
+		}
+	}
+
+	/**
+	 * R2 answering the manifest HEAD gzip-encoded with no Content-Length
+	 * fails verification as "size not reported", never as a 0-byte match
+	 * or mismatch, and the manifest is not marked submitted.
+	 *
+	 * @return void
+	 */
+	public function test_manifest_head_without_content_length_fails_as_size_not_reported() {
+		list( $job, $requests, $snapshot_id ) = $this->run_s3_upload(
+			function ( $path, $stored ) {
+				if ( null !== $stored && '/manifest.json' === substr( $path, -14 ) ) {
+					return array( 200, array( 'content-encoding' => 'gzip' ) );
+				}
+				return null;
+			}
+		);
+
+		$this->assert_heads_ask_for_identity( $requests );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertStringContainsString( '[' . MainWP_Backup_Error_Codes::ERR_S3_FAILED . ']', $job->last_error );
+		$this->assertStringContainsString( 'the storage provider did not report the size of 4/' . $snapshot_id . '/manifest.json', $job->last_error );
+		$this->assertStringNotContainsString( ' 0 bytes', $job->last_error );
+		$this->assertEmpty( $job->checkpoint['manifest_submitted'] );
+	}
+
+	/**
+	 * A manifest HEAD with the right Content-Length verifies and submits.
+	 *
+	 * @return void
+	 */
+	public function test_manifest_head_with_matching_length_verifies() {
+		list( $job, $requests ) = $this->run_s3_upload(
+			function () {
+				return null;
+			}
+		);
+
+		$this->assert_heads_ask_for_identity( $requests );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status );
+		$this->assertTrue( $job->checkpoint['manifest_submitted'] );
+	}
+
+	/**
+	 * A manifest missing right after its PUT is reported as absent.
+	 *
+	 * @return void
+	 */
+	public function test_manifest_missing_after_upload_fails_as_absent() {
+		list( $job, , $snapshot_id ) = $this->run_s3_upload(
+			function ( $path ) {
+				return '/manifest.json' === substr( $path, -14 ) ? array( 404, array() ) : null;
+			}
+		);
+
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertStringContainsString( '4/' . $snapshot_id . '/manifest.json was not found at the destination after it was uploaded', $job->last_error );
+		$this->assertEmpty( $job->checkpoint['manifest_submitted'] );
+	}
+
+	/**
+	 * A wrong manifest size names both the reported and the uploaded bytes.
+	 *
+	 * @return void
+	 */
+	public function test_manifest_size_mismatch_reports_both_sizes() {
+		$uploaded                    = null;
+		list( $job, , $snapshot_id ) = $this->run_s3_upload(
+			function ( $path, $stored ) use ( &$uploaded ) {
+				if ( null !== $stored && '/manifest.json' === substr( $path, -14 ) ) {
+					$uploaded = $stored;
+					return array( 200, array( 'content-length' => (string) ( $stored + 7 ) ) );
+				}
+				return null;
+			}
+		);
+
+		$this->assertGreaterThan( 0, $uploaded );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertStringContainsString( 'the destination reported 4/' . $snapshot_id . '/manifest.json as ' . ( $uploaded + 7 ) . ' bytes, but ' . $uploaded . ' bytes were uploaded', $job->last_error );
+		$this->assertEmpty( $job->checkpoint['manifest_submitted'] );
+	}
+
+	/**
+	 * An unknown size never counts as "already uploaded", even for a
+	 * 0-byte artifact whose expected size is 0.
+	 *
+	 * @return void
+	 */
+	public function test_unknown_size_never_skips_an_empty_artifact_upload() {
+		list( $job, $requests, $snapshot_id ) = $this->run_s3_upload(
+			function ( $path ) {
+				return '/files/empty.sql' === substr( $path, -16 ) ? array( 200, array() ) : null;
+			},
+			array(
+				'empty.sql' => array(
+					'size' => 0,
+					'role' => 'db',
+				),
+			)
+		);
+
+		$puts = array_filter(
+			$requests,
+			function ( $request ) {
+				return 'PUT' === $request['method'] && '/files/empty.sql' === substr( $request['path'], -16 );
+			}
+		);
+		$this->assertCount( 1, $puts, 'The artifact must be uploaded, not skipped on an unknown size.' );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertStringContainsString( 'did not report the size of 4/' . $snapshot_id . '/files/empty.sql', $job->last_error );
+	}
 }

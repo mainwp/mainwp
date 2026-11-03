@@ -186,7 +186,7 @@ class Test_Insights_Chart_Label_Escaping extends \WP_UnitTestCase {
 			);
 		} else {
 			$this->assertMatchesRegularExpression(
-				'/legend:\s*\{\s*formatter:\s*function\s*\(\s*name\s*\)\s*\{\s*return mainwp_escape_html\(\s*name\s*\);\s*\}/s',
+				'/legend:\s*\{[^{}]*?\bformatter:\s*function\s*\(\s*name\s*\)\s*\{[^{}]*?\breturn mainwp_escape_html\([^{};]*\);\s*\}/s',
 				$script,
 				'The pie legend must escape client names inserted as HTML.'
 			);

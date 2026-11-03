@@ -184,7 +184,6 @@ class Log_Graph_Tags_Widget {
                                 {
                                 x: <?php echo wp_json_encode( (string) $tagname, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                                 y: <?php echo intval( $groups_nrsites[ $tagid ] ); ?>,
-                                fillColor: "#18a4e0",
                                 },
                             <?php endforeach; ?>
                         ]
@@ -195,11 +194,18 @@ class Log_Graph_Tags_Widget {
                                 {
                                 x: <?php echo wp_json_encode( (string) $tagname, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                                 y: <?php echo isset( $tags_count[ $tagid ] ) ? intval( $tags_count[ $tagid ] ) : 0; ?>,
-                                fillColor: "#7fb100",
                                 },
                             <?php endforeach; ?>
                         ]
                     } ],
+                    // Legend swatches only read the series colors, so the bars take theirs from here too.
+                    colors: [ '#18a4e0', '#7fb100' ],
+                    // ApexCharts writes legend text as HTML in a fixed dark grey; inherit picks up the theme's text color.
+                    legend: {
+                        labels: {
+                            colors: 'inherit',
+                        }
+                    },
                     xaxis: {
                         labels: {
                             style: {

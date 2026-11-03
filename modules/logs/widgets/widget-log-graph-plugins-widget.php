@@ -182,7 +182,6 @@ class Log_Graph_Plugins_Widget {
                             {
                             x: <?php echo wp_json_encode( (string) $value['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                             y: <?php echo intval( $value['active'] ); ?>,
-                            fillColor: "#18a4e0",
                             },
                             <?php endforeach; ?>
                         ]
@@ -198,6 +197,15 @@ class Log_Graph_Plugins_Widget {
                         ]
                     }
                     ],
+                    // Legend swatches only read the series colors, so the bars take theirs from here too.
+                    // #00e396 is the color the Inactive bars already had (ApexCharts' default second color).
+                    colors: [ '#18a4e0', '#00e396' ],
+                    // ApexCharts writes legend text as HTML in a fixed dark grey; inherit picks up the theme's text color.
+                    legend: {
+                        labels: {
+                            colors: 'inherit',
+                        }
+                    },
                     xaxis: {
                         labels: {
                             style: {

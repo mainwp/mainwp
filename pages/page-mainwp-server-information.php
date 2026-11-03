@@ -1216,7 +1216,14 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     <?php
                 }
                 static::render_row_with_description( esc_html__( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
+                $outbound = MainWP_Server_Information_Handler::get_outbound_connections_data();
                 ?>
+                <tr>
+                    <td><?php esc_html_e( 'Outbound connections', 'mainwp' ); ?></td>
+                    <td><?php esc_html_e( 'HTTPS', 'mainwp' ); ?></td>
+                    <td style="white-space: normal;"><?php echo esc_html( $outbound['value'] ); ?></td>
+                    <td><?php echo 'pass' === $outbound['status'] ? static::get_pass_html() : static::get_warning_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed status markup. ?></td>
+                </tr>
             </tbody>
         </table>
         <?php

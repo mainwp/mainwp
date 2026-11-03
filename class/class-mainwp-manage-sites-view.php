@@ -2160,7 +2160,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {
-                    $_error = 'HTTP error' . ( null !== $e->get_message_extra( false ) ? ' - ' . esc_html( $e->get_message_extra( false ) ) : '' );
+                    $_error = MainWP_Error_Helper::get_error_message( $e );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $_error = MainWP_Error_Helper::get_error_not_detected_connect(); // phpcs:ignore WordPress.Security.EscapeOutput
                 } elseif ( 'TIMEOUT' === $e->getMessage() ) {
@@ -2640,7 +2640,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {
-                    $error = 'HTTP error' . ( null !== $e->get_message_extra( false ) ? ' - ' . esc_html( $e->get_message_extra( false ) ) : '' );
+                    $error = MainWP_Error_Helper::get_error_message( $e );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $error = MainWP_Error_Helper::get_error_not_detected_connect();
                 } elseif ( 'TIMEOUT' === $e->getMessage() ) {

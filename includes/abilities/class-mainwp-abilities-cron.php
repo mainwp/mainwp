@@ -387,7 +387,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                     $job['errors'][] = array(
                         'site_id' => $site_id,
                         'code'    => 'exception',
-                        'message' => $e->getMessage(),
+                        'message' => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                     );
                 }
 
@@ -1023,7 +1023,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                             }
                         } catch ( \Exception $e ) {
                             $site_success  = false;
-                            $site_errors[] = $type . ': ' . $e->getMessage();
+                            $site_errors[] = $type . ': ' . ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() );
                         }
                     }
 
@@ -1044,7 +1044,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                     $job['errors'][] = array(
                         'site_id' => $site_id,
                         'code'    => 'exception',
-                        'message' => $e->getMessage(),
+                        'message' => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                     );
                 }
 
@@ -1225,7 +1225,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     $error = __( 'Reconnect returned false.', 'mainwp' );
                                 }
                             } catch ( \Exception $e ) {
-                                $error = $e->getMessage();
+                                $error = ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() );
                             }
                             break;
 
@@ -1293,7 +1293,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                     $job['errors'][] = array(
                         'site_id' => $site_id,
                         'code'    => 'exception',
-                        'message' => $e->getMessage(),
+                        'message' => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                     );
                 }
 

@@ -77,6 +77,7 @@ namespace {
 	}
 	$root = dirname( __DIR__, 2 );
 	require $root . '/class/class-mainwp-exception.php';
+	require $root . '/class/class-mainwp-error-helper.php';
 	require $root . '/class/class-mainwp-credential-render.php';
 	require $root . '/class/class-mainwp-api-manager-key.php';
 	require $root . '/class/class-mainwp-api-manager.php';

@@ -365,7 +365,7 @@ function mainwp_onboarding_render_detection(state) {
   jQuery('#mainwp-onboarding-plugins-link').attr('href', fields.url ? fields.url + 'wp-admin/plugins.php' : '');
   jQuery('#mainwp-onboarding-retry').prop('hidden', !['expired', 'error', 'unreachable', 'timed_out', 'stopped'].includes(state.status));
   const message = jQuery('#mainwp-onboarding-detection-message').empty();
-  if (state.status === 'unreachable') message.text(mainwp_onboarding_copy('unreachable').replace('%s', site));
+  if (state.status === 'unreachable') message.text(state.result.error_message || mainwp_onboarding_copy('unreachable').replace('%s', site));
   else if (state.status === 'error') {
     if (state.result.failure_ux) message.html(state.result.failure_ux);
     else message.text(state.result.error || String(state.result.response || mainwp_onboarding_copy('error')).replace(/^ERROR\s*/, ''));
@@ -619,7 +619,7 @@ let mainwp_setup_managesites_add = function () {
         mainwp_onboarding_connecting = false;
         const childNotAnswering = mainwp_onboarding_decode(response) === mainwp_onboarding_decode('ERROR ' + mainwp_onboarding_copy('childNotAnswering'));
         mainwp_onboarding_connect_failure = { url, category: childNotAnswering ? 'child_not_answering' : 'other' };
-        if (!childNotAnswering) mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
+        if (!childNotAnswering) mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? (res_things.error_message ? '<p>' + mainwp_onboarding_escape(res_things.error_message) + '</p>' : '') + res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
         if (mainwp_onboarding_detection) mainwp_onboarding_detection.connectFailed(detectionState, false);
       } else {
         mainwp_set_message_zone('#mainwp-message-zone', response, 'green');

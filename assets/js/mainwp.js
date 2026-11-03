@@ -1938,7 +1938,12 @@ let mainwp_managesites_add = function () {
         }
         jQuery('#mainwp-response-data-container').attr('resp-data', resp_data);
 
-        if (res_things.failure_ux) {
+        if (response == 'HTTPERROR' && res_things.error_message) {
+            errors.push(jQuery('<span>').text(res_things.error_message));
+            if (res_things.failure_ux) {
+                errors.push(mainwp_failure_ux_nodes(res_things.failure_ux));
+            }
+        } else if (res_things.failure_ux) {
             errors.push(mainwp_failure_ux_nodes(res_things.failure_ux));
         } else if (response == 'HTTPERROR') {
             errors.push(mainwp_feedback_linked_message(MainWP.I18n.t('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review this %1Knowledgebase document%2, and if you still have issues, please let us know in the %3MainWP Community%4.'), [{ href: 'https://docs.mainwp.com/troubleshooting/potential-issues/' }, { href: 'https://managers.mainwp.com/c/community-support/5' }]));
@@ -2014,6 +2019,9 @@ let mainwp_managesites_add = function () {
                 if (response.substring(0, 5) == 'ERROR') {
                     mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
                     let add_err = [res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : response.substring(6)];
+                    if (res_things.failure_ux && res_things.error_message) {
+                        add_err.unshift(jQuery('<span>').text(res_things.error_message));
+                    }
                     if (resp_data != '') {
                         add_err.push(show_resp);
                     } else {
@@ -4085,7 +4093,7 @@ globalThis.getErrorMessageInfo = function (repError, outputType) { // NOSONAR - 
         }
 
         if (msg != '') {
-            msgUI = jQuery('<span data-inverted="" data-position="left center">').attr('data-tooltip', msg).append('<i class="red times icon"></i>').prop('outerHTML');
+            msgUI = jQuery('<span data-inverted="" data-position="left center">').attr('data-tooltip', mainwp_entities_text(msg)).append('<i class="red times icon"></i>').prop('outerHTML');
         }
     }
 

@@ -454,7 +454,7 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
             );
 
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'update_post_status_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'update_post_status_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         $type_error = self::get_child_type_error( $information );
@@ -577,7 +577,7 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
             );
 
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'edit_post_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'edit_post_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         $type_error = self::get_child_type_error( $information );
@@ -669,7 +669,7 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
             );
 
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'create_post_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'create_post_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
         if ( empty( $information['added'] ) ) {
             return rest_ensure_response(
@@ -740,7 +740,7 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
             );
 
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'delete_post_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'delete_post_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         $type_error = self::get_child_type_error( $information );
@@ -1448,7 +1448,7 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
             );
 
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'get_post_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'get_post_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         $type_error = self::get_child_type_error( $information );

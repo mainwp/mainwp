@@ -4847,7 +4847,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
             return new \WP_Error( 'mainwp_update_failed', $error_message );
         } catch ( \Exception $e ) {
-            return new \WP_Error( 'mainwp_update_exception', $e->getMessage() );
+            return new \WP_Error( 'mainwp_update_exception', ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) );
         }
     }
 
@@ -4959,7 +4959,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'      => 'plugin',
                     'slug'      => $slug,
                     'code'      => 'mainwp_update_exception',
-                    'message'   => $e->getMessage(),
+                    'message'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }
@@ -5064,7 +5064,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'      => 'theme',
                     'slug'      => $slug,
                     'code'      => 'mainwp_update_exception',
-                    'message'   => $e->getMessage(),
+                    'message'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }
@@ -5189,7 +5189,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'      => 'translation',
                     'slug'      => $slug,
                     'code'      => 'mainwp_update_exception',
-                    'message'   => $e->getMessage(),
+                    'message'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }

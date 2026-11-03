@@ -655,7 +655,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             do_action( 'mainwp_debug_log', 'Update general settings error: ' . $e->getMessage() );
             return new WP_Error(
                 'rest_invalid_param',
-                /* translators: %s: Error message */ sprintf( __( 'Update general settings error: %s', 'mainwp' ), $e->getMessage() ),
+                /* translators: %s: Error message */ sprintf( __( 'Update general settings error: %s', 'mainwp' ), ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) ),
                 array( 'status' => 500 )
             );
         }
@@ -777,7 +777,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             do_action( 'mainwp_debug_log', 'Update advanced settings error: ' . $e->getMessage() );
             return new WP_Error(
                 'rest_invalid_param',
-                /* translators: %s: Error message */ sprintf( __( 'Update advanced settings error: %s', 'mainwp' ), $e->getMessage() ),
+                /* translators: %s: Error message */ sprintf( __( 'Update advanced settings error: %s', 'mainwp' ), ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) ),
                 array( 'status' => 500 )
             );
         }
@@ -1809,7 +1809,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             do_action( 'mainwp_debug_log', 'Update backup settings error: ' . $e->getMessage() );
             return new WP_Error(
                 'rest_invalid_param',
-                /* translators: %s: Error message */ sprintf( __( 'Update backup settings error: %s', 'mainwp' ), $e->getMessage() ),
+                /* translators: %s: Error message */ sprintf( __( 'Update backup settings error: %s', 'mainwp' ), ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) ),
                 array( 'status' => 500 )
             );
         }
@@ -2056,7 +2056,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ++$destroy_data['failed'];
                 ++$destroy_data['processed'];
                 // Same cap and cleaning as the Child error above; the NOMAINWP text carries an anchor tag.
-                $error_message            = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e ) : $e->getMessage();
+                $error_message            = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage();
                 $destroy_data['errors'][] = array(
                     'site_id' => $website_id,
                     'error'   => self::sanitize_batch_error_message( $error_message ),
@@ -2257,7 +2257,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ++$renew_data['processed'];
                 $renew_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => $e->getMessage(),
+                    'error'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }
@@ -2394,7 +2394,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ++$disconnect_data['processed'];
                 $disconnect_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => $e->getMessage(),
+                    'error'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }

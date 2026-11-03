@@ -162,18 +162,18 @@ class Test_Addon_Update_Security extends TestCase {
 	}
 
 	/**
-	 * Certificate failures need guidance; other transport errors keep their message.
+	 * Classified failures include readable guidance and their original details.
 	 *
 	 * @return array Transport messages and expected escaped errors.
 	 */
 	public static function transport_failures(): array {
 		return array(
-			'cURL 60'   => array( 'cURL error 60: SSL certificate problem: unable to get local issuer certificate', self::TLS_ERROR ),
-			'cURL 77'   => array( 'cURL error 77: error setting certificate verify locations', self::TLS_ERROR ),
+			'cURL 60'   => array( 'cURL error 60: SSL certificate problem: unable to get local issuer certificate', 'The MainWP license server\'s SSL certificate could not be verified. The CA certificates on the Dashboard server are probably out of date. Ask your host to update them. Details: cURL error 60: SSL certificate problem: unable to get local issuer certificate' ),
+			'cURL 77'   => array( 'cURL error 77: error setting certificate verify locations', 'The Dashboard server\'s own SSL setup is broken. It could not load its CA certificate bundle or client certificate. Ask your host to fix it. Details: cURL error 77: error setting certificate verify locations' ),
 			'hostname'  => array( 'cURL error 51: SSL: no alternative certificate subject name matches target host name', self::TLS_ERROR ),
 			'streams'   => array( 'The SSL certificate for the host could not be verified.', self::TLS_ERROR ),
-			'timeout'   => array( 'cURL error 28: Operation timed out', 'cURL error 28: Operation timed out' ),
-			'handshake' => array( 'cURL error 35: Connection reset by peer', 'cURL error 35: Connection reset by peer' ),
+			'timeout'   => array( 'cURL error 28: Operation timed out', 'The MainWP license server did not respond in time. Try again in a few minutes. If it keeps failing, ask your host whether outbound connections from the Dashboard server are slow or filtered. Details: cURL error 28: Operation timed out' ),
+			'handshake' => array( 'cURL error 35: Connection reset by peer', 'The secure connection to the MainWP license server could not be set up. The Dashboard server\'s TLS support is probably too old, or a firewall is cutting the connection. Contact your host. Details: cURL error 35: Connection reset by peer' ),
 			'HTML'      => array( '<b>Transport failure</b>', '&lt;b&gt;Transport failure&lt;/b&gt;' ),
 		);
 	}
@@ -194,7 +194,7 @@ class Test_Addon_Update_Security extends TestCase {
 					'error'     => $message,
 				)
 			);
-			$this->assertSame( array( 'error' => $expected ), $result['response'] );
+			$this->assertSame( array( 'error' => esc_html( $expected ) ), $result['response'] );
 			$this->assertSame( 1, $result['sslverify'] );
 			$this->assertSame( 1, $result['requests'] );
 			$this->assertSame( array(), $result['warnings'] );

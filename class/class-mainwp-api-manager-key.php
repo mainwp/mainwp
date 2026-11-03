@@ -233,6 +233,10 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     private function get_request_error_message( $request ) {
         $error_message = $request->get_error_message();
+        $classified    = MainWP_Error_Helper::classify_transport_error( null, $error_message, 'mainwp_api' );
+        if ( null !== $classified ) {
+            return $classified['message'];
+        }
         // Certificate verification failures name the certificate (cURL 51, 60, 77, the streams transport);
         // other SSL-layer errors such as a reset handshake keep their own message.
         if ( 1 === (int) static::$apisslverify && false !== stripos( $error_message, 'certificate' ) ) {

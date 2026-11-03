@@ -133,10 +133,13 @@ class Log_Graph_Clients_Widget {
                         type: 'pie',
                         height: 350,
                     },
+                    // ApexCharts inserts these labels as HTML.
                     tooltip: {
-                        theme: 'dark'
+                        theme: 'dark',
+                        y: { title: { formatter: function( name ) { return name ? mainwp_escape_html( name ) + ': ' : ''; } } },
                     },
                     legend: {
+                        formatter: function( name ) { return mainwp_escape_html( name ); },
                         labels: {
                             colors: '#999'
                         }
@@ -149,7 +152,7 @@ class Log_Graph_Clients_Widget {
                         data: [
                             <?php foreach ( $clients as $client ) : ?>
                             {
-                            x: '<?php echo esc_js( $client['name'] ); ?>',
+                            x: <?php echo wp_json_encode( (string) $client['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                             y: <?php echo ! empty( $client['selected_sites'] ) ? count( explode( ',', $client['selected_sites'] ) ) : 0; ?>,
                             fillColor: "#18a4e0",
                             },

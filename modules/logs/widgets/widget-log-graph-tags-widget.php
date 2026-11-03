@@ -186,7 +186,7 @@ class Log_Graph_Tags_Widget {
                             <?php foreach ( $groups_nrsites as $group => $nrsites ) : ?>
                                 <?php if ( 'Staging Sites' !== $group ) : ?>
                                 {
-                                x: '<?php echo esc_js( $group ); ?>',
+                                x: <?php echo wp_json_encode( (string) $group, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                                 y: <?php echo intval( $nrsites ); ?>,
                                 fillColor: "#18a4e0",
                                 },
@@ -199,7 +199,7 @@ class Log_Graph_Tags_Widget {
                             <?php foreach ( $tags_names as $tagid => $tagname ) : ?>
                                 <?php if ( 'Staging Sites' !== $tagname ) : ?>
                                 {
-                                x: '<?php echo esc_js( $tagname ); ?>',
+                                x: <?php echo wp_json_encode( (string) $tagname, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                                 y: <?php echo isset( $tags_count[ $tagid ] ) ? intval( $tags_count[ $tagid ] ) : 0; ?>,
                                 fillColor: "#7fb100",
                                 },
@@ -221,8 +221,10 @@ class Log_Graph_Tags_Widget {
                             }
                         }
                     },
+                    // ApexCharts inserts these labels as HTML.
                     tooltip: {
-                        theme: 'dark'
+                        theme: 'dark',
+                        x: { formatter: function( value ) { return mainwp_escape_html( value ); } },
                     },
                 }
                 let tags = new ApexCharts(document.querySelector("#mainwp-module-log-chart-tags-wrapper"), options);

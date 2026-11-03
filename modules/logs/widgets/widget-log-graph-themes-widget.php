@@ -150,7 +150,7 @@ class Log_Graph_Themes_Widget {
                         data: [
                             <?php foreach ( $themes as $theme => $count ) : ?>
                             {
-                            x: '<?php echo esc_js( $theme ); ?>',
+                            x: <?php echo wp_json_encode( (string) $theme, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>,
                             y: <?php echo intval( $count ); ?>,
                             fillColor: <?php echo $count >= 3 ? '"#7fb100"' : '"#18a4e0"'; ?>,
                             },
@@ -171,8 +171,10 @@ class Log_Graph_Themes_Widget {
                             }
                         }
                     },
+                    // ApexCharts inserts these labels as HTML.
                     tooltip: {
-                        theme: 'dark'
+                        theme: 'dark',
+                        x: { formatter: function( value ) { return mainwp_escape_html( value ); } },
                     },
                 }
                 let theme = new ApexCharts(document.querySelector("#mainwp-module-log-chart-themes-wrapper"), options);

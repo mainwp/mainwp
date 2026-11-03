@@ -1237,7 +1237,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
         try {
             MainWP_Manage_Sites_View::m_reconnect_site( $website );
         } catch ( \Exception $e ) {
-            $error = $e->getMessage();
+            // Reconnect messages are escaped for the AJAX screen; the console needs them as plain text.
+            $error = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_console_error_message( $e ) : $e->getMessage();
         }
 
         if ( empty( $error ) ) {

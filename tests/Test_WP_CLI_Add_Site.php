@@ -47,6 +47,25 @@ class Add_Site_CLI_Output_Double {
 		self::$messages[] = array( 'error', $message );
 		throw new Add_Site_CLI_Error();
 	}
+
+	/**
+	 * Capture a plain output line.
+	 *
+	 * @param string $message Command output.
+	 */
+	public static function line( $message ) {
+		self::$messages[] = array( 'line', $message );
+	}
+
+	/**
+	 * Return text without color tokens.
+	 *
+	 * @param string $message Command output with color tokens.
+	 * @return string Uncolored output.
+	 */
+	public static function colorize( $message ) {
+		return str_replace( array( '%g', '%r', '%n' ), '', $message );
+	}
 }
 
 /** Expected CLI error exit. */
@@ -355,6 +374,22 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( '&#039;', $message );
 		$this->assertStringContainsString( 'TLS certificate verification failed', $message );
 		$this->assertStringContainsString( '--ssl_verify=0', $message );
+	}
+
+	/**
+	 * A failed reconnect prints its message as plain text, not HTML entities.
+	 */
+	public function test_reconnect_failure_prints_plain_text() {
+		$translate = static function ( $translation, $text ) {
+			return 'This operation is not allowed!' === $text ? "You can't reconnect this site." : $translation;
+		};
+		add_filter( 'gettext', $translate, 10, 2 );
+		try {
+			MainWP_WP_CLI_Handle::callback_site_reconnect_site( array(), array(), false );
+		} finally {
+			remove_filter( 'gettext', $translate, 10 );
+		}
+		$this->assertSame( array( 'line', "You can't reconnect this site." ), end( Add_Site_CLI_Output_Double::$messages ) );
 	}
 
 	/**

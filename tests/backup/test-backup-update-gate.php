@@ -591,8 +591,8 @@ class MainWP_Backup_Update_Gate_Test extends MainWP_Abilities_Test_Case {
 		update_option( 'mainwp_delay_autoupdate', 0 );
 		update_option( 'mainwp_automaticUpdate_backupChecks', array() );
 		$store = \MainWP\Dashboard\MainWP_Auto_Updates_DB::instance();
-		$mock  = $this->getMockBuilder( \MainWP\Dashboard\MainWP_Auto_Updates_DB::class )->onlyMethods( array( 'get_websites_to_continue_updates' ) )->getMock();
-		$mock->method( 'get_websites_to_continue_updates' )->willReturn( array( MainWP_DB::instance()->get_website_by_id( $site_id ) ) );
+		$mock  = $this->getMockBuilder( \MainWP\Dashboard\MainWP_Auto_Updates_DB::class )->onlyMethods( array( 'get_websites_to_continue_auto_updates' ) )->getMock();
+		$mock->method( 'get_websites_to_continue_auto_updates' )->willReturn( array( MainWP_DB::instance()->get_website_by_id( $site_id ) ) );
 		$instance = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Auto_Updates_DB::class, 'instance' );
 		$instance->setAccessible( true );
 		$instance->setValue( null, $mock );

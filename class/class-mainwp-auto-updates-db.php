@@ -179,6 +179,60 @@ class MainWP_Auto_Updates_DB extends MainWP_DB { // phpcs:ignore Generic.Classes
 
 
     /**
+     * Get child sites to continue automatic updates.
+     *
+     * Regular automatic sync owns dtsAutomaticSyncStart, so this query uses dtsAutomaticSync only.
+     *
+     * @param int  $limit limit sites to continue updates.
+     * @param int  $lasttime_start Lasttime start automatic update.
+     * @param bool $connected Requires sites connected.
+     * @param bool $not_suspended Requires sites unsuspended.
+     *
+     * @return array|false Sites still pending in this run, or false without a run start.
+     */
+    public function get_websites_to_continue_auto_updates( $limit, $lasttime_start, $connected = false, $not_suspended = false ) {
+
+        if ( empty( $lasttime_start ) ) {
+            return false;
+        }
+
+        $where = ' wp_sync.dtsAutomaticSync < ' . intval( $lasttime_start ) . ' AND';
+        if ( true === $connected ) {
+            $where .= ' wp_sync.sync_errors = "" AND';
+        }
+        if ( true === $not_suspended ) {
+            $where .= ' wp.suspended = 0 AND';
+        }
+
+        $orderby = ' wp_sync.dtsAutomaticSync ASC ';
+
+        $where = rtrim( $where, 'AND' );
+
+        $params = array(
+            'view'    => 'updates_view',
+            'where'   => $where,
+            'limit'   => $limit,
+            'orderby' => $orderby,
+        );
+
+        $sql = MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params );
+
+        $results = MainWP_DB::instance()->query( $sql );
+
+        $websites = array();
+        while ( $results && $website = static::fetch_object( $results ) ) {
+            $websites[] = $website;
+        }
+
+        if ( $results ) {
+            static::free_result( $results );
+        }
+
+        return $websites;
+    }
+
+
+    /**
      * Get child sites to start updates.
      *
      * @param int $limit limit sites to continue updates.

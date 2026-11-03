@@ -102,10 +102,8 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
                 $websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_start_updates( false, true ); // included disconnected sites.
                 while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-                    $websiteValues = array(
-                        'dtsAutomaticSyncStart' => $local_timestamp,
-                    );
-                    MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
+                    // The regular automatic sync owns the dtsAutomaticSyncStart claim marker.
+                    // Trusted Updates tracks progress with dtsAutomaticSync only.
                     MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( array() ) );
                 }
                 MainWP_DB::free_result( $websites );
@@ -146,7 +144,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
         $lasttime_start = get_option( 'mainwp_automatic_updates_start_lasttime' );
 
-        $autoupdates_websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_continue_updates( $sites_limit, $lasttime_start, false, true ); // included disconnected sites.
+        $autoupdates_websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_continue_auto_updates( $sites_limit, $lasttime_start, false, true ); // included disconnected sites.
 
         MainWP_Logger::instance()->log_events( 'debug-updates-crons', 'Auto updates :: found :: ' . ( ! empty( $autoupdates_websites ) ? count( $autoupdates_websites ) : 0 ) );
 

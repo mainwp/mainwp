@@ -951,12 +951,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // Fallback: Legacy logic when Abilities API is not available.
         $args['selectgroups'] = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
         $args['full_data']    = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
-        // Fetch health_site_status onto the rows (extra_view = SQL column, fields =
-        // what map_site() keeps) so prepare_item_for_response() reads the health data
-        // off the object instead of a per-site query.
+        // Fetch health_site_status and the custom fields onto the rows (extra_view =
+        // SQL column, fields = what map_site() keeps; a name left out of fields comes
+        // back as ''). With health_site_status on the object, prepare_item_for_response()
+        // skips a per-site health query.
         $args['extra_view'] = array_merge( array( 'health_site_status' ), $custom_fields );
         $args_fields        = isset( $args['fields'] ) && is_array( $args['fields'] ) ? $args['fields'] : array();
-        $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields );
+        $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields, $custom_fields );
 
         $args = $this->scope_site_query_args( $args );
         if ( null === $args ) {

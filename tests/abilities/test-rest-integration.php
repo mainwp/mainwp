@@ -1361,12 +1361,7 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 			$this->assertCount( 1, $items );
 			$this->assertSame( $site_id, (int) $items[0]['id'] );
 			$this->assertSame( 'Allowed credential fixture', $items[0]['name'] );
-			if ( $legacy && $collection ) {
-				// Legacy collections already omit options outside the schema.
-				$this->assertEmpty( $items[0]['integration_status'] ?? null );
-			} else {
-				$this->assertSame( 'healthy', $items[0]['integration_status'] );
-			}
+			$this->assertSame( 'healthy', $items[0]['integration_status'] );
 			$this->assertSame( $legacy ? 0 : 1, $ability_calls, 'The requested controller branch must execute.' );
 			$this->assertSame( [], array_values( array_intersect( array_unique( array_merge( $secret_options, $requested_secret_options ) ), array_keys( $items[0] ) ) ), 'Secret option names must be absent from the response.' );
 			$hidden = $this->do_authenticated_request( 'GET', '/mainwp/v2/sites/' . $hidden_id, $params );

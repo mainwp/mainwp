@@ -194,6 +194,16 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         // get_site_option is multisite aware!
         $currentVersion = get_site_option( $this->option_db_key );
 
+        // Seed before the equal-version return so existing installs receive grace once.
+        if ( false === get_option( 'mainwp_cron_key_state' ) ) {
+            MainWP_Server_Information::get_cron_secret();
+            $cron_key_state = empty( $currentVersion ) ? array( 'mode' => 'required' ) : array(
+                'mode'        => 'grace',
+                'grace_start' => time(),
+            );
+            add_option( 'mainwp_cron_key_state', $cron_key_state, '', true );
+        }
+
         if ( empty( $currentVersion ) ) {
             update_option( 'mainwp_run_quick_setup', 'yes' );
             add_option( 'mainwp_onboarding_fresh_install', time() );

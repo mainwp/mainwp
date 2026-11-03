@@ -327,6 +327,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 $destination = MainWP_Backup_Storage_Destinations::instance()->prepare_retention_identity( $destination );
                 $provider    = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
             }
+            $format_metadata = MainWP_Backup_Snapshots::format_metadata( (array) $snapshot->archives );
+            if ( is_wp_error( $format_metadata ) ) {
+                throw new \RuntimeException( $format_metadata->get_error_message(), 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are escaped by consumers.
+            }
             // Check persisted encryption intent before any upload phase can
             // write archive bytes or a manifest to the provider.
             $enc = $this->encryption_context_for( $snapshot );
@@ -357,6 +361,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                     // over an empty checkpoint the restore cannot use.
                     return;
                 }
+            }
+
+            $checkpoint_metadata = MainWP_Backup_Snapshots::format_metadata( (array) $checkpoint['artifacts'] );
+            if ( is_wp_error( $checkpoint_metadata ) || $checkpoint_metadata !== $format_metadata ) {
+                throw new \RuntimeException( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ), 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are escaped by consumers.
             }
 
             $status = $job->status;
@@ -471,8 +480,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             if ( empty( $entry['path'] ) ) {
                 continue;
             }
-            $size        = isset( $entry['size'] ) ? (int) $entry['size'] : 0;
-            $artifacts[] = array(
+            $size     = isset( $entry['size'] ) ? (int) $entry['size'] : 0;
+            $artifact = array(
                 'path'          => (string) $entry['path'],
                 'file'          => isset( $entry['file'] ) ? (string) $entry['file'] : basename( $entry['path'] ),
                 'role'          => isset( $entry['role'] ) ? (string) $entry['role'] : '',
@@ -482,6 +491,14 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 'chunks_cursor' => 0,
                 'done'          => false,
             );
+            if ( isset( $entry['backup_format'] ) && 2 === (int) $entry['backup_format'] ) {
+                $artifact['backup_format']            = 2;
+                $artifact['layout_descriptor_sha256'] = $entry['layout_descriptor_sha256'];
+                if ( 'manifest' === $artifact['role'] ) {
+                    $artifact['layout_descriptor'] = $entry['layout_descriptor'];
+                }
+            }
+            $artifacts[] = $artifact;
         }
 
         return array(
@@ -649,6 +666,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @return bool True when the terminal checkpoint landed; false when the
      *              fenced write was refused (transient DB error or lost lease)
      *              and the job must not complete this tick.
+     * @throws \RuntimeException When stored format metadata is invalid.
      */
     private function phase_submitting( object $job, array &$checkpoint, object $snapshot, MainWP_Backup_Storage_Provider $provider, array $enc ): bool {
         $artifacts = array();
@@ -675,6 +693,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             } else {
                 $entry['key'] = 'files/' . $artifact['file'];
             }
+            if ( isset( $artifact['backup_format'] ) && 2 === (int) $artifact['backup_format'] ) {
+                $entry['backup_format']            = 2;
+                $entry['layout_descriptor_sha256'] = $artifact['layout_descriptor_sha256'];
+                if ( 'manifest' === $entry['role'] ) {
+                    $entry['layout_descriptor'] = $artifact['layout_descriptor'];
+                }
+            }
             $artifacts[] = $entry;
         }
 
@@ -688,6 +713,17 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             'parent_id'   => empty( $snapshot->parent_id ) ? null : (int) $snapshot->parent_id,
             'artifacts'   => $artifacts,
         );
+
+        $format_metadata = MainWP_Backup_Snapshots::format_metadata( (array) $snapshot->archives );
+        if ( is_wp_error( $format_metadata ) ) {
+            throw new \RuntimeException( $format_metadata->get_error_message(), 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are escaped by consumers.
+        }
+        if ( ! empty( $format_metadata ) ) {
+            $manifest['format']                   = 2;
+            $manifest['backup_format']            = 2;
+            $manifest['layout_descriptor']        = $format_metadata['layout_descriptor'];
+            $manifest['layout_descriptor_sha256'] = $format_metadata['layout_descriptor_sha256'];
+        }
 
         // For an encrypted snapshot the manifest carries the keying material a
         // disaster recovery needs: the wrapped DEK, the passphrase-wrapped KEK
@@ -755,7 +791,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $expected_remote = $size + $this->seal_overhead( $enc );
 
         $head = $provider->head_object( $key );
-        if ( is_array( $head ) && (int) $head['size'] === $expected_remote ) {
+        if ( is_array( $head ) && isset( $head['size'] ) && (int) $head['size'] === $expected_remote ) {
             return; // Verified present.
         }
 
@@ -827,12 +863,20 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      *
      * @return void
      *
-     * @throws \RuntimeException When the destination did not return the expected size.
+     * @throws \RuntimeException When the object is missing, its size was not reported, or the size differs.
      */
     private function confirm_remote_object( MainWP_Backup_Storage_Provider $provider, string $key, int $expected_size ): void {
         $head = $provider->head_object( $key );
-        if ( ! is_array( $head ) || ! isset( $head['size'] ) || (int) $head['size'] !== $expected_size ) {
-            throw new \RuntimeException( 'Upload verification failed; the destination did not confirm ' . $key . ' at the expected size.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
+        // Each case gets its own message so a diagnostics export shows which
+        // one happened. A missing size never counts as a match.
+        if ( ! is_array( $head ) ) {
+            throw new \RuntimeException( 'Upload verification failed; ' . $key . ' was not found at the destination after it was uploaded.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
+        }
+        if ( ! isset( $head['size'] ) ) {
+            throw new \RuntimeException( 'Upload verification failed; the storage provider did not report the size of ' . $key . ', so the upload could not be checked.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
+        }
+        if ( (int) $head['size'] !== $expected_size ) {
+            throw new \RuntimeException( 'Upload verification failed; the destination reported ' . $key . ' as ' . (int) $head['size'] . ' bytes, but ' . $expected_size . ' bytes were uploaded.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
         }
     }
 
@@ -1111,10 +1155,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 return MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED;
             case 'ftp':
             case 'ftps':
-            case 'sftp':
                 return MainWP_Backup_Error_Codes::ERR_FTP_FAILED;
+            case 'sftp':
+                return MainWP_Backup_Error_Codes::ERR_SFTP_FAILED;
+            case 'local':
+                return MainWP_Backup_Error_Codes::ERR_LOCAL_FAILED;
             default:
-                return MainWP_Backup_Error_Codes::ERR_S3_FAILED;
+                return MainWP_Backup_Error_Codes::ERR_UPLOAD_FAILED;
         }
     }
 

@@ -109,6 +109,44 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Older Team Control versions cannot grant the delete right.
+     *
+     * @return bool
+     */
+    public static function delete_right_applies(): bool {
+        /**
+         * Wait for Team Control's upgrade grant so a Dashboard-first update
+         * preserves existing staff access to deletion.
+         *
+         * @param bool $supported Whether delete_backups role grants are ready.
+         */
+        return (bool) apply_filters( 'mainwp_backups_delete_right_supported', false );
+    }
+
+    /**
+     * UI staff and integrations use different base capability gates.
+     *
+     * @param string $context Calling transport.
+     * @return true|\WP_Error
+     */
+    public static function authorize_delete( string $context ) {
+        if ( ! self::delete_right_applies() ) {
+            return true;
+        }
+        return 'ui' === $context ? self::authorize_ui( 'delete_backups' ) : self::authorize_base( 'delete_backups' );
+    }
+
+    /**
+     * Page controls and AJAX registrations must agree on deletion access.
+     *
+     * @return bool
+     */
+    public static function current_user_can_delete(): bool {
+        return \mainwp_current_user_can( 'dashboard', 'execute_backups' )
+            && ( ! self::delete_right_applies() || \mainwp_current_user_can( 'dashboard', 'delete_backups' ) );
+    }
+
+    /**
      * Single-site and fleet access use the same scope and ownership rules.
      *
      * @param object $site Website row.
@@ -243,6 +281,22 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Cross-site sources require both backup access and the download right.
+     *
+     * @param int    $source_site_id Source owner.
+     * @param string $context Calling transport.
+     * @return object|\WP_Error Authorized source or refusal.
+     */
+    private static function authorize_cross_site_source( int $source_site_id, string $context ) {
+        $site = self::authorize_site( $source_site_id, 'execute_backups', $context );
+        if ( is_wp_error( $site ) ) {
+            return $site;
+        }
+        $download = 'ui' === $context ? self::authorize_ui( 'download_backups' ) : self::authorize_base( 'download_backups' );
+        return is_wp_error( $download ) ? $download : $site;
+    }
+
+    /**
      * Reservations are internal until a restore is admitted.
      *
      * @param int    $restore_job_id Restore job identity.
@@ -262,7 +316,24 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
         }
         $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
-        return ! $job || 'reserved' === $job->status || is_wp_error( self::authorize_site( (int) $job->site_id, 'execute_backups', $context ) ) ? self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND ) : $job;
+        if ( ! $job || 'reserved' === $job->status || is_wp_error( self::authorize_site( (int) $job->site_id, 'execute_backups', $context ) ) ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND );
+        }
+        $source_site_id = (int) ( $job->checkpoint['source_site_id'] ?? 0 );
+        if ( $source_site_id > 0 && $source_site_id !== (int) $job->site_id ) {
+            $source = self::authorize_cross_site_source( $source_site_id, $context );
+            if ( is_wp_error( $source ) ) {
+                return $source;
+            }
+            // Polling can advance a cross-site job, so it also needs restore rights.
+            if ( ! $require_restore_right ) {
+                $restore = 'ui' === $context ? self::authorize_ui( 'restore_backups' ) : self::authorize_base( 'restore_backups' );
+                if ( is_wp_error( $restore ) ) {
+                    return $restore;
+                }
+            }
+        }
+        return $job;
     }
 
     /**
@@ -711,8 +782,8 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'exclude'                        => MainWP_Backup_Settings::sanitize_exclude_list( array_map( 'htmlentities', $values['exclude'] ) ),
             'sites'                          => implode( ',', $values['site_ids'] ),
             'groups'                         => implode( ',', $values['group_ids'] ),
-            'subfolder'                      => MainWP_Utility::remove_preslash_spaces( sanitize_text_field( $fields['subfolder'] ?? $task->subfolder ?? '' ) ),
-            'filename'                       => sanitize_text_field( $fields['filename'] ?? $task->filename ?? '' ),
+            'subfolder'                      => MainWP_Backup_File_Manager::sanitize_subfolder_path( MainWP_Utility::remove_preslash_spaces( MainWP_Backup_File_Manager::clean_name_template( $fields['subfolder'] ?? $task->subfolder ?? '' ) ) ),
+            'filename'                       => MainWP_Backup_File_Manager::sanitize_path_segment( MainWP_Backup_File_Manager::clean_name_template( $fields['filename'] ?? $task->filename ?? '' ) ),
             'excludebackup'                  => (int) $flags['backup_archives'],
             'excludecache'                   => (int) $flags['cache'],
             'excludenonwp'                   => (int) $flags['non_wp_folders'],
@@ -1461,6 +1532,47 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Restore across sites only after independently authorizing both sides.
+     *
+     * @internal
+     * @param int    $source_site_id Source backup owner.
+     * @param int    $target_site_id Destination site.
+     * @param int    $snapshot_id Source snapshot.
+     * @param array  $options Restore options and destructive consent.
+     * @param string $context ui, cli or ability.
+     * @return array|\WP_Error Admission result.
+     */
+    public static function restore_snapshot_cross_site( int $source_site_id, int $target_site_id, int $snapshot_id, array $options, string $context ) {
+        if ( $source_site_id === $target_site_id ) {
+            return self::restore_snapshot( $target_site_id, $snapshot_id, $options, $context );
+        }
+        $source = self::authorize_cross_site_source( $source_site_id, $context );
+        if ( is_wp_error( $source ) ) {
+            return $source;
+        }
+        $target = self::authorize_site( $target_site_id, 'execute_backups', $context );
+        if ( is_wp_error( $target ) ) {
+            return $target;
+        }
+        $restore = 'ui' === $context ? self::authorize_ui( 'restore_backups' ) : self::authorize_base( 'restore_backups' );
+        if ( is_wp_error( $restore ) ) {
+            return $restore;
+        }
+        if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        if ( null === $snapshot || (int) $snapshot->site_id !== $source_site_id ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND );
+        }
+        try {
+            return array( 'job_id' => MainWP_Backup_Restore_Orchestrator::instance()->initiate_cross_site_restore( $source_site_id, $target_site_id, $snapshot_id, $options ) );
+        } catch ( MainWP_Exception $error ) {
+            return self::restore_refusal( $error, $context );
+        }
+    }
+
+    /**
      * Rollback admission shares the same site right as a new restore.
      *
      * @param int    $restore_job_id Source job identity.
@@ -2005,6 +2117,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $site ) ) {
             return $site;
         }
+        $delete = self::authorize_delete( $context );
+        if ( is_wp_error( $delete ) ) {
+            return $delete;
+        }
         $snapshot = self::authorize_snapshot( $snapshot_id, $context );
         if ( is_wp_error( $snapshot ) ) {
             return $snapshot;
@@ -2353,6 +2469,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $site ) ) {
             return $site;
         }
+        $delete = self::authorize_delete( $context );
+        if ( is_wp_error( $delete ) ) {
+            return $delete;
+        }
         // A preview must not fall through to the existing destructive pass.
         if ( $dry_run ) {
             return MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep, 6 * HOUR_IN_SECONDS );
@@ -2599,6 +2719,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $site = self::authorize_site( $site_id, 'execute_backups', $context );
         if ( is_wp_error( $site ) ) {
             return $site;
+        }
+        $delete = self::authorize_delete( $context );
+        if ( is_wp_error( $delete ) ) {
+            return $delete;
         }
         $error = self::native_task_write_error();
         if ( $error ) {

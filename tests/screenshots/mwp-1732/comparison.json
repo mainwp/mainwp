@@ -1,0 +1,534 @@
+{
+  "baseline_revision": "ca47522601d390a8eaf81c8664b18d4200b58a81",
+  "stylesheet_sha256": "a72b7948c356c3b14eb261d29a37fd20321ecd5832d6dae8f7f8b12fc8975b93",
+  "sites": 3,
+  "cases": [
+    {
+      "theme": "default",
+      "kind": "plugins",
+      "view": "0",
+      "width": 1440,
+      "rows": 7,
+      "before_overflow_px": 61.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 75.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "plugins",
+      "view": "0",
+      "width": 1024,
+      "rows": 7,
+      "before_overflow_px": 79.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 93.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "plugins",
+      "view": "0",
+      "width": 768,
+      "rows": 7,
+      "before_overflow_px": 111.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 125.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "plugins",
+      "view": "1",
+      "width": 1440,
+      "rows": 7,
+      "before_overflow_px": 61.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 75.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "plugins",
+      "view": "1",
+      "width": 1024,
+      "rows": 7,
+      "before_overflow_px": 79.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 93.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "plugins",
+      "view": "1",
+      "width": 768,
+      "rows": 7,
+      "before_overflow_px": 111.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 125.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "themes",
+      "view": "0",
+      "width": 1440,
+      "rows": 6,
+      "before_overflow_px": 46.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 60.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "themes",
+      "view": "0",
+      "width": 1024,
+      "rows": 6,
+      "before_overflow_px": 64.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 78.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "themes",
+      "view": "0",
+      "width": 768,
+      "rows": 6,
+      "before_overflow_px": 96.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 110.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "themes",
+      "view": "1",
+      "width": 1440,
+      "rows": 6,
+      "before_overflow_px": 46.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 60.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "themes",
+      "view": "1",
+      "width": 1024,
+      "rows": 6,
+      "before_overflow_px": 64.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 78.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default",
+      "kind": "themes",
+      "view": "1",
+      "width": 768,
+      "rows": 6,
+      "before_overflow_px": 96.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 110.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "plugins",
+      "view": "0",
+      "width": 1440,
+      "rows": 7,
+      "before_overflow_px": 61.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 75.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "plugins",
+      "view": "0",
+      "width": 1024,
+      "rows": 7,
+      "before_overflow_px": 79.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 93.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "plugins",
+      "view": "0",
+      "width": 768,
+      "rows": 7,
+      "before_overflow_px": 111.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 125.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "plugins",
+      "view": "1",
+      "width": 1440,
+      "rows": 7,
+      "before_overflow_px": 61.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 75.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "plugins",
+      "view": "1",
+      "width": 1024,
+      "rows": 7,
+      "before_overflow_px": 79.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 93.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "plugins",
+      "view": "1",
+      "width": 768,
+      "rows": 7,
+      "before_overflow_px": 111.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 125.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete",
+        "Deactivate"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "themes",
+      "view": "0",
+      "width": 1440,
+      "rows": 6,
+      "before_overflow_px": 46.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 60.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "themes",
+      "view": "0",
+      "width": 1024,
+      "rows": 6,
+      "before_overflow_px": 64.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 78.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "themes",
+      "view": "0",
+      "width": 768,
+      "rows": 6,
+      "before_overflow_px": 96.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 110.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "themes",
+      "view": "1",
+      "width": 1440,
+      "rows": 6,
+      "before_overflow_px": 46.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 60.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "themes",
+      "view": "1",
+      "width": 1024,
+      "rows": 6,
+      "before_overflow_px": 64.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 78.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    },
+    {
+      "theme": "default-dark",
+      "kind": "themes",
+      "view": "1",
+      "width": 768,
+      "rows": 6,
+      "before_overflow_px": 96.625,
+      "after_overflow_px": 0,
+      "before_cell_overflow_px": 110.625,
+      "after_cell_overflow_px": 0,
+      "button_labels": [
+        "Activate",
+        "Delete"
+      ]
+    }
+  ],
+  "page_errors": {
+    "before": [],
+    "after": []
+  },
+  "console_error_count": {
+    "before": 79,
+    "after": 79
+  },
+  "console_note": "External resource requests were denied by the isolated browser; the counts match before and after.",
+  "deployment": {
+    "baseline": {
+      "label": "base",
+      "manifest_files": 1006,
+      "deployed_files": 1006,
+      "all_match": true,
+      "mismatch": [],
+      "symlinks": 0,
+      "time": "2026-11-02T02:25:45.642549-05:00"
+    },
+    "branch": {
+      "label": "fix",
+      "manifest_files": 1006,
+      "deployed_files": 1006,
+      "all_match": true,
+      "mismatch": [],
+      "symlinks": 0,
+      "time": "2026-11-02T02:39:31.507215-05:00"
+    }
+  },
+  "restore": {
+    "mode": "final",
+    "sites": {
+      "dashboard": {
+        "files_differences": 0,
+        "database_differences": 0,
+        "database_tables": 40,
+        "readings_equal": true,
+        "plugin_state_equal": true,
+        "remote_root_removed": true
+      },
+      "child1": {
+        "files_differences": 0,
+        "database_differences": 0,
+        "database_tables": 14,
+        "readings_equal": true,
+        "plugin_state_equal": true,
+        "remote_root_removed": true
+      },
+      "child2": {
+        "files_differences": 0,
+        "database_differences": 0,
+        "database_tables": 14,
+        "readings_equal": true,
+        "plugin_state_equal": true,
+        "remote_root_removed": true
+      },
+      "child3": {
+        "files_differences": 0,
+        "database_differences": 0,
+        "database_tables": 53,
+        "readings_equal": true,
+        "plugin_state_equal": true,
+        "remote_root_removed": true
+      }
+    },
+    "time": "2026-11-02T02:42:20.160154-05:00"
+  },
+  "cleanup": {
+    "snapshot_archives_removed": true,
+    "private_auth_files_removed": 1,
+    "remote_backups_removed": true,
+    "sites": [
+      "dashboard",
+      "child1",
+      "child2",
+      "child3"
+    ],
+    "database_tables": 121,
+    "time": "2026-11-02T02:42:46.384376-05:00"
+  },
+  "suite_comparison": [
+    {
+      "suite": "MainWP Dashboard Test Suite",
+      "baseline_tests": 4358,
+      "branch_tests": 4358,
+      "baseline_exit": 0,
+      "branch_exit": 0,
+      "new_failures": [],
+      "resolved_failures": [],
+      "baseline_missing_junit": false,
+      "branch_missing_junit": false,
+      "baseline_errors": 0,
+      "baseline_failures": 0,
+      "branch_errors": 0,
+      "branch_failures": 0,
+      "baseline_skips": 0,
+      "branch_skips": 0
+    },
+    {
+      "suite": "Abilities",
+      "baseline_tests": 3442,
+      "branch_tests": 3442,
+      "baseline_exit": 0,
+      "branch_exit": 0,
+      "new_failures": [],
+      "resolved_failures": [],
+      "baseline_missing_junit": false,
+      "branch_missing_junit": false,
+      "baseline_errors": 0,
+      "baseline_failures": 0,
+      "branch_errors": 0,
+      "branch_failures": 0,
+      "baseline_skips": 4,
+      "branch_skips": 4
+    },
+    {
+      "suite": "Backup",
+      "baseline_tests": 7074,
+      "branch_tests": 7074,
+      "baseline_exit": 2,
+      "branch_exit": 2,
+      "new_failures": [],
+      "resolved_failures": [],
+      "baseline_missing_junit": false,
+      "branch_missing_junit": false,
+      "baseline_errors": 137,
+      "baseline_failures": 23,
+      "branch_errors": 137,
+      "branch_failures": 23,
+      "baseline_skips": 5,
+      "branch_skips": 5
+    },
+    {
+      "suite": "REST Key Authentication",
+      "baseline_tests": 469,
+      "branch_tests": 469,
+      "baseline_exit": 0,
+      "branch_exit": 0,
+      "new_failures": [],
+      "resolved_failures": [],
+      "baseline_missing_junit": false,
+      "branch_missing_junit": false,
+      "baseline_errors": 0,
+      "baseline_failures": 0,
+      "branch_errors": 0,
+      "branch_failures": 0,
+      "baseline_skips": 0,
+      "branch_skips": 0
+    }
+  ],
+  "test_runtime": {
+    "php": "8.4.27",
+    "wordpress": "7.1.3",
+    "sequential": true
+  }
+}

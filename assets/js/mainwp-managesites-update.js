@@ -55,7 +55,7 @@ let mainwp_update_get_selected_sitesids = function (selectedSitesIds, allSitesId
 
 
 // global variable.
-globalThis.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
+globalThis.mainwp_update_pluginsthemes = function (updateType, updateSiteIds, continueRun) {
     let allWebsiteIds = jQuery('.dashboard_wp_id[error-status=0]').map(function (indx, el) {
         return jQuery(el).val();
     });
@@ -116,7 +116,7 @@ globalThis.mainwp_update_pluginsthemes = function (updateType, updateSiteIds) {
         }
     }(updateType, nrOfWebsites, allWebsiteIds);
 
-    if (!ignoredBackupBeforeUpdate) {
+    if (!continueRun || !ignoredBackupBeforeUpdate) {
         mainwp_managesites_checkBackups(allWebsiteIds, siteNames);
     } else if (managesitesContinueAfterBackup != undefined) {
         managesitesContinueAfterBackup();
@@ -174,7 +174,7 @@ let managesites_update_pluginsthemes_done = function (pType) {
                     let selectedIds = jQuery('#sync_selected_site_ids').val().split(',');
                     setTimeout(function () {
                         // start next update step.
-                        mainwp_update_pluginsthemes(nextStep, selectedIds);
+                        mainwp_update_pluginsthemes(nextStep, selectedIds, true);
                     }, 1000);
                     return; // do not close the popup.
                 }
@@ -291,6 +291,7 @@ let managesites_update_pluginsthemes_next = function (pType) {
 jQuery(document).on('click', '#managesites-backup-ignore', function () {
     if (managesitesContinueAfterBackup != undefined) {
         ignoredBackupBeforeUpdate = true;
+        mainwpVars.ignoreBackupGate = true;
         mainwpPopup('#managesites-backup-box').close();
         managesitesContinueAfterBackup();
         managesitesContinueAfterBackup = undefined;
@@ -298,11 +299,19 @@ jQuery(document).on('click', '#managesites-backup-ignore', function () {
 });
 
 let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
+    // The pending check owns the shared override flag and backup box until it settles, so a second start is dropped.
+    if (mainwpVars.backupCheckPending) {
+        return;
+    }
+    mainwpVars.ignoreBackupGate = false;
+    ignoredBackupBeforeUpdate = false;
     if (!mainwpParams['backup_before_upgrade']) {
         if (managesitesContinueAfterBackup != undefined)
             managesitesContinueAfterBackup();
         return;
     }
+    // A dropped start still overwrites the shared global, so keep the update this check was started for.
+    const continueAfterBackup = managesitesContinueAfterBackup;
     let managesitesShowBusyFunction = function () {
         let output = MainWP.I18n.t('Checking if a backup is required for the selected updates...');
         mainwpPopup('#managesites-backup-box').getContentEl().html(output);
@@ -311,6 +320,8 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
         mainwpPopup('#managesites-backup-box').init({
             title: MainWP.I18n.t("Checking backup settings..."), callback: function () {
                 mainwpVars.bulkManageSitesTaskRunning = false;
+                // Closing the box cancels the check; its error handler releases the pending flag.
+                checkRequest.abort();
             },
             allowMultiple: true
         });
@@ -325,12 +336,14 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
         sites: sitesToUpdate
     });
 
-    jQuery.ajax({
+    mainwpVars.backupCheckPending = true;
+    let checkRequest = jQuery.ajax({
         type: "POST",
         url: ajaxurl,
         data: data,
         success: function (pSiteNames) {
             return function (response) {
+                mainwpVars.backupCheckPending = false;
                 clearTimeout(managesitesShowBusyTimeout);
 
                 mainwpPopup('#managesites-backup-box').close();
@@ -348,6 +361,8 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                 }
 
                 if (siteFeedback != undefined) {
+                    // The box buttons resume through the shared global.
+                    managesitesContinueAfterBackup = continueAfterBackup;
                     let title = mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
                     mainwpPopup('#managesites-backup-box').init({
                         title: title, callback: function () {
@@ -358,11 +373,12 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
 
                     return;
                 }
-                if (managesitesContinueAfterBackup != undefined)
-                    managesitesContinueAfterBackup();
+                if (continueAfterBackup != undefined)
+                    continueAfterBackup();
             }
         }(siteNames),
         error: function () {
+            mainwpVars.backupCheckPending = false;
             mainwpPopup('#managesites-backup-box').close(true);
         },
         dataType: 'json'
@@ -399,6 +415,13 @@ jQuery(document).on('click', '#managesites-backupnow-close', function () {
         mainwpPopup('#managesites-backup-box').close(true);
     } else {
         mainwpPopup('#managesites-backup-box').close();
+        // "Continue update anyway" after a failed backup is an explicit override; the server gate refuses without it.
+        // Later Update Everything stages keep it, as they do after Ignore.
+        if (managesitesBackupError) {
+            mainwpVars.ignoreBackupGate = true;
+            ignoredBackupBeforeUpdate = true;
+        }
+        managesitesBackupError = false;
         if (managesitesContinueAfterBackup != undefined)
             managesitesContinueAfterBackup();
     }
@@ -630,7 +653,7 @@ let managesites_wordpress_upgrade_all_update_done = function () {
             let selectedIds = jQuery('#sync_selected_site_ids').val().split(',');
             setTimeout(function () {
                 // start next update step.
-                mainwp_update_pluginsthemes(nextStep, selectedIds);
+                mainwp_update_pluginsthemes(nextStep, selectedIds, true);
             }, 1000);
             return; // do not close the popup.
         }

@@ -515,8 +515,8 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $datetime = new \DateTime( '@' . $timestamp );
         $datetime->setTimezone( new \DateTimeZone( $wp_timezone ) );
 
-        $format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) . $tzinfo;
-        return $datetime->format( $format );
+        $format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+        return $datetime->format( $format ) . $tzinfo;
     }
 
     /**

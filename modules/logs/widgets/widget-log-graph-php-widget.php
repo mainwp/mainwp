@@ -152,7 +152,7 @@ class Log_Graph_Php_Widget {
                     },
                     legend: {
                         labels: {
-                            colors: '#999'
+                            colors: 'inherit'
                         }
                     },
                     stroke: {

@@ -97,7 +97,9 @@ class MainWP_Bulk_Add { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             }
         } else {
             MainWP_Logger::instance()->debug_for_website( $website, 'posting_bulk_handler', '[' . $website->url . '] Result was: [data-start]' . $data . '[data-end]' );
-            $output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            $output->errors[ $website->id ] = isset( $output->transport_errors[ $website->id ]['message'] )
+                ? esc_html( $output->transport_errors[ $website->id ]['message'] )
+                : MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
 }

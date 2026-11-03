@@ -1033,7 +1033,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                         'status_url'     => array(
                             'type'        => 'string',
                             'format'      => 'uri',
-                            'description' => __( 'URL to poll for job status.', 'mainwp' ),
+                            'description' => __( 'Authenticated GET URL for mainwp/get-batch-job-status-v1, including job_id.', 'mainwp' ),
                         ),
                         'updates_queued' => array(
                             'type'        => 'integer',
@@ -1925,7 +1925,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                         'status_url'     => array(
                             'type'        => 'string',
                             'format'      => 'uri',
-                            'description' => __( 'URL to poll for job status.', 'mainwp' ),
+                            'description' => __( 'Authenticated GET URL for mainwp/get-batch-job-status-v1, including job_id.', 'mainwp' ),
                         ),
                         'updates_queued' => array(
                             'type'        => 'integer',
@@ -2460,7 +2460,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'dry_run'        => false,
                 'queued'         => true,
                 'job_id'         => $job_id,
-                'status_url'     => rest_url( "mainwp/v2/jobs/{$job_id}" ),
+                'status_url'     => MainWP_Abilities_Util::get_batch_job_status_url( $job_id ),
                 'updates_queued' => count( $access_check['allowed'] ),
                 'errors'         => $errors,
             );
@@ -4006,7 +4006,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'dry_run'        => false,
                 'queued'         => true,
                 'job_id'         => $job_id,
-                'status_url'     => rest_url( "mainwp/v2/jobs/{$job_id}" ),
+                'status_url'     => MainWP_Abilities_Util::get_batch_job_status_url( $job_id ),
                 'updates_queued' => count( $sites ),
                 'errors'         => self::normalize_resolution_errors( $acl_errors ),
             );
@@ -4847,7 +4847,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
             return new \WP_Error( 'mainwp_update_failed', $error_message );
         } catch ( \Exception $e ) {
-            return new \WP_Error( 'mainwp_update_exception', $e->getMessage() );
+            return new \WP_Error( 'mainwp_update_exception', ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) );
         }
     }
 
@@ -4959,7 +4959,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'      => 'plugin',
                     'slug'      => $slug,
                     'code'      => 'mainwp_update_exception',
-                    'message'   => $e->getMessage(),
+                    'message'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }
@@ -5064,7 +5064,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'      => 'theme',
                     'slug'      => $slug,
                     'code'      => 'mainwp_update_exception',
-                    'message'   => $e->getMessage(),
+                    'message'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }
@@ -5189,7 +5189,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'      => 'translation',
                     'slug'      => $slug,
                     'code'      => 'mainwp_update_exception',
-                    'message'   => $e->getMessage(),
+                    'message'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
                 );
             }
         }

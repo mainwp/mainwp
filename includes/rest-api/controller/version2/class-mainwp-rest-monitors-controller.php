@@ -1098,7 +1098,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 $result = MainWP_Monitoring_Handler::handle_check_website( $website );
             }
         } catch ( \Exception $e ) {
-            $error_msg = $e->getMessage();
+            $error_msg = ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() );
         }
 
         if ( ! empty( $error_msg ) ) {

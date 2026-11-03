@@ -33,7 +33,7 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             <div class="sub header">
             <?php
                 /* translators: 1: Opening anchor tag, 2: Closing anchor tag with external link icon */
-                printf( esc_html__( 'For additional help with setting up the Uptime Monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/manage-child-sites#uptime-monitoring" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                printf( esc_html__( 'For additional help with setting up the Uptime Monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/uptime-monitoring" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
             ?>
                 </div>
         </h3>
@@ -47,7 +47,7 @@ class MainWP_Monitoring_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             <div class="sub header">
             <?php
                 /* translators: 1: Opening anchor tag, 2: Closing anchor tag with external link icon */
-                printf( esc_html__( 'For additional help with setting up the Site Health monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/manage-child-sites#uptime-monitoring" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                printf( esc_html__( 'For additional help with setting up the Site Health monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/management/uptime-monitoring#site-health-monitoring-settings" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
             ?>
                 </div>
         </h3>

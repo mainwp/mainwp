@@ -4047,7 +4047,7 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
                 $type = $request['type'];
                 $slug = $request['slug'];
 
-                MainWP_Updates_Handler::unignore_global_plugins_themes( $type, $slug );
+                MainWP_Updates_Handler::unignore_global_plugins_themes( $type, $slug, 'all_versions' );
 
                 // do common process response.
                 $response = $this->mainwp_run_process_success();
@@ -4092,7 +4092,7 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
                 $type    = $request['type'];
                 $slug    = $request['slug'];
 
-                MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $site_id );
+                MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $site_id, 'all_versions' );
 
                 // do common process response.
                 $response = $this->mainwp_run_process_success();

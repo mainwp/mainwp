@@ -10747,6 +10747,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				'status'         => 'pending',
 				'updated'        => (int) $store->get_job( (int) $jobs[0]->id )->updated,
 				'last_error'     => '',
+				'error_code'     => '',
+				'error_message'  => '',
+				'error_detail'   => '',
 			),
 			$uploads[0]
 		);
@@ -10756,6 +10759,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( 'failed_permanent', $uploads[1]['status'] );
 		$this->assertIsInt( $uploads[1]['updated'] );
 		$this->assertSame( '<error>' . str_repeat( 'é', 193 ), $uploads[1]['last_error'] );
+		$this->assertSame( '', $uploads[1]['error_code'] );
+		$this->assertSame( '<error>' . str_repeat( 'é', 193 ), $uploads[1]['error_message'] );
 	}
 
 	/**
@@ -12110,6 +12115,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	public function test_restore_initiate_refusal_is_plain_text() {
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
 		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
 
 		$response = $this->post_ajax( 'mainwp_restore_initiate', array( 'site_id' => (string) $this->site_id ) );
 

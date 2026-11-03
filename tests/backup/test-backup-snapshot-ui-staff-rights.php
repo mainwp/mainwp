@@ -11,6 +11,7 @@ use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Backup_Download;
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
+use MainWP\Dashboard\MainWP_Backup_Snapshots_View;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 use MainWP\Dashboard\MainWP_System_Utility;
@@ -58,6 +59,7 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 	public function setUp(): void {
 		parent::setUp();
 		$this->skip_when_capabilities_bypassed();
+		add_filter( 'mainwp_backups_delete_right_supported', '__return_true' );
 		foreach ( array( '_GET', '_POST', '_REQUEST', '_COOKIE', '_SERVER', 'current_user', 'current_screen', 'wp_rest_auth_cookie', 'wp_rest_application_password_status', 'wp_rest_application_password_uuid' ) as $key ) {
 			$this->saved[ $key ] = array( array_key_exists( $key, $GLOBALS ), $GLOBALS[ $key ] ?? null );
 		}
@@ -110,6 +112,7 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 			return;
 		}
 		$this->clear_access();
+		remove_filter( 'mainwp_backups_delete_right_supported', '__return_true' );
 		foreach ( $this->tokens as $key ) {
 			delete_site_transient( $key );
 		}
@@ -148,8 +151,8 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 	private static function paths(): array {
 		return array(
 			'mainwp_restore_snapshot_list'          => 'execute_backups',
-			'mainwp_backup_snapshot_delete_preview' => 'execute_backups',
-			'mainwp_backup_snapshot_delete'         => 'execute_backups',
+			'mainwp_backup_snapshot_delete_preview' => 'delete_backups',
+			'mainwp_backup_snapshot_delete'         => 'delete_backups',
 			'mainwp_backup_snapshot_download_url'   => 'download_backups',
 			'download_redeem'                       => 'download_backups',
 			'mainwp_restore_initiate'               => 'restore_backups',
@@ -159,7 +162,7 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 			'mainwp_native_backup_initiate'         => 'execute_backups',
 			'mainwp_native_backup_progress'         => 'execute_backups',
 			'mainwp_native_backup_cancel'           => 'execute_backups',
-			'mainwp_snapshots_cleanup'              => 'execute_backups',
+			'mainwp_snapshots_cleanup'              => 'delete_backups',
 		);
 	}
 
@@ -221,7 +224,7 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 			if ( 'site' === $type ) {
 				return 'S-site' !== $actor && $site === (int) $cap;
 			}
-			return 'dashboard' === $type && in_array( $cap, array( 'execute_backups', 'download_backups', 'restore_backups' ), true ) && ( 'S-right' !== $actor || $missing !== $cap );
+			return 'dashboard' === $type && in_array( $cap, array( 'execute_backups', 'download_backups', 'restore_backups', 'delete_backups' ), true ) && ( 'S-right' !== $actor || $missing !== $cap );
 		};
 		$scope                = static function () use ( $actor, $site ) {
 			return 'A' === $actor ? 'all' : ( 'S-site' === $actor ? array() : array( $site ) );
@@ -464,6 +467,7 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 		} elseif ( in_array( $action, array( 'mainwp_restore_progress', 'mainwp_restore_cancel', 'mainwp_restore_rollback' ), true ) ) {
 			$this->assertSame( array( 'error' => 'Restore job not found.' ) + ( 'mainwp_restore_rollback' === $action ? array( 'retryable' => false ) : array() ), $result );
 		} elseif ( str_starts_with( $action, 'mainwp_backup_snapshot_delete' ) ) {
+			$this->assertArrayHasKey( 'error_code', $result );
 			$this->assertContains( $result['error_code'], array( 'mainwp_permission_denied', 'S-site' === $actor ? 'mainwp_site_not_found' : 'mainwp_insufficient_right' ) );
 			$messages = array(
 				'mainwp_permission_denied'  => 'You do not have permission to perform this action.',
@@ -483,6 +487,129 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 		$this->assert_admitted( 'mainwp_restore_snapshot_list', $result );
 		$this->assertSame( 'full', $result['snapshots'][0]['type'] );
 		$this->assertSame( '13.00B', $result['snapshots'][0]['size_label'] );
+	}
+
+	/** Execute-only staff still need the catalog even when cleanup is restricted. */
+	public function test_delete_restricted_staff_can_list_without_cleanup_warnings(): void {
+		$this->actor( 'S-right', 'delete_backups' );
+		$result = $this->observe( fn() => $this->request( 'mainwp_restore_snapshot_list' ), false );
+		$this->assert_admitted( 'mainwp_restore_snapshot_list', $result );
+		$this->assertNull( $result['cleanup_warnings'] );
+	}
+
+	/** Older Team Control versions cannot grant the new right yet. */
+	public function test_delete_without_support_preserves_execute_only_access(): void {
+		remove_filter( 'mainwp_backups_delete_right_supported', '__return_true' );
+		$this->actor( 'S-right', 'delete_backups' );
+		foreach ( array( 'mainwp_backup_snapshot_delete_preview', 'mainwp_backup_snapshot_delete', 'mainwp_snapshots_cleanup' ) as $action ) {
+			$result = $this->observe( fn() => $this->request( $action ), false );
+			$this->assert_admitted( $action, $result );
+		}
+	}
+
+	/**
+	 * Direct callers must not bypass the browser and ability permission gates.
+	 *
+	 * @return array
+	 */
+	public static function delete_service_cases(): array {
+		$cases = array();
+		foreach ( array( 'ui', 'ability' ) as $context ) {
+			foreach ( array( 'preview_delete', 'delete', 'cleanup_dry_run', 'cleanup_real', 'preview_cleanup' ) as $operation ) {
+				foreach ( array( false, true ) as $granted ) {
+					$cases[ $context . '/' . $operation . '/' . ( $granted ? 'granted' : 'denied' ) ] = array( $context, $operation, $granted );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Preview and confirmation must enforce the same right before any side effects.
+	 *
+	 * @dataProvider delete_service_cases
+	 * @param string $context Calling transport.
+	 * @param string $operation Service entry point.
+	 * @param bool   $granted Whether the actor holds delete_backups.
+	 */
+	public function test_delete_service_requires_second_right( string $context, string $operation, bool $granted ): void {
+		$this->actor( 'ui' === $context ? ( $granted ? 'S+' : 'S-right' ) : 'A', 'delete_backups' );
+		if ( 'ability' === $context ) {
+			$this->access( $granted ? 'S+' : 'S-right', 'delete_backups' );
+		}
+		$calls  = array(
+			'preview_delete'  => fn() => MainWP_Backup_Operations::preview_delete_snapshot( $this->site_id, 987673, false, $context ),
+			'delete'          => fn() => MainWP_Backup_Operations::delete_snapshot( $this->site_id, 987673, array( 987673, 999999999 ), false, $context ),
+			'cleanup_dry_run' => fn() => MainWP_Backup_Operations::cleanup_site_backups( $this->site_id, 1, true, $context ),
+			'cleanup_real'    => fn() => MainWP_Backup_Operations::cleanup_site_backups( $this->site_id, 1, false, $context ),
+			'preview_cleanup' => fn() => MainWP_Backup_Operations::preview_site_cleanup( $this->site_id, 1, $context ),
+		);
+		$result = $this->observe( $calls[ $operation ], ! $granted );
+		if ( ! $granted ) {
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_insufficient_right', $result->get_error_code() );
+			$this->assertSame(
+				array(
+					'status' => 403,
+					'right'  => 'delete_backups',
+				),
+				$result->get_error_data()
+			);
+		} else {
+			$this->assertIsArray( $result );
+			if ( 'delete' === $operation ) {
+				$this->assertSame( 'changed', $result['status'] );
+			} elseif ( 'cleanup_real' === $operation ) {
+				$this->assertSame( array(), $result['deleted_ids'] );
+			} elseif ( 'preview_delete' === $operation ) {
+				$this->assertTrue( $result['dry_run'] );
+			} elseif ( 'cleanup_dry_run' === $operation ) {
+				$this->assertSame( array(), $result['orphaned_task_snapshot_ids'] );
+				$this->assertSame( array(), $result['on_demand_units'] );
+				$this->assertSame( 0, $result['bytes'] );
+			} else {
+				$this->assertSame( $this->site_id, $result['would_affect']['site_id'] );
+				$this->assertSame( 1, $result['would_affect']['keep'] );
+				$this->assertSame( 0, $result['would_affect']['bytes_to_prune'] );
+				$this->assertTrue( $result['can_proceed'] );
+			}
+		}
+	}
+
+	/** A missing snapshot must not mask the missing delete right on an allowed site. */
+	public function test_delete_right_precedes_snapshot_lookup(): void {
+		$this->actor( 'A' );
+		$this->access( 'S-right', 'delete_backups' );
+		foreach ( array( 'ui', 'ability' ) as $context ) {
+			$result = $this->observe( fn() => MainWP_Backup_Operations::preview_delete_snapshot( $this->site_id, 999999999, false, $context ) );
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_insufficient_right', $result->get_error_code() );
+			$this->assertSame(
+				array(
+					'status' => 403,
+					'right'  => 'delete_backups',
+				),
+				$result->get_error_data()
+			);
+		}
+	}
+
+	/** Native controls must follow the same right as the registered AJAX actions. */
+	public function test_delete_page_controls_follow_second_right(): void {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		foreach ( array( false, true ) as $granted ) {
+			$this->actor( $granted ? 'S+' : 'S-right', 'delete_backups' );
+			$_GET['site_id'] = $this->site_id;
+			ob_start();
+			try {
+				MainWP_Backup_Snapshots_View::render();
+			} finally {
+				$output = ob_get_clean();
+			}
+			$this->assertStringContainsString( 'var canDelete = ' . ( $granted ? 'true' : 'false' ) . ';', $output );
+			$this->assertSame( $granted ? 1 : 0, substr_count( $output, 'id="mainwp-snapshots-cleanup-btn"' ) );
+			$this->assertStringContainsString( 'id="mainwp-native-backup-now-btn"', $output );
+		}
 	}
 
 	/** A real issued link remains bound to its staff user and is consumed once. */

@@ -454,4 +454,70 @@ class Test_Get_Client_Costs_Ability extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $cost_id, (int) $result['items'][0]['id'], 'The item must be the cost object itself, not a map bucket.' );
 		$this->assertSame( 'Client License', $result['items'][0]['name'] );
 	}
+
+	/**
+	 * A monthly cost whose stored next_renewal has gone stale must report the
+	 * next renewal the Cost Tracker list shows, keep last_renewal, label the
+	 * purchase date, and give the client's share of a multiple-site license.
+	 *
+	 * @return void
+	 */
+	public function test_client_costs_report_computed_renewal_license_type_and_client_share() {
+		$this->skip_if_no_abilities_api();
+		$this->require_cost_tracker();
+		$this->set_current_user_as_admin();
+
+		$client_id = $this->create_test_client( array( 'name' => 'Renewal Client' ) );
+		$site_a    = $this->create_test_site( array( 'name' => 'Renewal A', 'url' => 'https://renewal-a.example.com/', 'client_id' => $client_id ) );
+		$site_b    = $this->create_test_site( array( 'name' => 'Renewal B', 'url' => 'https://renewal-b.example.com/', 'client_id' => $client_id ) );
+		$other     = $this->create_test_site( array( 'name' => 'Renewal Other', 'url' => 'https://renewal-other.example.com/' ) );
+
+		$purchased = strtotime( gmdate( 'Y-m-d 00:00:00' ) ) - 70 * DAY_IN_SECONDS;
+		$stale     = strtotime( '+1 month', $purchased );
+
+		$shared = $this->seed_cost_tracker_entry(
+			array(
+				'name'         => 'Shared Hosting',
+				'license_type' => 'multi_site',
+				'price'        => 90,
+				'renewal_type' => 'monthly',
+				'last_renewal' => $purchased,
+				'next_renewal' => $stale,
+				'sites'        => wp_json_encode( array( $site_a, $site_b, $other ) ),
+			)
+		);
+		$on_hold = $this->seed_cost_tracker_entry(
+			array(
+				'name'         => 'On Hold License',
+				'license_type' => 'single_site',
+				'cost_status'  => 'onhold',
+				'price'        => 20,
+				'renewal_type' => 'monthly',
+				'last_renewal' => $purchased,
+				'next_renewal' => $stale,
+				'sites'        => wp_json_encode( array( $site_a ) ),
+			)
+		);
+
+		$result = $this->execute_ability( 'mainwp/get-client-costs-v1', array( 'client_id_or_email' => $client_id ) );
+
+		$this->assertNotWPError( $result );
+		$items = array_column( $result['items'], null, 'id' );
+		$this->assertArrayHasKey( $shared, $items );
+		$this->assertArrayHasKey( $on_hold, $items );
+
+		$expected_next = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Admin::get_next_renewal( $purchased, 'monthly' );
+		$this->assertGreaterThan( $stale, $expected_next, 'Fixture must leave the stored next_renewal in the past.' );
+
+		$item = $items[ $shared ];
+		$this->assertSame( gmdate( 'c', $expected_next ), $item['next_renewal'] );
+		$this->assertSame( gmdate( 'c', $purchased ), $item['purchase_date'] );
+		$this->assertSame( gmdate( 'c', $purchased ), $item['last_renewal'], 'last_renewal stays for existing callers.' );
+		$this->assertSame( 'multi_site', $item['license_type'] );
+		$this->assertSame( 3, $item['sites_count'] );
+		$this->assertEqualsWithDelta( 60.0, $item['client_share'], 0.0001, 'Two of the three license sites belong to the client.' );
+
+		$this->assertNull( $items[ $on_hold ]['next_renewal'], 'The Cost Tracker list shows no renewal for an inactive cost.' );
+		$this->assertEqualsWithDelta( 0.0, $items[ $on_hold ]['client_share'], 0.0001, 'The Dashboard totals leave inactive costs out.' );
+	}
 }

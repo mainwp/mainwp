@@ -92,11 +92,12 @@ for ( const [ branch, result, native ] of [
     }
 }
 
-for ( const [ branch, error, icon ] of [
+for ( const [ branch, error, icon, tooltip ] of [
     [ 'MAINWP_NOTICE', { errorCode: 'MAINWP_NOTICE', message: '"><img src=x onerror=alert(2)>' }, 'pause circular yellow inverted icon' ],
     [ 'generic', { message: '"><b>x</b>' }, 'red times icon' ],
     [ 'MAINWP_NOTICE entities', { errorCode: 'MAINWP_NOTICE', message: '&quot; " < > &' }, 'pause circular yellow inverted icon' ],
-    [ 'generic entities', { message: '&quot; " < > &' }, 'red times icon' ]
+    // Server error text arrives HTML-escaped, so the error tooltip shows it decoded.
+    [ 'generic entities', { message: '&quot; " < > &' }, 'red times icon', '" " < > &' ]
 ] ) {
     test( branch + ': tooltip keeps the message inside its attribute and plain output unchanged', () => {
         const h = harness();
@@ -105,7 +106,7 @@ for ( const [ branch, error, icon ] of [
         assert.doesNotMatch( html, /<img\b|<b\b/i );
         const span = html.match( /^<span data-inverted="" data-position="left center" data-tooltip="([^"]*)"><i class="([^"]*)"><\/i><\/span>$/ );
         assert.ok( span, html );
-        assert.equal( decodeEntities( span[ 1 ] ), error.message );
+        assert.equal( decodeEntities( span[ 1 ] ), tooltip ?? error.message );
         assert.equal( span[ 2 ], icon );
     } );
 }

@@ -342,6 +342,114 @@ class MainWP_DB_Option_Name_Injection_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Reserved names are dropped in any letter case. MySQL compares column aliases
+	 * without regard to case, so HEALTH_SITE_STATUS next to the health_site_status
+	 * every read path adds is the same column twice.
+	 *
+	 * @return void
+	 */
+	public function test_custom_fields_drops_reserved_names_in_any_case() {
+		$this->assertSame( array(), $this->parse_custom_fields( 'HEALTH_SITE_STATUS,Health_Site_Status' ) );
+		$this->assertSame( array(), $this->parse_custom_fields( 'WPGROUPS,WpGroupIds,WPGROUPS_COLORS' ) );
+	}
+
+	/**
+	 * Names that differ only in case collapse to the first spelling given.
+	 *
+	 * @return void
+	 */
+	public function test_custom_fields_dedupes_case_insensitively_keeping_first_spelling() {
+		$this->assertSame( array( 'foo' ), $this->parse_custom_fields( 'foo,FOO,Foo' ) );
+		$this->assertSame( array( 'FOO', 'site_info' ), $this->parse_custom_fields( 'FOO,site_info,foo,SITE_INFO' ) );
+	}
+
+	/**
+	 * A name the sites query adds on its own takes the query's spelling, so the
+	 * query recognizes it and joins that option once.
+	 *
+	 * @return void
+	 */
+	public function test_custom_fields_uses_query_spelling_for_columns_the_query_adds() {
+		$this->assertSame(
+			array( 'phpversion', 'signature_algo', 'security_stats', 'foo' ),
+			$this->parse_custom_fields( 'PHPVERSION,Signature_Algo,SECURITY_STATS,foo' )
+		);
+	}
+
+	/**
+	 * Distinct valid names keep their spelling and order, and invalid names are
+	 * still dropped.
+	 *
+	 * @return void
+	 */
+	public function test_custom_fields_keeps_distinct_names_and_drops_invalid_ones() {
+		$this->assertSame(
+			array( 'integration_status', 'My_Field' ),
+			$this->parse_custom_fields( array( 'integration_status', 'a-b', 'x y', 'My_Field' ) )
+		);
+		$this->assertSame(
+			array( 'integration_status', 'x', 'y' ),
+			$this->parse_custom_fields( 'integration_status,a-b,x y' )
+		);
+	}
+
+	/**
+	 * End to end through get_items(): a mixed-case reserved name or a repeated name
+	 * must not reach the list query twice. Each extra_view name becomes a table
+	 * alias (owp_<name>) and a column alias. MySQL compares column aliases without
+	 * regard to case, and table aliases too when lower_case_table_names is 1 or 2
+	 * (the Windows and macOS defaults), so owp_health_site_status next to
+	 * owp_HEALTH_SITE_STATUS fails the whole query with "Not unique table/alias"
+	 * and the request returns no sites.
+	 *
+	 * @return void
+	 */
+	public function test_list_request_queries_each_option_once_regardless_of_case() {
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site();
+		$this->set_site_option( $site_id, 'wp_upgrades', '' );
+		$this->set_site_option( $site_id, 'foo', 'bar' );
+
+		$extra_views = array();
+		$capture     = function ( $params, $selectgroups, $search_site, $order_by, $offset, $rowcount, $extra_where, $for_manager, $extra_view ) use ( &$extra_views ) {
+			$extra_views[] = $extra_view;
+			return $params;
+		};
+
+		$controller = new \MainWP_Rest_Sites_Controller();
+		$request    = new \WP_REST_Request( 'GET', '/mainwp/v2/sites' );
+		$request->set_param( 'custom_fields', 'HEALTH_SITE_STATUS,Health_Site_Status,foo,FOO,Foo,PHPVERSION,Verify_Method' );
+
+		add_filter( 'mainwp_get_sql_websites', $capture, 10, 9 );
+		try {
+			$response = $controller->get_items( $request );
+		} finally {
+			remove_filter( 'mainwp_get_sql_websites', $capture, 10 );
+		}
+
+		$this->assertNotWPError( $response );
+		$this->assertNotEmpty( $extra_views, 'The list request must run the site query.' );
+
+		foreach ( $extra_views as $extra_view ) {
+			// The join the list query is built from, including the columns it adds itself.
+			$join = \MainWP\Dashboard\MainWP_DB::instance()->get_wp_options_join( $extra_view );
+			preg_match_all( '/LEFT JOIN \S+ (owp_\w+)/', $join['joins'], $matches );
+			$aliases = array_map( 'strtolower', $matches[1] );
+
+			$this->assertContains( 'owp_phpversion', $aliases );
+			$this->assertSame( array_values( array_unique( $aliases ) ), $aliases, 'Each option may be joined only once, ignoring case.' );
+		}
+
+		$data = $response->get_data();
+		$this->assertNotEmpty( $data['data'] );
+		$site = current( $data['data'] );
+		$this->assertSame( 'bar', $site['foo'] );
+		$this->assertArrayNotHasKey( 'FOO', $site );
+		$this->assertArrayNotHasKey( 'Foo', $site );
+	}
+
+	/**
 	 * End to end: a list query carrying the payload in extra_view must run cleanly,
 	 * must not project an injected column onto the row, and the prepared response
 	 * must expose no key derived from it.

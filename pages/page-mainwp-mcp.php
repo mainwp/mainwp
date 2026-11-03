@@ -70,6 +70,12 @@ class MainWP_MCP {
             return;
         }
 
+        if ( ! MainWP_Abilities_Util::is_abilities_api_available() ) {
+            MainWP_UI::render_top_header( array( 'title' => esc_html__( 'MainWP MCP', 'mainwp' ) ) );
+            echo '<div class="ui padded segment"><div class="ui blue message">' . esc_html__( 'MainWP MCP and MainWP Control require WordPress 6.9 or later. Update WordPress on this Dashboard to set up a connection.', 'mainwp' ) . '</div></div></div>';
+            return;
+        }
+
         if ( get_option( 'mainwp_onboarding_fresh_install' ) ) {
             update_option( 'mainwp_onboarding_mcp_visited', 1 );
         }

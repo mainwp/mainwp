@@ -694,7 +694,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      *
      * health_site_status is dropped as well: every caller adds it explicitly for the
      * health_score fast-path, and $never_in_response_fields reserves it out of the
-     * response, so accepting it here would only duplicate the entry.
+     * response, so accepting it here would only duplicate the entry. Reserved names
+     * and duplicates are matched without regard to case, as MySQL matches aliases.
      *
      * @param WP_REST_Request $request Request object.
      *
@@ -711,11 +712,26 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $fields,
             function ( $name ) {
                 // The raw tag aggregates would bypass the scoped tags field.
-                return ! in_array( $name, array( 'health_site_status', 'wpgroups', 'wpgroupids', 'wpgroups_colors' ), true ) && preg_match( '/^[A-Za-z0-9_]+$/', $name );
+                return preg_match( '/^[A-Za-z0-9_]+$/', $name ) && ! in_array( strtolower( $name ), array( 'health_site_status', 'wpgroups', 'wpgroupids', 'wpgroups_colors' ), true );
             }
         );
 
-        return array_values( array_unique( $fields ) );
+        // Option columns the sites query adds on its own (MainWP_DB::get_wp_options_join()
+        // and get_websites_for_current_user()). It skips them only when the exact
+        // spelling is already requested.
+        $query_columns = array( 'recent_comments', 'recent_posts', 'recent_pages', 'phpversion', 'added_timestamp', 'wp_upgrades', 'signature_algo', 'verify_method', 'cust_site_icon_info', 'security_stats' );
+
+        // MySQL compares these aliases without regard to case, so FOO after foo is
+        // the same column twice. Keep the first spelling, or the query's own.
+        $unique = array();
+        foreach ( $fields as $name ) {
+            $key = strtolower( $name );
+            if ( ! isset( $unique[ $key ] ) ) {
+                $unique[ $key ] = in_array( $key, $query_columns, true ) ? $key : $name;
+            }
+        }
+
+        return array_values( $unique );
     }
 
     /**
@@ -1160,7 +1176,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         try {
             $success = MainWP_Sync::sync_site( $website );
         } catch ( \Exception $e ) {
-            return new WP_Error( 'mainwp_rest_sync_site_error', $e->getMessage(), array( 'status' => 404 ) );
+            return new WP_Error( 'mainwp_rest_sync_site_error', ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ), array( 'status' => 404 ) );
         }
 
         $data = array();
@@ -1204,7 +1220,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         try {
             $result = MainWP_Connect::fetch_url_authed( $website, 'security' );
         } catch ( \Exception $e ) {
-            return new WP_Error( 'mainwp_rest_get_secure_site_error', $e->getMessage(), array( 'status' => 404 ) );
+            return new WP_Error( 'mainwp_rest_get_secure_site_error', ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ), array( 'status' => 404 ) );
         }
 
         $data = array(
@@ -1386,7 +1402,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             );
 
         } catch ( \Exception $e ) {
-            return new WP_Error( "mainwp_rest_{$action}_plugins_action", $e->getMessage() );
+            return new WP_Error( "mainwp_rest_{$action}_plugins_action", ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) );
         }
     }
 
@@ -1733,7 +1749,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             );
 
         } catch ( \Exception $e ) {
-            return new WP_Error( "mainwp_rest_{$action}_plugins_action", $e->getMessage() );
+            return new WP_Error( "mainwp_rest_{$action}_plugins_action", ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) );
         }
     }
 
@@ -2067,7 +2083,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         } catch ( \Exception $e ) {
             // failed.
             /* translators: %d: Site ID */
-            return new \WP_Error( 'mainwp_rest_reconnect_site_error', sprintf( esc_html__( 'Reconnect Site "%d" error:', 'mainwp' ), $website->id ) . ': ' . $e->getMessage() );
+            return new \WP_Error( 'mainwp_rest_reconnect_site_error', sprintf( esc_html__( 'Reconnect Site "%d" error:', 'mainwp' ), $website->id ) . ': ' . ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) );
         }
         $website           = $this->get_site_by( 'id', $website->id );
         $resp_data['data'] = $this->filter_response_data_by_allowed_fields( $website, 'simple_view' );
@@ -2154,7 +2170,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $error   = is_array( $info ) && ! empty( $info['error'] ) ? $info['error'] : '';
         } catch ( \Exception $e ) {
             /* translators: %d: Site ID */
-            return new \WP_Error( 'mainwp_rest_disconnect_site_error', sprintf( esc_html__( 'Disconnect Site "%d" error:', 'mainwp' ), $website->id ) . ': ' . $e->getMessage() );
+            return new \WP_Error( 'mainwp_rest_disconnect_site_error', sprintf( esc_html__( 'Disconnect Site "%d" error:', 'mainwp' ), $website->id ) . ': ' . ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) );
         }
         $resp_data = array(
             'success' => $success,
@@ -2329,7 +2345,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $ret = MainWP_Monitoring_Handler::handle_check_website( $website );
         } catch ( \Exception $e ) {
             $ret   = false;
-            $error = $e->getMessage();
+            $error = ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() );
         }
 
         $resp_data = array( 'success' => $ret ? 1 : 0 );
@@ -3454,6 +3470,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             }
         }
 
+        // Requested custom_fields can JOIN secret site options onto the row, so strip
+        // them before public callbacks see either value. The caller strips again
+        // in case a callback adds them back.
+        $data = $this->strip_never_in_response_fields( $data );
+        $item = $this->strip_never_in_response_fields( clone $item );
+
         /**
          * Filterobject returned from the REST API.
          *
@@ -3548,15 +3570,17 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     $resp_data['message'] = wp_strip_all_tags( $message );
                 }
             } elseif ( ! empty( $error ) ) {
-                $resp_data['error'] = wp_strip_all_tags( $error );
+                $resp_data['error'] = html_entity_decode( wp_strip_all_tags( $error ), ENT_QUOTES, 'UTF-8' );
             } else {
                 $resp_data['error'] = esc_html__( 'Add site failed. Please try again.', 'mainwp' );
             }
         } catch ( Exception $e ) {
-            $resp_data['error'] = wp_strip_all_tags( $e->getMessage() );
+            $resp_data['error'] = ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : wp_strip_all_tags( $e->getMessage() ) );
         }
 
-        if ( ! empty( $found_id ) ) {
+        // The URL lookup ignores scope, so a site outside the key's scope reads as already connected without its id.
+        $allowed_sites = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( ! empty( $found_id ) && ( 'all' === $allowed_sites || in_array( (int) $found_id, $allowed_sites, true ) ) ) {
             $resp_data['found_id'] = $found_id;
         }
 
@@ -3702,7 +3726,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 $resp_data['error'] = esc_html__( 'Update site failed. Please try again.', 'mainwp' );
             }
         } catch ( \Exception $e ) {
-            $resp_data['error'] = $e->getMessage();
+            $resp_data['error'] = ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() );
         }
         return rest_ensure_response( $resp_data );
     }

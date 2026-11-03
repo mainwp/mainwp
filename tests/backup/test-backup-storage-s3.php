@@ -1288,4 +1288,180 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'The storage endpoint s3.example.com needs https://', $result['error'] );
 		$this->assertStringNotContainsString( 'example-bucket.s3.example.com', $result['error'] );
 	}
+
+	/**
+	 * Amazon S3 and Wasabi endpoints a dotted bucket name is used with.
+	 *
+	 * @return array
+	 */
+	public function data_dotted_bucket_service_endpoints() {
+		return array(
+			'Wasabi'           => array( 's3.wasabisys.com', 's3.wasabisys.com' ),
+			'Amazon S3 region' => array( 'https://s3.us-west-2.amazonaws.com', 's3.us-west-2.amazonaws.com' ),
+			'Amazon S3 empty'  => array( '', 's3.amazonaws.com' ),
+		);
+	}
+
+	/**
+	 * With path style saved, a dotted bucket stays out of the host for the
+	 * connection test, uploads, reads, lists, deletes and presigned URLs, and
+	 * every signature covers that same host (MWP-2089).
+	 *
+	 * @dataProvider data_dotted_bucket_service_endpoints
+	 *
+	 * @param string $endpoint Saved endpoint setting.
+	 * @param string $host     Host every request must go to.
+	 *
+	 * @return void
+	 */
+	public function test_dotted_bucket_with_path_style_uses_the_service_host_everywhere( $endpoint, $host ) {
+		$this->resolve_hostnames_publicly();
+		$target    = get_temp_dir() . 'mainwp-s3-dotted-' . uniqid() . '.bin';
+		$transport = function ( $url, $args ) {
+			$this->requests[] = array(
+				'url'  => $url,
+				'args' => $args,
+			);
+			if ( ! empty( $args['filename'] ) ) {
+				file_put_contents( $args['filename'], 'bytes' );
+			}
+			return $this->response( 200, '<?xml version="1.0" encoding="UTF-8"?><ListBucketResult><IsTruncated>false</IsTruncated></ListBucketResult>', array( 'content-length' => '5' ) );
+		};
+		$provider  = new MainWP_Backup_Storage_S3(
+			$this->settings(
+				array(
+					'bucket'     => 'backups.example.com',
+					'endpoint'   => $endpoint,
+					'path_style' => 1,
+				)
+			),
+			$transport
+		);
+
+		try {
+			$this->assertTrue( $provider->connection_test()['ok'] );
+			$provider->put_object( 'k.bin', 'bytes' );
+			$provider->head_object( 'k.bin' );
+			$this->assertTrue( $provider->get_object( 'k.bin', $target ) );
+			$provider->list_objects( '4/' );
+			$provider->delete_object( 'k.bin' );
+		} finally {
+			if ( file_exists( $target ) ) {
+				unlink( $target );
+			}
+		}
+
+		$this->assertCount( 9, $this->requests );
+		foreach ( $this->requests as $request ) {
+			$this->assertStringStartsWith( 'https://' . $host . '/backups.example.com', $request['url'] );
+			$this->assertSame( $host, $request['args']['headers']['Host'] );
+			$this->assertMatchesRegularExpression( '/SignedHeaders=([a-z0-9-]+;)*host[;,]/', $request['args']['headers']['Authorization'] );
+			// WordPress verifies certificates when sslverify is absent.
+			if ( array_key_exists( 'sslverify', $request['args'] ) ) {
+				$this->assertTrue( (bool) $request['args']['sslverify'], 'Certificate verification stays on.' );
+			}
+		}
+		$this->assertSame( $host, $provider->object_host() );
+
+		$presigned = $provider->presigned_get_url( 'k.bin', 600 );
+		$this->assertStringStartsWith( 'https://' . $host . '/backups.example.com/k.bin?', $presigned );
+		$this->assertStringContainsString( 'X-Amz-SignedHeaders=host', $presigned );
+	}
+
+	/**
+	 * Without path style, the same settings keep virtual-hosted addressing:
+	 * the driver never changes a saved choice on its own (MWP-2089).
+	 *
+	 * @return void
+	 */
+	public function test_dotted_bucket_without_path_style_keeps_virtual_hosted_urls() {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'bucket'   => 'backups.example.com',
+				'endpoint' => 's3.wasabisys.com',
+			)
+		);
+
+		$provider->put_object( 'k.bin', 'bytes' );
+
+		$this->assertSame( 'https://backups.example.com.s3.wasabisys.com/k.bin', $this->requests[0]['url'] );
+		$this->assertStringStartsWith( 'https://backups.example.com.s3.wasabisys.com/k.bin?', $provider->presigned_get_url( 'k.bin', 600 ) );
+	}
+
+	/**
+	 * HEAD asks for the stored bytes, not a compressed reply, so R2 keeps
+	 * Content-Length on compressible objects (MWP-2129). The header stays out
+	 * of the signature, like the Accept-Encoding libcurl already sends, and
+	 * other methods keep the transport's default.
+	 *
+	 * @return void
+	 */
+	public function test_head_requests_identity_encoding_outside_the_signature() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 200, '', array( 'content-length' => '12' ) ),
+				$this->response( 200 ),
+			)
+		);
+		$provider->head_object( 'snap/manifest.json' );
+		$provider->put_object( 'snap/manifest.json', '{"format":1}', 'application/json' );
+
+		$head_headers = $this->requests[0]['args']['headers'];
+		$this->assertSame( 'HEAD', $this->requests[0]['args']['method'] );
+		$this->assertSame( 'identity', $head_headers['Accept-Encoding'] );
+		$this->assertMatchesRegularExpression( '/SignedHeaders=host;x-amz-content-sha256;x-amz-date,/', $head_headers['Authorization'] );
+		$this->assertArrayNotHasKey( 'Accept-Encoding', $this->requests[1]['args']['headers'] );
+	}
+
+	/**
+	 * A HEAD that follows a redirect asks for identity on the second hop too.
+	 *
+	 * @return void
+	 */
+	public function test_redirected_head_keeps_identity_encoding() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => 'https://example-bucket.s3.amazonaws.com/k.bin?hop=2' ) ),
+				$this->response( 200, '', array( 'content-length' => '5' ) ),
+			)
+		);
+		$this->assertSame( array( 'size' => 5 ), $provider->head_object( 'k.bin' ) );
+		$this->assertCount( 2, $this->requests );
+		$this->assertSame( 'identity', $this->requests[1]['args']['headers']['Accept-Encoding'] );
+	}
+
+	/**
+	 * A 200 without a usable Content-Length is an unknown size, never 0.
+	 * A real 0 is still a size.
+	 *
+	 * @dataProvider content_length_headers
+	 * @param array    $headers  Response headers.
+	 * @param int|null $expected Reported size.
+	 *
+	 * @return void
+	 */
+	public function test_head_without_a_usable_content_length_reports_unknown_size( array $headers, $expected ) {
+		$provider = $this->make_provider( array( $this->response( 200, '', $headers ) ) );
+		$this->assertSame( array( 'size' => $expected ), $provider->head_object( 'k.json' ) );
+	}
+
+	/**
+	 * Content-Length cases.
+	 *
+	 * @return array
+	 */
+	public static function content_length_headers() {
+		return array(
+			'gzip, no length' => array( array( 'content-encoding' => 'gzip' ), null ),
+			'no headers'      => array( array(), null ),
+			'empty length'    => array( array( 'content-length' => '' ), null ),
+			'not a number'    => array( array( 'content-length' => 'abc' ), null ),
+			'negative'        => array( array( 'content-length' => '-5' ), null ),
+			'repeated header' => array( array( 'content-length' => array( '5', '5' ) ), null ),
+			'zero'            => array( array( 'content-length' => '0' ), 0 ),
+			'padded number'   => array( array( 'content-length' => ' 42 ' ), 42 ),
+		);
+	}
 }

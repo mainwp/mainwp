@@ -96,8 +96,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // Page: ManageBackupsSnapshots (restore).
         if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
             $this->add_action( 'mainwp_restore_snapshot_list', array( &$this, 'mainwp_restore_snapshot_list' ) );
-            $this->add_action( 'mainwp_backup_snapshot_delete_preview', array( &$this, 'mainwp_backup_snapshot_delete_preview' ) );
-            $this->add_action( 'mainwp_backup_snapshot_delete', array( &$this, 'mainwp_backup_snapshot_delete' ) );
+            if ( MainWP_Backup_Operations::current_user_can_delete() ) {
+                $this->add_action( 'mainwp_backup_snapshot_delete_preview', array( &$this, 'mainwp_backup_snapshot_delete_preview' ) );
+                $this->add_action( 'mainwp_backup_snapshot_delete', array( &$this, 'mainwp_backup_snapshot_delete' ) );
+                $this->add_action( 'mainwp_snapshots_cleanup', array( &$this, 'mainwp_snapshots_cleanup' ) );
+            }
             $this->add_action( 'mainwp_backup_snapshot_download_url', array( &$this, 'mainwp_backup_snapshot_download_url' ) );
             $this->add_action( 'mainwp_restore_progress', array( &$this, 'mainwp_restore_progress' ) );
             if ( \mainwp_current_user_can( 'dashboard', 'restore_backups' ) ) {
@@ -108,7 +111,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_native_backup_initiate', array( &$this, 'mainwp_native_backup_initiate' ) );
             $this->add_action( 'mainwp_native_backup_progress', array( &$this, 'mainwp_native_backup_progress' ) );
             $this->add_action( 'mainwp_native_backup_cancel', array( &$this, 'mainwp_native_backup_cancel' ) );
-            $this->add_action( 'mainwp_snapshots_cleanup', array( &$this, 'mainwp_snapshots_cleanup' ) );
             $this->add_action( 'mainwp_backup_diagnostics_export', array( &$this, 'mainwp_backup_diagnostics_export' ) );
         }
         add_action( 'admin_post_mainwp_backup_diagnostics_download', array( MainWP_Backup_Diagnostics::instance(), 'download_bundle' ) );
@@ -325,9 +327,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
             $destination_names[ (int) $destination->id ] = (string) $destination->name;
         }
+        $registered_codes = MainWP_Backup_Error_Codes::get_registered_codes();
         foreach ( $entries as $entry ) {
             $uploads = array();
             foreach ( $entry['uploads'] as $job ) {
+                $error     = MainWP_Backup_Error_Codes::stored_error_parts( $job->last_error['source_text'] );
                 $uploads[] = array(
                     'destination_id' => (int) $job->destination_id,
                     /* translators: %d: storage destination ID. */
@@ -336,6 +340,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     'status'         => (string) $job->status,
                     'updated'        => (int) $job->updated,
                     'last_error'     => mb_substr( $job->last_error['source_text'], 0, 200 ),
+                    'error_code'     => $error['code'],
+                    // Registry text is complete; text without a known code keeps last_error's bound.
+                    'error_message'  => in_array( $error['code'], $registered_codes, true ) ? $error['message'] : mb_substr( $error['message'], 0, 200 ),
+                    'error_detail'   => mb_substr( $error['detail'], 0, 200 ),
                 );
             }
             $archives        = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
@@ -511,7 +519,21 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
         $site_id     = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0;
         $snapshot_id = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;
-        $options     = array(
+        if ( array_key_exists( 'target_site_id', $_POST ) ) {
+            $target       = $_POST['target_site_id']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- exact positive integer validated before use.
+            $valid_target = ( is_int( $target ) && $target > 0 ) || ( is_string( $target ) && 1 === preg_match( '/^[1-9][0-9]*$/D', $target ) && (string) (int) $target === $target );
+            if ( ! $valid_target || (int) $target !== $site_id ) {
+                $code = $valid_target ? MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE : 'mainwp_invalid_input';
+                wp_send_json(
+                    array(
+                        'error'      => MainWP_Backup_Operations::safe_error( $code )['message'],
+                        'error_code' => $code,
+                    )
+                );
+                return;
+            }
+        }
+        $options = array(
             'pre_snapshot'        => isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'],
             'file_rollback'       => isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'],
             'confirm_destructive' => isset( $_POST['confirm_destructive'] ) && '1' === $_POST['confirm_destructive'],
@@ -814,13 +836,55 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             }
         }
 
-        $response = MainWP_Backup_Read_Model::get_site_backup_progress( $site_id, $since );
+        $response   = MainWP_Backup_Read_Model::get_site_backup_progress( $site_id, $since );
+        $error_code = isset( $response['status'], $response['error'] ) && 'failed' === $response['status'] ? self::on_demand_failure_code( $site_id, $since, (string) $response['error']['source_text'] ) : '';
         foreach ( array( 'error', 'notice' ) as $key ) {
             if ( isset( $response[ $key ] ) ) {
                 $response[ $key ] = static::humanize_backup_errors( $response[ $key ]['source_text'] );
             }
         }
+        if ( '' !== $error_code ) {
+            $response['error_code'] = $error_code;
+        }
         wp_send_json( $response );
+    }
+
+    /**
+     * The flattened error text cannot tell the progress dialog which failure
+     * it describes, so the code the failing site recorded rides along for the
+     * dialog's short summary. Only a run that owns the shown error gets one:
+     * the read model shows a paused task's notice or a generic line instead
+     * when the stored errors belong to no run of this click. The task is read
+     * again after the progress row, so a run that opened and failed between
+     * these reads cannot lend its code to the text already chosen.
+     *
+     * @param int    $site_id     Website identity.
+     * @param int    $since       Click's freshness cutoff, as sent by the poll.
+     * @param string $source_text Stored error text the read model chose to show.
+     *
+     * @return string A registered error code, or '' when none applies.
+     */
+    private static function on_demand_failure_code( int $site_id, int $since, string $source_text ): string {
+        $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        if ( empty( $task ) || ! empty( $task->paused ) || '' === (string) $task->backup_errors || ( 0 !== $since && (int) $task->last_run < $since ) ) {
+            return '';
+        }
+        // A private-root failure stops the run before its progress row is
+        // reset, so the row can still carry an older run's fields. The
+        // failure catch writes the error text to last_error together with the
+        // code; anything else there is the run-state JSON of a live or reset
+        // run, whose code would not describe this failure.
+        $progress   = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+        $last_error = $progress ? (string) ( $progress->last_error ?? '' ) : '';
+        if ( '' === $last_error || is_array( json_decode( $last_error, true ) ) || ! is_array( $progress->fetchResult ) ) {
+            return '';
+        }
+        $after = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        if ( empty( $after ) || (int) $after->last_run !== (int) $task->last_run || (string) $after->backup_errors !== $source_text ) {
+            return '';
+        }
+        $code = $progress->fetchResult['error_code'] ?? '';
+        return is_string( $code ) && in_array( $code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? $code : '';
     }
 
     /**
@@ -897,21 +961,27 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
-     * Flatten the task's stored HTML backup_errors into a readable single
-     * line of plain text. The errors are stored as an HTML list, so block
-     * boundaries are turned into spaces before the tags are stripped;
-     * without this the site name and the message run together. Entities are
-     * decoded last: every caller sends the result as JSON to a jQuery .text()
-     * sink, which escapes on its own, so an encoded quote would show as
-     * "&quot;".
+     * Turn the task's stored HTML backup_errors into plain text. The errors
+     * are stored as an HTML list, so line breaks become newlines and list
+     * items become paragraphs before the tags are stripped; without this the
+     * site name and the message run together. Blank lines inside a message
+     * (paragraph breaks in long guidance such as the private-root error) are
+     * kept so a pre-line sink can show them; sinks without it render every
+     * newline as a space. Entities are decoded last: every caller sends the
+     * result as JSON to a jQuery .text() sink, which escapes on its own, so an
+     * encoded quote would show as "&quot;".
      *
      * @param string $errors Stored backup_errors HTML.
      *
-     * @return string A flattened, space-separated plain-text message.
+     * @return string Plain text with single spaces, line breaks and at most one blank line between paragraphs.
      */
     public static function humanize_backup_errors( $errors ) {
-        $spaced = str_replace( array( '<br>', '<br/>', '<br />', '</li>', '<li>', '</ol>', '<ol>' ), ' ', (string) $errors );
-        return wp_specialchars_decode( trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $spaced ) ) ), ENT_QUOTES );
+        $text = str_replace( array( '</li>', '</ol>' ), "\n\n", str_replace( "\r", '', (string) $errors ) );
+        $text = str_replace( array( '<br>', '<br/>', '<br />' ), "\n", $text );
+        $text = str_replace( array( '<li>', '<ol>' ), ' ', $text );
+        $text = preg_replace( '/[^\S\n]+/', ' ', wp_strip_all_tags( $text ) );
+        $text = preg_replace( "/\n{3,}/", "\n\n", preg_replace( '/ *\n */', "\n", $text ) );
+        return wp_specialchars_decode( trim( $text ), ENT_QUOTES );
     }
 
     /*
@@ -1077,6 +1147,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
+     * A posted file name or subfolder template, with its %tokens% intact.
+     *
+     * @param string $key POST field.
+     * @return string
+     */
+    private static function posted_name_template( string $key ): string {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- callers verify the nonce; clean_name_template() sanitizes.
+        return isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) ? MainWP_Backup_File_Manager::clean_name_template( wp_unslash( $_POST[ $key ] ) ) : '';
+    }
+
+    /**
      * Method sanitize_adhoc_backup_type()
      *
      * Allowlist the ad-hoc backup type from the wire. Incremental is
@@ -1122,12 +1203,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $excludedFolder = MainWP_Backup_Settings::sanitize_exclude_list( $excludedFolder );
 
             $type                           = static::sanitize_adhoc_backup_type( isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '' );
-            $subfolder                      = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
+            $subfolder                      = static::posted_name_template( 'subfolder' );
             $excludebackup                  = isset( $_POST['excludebackup'] ) ? sanitize_text_field( wp_unslash( $_POST['excludebackup'] ) ) : '';
             $excludecache                   = isset( $_POST['excludecache'] ) ? sanitize_text_field( wp_unslash( $_POST['excludecache'] ) ) : '';
             $excludenonwp                   = isset( $_POST['excludenonwp'] ) ? sanitize_text_field( wp_unslash( $_POST['excludenonwp'] ) ) : '';
             $excludezip                     = isset( $_POST['excludezip'] ) ? sanitize_text_field( wp_unslash( $_POST['excludezip'] ) ) : '';
-            $filename                       = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
+            $filename                       = static::posted_name_template( 'filename' );
             $fileNameUID                    = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : '';
             $archiveFormat                  = isset( $_POST['archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['archiveFormat'] ) ) : '';
             $maximumFileDescriptorsOverride = isset( $_POST['maximumFileDescriptorsOverride'] ) ? intval( $_POST['maximumFileDescriptorsOverride'] ) : false;
@@ -1201,8 +1282,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             }
             $pid       = isset( $_POST['pid'] ) ? intval( $_POST['pid'] ) : false;
             $type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-            $subfolder = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
-            $filename  = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
+            $subfolder = static::posted_name_template( 'subfolder' );
+            $filename  = static::posted_name_template( 'filename' );
             $result    = MainWP_Backup_Executor::with_backup_hold(
                 $site_id,
                 static function () use ( $site_id, $pid, $type, $subfolder, $filename ) {

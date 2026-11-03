@@ -1141,20 +1141,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             'properties' => array(
                 'items' => array(
                     'type'  => 'array',
-                    'items' => array(
-                        'type'       => 'object',
-                        'properties' => array(
-                            'id'             => array( 'type' => 'integer' ),
-                            'name'           => array( 'type' => 'string' ),
-                            'type'           => array( 'type' => 'string' ),
-                            'price'          => array( 'type' => 'number' ),
-                            'renewal_type'   => array( 'type' => 'string' ),
-                            'payment_method' => array( 'type' => 'string' ),
-                            'product_type'   => array( 'type' => 'string' ),
-                            'last_renewal'   => array( 'type' => array( 'string', 'null' ) ),
-                            'next_renewal'   => array( 'type' => array( 'string', 'null' ) ),
-                        ),
-                    ),
+                    'items' => MainWP_Abilities_Util::get_cost_output_item_schema( 'client' ),
                 ),
                 'total' => array( 'type' => 'integer' ),
             ),
@@ -1226,7 +1213,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                         continue;
                     }
                 }
-                $items[] = MainWP_Abilities_Util::format_cost_for_output( $cost );
+                $items[] = MainWP_Abilities_Util::format_cost_for_output( $cost, 'client' );
             }
         }
 
@@ -1313,6 +1300,10 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 __( 'Failed to suspend client.', 'mainwp' ),
                 array( 'status' => 500 )
             );
+        }
+
+        if ( 1 !== (int) $client->suspended ) {
+            MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $client->client_id, 1 );
         }
 
         $updated_client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client->client_id );
@@ -1405,6 +1396,10 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 __( 'Failed to unsuspend client.', 'mainwp' ),
                 array( 'status' => 500 )
             );
+        }
+
+        if ( 1 === (int) $client->suspended ) {
+            MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $client->client_id, 0 );
         }
 
         $updated_client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client->client_id );

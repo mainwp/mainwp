@@ -1,0 +1,336 @@
+{
+  "policy": {
+    "key_order": [
+      "format",
+      "roots",
+      "layout_id",
+      "core_policy",
+      "list_format",
+      "path_encoding"
+    ],
+    "root_entry_key_order": [
+      "role",
+      "coverage"
+    ],
+    "root_order": [
+      "site",
+      "content",
+      "uploads",
+      "plugins",
+      "mu_plugins",
+      "config"
+    ],
+    "root_order_before_hashing": true,
+    "json_flags": [
+      "JSON_UNESCAPED_SLASHES"
+    ],
+    "whitespace": "none",
+    "trailing_newline": false,
+    "digest": "SHA-256 of the exact canonical bytes",
+    "core_version": "Optional string inside the descriptor, excluded from canonical bytes and digest, retained unchanged; non-string refuses as mainwp_backup_file_corrupt.",
+    "unknown_keys": "Refuse as mainwp_backup_file_corrupt.",
+    "inner_versions": "format and list_format must each be integer 2; otherwise refuse as mainwp_backup_format_unsupported.",
+    "outer_backup_format": "Only integer 2 selects v2. String 2 refuses as mainwp_backup_format_unsupported. Missing, integer 1 and string 1 retain the v1 path. No string-only storage exception.",
+    "invalid_version_canonical_bytes": "For inputs refused before serialization, canonical_bytes and canonical_sha256 identify the paired valid v2 control, not serialization of the invalid input."
+  },
+  "cases": [
+    {
+      "name": "reordered_roots_supplied_order_digest",
+      "input_descriptor": {
+        "format": 2,
+        "roots": [
+          {
+            "role": "content",
+            "coverage": "restore"
+          },
+          {
+            "role": "site",
+            "coverage": "preserved"
+          }
+        ],
+        "layout_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "core_policy": "managed_preserve",
+        "list_format": 2,
+        "path_encoding": "role-prefix"
+      },
+      "backup_format": 2,
+      "supplied_digest": "d66acb0edd2dc1b7fc87e2cf0fa36170ebaf416a63b218d6ca894419035b4300",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"content\",\"coverage\":\"restore\"}],\"layout_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "858b1594da3868f949456ea947728c04b9f89789489cc8cd7421b5e822f3a10c",
+      "expected_result": "refuse",
+      "error_code": "mainwp_backup_file_corrupt"
+    },
+    {
+      "name": "reordered_roots_canonical_digest",
+      "input_descriptor": {
+        "format": 2,
+        "roots": [
+          {
+            "role": "content",
+            "coverage": "restore"
+          },
+          {
+            "role": "site",
+            "coverage": "preserved"
+          }
+        ],
+        "layout_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "core_policy": "managed_preserve",
+        "list_format": 2,
+        "path_encoding": "role-prefix"
+      },
+      "backup_format": 2,
+      "supplied_digest": "858b1594da3868f949456ea947728c04b9f89789489cc8cd7421b5e822f3a10c",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"content\",\"coverage\":\"restore\"}],\"layout_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "858b1594da3868f949456ea947728c04b9f89789489cc8cd7421b5e822f3a10c",
+      "expected_result": "accept",
+      "error_code": null
+    },
+    {
+      "name": "slash_core_version",
+      "input_descriptor": {
+        "format": 2,
+        "roots": [
+          {
+            "role": "site",
+            "coverage": "preserved"
+          },
+          {
+            "role": "uploads",
+            "coverage": "restore"
+          },
+          {
+            "role": "config",
+            "coverage": "recovery_only"
+          }
+        ],
+        "layout_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "core_policy": "managed_preserve",
+        "list_format": 2,
+        "path_encoding": "role-prefix",
+        "core_version": "6.8/beta-2"
+      },
+      "backup_format": 2,
+      "supplied_digest": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "expected_result": "accept",
+      "error_code": null,
+      "metadata_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\",\"core_version\":\"6.8/beta-2\"}"
+    },
+    {
+      "name": "core_version_observation",
+      "input_descriptor": {
+        "format": 2,
+        "roots": [
+          {
+            "role": "site",
+            "coverage": "preserved"
+          },
+          {
+            "role": "uploads",
+            "coverage": "restore"
+          },
+          {
+            "role": "config",
+            "coverage": "recovery_only"
+          }
+        ],
+        "layout_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "core_policy": "managed_preserve",
+        "list_format": 2,
+        "path_encoding": "role-prefix",
+        "core_version": "6.8.2"
+      },
+      "backup_format": 2,
+      "supplied_digest": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "expected_result": "accept",
+      "error_code": null,
+      "metadata_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\",\"core_version\":\"6.8.2\"}"
+    },
+    {
+      "name": "non_string_core_version",
+      "input_descriptor": {
+        "format": 2,
+        "roots": [
+          {
+            "role": "site",
+            "coverage": "preserved"
+          },
+          {
+            "role": "uploads",
+            "coverage": "restore"
+          },
+          {
+            "role": "config",
+            "coverage": "recovery_only"
+          }
+        ],
+        "layout_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "core_policy": "managed_preserve",
+        "list_format": 2,
+        "path_encoding": "role-prefix",
+        "core_version": 68
+      },
+      "backup_format": 2,
+      "supplied_digest": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "expected_result": "refuse",
+      "error_code": "mainwp_backup_file_corrupt"
+    },
+    {
+      "name": "unknown_top_level_key",
+      "input_descriptor": {
+        "format": 2,
+        "roots": [
+          {
+            "role": "site",
+            "coverage": "preserved"
+          },
+          {
+            "role": "uploads",
+            "coverage": "restore"
+          },
+          {
+            "role": "config",
+            "coverage": "recovery_only"
+          }
+        ],
+        "layout_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "core_policy": "managed_preserve",
+        "list_format": 2,
+        "path_encoding": "role-prefix",
+        "unexpected": "value"
+      },
+      "backup_format": 2,
+      "supplied_digest": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "expected_result": "refuse",
+      "error_code": "mainwp_backup_file_corrupt"
+    },
+    {
+      "name": "inner_format_3",
+      "input_descriptor": {
+        "format": 3,
+        "roots": [
+          {
+            "role": "site",
+            "coverage": "preserved"
+          },
+          {
+            "role": "uploads",
+            "coverage": "restore"
+          },
+          {
+            "role": "config",
+            "coverage": "recovery_only"
+          }
+        ],
+        "layout_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "core_policy": "managed_preserve",
+        "list_format": 2,
+        "path_encoding": "role-prefix"
+      },
+      "backup_format": 2,
+      "supplied_digest": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "expected_result": "refuse",
+      "error_code": "mainwp_backup_format_unsupported"
+    },
+    {
+      "name": "inner_list_format_string_2",
+      "input_descriptor": {
+        "format": 2,
+        "roots": [
+          {
+            "role": "site",
+            "coverage": "preserved"
+          },
+          {
+            "role": "uploads",
+            "coverage": "restore"
+          },
+          {
+            "role": "config",
+            "coverage": "recovery_only"
+          }
+        ],
+        "layout_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "core_policy": "managed_preserve",
+        "list_format": "2",
+        "path_encoding": "role-prefix"
+      },
+      "backup_format": 2,
+      "supplied_digest": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "expected_result": "refuse",
+      "error_code": "mainwp_backup_format_unsupported"
+    },
+    {
+      "name": "canonical_control",
+      "input_descriptor": {
+        "format": 2,
+        "roots": [
+          {
+            "role": "site",
+            "coverage": "preserved"
+          },
+          {
+            "role": "uploads",
+            "coverage": "restore"
+          },
+          {
+            "role": "config",
+            "coverage": "recovery_only"
+          }
+        ],
+        "layout_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "core_policy": "managed_preserve",
+        "list_format": 2,
+        "path_encoding": "role-prefix"
+      },
+      "backup_format": 2,
+      "supplied_digest": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "expected_result": "accept",
+      "error_code": null
+    },
+    {
+      "name": "outer_format_string_2",
+      "input_descriptor": {
+        "format": 2,
+        "roots": [
+          {
+            "role": "site",
+            "coverage": "preserved"
+          },
+          {
+            "role": "uploads",
+            "coverage": "restore"
+          },
+          {
+            "role": "config",
+            "coverage": "recovery_only"
+          }
+        ],
+        "layout_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "core_policy": "managed_preserve",
+        "list_format": 2,
+        "path_encoding": "role-prefix"
+      },
+      "backup_format": "2",
+      "supplied_digest": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "canonical_bytes": "{\"format\":2,\"roots\":[{\"role\":\"site\",\"coverage\":\"preserved\"},{\"role\":\"uploads\",\"coverage\":\"restore\"},{\"role\":\"config\",\"coverage\":\"recovery_only\"}],\"layout_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"core_policy\":\"managed_preserve\",\"list_format\":2,\"path_encoding\":\"role-prefix\"}",
+      "canonical_sha256": "d14bdfcecd100bef90eb4bf74caa8476f17848a5331f687c410f1192008c4b86",
+      "expected_result": "refuse",
+      "error_code": "mainwp_backup_format_unsupported"
+    }
+  ]
+}

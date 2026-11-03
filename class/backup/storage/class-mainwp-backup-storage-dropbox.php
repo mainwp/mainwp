@@ -138,7 +138,8 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
      *
      * @param string $key Object key.
      *
-     * @return array|false
+     * @return array|false {size: int|null} when present, with a null size when
+     *                     the metadata carried no usable size; false when absent.
      *
      * @throws \RuntimeException On transport or service errors.
      */
@@ -152,8 +153,18 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
         $this->expect_status( $response, array( 200 ), 'HEAD ' . $key );
 
         $data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+        $size = is_array( $data ) ? ( $data['size'] ?? null ) : null;
 
-        return array( 'size' => is_array( $data ) && isset( $data['size'] ) ? (int) $data['size'] : 0 );
+        // A missing size is unknown, not zero: reading it as 0 would confirm a
+        // 0-byte upload that may not be there. Same contract as the S3 provider.
+        if ( is_int( $size ) && $size >= 0 ) {
+            return array( 'size' => $size );
+        }
+        if ( is_string( $size ) && 1 === preg_match( '/^\d+$/D', $size ) ) {
+            return array( 'size' => (int) $size );
+        }
+
+        return array( 'size' => null );
     }
 
     /**

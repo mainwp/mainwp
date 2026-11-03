@@ -124,7 +124,8 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
      *
      * @param string $key Object key.
      *
-     * @return array|false
+     * @return array|false {size: int|null} when present, with a null size when
+     *                     the provider sent no usable Content-Length; false when absent.
      *
      * @throws \RuntimeException On transport or service errors.
      */
@@ -138,7 +139,12 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
 
         $this->expect_status( $response, array( 200 ), 'HEAD ' . $key );
 
+        // A missing length is unknown, not zero: reading it as 0 made size
+        // checks fail with a misleading mismatch, and would match a 0-byte object.
         $length = wp_remote_retrieve_header( $response, 'content-length' );
+        if ( ! is_string( $length ) || 1 !== preg_match( '/^\d+$/', trim( $length ) ) ) {
+            return array( 'size' => null );
+        }
 
         return array( 'size' => (int) $length );
     }
@@ -387,6 +393,16 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
             ),
             $extra_args
         );
+
+        // Cloudflare R2 gzips compressible objects such as the JSON manifest
+        // when the client accepts gzip, which libcurl offers on every request,
+        // and then answers HEAD with no Content-Length. Asking for identity
+        // keeps the stored size in the reply. libcurl's own Accept-Encoding is
+        // sent unsigned today, so this one stays out of the signature too and
+        // the signed request is unchanged for every provider.
+        if ( 'HEAD' === $method ) {
+            $args['headers']['Accept-Encoding'] = 'identity';
+        }
 
         if ( null !== $body ) {
             $args['body'] = $body;

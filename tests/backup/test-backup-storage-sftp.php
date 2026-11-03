@@ -359,6 +359,57 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * HEAD reports a file whose stat carries no usable size as unknown
+	 * (null), never as 0, keeps a real size (including an empty file's 0),
+	 * and still reports a missing file as absent.
+	 *
+	 * @return void
+	 */
+	public function test_head_object_reports_a_missing_size_as_unknown() {
+		$connection = new class() extends Fake_SFTP_Connection {
+			/**
+			 * Scripted stat results by remote path.
+			 *
+			 * @var array
+			 */
+			public $stats = array();
+
+			/**
+			 * Stat a path, preferring a scripted result.
+			 *
+			 * @param string $remote Remote path.
+			 *
+			 * @return array|false
+			 */
+			public function stat( $remote ) {
+				return array_key_exists( $remote, $this->stats ) ? $this->stats[ $remote ] : parent::stat( $remote );
+			}
+		};
+		$provider   = $this->make_provider( $connection );
+
+		$file  = array( 'type' => 1 );
+		$cases = array(
+			'no size'      => array( $file, null ),
+			'null size'    => array( $file + array( 'size' => null ), null ),
+			'non-numeric'  => array( $file + array( 'size' => 'abc' ), null ),
+			'negative'     => array( $file + array( 'size' => -1 ), null ),
+			'fraction'     => array( $file + array( 'size' => 1.5 ), null ),
+			'real zero'    => array( $file + array( 'size' => 0 ), 0 ),
+			'real size'    => array( $file + array( 'size' => 4194304 ), 4194304 ),
+			'digit string' => array( $file + array( 'size' => '12' ), 12 ),
+		);
+
+		foreach ( $cases as $label => $case ) {
+			$connection->stats['/backups/k.bin'] = $case[0];
+			$this->assertSame( array( 'size' => $case[1] ), $provider->head_object( 'k.bin' ), $label );
+		}
+
+		$provider->put_object( 'empty.bin', '' );
+		$this->assertSame( array( 'size' => 0 ), $provider->head_object( 'empty.bin' ) );
+		$this->assertFalse( $provider->head_object( 'missing.bin' ) );
+	}
+
+	/**
 	 * Downloads copy the remote bytes to the local target.
 	 *
 	 * @return void

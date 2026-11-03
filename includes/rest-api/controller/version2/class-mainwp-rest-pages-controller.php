@@ -437,7 +437,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
             );
 
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'update_page_status_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'update_page_status_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         $type_error = MainWP_Rest_Posts_Controller::get_child_type_error( $information );
@@ -533,7 +533,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
                 $page_data
             );
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'edit_page_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'edit_page_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         $type_error = MainWP_Rest_Posts_Controller::get_child_type_error( $information );
@@ -611,7 +611,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
             );
 
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'create_page_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'create_page_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         if ( empty( $information['added'] ) ) {
@@ -679,7 +679,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
             );
 
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'delete_page_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'delete_page_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         $type_error = MainWP_Rest_Posts_Controller::get_child_type_error( $information );
@@ -732,7 +732,7 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
                 )
             );
         } catch ( MainWP_Exception $e ) {
-            return new WP_Error( 'get_post_error', MainWP_Error_Helper::get_error_message( $e ) );
+            return new WP_Error( 'get_post_error', MainWP_Error_Helper::get_error_message( $e, false, true ) );
         }
 
         $type_error = MainWP_Rest_Posts_Controller::get_child_type_error( $information );

@@ -8,6 +8,10 @@
  * with the same atomic locked_until/locked_by gate as the upload job
  * store, and failures back off exponentially with the same constants.
  *
+ * Checkpoints may carry source_site_id and target_layout_id for a future
+ * cross-site restore. Both fields are preserved only when supplied; site_id
+ * on the job remains the destination. Legacy checkpoints gain no defaults.
+ *
  * @package MainWP\Dashboard
  */
 

@@ -954,11 +954,9 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
                 continue;
             }
             MainWP_Cron_Jobs_Batch::instance()->prepare_bulk_updates( $website );
-            $queued        = true;
-            $websiteValues = array(
-                'dtsAutomaticSyncStart' => $start_time,
-            );
-            MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
+            $queued = true;
+            // Regular automatic sync owns dtsAutomaticSyncStart as its claim marker.
+            MainWP_DB::instance()->update_website_option( $website, 'batch_updates_queue_time', $start_time );
         }
         MainWP_DB::free_result( $websites );
 
@@ -1259,7 +1257,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
 
             $result = Rest_Api_V1_Helper::instance()->handle_site_update_item( $website->id, 'plugin', $information );
         } catch ( \Exception $e ) {
-            return new \WP_Error( 'mainwp_rest_upgrade_plugins_of_site_error', $e->getMessage() );
+            return new \WP_Error( 'mainwp_rest_upgrade_plugins_of_site_error', ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) );
         }
 
         $resp_data = array(
@@ -1350,7 +1348,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
 
             $result = Rest_Api_V1_Helper::instance()->handle_site_update_item( $website->id, 'theme', $information );
         } catch ( \Exception $e ) {
-            return new \WP_Error( 'mainwp_rest_upgrade_themes_of_site_error', $e->getMessage() );
+            return new \WP_Error( 'mainwp_rest_upgrade_themes_of_site_error', ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) );
         }
 
         $resp_data = array(
@@ -1424,7 +1422,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             );
             $result      = Rest_Api_V1_Helper::instance()->handle_site_update_item( $website->id, 'translation', $information );
         } catch ( \Exception $e ) {
-            return new \WP_Error( 'mainwp_rest_upgrade_translations_of_site_error', $e->getMessage() );
+            return new \WP_Error( 'mainwp_rest_upgrade_translations_of_site_error', ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ) );
         }
 
         $resp_data = array(

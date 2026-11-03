@@ -154,7 +154,15 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
                 $result['error_code'] = self::ERR_UNRESOLVABLE;
                 return $result;
             }
-            $plan            = (array) $resolved['plan'];
+            $plan     = (array) $resolved['plan'];
+            $metadata = MainWP_Backup_Monitor::restore_plan_metadata( $plan );
+            if ( is_wp_error( $metadata ) || ! empty( $metadata ) ) {
+                // The local sandbox has no root-aware container reader yet.
+                $result['state']      = self::STATE_UNSUPPORTED;
+                $result['error_code'] = is_wp_error( $metadata ) ? $metadata->get_error_code() : MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT;
+                $result['error']      = MainWP_Backup_Error_Codes::message( $result['error_code'] );
+                return $result;
+            }
             $own_deadline    = microtime( true ) + (float) self::DEFAULT_STAGE_BUDGET_SECONDS;
             $stage_deadline  = null !== $caller_deadline ? min( $caller_deadline, $own_deadline ) : $own_deadline;
             $staging_started = true;

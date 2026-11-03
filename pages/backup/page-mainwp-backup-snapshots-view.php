@@ -184,7 +184,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     MainWP_Logger::instance()->debug( 'test-restore capability :: ' . $test_restore_notice );
                     ?>
                 <div class="ui small info visible message">
-                    <?php esc_html_e( 'Test Restore is not available on this Dashboard host because the restore sandbox could not be set up. The usual cause is a database user without the CREATE privilege; ask your host to grant it. For the exact reason, set the Custom Event Monitor log level to Debug, reload this page, and check the log.', 'mainwp' ); ?>
+                    <p><?php esc_html_e( 'Test Restore stays off until the sandbox can be set up.', 'mainwp' ); ?></p>
+                    <p style="white-space: pre-line;"><?php echo esc_html( $test_restore_notice ); ?></p>
+                    <p><?php esc_html_e( 'After fixing the cause, save Backup Settings to clear the cached result. Test Restore will retry on the next automatic check.', 'mainwp' ); ?></p>
                 </div>
                 <?php endif; ?>
 
@@ -385,9 +387,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             <button type="button" class="ui mini red button" id="mainwp-native-backup-cancel-btn" style="display: none;">
                                 <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
                             </button>
-                            <button type="button" class="ui mini basic button<?php echo $cleanup_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $cleanup_off ); ?>>
-                                <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
-                            </button>
+                                <?php if ( MainWP_Backup_Operations::current_user_can_delete() ) : ?>
+                                    <button type="button" class="ui mini basic button<?php echo $cleanup_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $cleanup_off ); ?>>
+                                        <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -487,6 +491,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // restore_backups; an unregistered admin-ajax action answers 400.
             var canDownload = <?php echo MainWP_Abilities_Util::current_user_has_operation_right( 'download_backups' ) ? 'true' : 'false'; ?>;
             var canRestore = <?php echo \mainwp_current_user_can( 'dashboard', 'restore_backups' ) ? 'true' : 'false'; ?>;
+            var canDelete = <?php echo MainWP_Backup_Operations::current_user_can_delete() ? 'true' : 'false'; ?>;
             var backupTypeLabels = <?php echo wp_json_encode( $type_labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
             var snapshotDeleteBusy = false;
@@ -723,7 +728,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function deleteButton( snap ) {
-                if ( 'pruned' === snap.status ) {
+                if ( ! canDelete || 'pruned' === snap.status ) {
                     return '';
                 }
                 var disabled = snapshotDeleteBusy ? ' disabled' : '';
@@ -1092,7 +1097,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     var label = uploadLabels[ upload.status ] || [ 'grey', escAttr( upload.status ) ];
                     details += '<div class="item">' + escAttr( upload.name ) + ' (' + escAttr( upload.provider ) + ') <span class="ui small basic ' + label[0] + ' label">' + label[1] + '</span>';
                     if ( [ 'failed_retryable', 'failed_permanent', 'credentials_invalid' ].indexOf( upload.status ) !== -1 && upload.last_error ) {
-                        details += ' ' + escAttr( upload.last_error );
+                        details += ' ' + escAttr( upload.error_message || upload.last_error );
+                        // The provider's own message and the error code stay visible for support.
+                        var support = [ upload.error_detail, upload.error_code ? '(' + upload.error_code + ')' : '' ].filter( Boolean ).join( ' ' );
+                        if ( support ) {
+                            details += '<div><span class="ui small grey text">' + escAttr( support ) + '</span></div>';
+                        }
                     }
                     details += '</div>';
                 } );
@@ -1921,7 +1931,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-backup-monitor' ).hide();
             } );
 
-            function setBackupStatus( text, isError, color, progressTick ) {
+            // A failed run's error can be several paragraphs; the message panel
+            // shows it once and the progress label only names the failure.
+            var backupFailureSummaries = {
+                '<?php echo esc_js( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ); ?>': '<?php echo esc_js( esc_html__( 'Backup failed on the Dashboard server.', 'mainwp' ) ); ?>'
+            };
+
+            function backupFailureSummary( code ) {
+                return Object.prototype.hasOwnProperty.call( backupFailureSummaries, code ) ? backupFailureSummaries[ code ] : '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>';
+            }
+
+            function setBackupStatus( text, isError, color, progressTick, label ) {
                 if ( ! progressTick ) {
                     backupStatusDismissed = false;
                 }
@@ -1934,7 +1954,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
                 updateBackupMonitor();
                 if ( ! progressTick ) {
-                    $( '#mainwp-backup-phase-label' ).text( text );
+                    $( '#mainwp-backup-phase-label' ).text( label || text );
                     if ( color === 'green' ) {
                         $( '#mainwp-backup-phase-progress' ).progress( { percent: 100, autoSuccess: false } ).removeClass( 'active' );
                         window.mainwpBackupProgressSteps( $( '#mainwp-backup-phase-steps' ), 'completed', 100, 'completed', '' );
@@ -2050,7 +2070,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     if ( data.error ) {
                         stopBackupTimers();
-                        setBackupStatus( data.error, true );
+                        // Early refusals carry no status and stay short enough for the label.
+                        setBackupStatus( data.error, true, '', false, 'failed' === data.status ? backupFailureSummary( data.error_code ) : '' );
                         reenableBackupBtn();
                         showCancelBackup( false );
                         loadSnapshots( siteId );

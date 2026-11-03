@@ -143,9 +143,9 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 		$before = array();
 		foreach ( array( 'wp_backup', 'wp_backup_snapshot', 'wp_backup_upload_job', 'wp_backup_storage' ) as $table ) {
 			$name             = MainWP_DB::instance()->get_table_name( $table );
-			$before[ $table ] = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $name ), ARRAY_A );
+			$before[ $table ] = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id', $name ), ARRAY_A );
 		}
-		$options  = $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups'", ARRAY_A );
+		$options  = $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups' ORDER BY option_id", ARRAY_A );
 		$messages = array();
 		$requests = 0;
 		$log      = static function ( $message, $site_id, $task_id ) use ( &$messages ) {
@@ -167,9 +167,9 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 			$this->assertSame( array( $this->site_id, $task ), array_slice( $messages[0], 1 ) );
 			foreach ( $before as $table => $rows ) {
 				$name = MainWP_DB::instance()->get_table_name( $table );
-				$this->assertEquals( $rows, $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $name ), ARRAY_A ), $table );
+				$this->assertEquals( $rows, $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id', $name ), ARRAY_A ), $table );
 			}
-			$this->assertEquals( $options, $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups'", ARRAY_A ) );
+			$this->assertEquals( $options, $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups' ORDER BY option_id", ARRAY_A ) );
 			foreach ( $this->fixture_dirs as $dir ) {
 				$this->assertSame( str_repeat( 'x', 100 ), file_get_contents( $dir . '/artifact.tar' ) );
 			}
@@ -898,5 +898,172 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 		$scheduler->cron_backups_prune();
 		$this->assertFileDoesNotExist( $path );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+	}
+
+	/**
+	 * Build a remove-local-archives task with zero retention caps and one
+	 * snapshot whose required upload is complete and verified.
+	 *
+	 * @param bool $verified Whether the required upload finished.
+	 *
+	 * @return array Task id, snapshot id and local archive path.
+	 */
+	private function insert_verified_eviction_fixture( $verified = true ) {
+		$protection  = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$destination = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Held eviction fixture',
+				'settings' => array(),
+			)
+		);
+		$task        = $this->insert_task(
+			array(
+				'retention_count'      => 0,
+				'retention_days'       => 0,
+				'retention_storage_mb' => 0,
+			)
+		);
+		$protection::save_task_remove_local_archives( $task, true );
+		$id = $this->insert_snapshot_with_dir( $task );
+		$protection::capture_required_destinations( $id, array( $destination ) );
+		\MainWP\Dashboard\MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $id, array( $destination ) );
+		if ( $verified ) {
+			global $wpdb;
+			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+				MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+				array(
+					'provider'   => 's3',
+					'status'     => 'complete',
+					'checkpoint' => wp_json_encode(
+						array(
+							'uploaded_at'         => time(),
+							'manifest_submitted'  => true,
+							'destination_binding' => $protection::destination_binding( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ),
+							'artifacts'           => array(
+								array(
+									'file'   => 'artifact.tar',
+									'role'   => 'full',
+									'size'   => 100,
+									'sha256' => hash( 'sha256', str_repeat( 'x', 100 ) ),
+									'mode'   => 'whole',
+									'done'   => true,
+								),
+							),
+						)
+					),
+				),
+				array( 'snapshot_id' => $id )
+			);
+		}
+		$path = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives[0]['path'];
+		return array( $task, $id, $path );
+	}
+
+	/**
+	 * The archive is gone and the snapshot keeps its inventory.
+	 *
+	 * @param int    $id   Snapshot id.
+	 * @param string $path Local archive path.
+	 *
+	 * @return void
+	 */
+	private function assert_archive_evicted_inventory_kept( $id, $path ) {
+		$this->assertFileDoesNotExist( $path );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$this->assertSame( 'complete', $snapshot->status );
+		$this->assertSame( 'artifact.tar', $snapshot->archives[0]['file'], 'The snapshot keeps its archive inventory.' );
+		$this->assertSame( array(), get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION, array() ) );
+	}
+
+	/** An eviction held by a running backup retries from the queue once the backup ends. */
+	public function test_eviction_held_by_running_backup_retries_after_hold_clears() {
+		list( $task, $id, $path ) = $this->insert_verified_eviction_fixture();
+		$hold                     = \MainWP\Dashboard\MainWP_Backup_Executor::BACKUP_HOLD_OPTION_PREFIX . $this->site_id;
+		update_option( $hold, wp_json_encode( array( 'other-task' => time() + 600 ) ), false );
+		$scheduler = MainWP_Backup_Retention_Scheduler::instance();
+		$clock     = time();
+		$scheduler->on_snapshot_recorded( $id, $task, $this->site_id );
+
+		$scheduler->process_post_snapshot_queue( 60, $clock );
+		delete_option( $hold );
+		$this->assertFileExists( $path );
+		$this->assertCount( 1, get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION, array() ), 'A held eviction stays queued.' );
+
+		// The wait has not passed yet, so this tick leaves the pair alone.
+		$scheduler->process_post_snapshot_queue( 60, $clock );
+		$this->assertFileExists( $path );
+
+		$scheduler->process_post_snapshot_queue( 60, $clock + MainWP_Backup_Retention_Scheduler::HOLD_RETRY_BASE_SECONDS );
+		$this->assert_archive_evicted_inventory_kept( $id, $path );
+	}
+
+	/** An eviction held by a transfer marker retries from the queue once the transfer ends. */
+	public function test_eviction_held_by_transfer_marker_retries_after_hold_clears() {
+		list( $task, $id, $path ) = $this->insert_verified_eviction_fixture();
+		file_put_contents( $path . '.downloading', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$scheduler = MainWP_Backup_Retention_Scheduler::instance();
+		$clock     = time();
+		$scheduler->on_snapshot_recorded( $id, $task, $this->site_id );
+
+		$scheduler->process_post_snapshot_queue( 60, $clock );
+		$this->assertFileExists( $path );
+		unlink( $path . '.downloading' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$scheduler->process_post_snapshot_queue( 60, $clock + HOUR_IN_SECONDS );
+		$this->assert_archive_evicted_inventory_kept( $id, $path );
+	}
+
+	/** Without a hold the first drain removes the archive and does not requeue. */
+	public function test_unheld_eviction_removes_archive_on_first_drain() {
+		list( $task, $id, $path ) = $this->insert_verified_eviction_fixture();
+		$scheduler                = MainWP_Backup_Retention_Scheduler::instance();
+		$scheduler->on_snapshot_recorded( $id, $task, $this->site_id );
+
+		$scheduler->process_post_snapshot_queue();
+		$this->assert_archive_evicted_inventory_kept( $id, $path );
+	}
+
+	/** A hold that never clears stops retrying after the attempt cap and keeps the archive. */
+	public function test_permanent_eviction_hold_stops_retrying_within_bound() {
+		list( $task, $id, $path ) = $this->insert_verified_eviction_fixture( false );
+		$scheduler                = MainWP_Backup_Retention_Scheduler::instance();
+		$clock                    = time();
+		$scheduler->on_snapshot_recorded( $id, $task, $this->site_id );
+
+		// Each wait doubles from one continue tick up to the hourly ceiling.
+		$expected_delays = array( 300, 600, 1200, 2400, 3600, 3600, 3600 );
+		$drains          = 0;
+		foreach ( $expected_delays as $delay ) {
+			$scheduler->process_post_snapshot_queue( 60, $clock );
+			++$drains;
+			$queue = get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION, array() );
+			$this->assertCount( 1, $queue, 'An unverified upload holds the eviction and retries.' );
+			$this->assertSame( $clock + $delay, (int) array_values( $queue )[0]['retry_at'] );
+			$clock += $delay;
+		}
+		$scheduler->process_post_snapshot_queue( 60, $clock );
+		++$drains;
+		$this->assertSame( array(), get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION, array() ), 'The pair leaves the queue after the last attempt.' );
+
+		$this->assertSame( MainWP_Backup_Retention_Scheduler::HOLD_RETRY_MAX_ATTEMPTS, $drains, 'Retries stop at the attempt cap.' );
+		$this->assertFileExists( $path );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+	}
+
+	/** A new snapshot event resets a backing-off pair so it runs on the next tick. */
+	public function test_snapshot_event_resets_held_pair_backoff() {
+		list( $task, $id, $path ) = $this->insert_verified_eviction_fixture();
+		file_put_contents( $path . '.downloading', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$scheduler = MainWP_Backup_Retention_Scheduler::instance();
+		$clock     = time();
+		$scheduler->on_snapshot_recorded( $id, $task, $this->site_id );
+		$scheduler->process_post_snapshot_queue( 60, $clock );
+		unlink( $path . '.downloading' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$this->assertSame( 1, (int) array_values( get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION, array() ) )[0]['attempts'] );
+
+		$scheduler->on_snapshot_recorded( $id, $task, $this->site_id );
+		$scheduler->process_post_snapshot_queue( 60, $clock );
+		$this->assert_archive_evicted_inventory_kept( $id, $path );
 	}
 }

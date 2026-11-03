@@ -49,6 +49,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		return array(
 			'cancelled before start' => array( 'ERR_RESTORE_CANCELLED_BEFORE_START', 'mainwp_restore_cancelled_before_start', 'This restore was cancelled before the site started it.' ),
 			'native disabled'        => array( 'ERR_RESTORE_NATIVE_DISABLED', 'mainwp_restore_native_backups_disabled', 'Built-In Backups were turned off, so this restore stopped before changing the site.' ),
+			'transfer stalled'       => array( 'ERR_RESTORE_TRANSFER_STALLED', 'mainwp_restore_transfer_stalled', 'The restore stopped because the site received no backup data from the Dashboard for 15 minutes. Check that the Dashboard can still reach the site, then start the restore again.' ),
 		);
 	}
 
@@ -148,6 +149,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		'mainwp_backup_dl_token_invalid',
 		'mainwp_backup_unsupported_layout',
 		'mainwp_restore_target_not_writable',
+		'mainwp_restore_transfer_stalled',
 	);
 
 	/**

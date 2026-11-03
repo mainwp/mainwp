@@ -50,6 +50,9 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      */
     const PRUNE_STALE_LEASE_SECONDS = HOUR_IN_SECONDS;
 
+    /** Limit checkpoint writes while keeping renewals within the late-write window. */
+    private const STAMP_INTERVAL_SECONDS = 60;
+
     const STATUS_PENDING             = 'pending';
     const STATUS_CHUNKING            = 'chunking';
     const STATUS_UPLOADING           = 'uploading';
@@ -66,6 +69,13 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      * @var (self|null) $instance Instance of MainWP_Backup_Upload_Job_Store or null.
      */
     private static $instance = null;
+
+    /**
+     * Last successful attempt stamp per lease token in this request.
+     *
+     * @var array<string, int>
+     */
+    private $attempt_stamps = array();
 
     /**
      * Method instance()
@@ -201,7 +211,97 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
             )
         );
 
+        if ( null !== $row && self::KIND_UPLOAD === $row->kind ) {
+            if ( ! $this->stamp_attempt( (int) $row->id, $token, $now ) ) {
+                $this->release_lock( (int) $row->id, $token );
+                return null;
+            }
+            $this->attempt_stamps[ $token ] = $now;
+            return $this->get_job( (int) $row->id );
+        }
+
         return $this->decode_row( $row );
+    }
+
+    /**
+     * Keep retention's latest-write bound current before provider requests.
+     *
+     * @param int      $job_id        Job id.
+     * @param string   $token         The holder's lock token.
+     * @param int      $lease_seconds New lease duration from now.
+     * @param int|null $now           Clock override for tests.
+     * @return bool Whether the lease and any due attempt stamp are confirmed.
+     */
+    public function renew_lease( int $job_id, string $token, int $lease_seconds, ?int $now = null ): bool {
+        $now = null === $now ? time() : $now;
+        if ( ! parent::renew_lease( $job_id, $token, $lease_seconds, $now ) ) {
+            return false;
+        }
+        if ( isset( $this->attempt_stamps[ $token ] ) && $now - $this->attempt_stamps[ $token ] < self::STAMP_INTERVAL_SECONDS ) {
+            return true;
+        }
+        if ( ! $this->stamp_attempt( $job_id, $token, $now ) ) {
+            return false;
+        }
+        $this->attempt_stamps[ $token ] = $now;
+        return true;
+    }
+
+    /**
+     * Preserve a monotonic bound on writes made under this upload lease.
+     *
+     * @param int    $job_id Job identity.
+     * @param string $token Current lease owner.
+     * @param int    $now   Attempt time.
+     * @return bool Whether the stamp is confirmed under a live lease.
+     */
+    private function stamp_attempt( int $job_id, string $token, int $now ): bool {
+        // Retry once because the scheduler's unfenced storage-age floor CAS can race this stamp.
+        for ( $attempt = 0; $attempt < 2; ++$attempt ) {
+            $row = $this->wpdb->get_row(
+                $this->wpdb->prepare(
+                    'SELECT kind, checkpoint FROM %i WHERE id = %d AND locked_by = %s AND locked_until >= %d',
+                    $this->table(),
+                    $job_id,
+                    $token,
+                    $now
+                )
+            );
+            if ( null === $row ) {
+                return false;
+            }
+            if ( self::KIND_UPLOAD !== $row->kind ) {
+                return true;
+            }
+            $checkpoint = json_decode( (string) $row->checkpoint, true );
+            $checkpoint = is_array( $checkpoint ) ? $checkpoint : array();
+            if ( (int) ( $checkpoint['last_attempt_at'] ?? 0 ) >= $now ) {
+                return true;
+            }
+            $checkpoint['last_attempt_at'] = $now;
+            $encoded                       = wp_json_encode( $checkpoint );
+            if ( false === $encoded ) {
+                return false;
+            }
+            $changed = $this->wpdb->query(
+                $this->wpdb->prepare(
+                    'UPDATE %i SET checkpoint = %s WHERE id = %d AND MD5(checkpoint) = %s AND locked_by = %s AND locked_until >= %d',
+                    $this->table(),
+                    $encoded,
+                    $job_id,
+                    md5( (string) $row->checkpoint ),
+                    $token,
+                    $now
+                )
+            );
+            if ( false === $changed ) {
+                return false;
+            }
+            if ( 1 === $changed ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -511,6 +611,10 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         if ( (int) ( $current['storage_age_floor'] ?? 0 ) > 0 ) {
             $checkpoint['storage_age_floor'] = (int) $current['storage_age_floor'];
         }
+        $last_attempt = max( (int) ( $current['last_attempt_at'] ?? 0 ), (int) ( $checkpoint['last_attempt_at'] ?? 0 ) );
+        if ( $last_attempt > 0 ) {
+            $checkpoint['last_attempt_at'] = $last_attempt;
+        }
         $encoded = wp_json_encode( $checkpoint );
         if ( false === $encoded ) {
             return false;
@@ -607,7 +711,8 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
     }
 
     /**
-     * Mark a job complete and release its lock.
+     * Mark a job complete and release its lock. Clears the error an
+     * earlier retryable attempt left, so a completed job reports none.
      *
      * @param int         $job_id     Job id.
      * @param string|null $lock_token Fence the transition on this lease token; null skips the fence.
@@ -621,6 +726,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
             $job_id,
             array(
                 'status'       => static::STATUS_COMPLETE,
+                'last_error'   => '',
                 'locked_until' => 0,
                 'locked_by'    => '',
             ),

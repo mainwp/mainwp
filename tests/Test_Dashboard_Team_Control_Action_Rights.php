@@ -8,6 +8,8 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Menu;
+use MainWP\Dashboard\MainWP_Themes;
 use MainWP\Dashboard\MainWP_Widget_Themes;
 use MainWP\Dashboard\Rights_Post_Plugin_Theme_Handler;
 use MainWP\Dashboard\Rights_REST_API_Page;
@@ -293,6 +295,102 @@ class Test_Dashboard_Team_Control_Action_Rights extends \WP_UnitTestCase {
         $html = $this->capture( static function () use ( $website ) { MainWP_Widget_Themes::render_html_widget( $website, array( array( 'slug' => 'fixture', 'name' => 'Fixture', 'version' => '1', 'active' => 0 ) ) ); } );
         $this->assertSame( 'denied' !== $actor, false !== strpos( $html, 'mainwp-theme-activate item' ) );
     }
+
+	/**
+	 * Theme rights and expected access.
+	 *
+	 * @return array
+	 */
+	public static function theme_manage_rights(): array {
+		return array(
+			'activation only'                    => array( array( 'activate_themes' ), true, true, false ),
+			'activation and deletion'            => array( array( 'activate_themes', 'delete_themes' ), true, true, true ),
+			'deletion only'                      => array( array( 'delete_themes' ), true, false, true ),
+			'no theme rights'                    => array( array(), false, false, false ),
+			'administrator without Team Control' => array( null, true, true, true ),
+		);
+	}
+
+	/**
+	 * Manage Themes uses the granted activation right in its menu and both row layouts.
+	 *
+	 * @dataProvider theme_manage_rights
+	 * @param array|null $rights Granted staff rights, or null for an administrator without Team Control.
+	 * @param bool       $menu_visible Whether Manage Themes is registered.
+	 * @param bool       $activate_visible Whether inactive themes can be activated.
+	 * @param bool       $delete_visible Whether inactive themes can be deleted.
+	 */
+	public function test_manage_themes_access( ?array $rights, bool $menu_visible, bool $activate_visible, bool $delete_visible ): void {
+		$this->actor( null === $rights ? 'default' : 'staff', 'activate_themes' );
+		if ( null !== $rights ) {
+			$this->filter(
+				'mainwp_currentusercan',
+				static function ( $can, $type, $requested ) use ( $rights ) {
+					return 'dashboard' === $type && in_array( $requested, $rights, true );
+				},
+				3
+			);
+		}
+		$this->filter(
+			'mainwp_init_primary_menu_items',
+			static function ( $items ) {
+				return array_filter(
+					$items,
+					static function ( $item ) {
+						return 'ThemesManage' === $item['slug'];
+					}
+				);
+			}
+		);
+		$saved_globals = array();
+		foreach ( array( 'submenu', '_registered_pages', '_parent_pages', 'admin_page_hooks', '_wp_submenu_nopriv', 'mainwp_leftmenu', 'mainwp_sub_leftmenu', '_mainwp_menu_active_slugs', '_mainwp_disable_menus_items' ) as $name ) {
+			$saved_globals[ $name ] = $GLOBALS[ $name ] ?? null;
+		}
+		$hook = get_plugin_page_hookname( 'ThemesManage', 'mainwp_tab' );
+		unset( $GLOBALS['_registered_pages'][ $hook ] );
+		remove_all_actions( $hook );
+		try {
+			MainWP_Menu::init_mainwp_menus();
+			$this->assertSame( $menu_visible, isset( $GLOBALS['_registered_pages'][ $hook ] ), 'Manage Themes registration ignored the granted theme rights.' );
+			$callback_priority = has_action( $hook, array( MainWP_Themes::class, 'render' ) );
+			$this->assertSame( $menu_visible, false !== $callback_priority );
+		} finally {
+			foreach ( $saved_globals as $name => $value ) {
+				if ( null === $value ) {
+					unset( $GLOBALS[ $name ] );
+				} else {
+					$GLOBALS[ $name ] = $value;
+				}
+			}
+		}
+
+		$site        = $this->create_test_site();
+		$sites       = array(
+			$site => array(
+				'websitename' => 'Theme fixture site',
+				'websiteurl'  => 'https://themes.example.org/',
+			),
+		);
+		$site_themes = array(
+			$site => array(
+				'fixture_1' => array(
+					'title'   => 'Fixture',
+					'version' => '1',
+					'active'  => 0,
+				),
+			),
+		);
+		foreach ( array( 'render_manage_per_site_table', 'render_manage_table' ) as $renderer ) {
+			$html = $this->capture(
+				static function () use ( $renderer, $site, $sites, $site_themes ) {
+					MainWP_Themes::$renderer( $sites, array( 'fixture_1' => 'Fixture' ), $site_themes, array( 'fixture_1' => 'fixture' ), array( 'Fixture' => array( $site => array( 'fixture_1' ) ) ), array( 'fixture_1' => '1' ) );
+				}
+			);
+			$this->assertStringContainsString( 'Theme fixture site', $html, $renderer . ' did not render the site fixture.' );
+			$this->assertSame( $activate_visible, str_contains( $html, 'mainwp-manages-theme-activate ' ), $renderer . ' ignored the activation right.' );
+			$this->assertSame( $delete_visible, str_contains( $html, 'mainwp-manages-theme-delete ' ), $renderer . ' ignored the deletion right.' );
+		}
+	}
 
     /**
      * @param string $actor Actor mode.

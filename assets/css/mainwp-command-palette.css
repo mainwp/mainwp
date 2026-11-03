@@ -1,0 +1,191 @@
+/* The global search trigger stays in the existing header action area. */
+#mainwp-top-header #mainwp-command-palette-trigger {
+    justify-content: flex-start;
+    gap: 9px;
+    min-width: 260px;
+    min-height: 38px;
+    padding: 8px 11px !important;
+    border-radius: 6px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    font-weight: 400;
+    text-align: left;
+}
+
+#mainwp-top-header #mainwp-command-palette-trigger .search.icon {
+    margin: 0;
+    opacity: 0.85;
+}
+
+#mainwp-top-header #mainwp-command-palette-trigger .mainwp-command-palette-trigger-label {
+    white-space: nowrap;
+}
+
+#mainwp-top-header #mainwp-command-palette-trigger kbd {
+    margin-left: auto;
+    padding: 3px 5px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-top-header #mainwp-command-palette-trigger {
+    background: var(--mainwp-element-background-secondary, #f4f5f3) !important;
+    border-color: var(--mainwp-border-strong, #a1a9a1) !important;
+    color: var(--mainwp-text, #212721) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-top-header #mainwp-command-palette-trigger kbd {
+    border-color: var(--mainwp-border-strong, #a1a9a1);
+}
+
+#mainwp-top-header #mainwp-command-palette-trigger:hover,
+#mainwp-top-header #mainwp-command-palette-trigger:focus-visible {
+    border-color: var(--mainwp-green, #7fb100) !important;
+    box-shadow: 0 0 0 1px var(--mainwp-green, #7fb100) !important;
+}
+
+/* Native section headings retain WordPress's dark text without this override. */
+.mainwp-ui .commands-command-menu__container [cmdk-root] > [cmdk-list] [cmdk-group-heading] {
+    color: var(--mainwp-text-secondary, #555);
+}
+
+/* Reserve room for the footer inside the native modal's height limit. */
+.components-modal__frame.commands-command-menu.mainwp-command-palette-modal {
+    /* The native palette sits below the top edge, including on narrow screens. */
+    max-height: 70vh;
+}
+
+.components-modal__content.mainwp-command-palette-content,
+.mainwp-command-palette-content > .components-modal__children-container,
+.mainwp-command-palette-container,
+.mainwp-command-palette-container > [cmdk-root] {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.mainwp-command-palette-content > .components-modal__children-container,
+.mainwp-command-palette-container,
+.mainwp-command-palette-container > [cmdk-root] {
+    flex: 1 1 auto;
+}
+
+.mainwp-command-palette-container .commands-command-menu__header {
+    flex: 0 0 auto;
+}
+
+.commands-command-menu__container.mainwp-command-palette-container [cmdk-root] > [cmdk-list] {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* This is a sibling of cmdk-root, outside its listbox and keyboard handler. */
+.mainwp-command-palette-site-actions {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+    background: var(--mainwp-element-background, #fff);
+    border-top: 1px solid var(--mainwp-border, #ddd);
+    color: var(--mainwp-text, #1e1e1e);
+}
+
+.mainwp-command-palette-site-actions[hidden] {
+    display: none;
+}
+
+.mainwp-command-palette-action-row,
+.mainwp-command-palette-action-group,
+.mainwp-command-palette-keyboard {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mainwp-command-palette-selected-site {
+    flex: 1;
+    min-width: 100px;
+    overflow-wrap: anywhere;
+    font-size: 12px;
+    color: var(--mainwp-text-secondary, #555);
+}
+
+.mainwp-command-palette-site-actions .mainwp-command-palette-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: auto;
+    min-height: 34px;
+    padding: 7px 10px;
+    background: var(--mainwp-element-background-secondary, #f6f7f7);
+    border: 1px solid var(--mainwp-border-strong, #b7b7b7);
+    border-radius: 4px;
+    color: var(--mainwp-text, #1e1e1e);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.mainwp-command-palette-site-actions .mainwp-command-palette-action:hover {
+    background: var(--mainwp-shell-background-hover, var(--mainwp-border-strong, #e9ede5));
+    color: var(--mainwp-text, #1e1e1e);
+}
+
+.mainwp-command-palette-site-actions .mainwp-command-palette-action:focus-visible {
+    outline: 2px solid var(--wp-admin-theme-color, #3858e9);
+    outline-offset: 2px;
+}
+
+.mainwp-command-palette-action[aria-disabled="true"] {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.mainwp-command-palette-action .dashicons {
+    width: 17px;
+    height: 17px;
+    font-size: 17px;
+    line-height: 1;
+}
+
+.mainwp-command-palette-keyboard {
+    margin-top: 10px;
+    gap: 12px;
+    color: var(--mainwp-text-secondary, #555);
+    font-size: 11px;
+}
+
+.mainwp-command-palette-keyboard > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mainwp-command-palette-keyboard kbd {
+    padding: 1px 4px;
+    border: 1px solid var(--mainwp-border, #ccc);
+    border-radius: 3px;
+    background: var(--mainwp-element-background-secondary, #f6f7f7);
+    color: inherit;
+    font: inherit;
+}
+
+@media (max-width: 1100px) {
+    #mainwp-top-header #mainwp-command-palette-trigger {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .mainwp-command-palette-selected-site {
+        flex-basis: 100%;
+    }
+}
+
+@media (pointer: coarse) {
+    .mainwp-command-palette-site-actions .mainwp-command-palette-action {
+        min-height: 44px;
+    }
+}

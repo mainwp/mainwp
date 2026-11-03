@@ -93,7 +93,9 @@ class MainWP_Plugins_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             unset( $plugins );
         } else {
-            $output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+            $output->errors[ $website->id ] = isset( $output->transport_errors[ $website->id ]['message'] )
+                ? esc_html( $output->transport_errors[ $website->id ]['message'] )
+                : MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
         }
     }
 

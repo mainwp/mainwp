@@ -179,12 +179,7 @@ class Cost_Tracker_Sites_Widget {
                 );
 
                 if ( 'active' === $item->cost_status ) {
-                    $price = 0;
-                    if ( 'single_site' === $item->license_type ) {
-                        $price = $item->price;
-                    } elseif ( 'multi_site' === $item->license_type && ! empty( $item->count_sites ) ) {
-                        $price = $item->price / $item->count_sites;
-                    }
+                    $price = Cost_Tracker_Admin::get_cost_price_per_site( $item );
                     if ( 'lifetime' === $item->type ) {
                         $array_costs['lifetime'] += $price;
                     } elseif ( isset( $array_costs[ $item->renewal_type ] ) ) {

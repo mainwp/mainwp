@@ -1337,7 +1337,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $table_rows = '';
             foreach ( $posts as $post ) {
-                $raw_dts = '';
+                $raw_dts        = '';
                 $copy_permalink = static::get_copyable_permalink( $post, $website );
                 if ( isset( $post['dts'] ) ) {
                     $raw_dts = $post['dts'];
@@ -1493,7 +1493,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $output->table_rows .= $table_rows;
             unset( $posts );
         } else {
-            $output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+            $output->errors[ $website->id ] = isset( $output->transport_errors[ $website->id ]['message'] )
+                ? esc_html( $output->transport_errors[ $website->id ]['message'] )
+                : MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
         }
     }
 
@@ -1855,7 +1857,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $monthtext = $wp_locale->get_month_abbrev( $wp_locale->get_month( $i ) );
             $month    .= "\t\t\t" . '<option value="' . $monthnum . '" data-text="' . $monthtext . '" ' . selected( $monthnum, $mm, false ) . '>';
             /* translators: 1: month number, 2: month abbreviation */
-            $month    .= sprintf( esc_html__( '%1$s-%2$s', 'mainwp' ), $monthnum, $monthtext ) . "</option>\n";
+            $month .= sprintf( esc_html__( '%1$s-%2$s', 'mainwp' ), $monthnum, $monthtext ) . "</option>\n";
         }
 
         $month .= '</select></label>';

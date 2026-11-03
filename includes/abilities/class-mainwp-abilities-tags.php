@@ -909,7 +909,7 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
             $color = null;
         }
 
-        $existing = MainWP_DB_Common::instance()->get_group_by_name( $name );
+        $existing = MainWP_Manage_Groups::get_visible_group_by_name( $name );
         if ( ! empty( $existing ) ) {
             return new \WP_Error(
                 'mainwp_already_exists',

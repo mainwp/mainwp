@@ -586,6 +586,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 	 */
 	public function test_backup_site_disabled_feature_throws_legacy_disabled() {
 		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
 		list( $site_id, $task ) = $this->site_and_task();
 
 		try {
@@ -603,6 +604,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 	 */
 	public function test_backup_disabled_feature_throws_legacy_disabled() {
 		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
 		$site_id = $this->create_test_site();
 
 		try {

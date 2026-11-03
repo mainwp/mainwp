@@ -70,6 +70,12 @@ class MainWP_Control {
             return;
         }
 
+        if ( ! MainWP_Abilities_Util::is_abilities_api_available() ) {
+            MainWP_UI::render_top_header( array( 'title' => esc_html__( 'MainWP Control', 'mainwp' ) ) );
+            echo '<div class="ui padded segment"><div class="ui blue message">' . esc_html__( 'MainWP MCP and MainWP Control require WordPress 6.9 or later. Update WordPress on this Dashboard to set up a connection.', 'mainwp' ) . '</div></div></div>';
+            return;
+        }
+
         MainWP_UI::render_top_header( array( 'title' => esc_html__( 'MainWP Control', 'mainwp' ) ) );
         ?>
         <div id="mainwp-control-page" class="ui padded segment">

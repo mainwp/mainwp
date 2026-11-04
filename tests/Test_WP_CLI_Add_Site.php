@@ -28,6 +28,15 @@ class Add_Site_CLI_Output_Double {
 	public static $messages = array();
 
 	/**
+	 * Capture a warning without terminating the command.
+	 *
+	 * @param string $message Command output.
+	 */
+	public static function warning( $message ) {
+		self::$messages[] = array( 'warning', $message );
+	}
+
+	/**
 	 * Capture a successful command result.
 	 *
 	 * @param string $message Command output.
@@ -48,31 +57,22 @@ class Add_Site_CLI_Output_Double {
 	}
 
 	/**
-	 * Capture a warning. The first CLI test to load owns the WP_CLI alias, so each double needs every method the handler calls.
-	 *
-	 * @param string $message Command output.
-	 */
-	public static function warning( $message ) {
-		self::$messages[] = array( 'warning', $message );
-	}
-
-	/**
 	 * Capture a plain output line.
 	 *
 	 * @param string $message Command output.
 	 */
-	public static function line( $message = '' ) {
+	public static function line( $message ) {
 		self::$messages[] = array( 'line', $message );
 	}
 
 	/**
-	 * Return text unchanged; colour tokens do not matter to the assertions.
+	 * Return text without color tokens.
 	 *
-	 * @param string $text Text with colour tokens.
-	 * @return string
+	 * @param string $message Command output with color tokens.
+	 * @return string Uncolored output.
 	 */
-	public static function colorize( $text ) {
-		return $text;
+	public static function colorize( $message ) {
+		return str_replace( array( '%g', '%r', '%n' ), '', $message );
 	}
 }
 

@@ -228,7 +228,6 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
         }
 
-        curl_setopt( $ch, CURLOPT_HEADER, true );
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
         if ( 'get' === $mo_apply_method || 'head' === $mo_apply_method ) {
@@ -383,7 +382,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 ++$down_count;
                 $set_retry = true;
             }
-        } elseif ( ! $is_notallowed && empty( $data ) && 'ping' !== $mo_apply_type && ! $second_try ) {
+        } elseif ( ! $is_notallowed && false === $data && 'ping' !== $mo_apply_type && ! $second_try ) {
+            // Retry only when no response arrived. An empty body is a response, and HEAD never has one.
             usleep( 200000 );
             // Process only the second-try response.
             return $this->fetch_uptime_monitor( $monitor, $global_settings, true, $params );

@@ -1108,11 +1108,19 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             return new \WP_Error( 'mainwp_rest_updates_queue_error', esc_html__( 'The updates could not be queued. Please try again.', 'mainwp' ), array( 'status' => 500 ) );
         }
 
-        if ( ! $batch_individual_updates_running ) {
+        // Refresh cached options before checking whether another request started a run.
+        wp_cache_delete( 'mainwp_batch_individual_updates_is_running', 'options' );
+        wp_cache_delete( 'mainwp_batch_updates_individual_start_time', 'options' );
+        wp_cache_delete( 'alloptions', 'options' );
+        wp_cache_delete( 'notoptions', 'options' );
+
+        if ( ! get_option( 'mainwp_batch_individual_updates_is_running', 0 ) ) {
             $start_individual_time = $local_timestamp;
             MainWP_Utility::update_option( 'mainwp_batch_updates_individual_start_time', $start_individual_time ); // individual site batch start time.
             MainWP_Utility::update_option( 'mainwp_batch_individual_updates_is_running', 1 ); // individual site batch start time.
             MainWP_Logger::instance()->log_update_check( 'Batch individual updates start: [websiteid=' . $website->id . ']' );
+        } else {
+            $start_individual_time = (int) get_option( 'mainwp_batch_updates_individual_start_time', $local_timestamp );
         }
 
         $msg = esc_html__( 'Batch updates for the site started successfully. Please wait to completed.', 'mainwp' );

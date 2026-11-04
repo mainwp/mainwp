@@ -1908,6 +1908,101 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
 		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $failed, 'batch_individual_queue_time' ) );
 	}
 
+	/** Cache locations that can retain the run state read by the first request. */
+	public static function legacy_run_option_caches(): array {
+		return array(
+			'autoloaded'     => array( 'yes' ),
+			'not autoloaded' => array( 'no' ),
+			'missing'        => array( null ),
+		);
+	}
+
+	/**
+	 * Successful overlapping requests must keep both sites eligible for the worker.
+	 *
+	 * @dataProvider legacy_run_option_caches
+	 * @param string|null $autoload Initial run option autoload setting, or null for missing options.
+	 */
+	public function test_rest_site_update_legacy_successful_enqueue_preserves_concurrent_run( $autoload ) {
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$first       = $this->create_test_site(
+			array(
+				'plugin_upgrades' => '[]',
+				'theme_upgrades'  => '[]',
+			)
+		);
+		$other       = $this->create_test_site(
+			array(
+				'plugin_upgrades' => '[]',
+				'theme_upgrades'  => '[]',
+			)
+		);
+		$run_options = array( 'mainwp_batch_individual_updates_is_running', 'mainwp_batch_updates_individual_start_time' );
+		foreach ( $run_options as $option ) {
+			delete_option( $option );
+			if ( null !== $autoload ) {
+				add_option( $option, 0, '', $autoload );
+			}
+		}
+		$table          = $wpdb->prefix . 'mainwp_wp_options';
+		$other_response = null;
+		$other_start    = null;
+		$interleave     = null;
+		$interleave     = function ( $query ) use ( $table, $other, $run_options, &$other_response, &$other_start, &$interleave ) {
+			if ( ! preg_match( '/^\s*(INSERT|UPDATE)\b.*' . preg_quote( $table, '/' ) . '.*batch_individual_queue_time/is', $query ) ) {
+				return $query;
+			}
+			remove_filter( 'query', $interleave );
+			$cache = array();
+			foreach ( array_merge( $run_options, array( 'alloptions', 'notoptions' ) ) as $key ) {
+				$cache[ $key ] = wp_cache_get( $key, 'options' );
+			}
+			$request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates/' . $other . '/update' );
+			$request->set_param( 'id_domain', $other );
+			$other_response = ( new \MainWP_Rest_Updates_Controller() )->update_all_items_inidividual_site_start( $request );
+			$this->assertNotWPError( $other_response );
+			// Backdate the concurrent run so timestamp ordering is deterministic without sleeping.
+			$other_start = (int) get_option( 'mainwp_batch_updates_individual_start_time' ) - MINUTE_IN_SECONDS;
+			MainWP_DB::instance()->update_website_option( MainWP_DB::instance()->get_website_by_id( $other ), 'batch_individual_queue_time', $other_start );
+			\MainWP\Dashboard\MainWP_Utility::update_option( 'mainwp_batch_updates_individual_start_time', $other_start );
+			// A separate request cannot refresh the first request's local option caches.
+			foreach ( $cache as $key => $value ) {
+				if ( false === $value ) {
+					wp_cache_delete( $key, 'options' );
+				} else {
+					wp_cache_set( $key, $value, 'options' );
+				}
+			}
+			return $query;
+		};
+
+		add_filter( 'query', $interleave );
+		try {
+			$response = $this->without_ability(
+				'mainwp/run-updates-v1',
+				static function () use ( $first ) {
+					$request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates/' . $first . '/update' );
+					$request->set_param( 'id_domain', $first );
+					return ( new \MainWP_Rest_Updates_Controller() )->update_all_items_inidividual_site_start( $request );
+				}
+			);
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+		$this->assertNotWPError( $response );
+		$this->assertSame( 1, $response->get_data()['success'] );
+		$this->assertNotWPError( $other_response );
+		$this->assertSame( 1, $other_response->get_data()['success'] );
+		$this->assertSame( 1, (int) get_option( 'mainwp_batch_individual_updates_is_running' ) );
+		$this->assertSame( $other_start, (int) get_option( 'mainwp_batch_updates_individual_start_time' ) );
+		$this->assertSame( mainwp_rest_prepare_date_response( get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $other_start ) ) ), $response->get_data()['last_time_start_batch_updates'] );
+		$eligible = \MainWP\Dashboard\MainWP_Auto_Updates_DB::instance()->get_websites_to_continue_individual_updates( 4, $other_start );
+		$site_ids = array_map( 'intval', array_column( $eligible, 'id' ) );
+		$this->assertContains( $first, $site_ids );
+		$this->assertContains( $other, $site_ids );
+	}
+
     private function start_site_updates( $site ) {
         $request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates/' . $site . '/update' );
         $request->set_param( 'id_domain', $site );

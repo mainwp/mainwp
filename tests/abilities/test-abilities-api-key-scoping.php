@@ -1804,6 +1804,7 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $data = $response->get_data();
         $this->assertSame( array( 'success', 'message', 'last_time_start_batch_updates', 'failed_site_ids' ), array_keys( $data ) );
         $this->assertSame( 1, $data['success'] );
+        $this->assertSame( 'Batch updates started, but some sites could not be queued.', $data['message'] );
         $this->assertSame( array( $failed ), $data['failed_site_ids'] );
         $this->assertSame( 1, (int) get_option( 'mainwp_batch_updates_is_running' ) );
         $this->assertSame( (int) get_option( 'mainwp_batch_updates_start_time' ), (int) MainWP_DB::instance()->get_website_option( $queued, 'batch_updates_queue_time' ) );

@@ -987,6 +987,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         $resp_data['last_time_start_batch_updates'] = mainwp_rest_prepare_date_response( $datetime );
 
         if ( ! empty( $failed_site_ids ) ) {
+            $resp_data['message']         = esc_html__( 'Batch updates started, but some sites could not be queued.', 'mainwp' );
             $resp_data['failed_site_ids'] = $failed_site_ids;
         }
 

@@ -467,7 +467,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @throws MainWP_Exception On errors.
      *
-     * @return bool.
+     * @return object|false|null The saved client row, or false when the data is invalid or the write fails.
      */
     public function update_client( $data, $throw_out = false ) {
         if ( empty( $data ) || ! is_array( $data ) ) {

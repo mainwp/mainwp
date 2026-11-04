@@ -435,7 +435,7 @@ class Test_MWP_2109_Client_Suspend_Sites extends \WP_UnitTestCase {
 			remove_action( 'mainwp_client_suspend', $listener );
 		}
 
-		$this->assertNotSame( 'success', $message );
+		$this->assertSame( 'The client could not be saved. Please try again.', $message );
 		$this->assertSame( 0, $fired );
 		$this->assert_client_status( $client->client_id, 0 );
 		$this->assert_site_statuses( $site_ids, array( 0, 0 ) );

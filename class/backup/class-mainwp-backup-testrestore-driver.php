@@ -161,6 +161,8 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
                 $result['state']      = self::STATE_UNSUPPORTED;
                 $result['error_code'] = is_wp_error( $metadata ) ? $metadata->get_error_code() : MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT;
                 $result['error']      = MainWP_Backup_Error_Codes::message( $result['error_code'] );
+                // The sampler already consumed this cadence window, so the verdict must be visible.
+                $this->record( $snapshot_id, $result['state'] );
                 return $result;
             }
             $own_deadline    = microtime( true ) + (float) self::DEFAULT_STAGE_BUDGET_SECONDS;

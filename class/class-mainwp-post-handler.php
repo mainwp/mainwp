@@ -1333,9 +1333,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             'suspended' => $suspended,
         );
 
-        MainWP_DB_Client::instance()->update_client( $params );
-
-        $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $clientid );
+        // A failed write must not fire the hook or change the sites; the button keeps its state.
+        $client = MainWP_DB_Client::instance()->update_client( $params );
+        if ( ! $client ) {
+            wp_die( esc_html__( 'The client could not be saved. Please try again.', 'mainwp' ) );
+        }
 
         /**
          * Fires immediately after update client suspend/unsuspend.
@@ -1438,8 +1440,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 $sites          = MainWP_DB_Client::instance()->get_websites_by_client_ids( $current->client_id, array( 'no_perm_check' => true ) );
                 $selected_sites = MainWP_System::get_selected_sites_with_allowed_sites( $selected_sites, wp_list_pluck( (array) $sites, 'id' ) );
             }
-            // Inset client.
-            $inserted = MainWP_DB_Client::instance()->update_client( $client_to_add, true );
+            // Inset client. A failed save reports this row and lets the import go on to the next one.
+            try {
+                $inserted = MainWP_DB_Client::instance()->update_client( $client_to_add, true );
+            } catch ( MainWP_Exception $e ) {
+                return wp_send_json_error( array( 'message' => esc_html( $e->getMessage() ) ) );
+            }
 
             if ( ! empty( $inserted ) && is_object( $inserted ) ) {
                 if ( ! empty( $selected_sites ) || ( $current && 'all' !== $allowed ) ) {

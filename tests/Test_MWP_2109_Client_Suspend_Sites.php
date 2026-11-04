@@ -81,6 +81,37 @@ class Test_MWP_2109_Client_Suspend_Sites extends \WP_UnitTestCase {
 		$this->assert_site_statuses( $site_ids, array( 1, 0 ) );
 	}
 
+	/** A site added to a client that stays suspended is suspended; existing overrides stay. */
+	public function test_edit_unchanged_suspended_client_suspends_newly_added_site(): void {
+		$client     = $this->create_client( 1 );
+		$site_ids   = $this->create_client_sites( $client, 1 );
+		MainWP_DB::instance()->update_website_values( $site_ids[0], array( 'suspended' => 0 ) );
+		$site_ids[] = $this->create_test_site( array( 'suspended' => 0 ) );
+		$unrelated  = $this->create_test_site( array( 'suspended' => 0 ) );
+
+		$this->save_client( $client->client_id, $site_ids, array( 'client.suspended' => 1 ) );
+
+		$this->assert_client_status( $client->client_id, 1 );
+		$this->assert_site_statuses( $site_ids, array( 0, 1, 1 ) );
+		$this->assert_site_statuses( array( $unrelated ), array( 0 ) );
+	}
+
+	/** Every caller of the roster write gets the same rule, including the CSV import append. */
+	public function test_roster_write_suspends_only_sites_joining_a_suspended_client(): void {
+		$suspended = $this->create_client( 1 );
+		$active    = $this->create_client( 0 );
+		$existing  = $this->create_client_sites( $suspended, 0 );
+		$joining   = $this->create_test_site( array( 'suspended' => 0 ) );
+		$for_other = $this->create_test_site( array( 'suspended' => 0 ) );
+
+		MainWP_DB_Client::instance()->update_selected_sites_for_client( $suspended->client_id, array_merge( $existing, array( $joining ) ) );
+		MainWP_DB_Client::instance()->update_selected_sites_for_client( $active->client_id, array( $for_other ) );
+
+		$this->assert_site_statuses( array_merge( $existing, array( $joining ) ), array( 0, 0, 1 ) );
+		$this->assert_site_statuses( array( $for_other ), array( 0 ) );
+		$this->assertSame( (int) $suspended->client_id, (int) MainWP_DB::instance()->get_website_by_id( $joining )->client_id );
+	}
+
 	/** A save without the status field cannot change site suspensions. */
 	public function test_edit_client_without_status_leaves_sites_untouched(): void {
 		$client   = $this->create_client( 1 );
@@ -316,6 +347,184 @@ class Test_MWP_2109_Client_Suspend_Sites extends \WP_UnitTestCase {
 		$this->assertTrue( $response['success'] );
 		$this->assertSame( (int) $client->client_id, (int) $response['data']['client']['client_id'] );
 		$this->assert_site_statuses( $site_ids, array( 0, 0 ) );
+	}
+
+	/** A failed client write is reported; an unchanged row is still a success. */
+	public function test_update_client_reports_a_failed_write_and_accepts_an_unchanged_row(): void {
+		$client = $this->create_client( 0 );
+		$params = array(
+			'client_id' => $client->client_id,
+			'suspended' => 0,
+		);
+
+		$unchanged = MainWP_DB_Client::instance()->update_client( $params );
+		$this->assertIsObject( $unchanged, 'Zero changed rows is not a failure.' );
+
+		$this->with_failing_client_writes(
+			function () use ( $params ) {
+				$this->assertFalse( MainWP_DB_Client::instance()->update_client( array( 'suspended' => 1 ) + $params ) );
+				$this->expectException( \MainWP\Dashboard\MainWP_Exception::class );
+				MainWP_DB_Client::instance()->update_client( array( 'suspended' => 1 ) + $params, true );
+			}
+		);
+	}
+
+	/** REST suspend answers an error and leaves the sites active when the client write fails. */
+	public function test_rest_suspend_failed_client_write_leaves_sites_untouched(): void {
+		$client   = $this->create_client( 0 );
+		$site_ids = $this->create_client_sites( $client, 0 );
+
+		$response = $this->with_failing_client_writes(
+			function () use ( $client ) {
+				return $this->rest_status_request( $client->client_id, 1 );
+			}
+		);
+
+		$this->assertSame( 500, $response->get_status() );
+		$this->assertSame( 'mainwp_client_update_failed', $response->get_data()['code'] );
+		$this->assert_client_status( $client->client_id, 0 );
+		$this->assert_site_statuses( $site_ids, array( 0, 0 ) );
+	}
+
+	/** REST unsuspend answers an error and leaves the sites suspended when the client write fails. */
+	public function test_rest_unsuspend_failed_client_write_leaves_sites_untouched(): void {
+		$client   = $this->create_client( 1 );
+		$site_ids = $this->create_client_sites( $client, 1 );
+
+		$response = $this->with_failing_client_writes(
+			function () use ( $client ) {
+				return $this->rest_status_request( $client->client_id, 0 );
+			}
+		);
+
+		$this->assertSame( 500, $response->get_status() );
+		$this->assertSame( 'mainwp_client_update_failed', $response->get_data()['code'] );
+		$this->assert_client_status( $client->client_id, 1 );
+		$this->assert_site_statuses( $site_ids, array( 1, 1 ) );
+	}
+
+	/** The Client Info button neither fires the suspend hook nor changes sites after a failed write. */
+	public function test_client_info_suspend_failed_client_write_leaves_sites_untouched(): void {
+		$client   = $this->create_client( 0 );
+		$site_ids = $this->create_client_sites( $client, 0 );
+		$fired    = 0;
+		$listener = static function () use ( &$fired ) {
+			++$fired;
+		};
+		add_action( 'mainwp_client_suspend', $listener );
+		$nonce    = wp_create_nonce( 'mainwp_clients_suspend_client' );
+		$_POST    = array(
+			'security'       => $nonce,
+			'clientid'       => $client->client_id,
+			'suspend_status' => 1,
+		);
+		$_REQUEST = $_POST;
+
+		try {
+			$message = $this->with_failing_client_writes(
+				static function () {
+					try {
+						MainWP_Post_Handler::instance()->mainwp_clients_suspend_client();
+					} catch ( \WPDieException $exception ) {
+						return $exception->getMessage();
+					}
+					return 'no wp_die';
+				}
+			);
+		} finally {
+			remove_action( 'mainwp_client_suspend', $listener );
+		}
+
+		$this->assertNotSame( 'success', $message );
+		$this->assertSame( 0, $fired );
+		$this->assert_client_status( $client->client_id, 0 );
+		$this->assert_site_statuses( $site_ids, array( 0, 0 ) );
+	}
+
+	/** A CSV row whose client write fails is reported as a failed row, and its sites stay as they were. */
+	public function test_csv_import_failed_client_write_reports_the_row(): void {
+		$client   = $this->create_client( 0 );
+		$site_ids = $this->create_client_sites( $client, 0 );
+		$scope    = static function () use ( $site_ids ) {
+			return $site_ids;
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			$response = $this->with_failing_client_writes(
+				function () use ( $client, $site_ids ) {
+					return $this->import_client( $client->client_email, $site_ids );
+				}
+			);
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		}
+
+		$this->assertFalse( $response['success'] );
+		$this->assertNotEmpty( $response['data']['message'] );
+		$this->assert_client_status( $client->client_id, 0 );
+		$this->assert_site_statuses( $site_ids, array( 0, 0 ) );
+	}
+
+	/** Edit Client reports the failed write and does not change the site roster. */
+	public function test_edit_client_failed_client_write_keeps_the_roster(): void {
+		$client   = $this->create_client( 0 );
+		$site_ids = $this->create_client_sites( $client, 0 );
+		$added    = $this->create_test_site();
+		$_POST    = array(
+			'nonce_client_id' => wp_create_nonce( 'editing-client-' . $client->client_id ),
+			'selected_sites'  => array( $site_ids[0], $added ),
+			'client_fields'   => array(
+				'client_id'     => $client->client_id,
+				'default_field' => array(
+					'client.name'      => 'Saved client',
+					'client.suspended' => 1,
+				),
+			),
+		);
+
+		$body = $this->with_failing_client_writes(
+			static function () {
+				ob_start();
+				try {
+					MainWP_Client::add_client();
+				} finally {
+					$body = ob_get_clean();
+				}
+				return $body;
+			}
+		);
+
+		$response = json_decode( $body, true );
+		$this->assertIsArray( $response, $body );
+		$this->assertArrayHasKey( 'error', $response );
+		$this->assertSame( (int) $client->client_id, (int) MainWP_DB::instance()->get_website_by_id( $site_ids[1] )->client_id );
+		$this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $added )->client_id );
+		$this->assert_site_statuses( array( $site_ids[0], $site_ids[1], $added ), array( 0, 0, 0 ) );
+	}
+
+	/**
+	 * Run a callback while every UPDATE of the clients table fails in the database.
+	 *
+	 * @param callable $callback Code under test.
+	 * @return mixed Callback result.
+	 */
+	private function with_failing_client_writes( callable $callback ) {
+		global $wpdb;
+		$table  = MainWP_DB_Client::instance()->get_table_name( 'wp_clients' );
+		$filter = static function ( $query ) use ( $table ) {
+			if ( 0 === stripos( ltrim( $query ), 'UPDATE' ) && false !== strpos( $query, '`' . $table . '`' ) ) {
+				return 'UPDATE `mwp2170_missing_table` SET suspended = 1';
+			}
+			return $query;
+		};
+		$suppressed = $wpdb->suppress_errors( true );
+		add_filter( 'query', $filter );
+		try {
+			return $callback();
+		} finally {
+			remove_filter( 'query', $filter );
+			$wpdb->suppress_errors( $suppressed );
+		}
 	}
 
 	/**

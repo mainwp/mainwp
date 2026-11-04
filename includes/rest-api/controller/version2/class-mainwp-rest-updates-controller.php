@@ -947,21 +947,31 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         MainWP_Utility::update_option( 'mainwp_batch_updates_start_time', $start_time );
         MainWP_Utility::update_option( 'mainwp_batch_updates_is_running', 1 ); // to start perform batch update job.
 
-        $queued   = false;
-        $websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_start_updates( true, true );
+        $queued_count    = 0;
+        $failed_site_ids = array();
+        $websites        = MainWP_Auto_Updates_DB::instance()->get_websites_to_start_updates( true, true );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
             if ( empty( $this->filter_scoped_sites( array( $website ) ) ) ) {
                 continue;
             }
             MainWP_Cron_Jobs_Batch::instance()->prepare_bulk_updates( $website );
-            $queued = true;
             // Regular automatic sync owns dtsAutomaticSyncStart as its claim marker.
-            MainWP_DB::instance()->update_website_option( $website, 'batch_updates_queue_time', $start_time );
+            // The batch cron selects sites by this marker, so a site whose write failed is not queued.
+            if ( false === MainWP_DB::instance()->update_website_option( $website, 'batch_updates_queue_time', $start_time ) ) {
+                $failed_site_ids[] = (int) $website->id;
+                continue;
+            }
+            ++$queued_count;
         }
         MainWP_DB::free_result( $websites );
 
-        if ( ! $queued ) {
-            MainWP_Utility::update_option( 'mainwp_batch_updates_is_running', 0 );
+        if ( 0 === $queued_count ) {
+            // A running batch returns early above, so this request set the flag and must not leave it holding the regular sync.
+            MainWP_Utility::update_option( 'mainwp_batch_updates_is_running', $batch_updates_running );
+        }
+
+        if ( 0 === $queued_count && ! empty( $failed_site_ids ) ) {
+            return new WP_Error( 'mainwp_rest_updates_queue_error', esc_html__( 'The updates could not be queued. Please try again.', 'mainwp' ), array( 'status' => 500 ) );
         }
 
         MainWP_Logger::instance()->log_update_check( 'Batch updates started' );
@@ -975,6 +985,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
 
         $datetime                                   = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $start_time ) );
         $resp_data['last_time_start_batch_updates'] = mainwp_rest_prepare_date_response( $datetime );
+
+        if ( ! empty( $failed_site_ids ) ) {
+            $resp_data['failed_site_ids'] = $failed_site_ids;
+        }
 
         return rest_ensure_response( $resp_data );
     }
@@ -1094,7 +1108,13 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             MainWP_Logger::instance()->log_update_check( 'Batch individual updates start: [websiteid=' . $website->id . ']' );
         }
 
-        MainWP_DB::instance()->update_website_option( $website, 'batch_individual_queue_time', $local_timestamp ); // init queue time batch updates process.
+        // The batch cron selects sites by this marker, so a failed write means the site is not queued.
+        if ( false === MainWP_DB::instance()->update_website_option( $website, 'batch_individual_queue_time', $local_timestamp ) ) {
+            if ( ! $batch_individual_updates_running ) {
+                MainWP_Utility::update_option( 'mainwp_batch_individual_updates_is_running', $batch_individual_updates_running );
+            }
+            return new \WP_Error( 'mainwp_rest_updates_queue_error', esc_html__( 'The updates could not be queued. Please try again.', 'mainwp' ), array( 'status' => 500 ) );
+        }
 
         $msg = esc_html__( 'Batch updates for the site started successfully. Please wait to completed.', 'mainwp' );
 

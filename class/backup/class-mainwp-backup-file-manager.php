@@ -645,7 +645,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
-     * Sanitize each folder of a path and drop "." and ".." so it stays inside its destination root.
+     * Sanitize each folder of a path and drop empty, "." and ".." segments so the path stays relative to its destination root.
      *
      * @param string $path Folder path.
      * @return string
@@ -654,7 +654,8 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         $segments = array();
         foreach ( explode( '/', str_replace( '\\', '/', $path ) ) as $segment ) {
             $segment = self::sanitize_path_segment( $segment );
-            if ( '.' !== trim( $segment ) && '..' !== trim( $segment ) ) {
+            $trimmed = trim( $segment );
+            if ( '' !== $trimmed && '.' !== $trimmed && '..' !== $trimmed ) {
                 $segments[] = $segment;
             }
         }

@@ -5759,9 +5759,15 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
-		// Stands in for a snapshot table whose run_key column the repair has not added yet.
-		$missing = static function ( $sql ) use ( $snapshot_table ) {
-			return str_contains( $sql, '`' . $snapshot_table . '` WHERE' ) ? str_replace( 'run_key =', 'run_key_missing =', $sql ) : $sql;
+		// The guard must skip the snapshot read entirely; if it ran, the rewrite makes it fail
+		// the way a not-yet-repaired run_key column would.
+		$snapshot_reads = 0;
+		$missing        = static function ( $sql ) use ( $snapshot_table, &$snapshot_reads ) {
+			if ( ! str_contains( $sql, '`' . $snapshot_table . '` WHERE' ) ) {
+				return $sql;
+			}
+			++$snapshot_reads;
+			return str_replace( 'run_key =', 'run_key_missing =', $sql );
 		};
 		update_site_option( \MainWP\Dashboard\MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() );
 		add_filter( 'query', $missing );
@@ -5788,6 +5794,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFalse( $idle, 'A site with nothing in flight must not read as held.' );
 		$this->assertTrue( $creating, 'A mid-create site is still held.' );
 		$this->assertTrue( $state, 'A pending repair holds as a running backup, not as a failed check.' );
+		$this->assertSame( 0, $snapshot_reads, 'A pending repair must not read the snapshot table.' );
 	}
 
 	/**

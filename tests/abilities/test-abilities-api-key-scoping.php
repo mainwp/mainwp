@@ -1747,6 +1747,110 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         } );
     }
 
+    /**
+     * Runs $run while writes of the $option site marker fail, for every site or only for $site_id.
+     */
+    private function with_failed_queue_marker_writes( $option, $site_id, callable $run ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'mainwp_wp_options';
+        $fail  = static function ( $query ) use ( $table, $option, $site_id ) {
+            if ( ! preg_match( '/^\s*(INSERT|UPDATE)\b.*' . preg_quote( $table, '/' ) . '.*' . preg_quote( $option, '/' ) . '/is', $query ) ) {
+                return $query;
+            }
+            if ( null !== $site_id && ! preg_match( '/(VALUES\s*\(\s*\'?' . (int) $site_id . '\'?\s*,|`wpid`\s*=\s*\'?' . (int) $site_id . '\b)/', $query ) ) {
+                return $query;
+            }
+            return "UPDATE {$table} SET mwp2170_missing_column = 1";
+        };
+        $previous = $wpdb->suppress_errors( true );
+        add_filter( 'query', $fail );
+        try {
+            return $run();
+        } finally {
+            remove_filter( 'query', $fail );
+            $wpdb->suppress_errors( $previous );
+        }
+    }
+
+    private function start_legacy_update_all() {
+        return $this->without_ability( 'mainwp/run-updates-v1', static function () {
+            return ( new \MainWP_Rest_Updates_Controller() )->update_all_items_start( new \WP_REST_Request( 'POST', '/mainwp/v2/updates/update' ) );
+        } );
+    }
+
+    public function test_rest_update_all_legacy_fails_when_no_site_is_queued() {
+        $this->set_current_user_as_admin();
+        $site = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
+        update_option( 'mainwp_batch_updates_is_running', 0 );
+        $response = $this->with_failed_queue_marker_writes( 'batch_updates_queue_time', null, function () {
+            return $this->start_legacy_update_all();
+        } );
+        $this->assertWPError( $response );
+        $this->assertSame( 'mainwp_rest_updates_queue_error', $response->get_error_code() );
+        $this->assertSame( 500, $response->get_error_data()['status'] );
+        $this->assertSame( 0, (int) get_option( 'mainwp_batch_updates_is_running' ), 'A run that queued nothing must not hold the running flag.' );
+        $this->assertEmpty( MainWP_DB::instance()->get_website_option( $site, 'batch_updates_queue_time' ) );
+    }
+
+    public function test_rest_update_all_legacy_reports_unqueued_sites() {
+        $this->set_current_user_as_admin();
+        $queued = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
+        $failed = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
+        update_option( 'mainwp_batch_updates_is_running', 0 );
+        $response = $this->with_failed_queue_marker_writes( 'batch_updates_queue_time', $failed, function () {
+            return $this->start_legacy_update_all();
+        } );
+        $this->assertNotWPError( $response );
+        $data = $response->get_data();
+        $this->assertSame( array( 'success', 'message', 'last_time_start_batch_updates', 'failed_site_ids' ), array_keys( $data ) );
+        $this->assertSame( 1, $data['success'] );
+        $this->assertSame( array( $failed ), $data['failed_site_ids'] );
+        $this->assertSame( 1, (int) get_option( 'mainwp_batch_updates_is_running' ) );
+        $this->assertSame( (int) get_option( 'mainwp_batch_updates_start_time' ), (int) MainWP_DB::instance()->get_website_option( $queued, 'batch_updates_queue_time' ) );
+        $this->assertEmpty( MainWP_DB::instance()->get_website_option( $failed, 'batch_updates_queue_time' ) );
+    }
+
+    public function test_rest_update_all_legacy_response_unchanged_when_every_site_is_queued() {
+        $this->set_current_user_as_admin();
+        $site = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
+        update_option( 'mainwp_batch_updates_is_running', 0 );
+        $data = $this->start_legacy_update_all()->get_data();
+        $this->assertSame( array( 'success', 'message', 'last_time_start_batch_updates' ), array_keys( $data ) );
+        $this->assertSame( 1, $data['success'] );
+        $this->assertSame( 'Batch updates all started successfully.', $data['message'] );
+        $this->assertSame( 1, (int) get_option( 'mainwp_batch_updates_is_running' ) );
+        $this->assertSame( (int) get_option( 'mainwp_batch_updates_start_time' ), (int) MainWP_DB::instance()->get_website_option( $site, 'batch_updates_queue_time' ) );
+    }
+
+    public function test_rest_site_update_legacy_fails_when_site_is_not_queued() {
+        $this->set_current_user_as_admin();
+        $site  = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
+        $start = function () use ( $site ) {
+            return $this->with_failed_queue_marker_writes( 'batch_individual_queue_time', null, function () use ( $site ) {
+                return $this->without_ability( 'mainwp/run-updates-v1', static function () use ( $site ) {
+                    $request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates/' . $site . '/update' );
+                    $request->set_param( 'id_domain', $site );
+                    return ( new \MainWP_Rest_Updates_Controller() )->update_all_items_inidividual_site_start( $request );
+                } );
+            } );
+        };
+
+        update_option( 'mainwp_batch_individual_updates_is_running', 0 );
+        $response = $start();
+        $this->assertWPError( $response );
+        $this->assertSame( 'mainwp_rest_updates_queue_error', $response->get_error_code() );
+        $this->assertSame( 500, $response->get_error_data()['status'] );
+        $this->assertSame( 0, (int) get_option( 'mainwp_batch_individual_updates_is_running' ), 'The flag this request set must be restored.' );
+        $this->assertEmpty( MainWP_DB::instance()->get_website_option( $site, 'batch_individual_queue_time' ) );
+
+        // A run another request started keeps its flag.
+        update_option( 'mainwp_batch_individual_updates_is_running', 1 );
+        $response = $start();
+        $this->assertWPError( $response );
+        $this->assertSame( 500, $response->get_error_data()['status'] );
+        $this->assertSame( 1, (int) get_option( 'mainwp_batch_individual_updates_is_running' ) );
+    }
+
     private function start_site_updates( $site ) {
         $request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates/' . $site . '/update' );
         $request->set_param( 'id_domain', $site );

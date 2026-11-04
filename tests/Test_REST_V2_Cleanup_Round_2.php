@@ -250,6 +250,128 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Run one renew or disconnect batch for the fixture site while the Child call for $what is answered by $answer.
+	 *
+	 * @param string   $kind   'renew' or 'disconnect'.
+	 * @param callable $answer Child response or thrower for the 'renew'/'disconnect' call.
+	 * @return array Stored job.
+	 */
+	private function run_site_tool_batch( string $kind, callable $answer ): array {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( $kind . '_', true );
+		set_transient(
+			"mainwp_tool_{$kind}_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 1,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id ),
+			),
+			DAY_IN_SECONDS
+		);
+
+		// Renew may sync a site with sync errors first; only the tool call itself is answered.
+		$this->destroy_session_filter = static function ( $pre, $website, $what ) use ( $kind, $answer ) {
+			return $kind === $what ? $answer() : array();
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10, 4 );
+
+		$controller = \MainWP_Rest_Settings_Controller::instance();
+		if ( 'renew' === $kind ) {
+			$controller->process_renew_connection_batch( $id );
+		} else {
+			$controller->process_disconnect_batch( $id );
+		}
+		return get_transient( "mainwp_tool_{$kind}_job_{$id}" );
+	}
+
+	/**
+	 * Renew and disconnect batches.
+	 *
+	 * @return array
+	 */
+	public function site_tool_batches(): array {
+		return array(
+			'renew'      => array( 'renew' ),
+			'disconnect' => array( 'disconnect' ),
+		);
+	}
+
+	/**
+	 * Cap and clean an error returned by the Child, as the destroy-sessions batch does.
+	 *
+	 * @dataProvider site_tool_batches
+	 *
+	 * @param string $kind Batch kind.
+	 * @return void
+	 */
+	public function test_site_tool_batch_records_child_error( string $kind ): void {
+		$raw = '<b>Child refused</b>' . str_repeat( 'x', 600 );
+		$job = $this->run_site_tool_batch(
+			$kind,
+			static function () use ( $raw ) {
+				return array(
+					'result' => 'fail',
+					'error'  => $raw,
+				);
+			}
+		);
+
+		$this->assertSame( 1, $job['failed'] );
+		$this->assertSame( 1, $job['processed'] );
+		$this->assertSame( $this->monitor_site_id, $job['errors'][0]['site_id'] );
+		$this->assertSame( sanitize_text_field( mb_substr( $raw, 0, 500 ) ), $job['errors'][0]['error'] );
+		$this->assertStringNotContainsString( '<', $job['errors'][0]['error'] );
+		$this->assertSame( 'completed', $job['status'] );
+	}
+
+	/**
+	 * Cap and clean an exception from the Child request; the NOMAINWP text carries an anchor.
+	 *
+	 * @dataProvider site_tool_batches
+	 *
+	 * @param string $kind Batch kind.
+	 * @return void
+	 */
+	public function test_site_tool_batch_records_child_exception( string $kind ): void {
+		$job = $this->run_site_tool_batch(
+			$kind,
+			static function () {
+				throw new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP' );
+			}
+		);
+
+		$this->assertSame( 1, $job['failed'] );
+		$raw = \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP' ) );
+		$this->assertStringContainsString( '<a ', $raw, 'The NOMAINWP text must carry the anchor this test strips.' );
+		$this->assertSame( sanitize_text_field( mb_substr( $raw, 0, 500 ) ), $job['errors'][0]['error'] );
+		$this->assertStringNotContainsString( '<', $job['errors'][0]['error'] );
+	}
+
+	/**
+	 * A plain exception longer than the cap is cut to 500 characters.
+	 *
+	 * @dataProvider site_tool_batches
+	 *
+	 * @param string $kind Batch kind.
+	 * @return void
+	 */
+	public function test_site_tool_batch_caps_long_exception( string $kind ): void {
+		$raw = str_repeat( 'y', 700 );
+		$job = $this->run_site_tool_batch(
+			$kind,
+			static function () use ( $raw ) {
+				throw new \Exception( $raw ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- test fixture.
+			}
+		);
+
+		$this->assertSame( str_repeat( 'y', 500 ), $job['errors'][0]['error'] );
+	}
+
+	/**
 	 * Schedule the remaining destroy sites after one batch.
 	 *
 	 * @return void

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.4
 Requires PHP: 8.3
-Stable tag: 6.4.1
+Stable tag: 6.4.2-rc.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -153,6 +153,28 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.4.2-rc.1 - 11-4-2026 =
+
+* Fixed: Corrected premium plugin and theme update counts in Manage Sites and the Client Overview Sites widget, including sorting by available updates.
+* Fixed: Sites with only premium updates are now included in REST API available-update filters, with accurate totals and pagination.
+* Fixed: REST API site requests now return custom field values when including or excluding specific sites.
+* Fixed: Custom field requests no longer overwrite site IDs, URLs, or other built-in site details.
+* Fixed: Non-MainWP Changes now sync during scheduled, REST API, and WP-CLI syncs.
+* Fixed: Prevented widgets from briefly overlapping while Overview pages load.
+* Fixed: Uptime Monitoring Check Now now matches keywords against page content only, preventing response headers from incorrectly marking a site as Up.
+* Fixed: Newly selected sites now inherit suspension when saving a suspended client, while existing individual site settings are preserved.
+* Fixed: Failed client saves now report an error without changing associated site statuses.
+* Fixed: Resolved WP-CLI errors when unignoring plugin and theme updates, with support for selecting a specific version.
+* Fixed: Bulk disconnection through WP-CLI now continues after individual site failures and reports the overall result.
+* Fixed: Improved REST API update queue failure handling and reporting of sites that could not be queued.
+* Fixed: Test Restore now correctly records unsupported backup formats.
+* Fixed: Corrected backup subfolder paths containing leading or repeated separators.
+* Fixed: Prevented PHP deprecation warnings when changing user passwords on servers without the mbstring extension.
+* Updated: Corrected WP-CLI help, available options, and command examples.
+* Updated: Improved privacy checks when renaming tags through restricted API access.
+* Updated: Improved handling of connection renewal and disconnection error messages.
+* Updated: Clarified the database permissions required for Test Restore.
 
 = 6.4.1 - 11-3-2026 =
 

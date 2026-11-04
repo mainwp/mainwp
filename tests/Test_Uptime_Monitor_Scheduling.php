@@ -895,12 +895,13 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_check_now_ignores_keyword_in_response_headers() {
-		// A local file response carries an "Accept-ranges: bytes" header that the body lacks.
+		// The HTTP fixture carries an "Accept-ranges: bytes" header that the body lacks.
 		$result = $this->check_now_with_body( 'Accept-ranges', 'Welcome' );
 
 		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $this->get_monitor()->last_status, 'A keyword only in the headers should leave the monitor down.' );
 		$this->assertStringContainsString( 'Keyword not found.', (string) $this->get_latest_heartbeat()->msg );
-		$this->assertSame( 'Welcome', $result['data'], 'The keyword check should get the body only.' );
+		$this->assertStringContainsString( 'Accept-ranges: bytes', $result['data'], 'The public result filter must still receive headers.' );
+		$this->assertStringEndsWith( "\r\n\r\nWelcome", $result['data'] );
 	}
 
 	/**
@@ -924,7 +925,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$result = $this->check_now_with_body( 'Checkout', '' );
 
 		$this->assertSame( 1, $result['requests'], 'An empty body is still a response, so check now should not retry it.' );
-		$this->assertSame( '', $result['data'] );
+		$this->assertStringEndsWith( "\r\n\r\n", $result['data'], 'The raw response has headers and an empty body.' );
 		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $this->get_monitor()->last_status );
 		$this->assertStringContainsString( 'Keyword not found.', (string) $this->get_latest_heartbeat()->msg );
 	}
@@ -996,9 +997,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Run a real check now for a keyword monitor against a local file holding the body.
-	 *
-	 * A file URL has no HTTP status, so the result filter reports 200 and the keyword decides the status.
+	 * Run a real check now against a loopback HTTP response with known headers and body.
 	 *
 	 * @param string $keyword Configured keyword.
 	 * @param string $body    Response body.
@@ -1011,30 +1010,53 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$global_settings['keyword']    = $keyword;
 		$global_settings['maxretries'] = 0;
 
-		$file = tempnam( sys_get_temp_dir(), 'mainwp-uptime-body-' );
-		file_put_contents( $file, $body );
+		$script = <<<'FIXTURE'
+$body = base64_decode(trim(fgets(STDIN)));
+$server = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
+if (!$server) { fwrite(STDERR, 'Cannot open loopback fixture'); exit(1); }
+fwrite(STDOUT, stream_socket_get_name($server, false) . "\n");
+fflush(STDOUT);
+$client = stream_socket_accept($server, 10);
+if (!$client) { fclose($server); exit(2); }
+stream_set_timeout($client, 5);
+while (false !== ($line = fgets($client)) && "\r\n" !== $line) {}
+fwrite($client, "HTTP/1.1 200 OK\r\nAccept-ranges: bytes\r\nContent-Type: text/plain\r\nContent-Length: " . strlen($body) . "\r\nConnection: close\r\n\r\n" . $body);
+fclose($client);
+fclose($server);
+FIXTURE;
+		$server = proc_open( array( PHP_BINARY, '-r', $script ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );
+		$this->assertIsResource( $server, 'Loopback HTTP fixture must start.' );
+		fwrite( $pipes[0], base64_encode( $body ) . "\n" );
+		fclose( $pipes[0] );
+		stream_set_timeout( $pipes[1], 5 );
+		$address = trim( (string) fgets( $pipes[1] ) );
 
 		$requests      = 0;
 		$checked_data  = null;
-		$url_filter    = function () use ( &$requests, $file ) {
+		$url_filter    = function () use ( &$requests, $address ) {
 			++$requests;
-			return 'file://localhost' . $file;
+			return 'http://' . $address . '/';
 		};
 		$result_filter = function ( $resp_info, $data ) use ( &$checked_data ) {
-			$checked_data           = $data;
-			$resp_info['http_code'] = 200;
+			$checked_data = $data;
 			return $resp_info;
 		};
 
 		add_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
 		add_filter( 'mainwp_uptime_monitor_check_result', $result_filter, 10, 2 );
 
-		$monitor = $this->get_monitor();
-		MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor( $monitor, $global_settings, false, array( 'ignore_compatible_save' => 1 ) );
-
-		remove_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
-		remove_filter( 'mainwp_uptime_monitor_check_result', $result_filter, 10 );
-		unlink( $file );
+		try {
+			$this->assertNotSame( '', $address, 'Loopback fixture must publish its address.' );
+			$monitor = $this->get_monitor();
+			MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor( $monitor, $global_settings, false, array( 'ignore_compatible_save' => 1 ) );
+		} finally {
+			remove_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+			remove_filter( 'mainwp_uptime_monitor_check_result', $result_filter, 10 );
+			proc_terminate( $server );
+			fclose( $pipes[1] );
+			fclose( $pipes[2] );
+			proc_close( $server );
+		}
 
 		return array(
 			'data'     => $checked_data,

@@ -40,6 +40,34 @@ class Password_Value_CLI_Output_Double {
 		self::$messages[] = array( 'error', $message );
 		throw new Password_Value_CLI_Error();
 	}
+
+	/**
+	 * Capture a warning. The first CLI test to load owns the WP_CLI alias, so each double needs every method the handler calls.
+	 *
+	 * @param string $message Command output.
+	 */
+	public static function warning( $message ) {
+		self::$messages[] = array( 'warning', $message );
+	}
+
+	/**
+	 * Capture a plain output line.
+	 *
+	 * @param string $message Command output.
+	 */
+	public static function line( $message = '' ) {
+		self::$messages[] = array( 'line', $message );
+	}
+
+	/**
+	 * Return text unchanged; colour tokens do not matter to the assertions.
+	 *
+	 * @param string $text Text with colour tokens.
+	 * @return string
+	 */
+	public static function colorize( $text ) {
+		return $text;
+	}
 }
 
 /** Expected command error exit. */

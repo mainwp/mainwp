@@ -774,8 +774,12 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         );
 
         $updated = MainWP_DB_Client::instance()->update_client( $params );
+        if ( ! $updated ) {
+            // Same error the suspend-client ability returns; the sites keep their status.
+            return new WP_Error( 'mainwp_client_update_failed', __( 'Failed to suspend client.', 'mainwp' ), array( 'status' => 500 ) );
+        }
 
-        if ( $updated && 1 !== (int) $item->suspended ) {
+        if ( 1 !== (int) $item->suspended ) {
             MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $item->client_id, 1 );
         }
 
@@ -813,8 +817,12 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         );
 
         $updated = MainWP_DB_Client::instance()->update_client( $params );
+        if ( ! $updated ) {
+            // Same error the unsuspend-client ability returns; the sites keep their status.
+            return new WP_Error( 'mainwp_client_update_failed', __( 'Failed to unsuspend client.', 'mainwp' ), array( 'status' => 500 ) );
+        }
 
-        if ( $updated && 1 === (int) $item->suspended ) {
+        if ( 1 === (int) $item->suspended ) {
             MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $item->client_id, 0 );
         }
 

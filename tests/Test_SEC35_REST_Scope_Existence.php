@@ -385,6 +385,60 @@ class Test_SEC35_REST_Scope_Existence extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Renaming through the update-tag ability applies the same rule, so the
+	 * duplicate-name error cannot confirm that a hidden tag name exists.
+	 */
+	public function test_update_tag_ability_refuses_only_a_visible_existing_name(): void {
+		// The ability runs inside REST API key requests, which define this for the rest of the process.
+		if ( ! defined( 'MAINWP_REST_API_DOING' ) ) {
+			define( 'MAINWP_REST_API_DOING', true );
+		}
+		$hidden_name = self::PREFIX . 'rename hidden';
+		$shown_name  = self::PREFIX . 'rename shown';
+		$this->create_tag( $hidden_name );
+		$shown  = $this->create_tag( $shown_name );
+		$target = $this->create_tag( self::PREFIX . 'rename target' );
+		$this->scope( array(), array( $shown, $target ) );
+
+		$renamed = \MainWP\Dashboard\MainWP_Abilities_Tags::execute_update_tag(
+			array(
+				'tag_id' => $target,
+				'name'   => $hidden_name,
+			)
+		);
+		$this->assertNotWPError( $renamed );
+		$this->assertSame( array( $hidden_name, $hidden_name, $shown_name ), $this->tag_names() );
+
+		$refused = \MainWP\Dashboard\MainWP_Abilities_Tags::execute_update_tag(
+			array(
+				'tag_id' => $target,
+				'name'   => $shown_name,
+			)
+		);
+		$this->assertWPError( $refused );
+		$this->assertSame( 'mainwp_already_exists', $refused->get_error_code() );
+		$this->assertSame( array( $hidden_name, $hidden_name, $shown_name ), $this->tag_names() );
+	}
+
+	/**
+	 * A full-access caller sees every tag, so any existing name still refuses the rename.
+	 */
+	public function test_update_tag_ability_refuses_any_existing_name_for_full_access(): void {
+		$existing = self::PREFIX . 'rename full existing';
+		$this->create_tag( $existing );
+		$target = $this->create_tag( self::PREFIX . 'rename full target' );
+
+		$refused = \MainWP\Dashboard\MainWP_Abilities_Tags::execute_update_tag(
+			array(
+				'tag_id' => $target,
+				'name'   => $existing,
+			)
+		);
+		$this->assertWPError( $refused );
+		$this->assertSame( 'mainwp_already_exists', $refused->get_error_code() );
+	}
+
+	/**
 	 * A full-access key still numbers every duplicate, hidden from no one.
 	 */
 	public function test_tags_add_numbers_duplicates_for_a_full_access_key(): void {

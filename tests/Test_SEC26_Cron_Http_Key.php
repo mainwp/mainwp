@@ -569,6 +569,13 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
             remove_filter( 'mainwp_currentusercan', '__return_true', 999 );
             remove_role( 'mainwp_sec26_staff' );
         }
+        // A WordPress editor holding a valid nonce is refused too. Without Team Control the
+        // Dashboard right is granted, so secure_request()'s admin check is what answers 0.
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+        $body = $this->rotate();
+        $this->assertSame( '0', $body );
+        $this->assertStringNotContainsString( $new, $body );
+        $this->assertSame( $new, get_option( 'mainwp_cron_secret' ) );
     }
 
     /**

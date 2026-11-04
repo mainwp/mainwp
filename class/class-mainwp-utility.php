@@ -364,6 +364,94 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Convert UTF-8 text to ISO-8859-1, the encoding the Child expects for a new user password.
+     *
+     * @param string $text UTF-8 text.
+     *
+     * @return string ISO-8859-1 bytes.
+     */
+    public static function utf8_to_latin1( $text ) {
+        if ( function_exists( '\mb_convert_encoding' ) ) {
+            return \mb_convert_encoding( (string) $text, 'ISO-8859-1', 'UTF-8' );
+        }
+        return static::utf8_to_latin1_fallback( $text );
+    }
+
+    /**
+     * Byte-for-byte port of PHP's deprecated utf8_decode(), used when mbstring is missing.
+     *
+     * Keeps the password bytes sent to the Child identical to what utf8_decode() produced:
+     * a code point above U+00FF and each invalid sequence become '?', with the same
+     * sequence lengths PHP's php_next_utf8_char() skips. Public so tests can reach it
+     * on hosts that have mbstring.
+     *
+     * @param string $text UTF-8 text.
+     *
+     * @return string ISO-8859-1 bytes.
+     */
+    public static function utf8_to_latin1_fallback( $text ) {
+        $text  = (string) $text;
+        $len   = strlen( $text );
+        $out   = '';
+        $pos   = 0;
+        $lead  = static function ( $c ) {
+            return $c < 0x80 || ( $c >= 0xC2 && $c <= 0xF4 );
+        };
+        $trail = static function ( $c ) {
+            return $c >= 0x80 && $c <= 0xBF;
+        };
+        while ( $pos < $len ) {
+            $c     = ord( $text[ $pos ] );
+            $avail = $len - $pos;
+            $b1    = $avail > 1 ? ord( $text[ $pos + 1 ] ) : -1;
+            $b2    = $avail > 2 ? ord( $text[ $pos + 2 ] ) : -1;
+            $b3    = $avail > 3 ? ord( $text[ $pos + 3 ] ) : -1;
+            $cp    = -1;
+            $step  = 1;
+            if ( $c < 0x80 ) {
+                $cp = $c;
+            } elseif ( $c >= 0xC2 && $c < 0xE0 ) {
+                if ( $avail >= 2 && $trail( $b1 ) ) {
+                    $cp   = ( ( $c & 0x1F ) << 6 ) | ( $b1 & 0x3F );
+                    $step = 2;
+                } elseif ( $avail >= 2 && ! $lead( $b1 ) ) {
+                    $step = 2;
+                }
+            } elseif ( $c >= 0xE0 && $c < 0xF0 ) {
+                if ( $avail >= 3 && $trail( $b1 ) && $trail( $b2 ) ) {
+                    $step = 3;
+                    $v    = ( ( $c & 0x0F ) << 12 ) | ( ( $b1 & 0x3F ) << 6 ) | ( $b2 & 0x3F );
+                    if ( $v >= 0x800 && ( $v < 0xD800 || $v > 0xDFFF ) ) {
+                        $cp = $v;
+                    }
+                } elseif ( $avail < 2 || $lead( $b1 ) ) {
+                    $step = 1;
+                } elseif ( $avail < 3 || $lead( $b2 ) ) {
+                    $step = 2;
+                } else {
+                    $step = 3;
+                }
+            } elseif ( $c >= 0xF0 && $c < 0xF5 ) {
+                // A valid 4-byte sequence is always above U+00FF, so only the length matters.
+                if ( $avail >= 4 && $trail( $b1 ) && $trail( $b2 ) && $trail( $b3 ) ) {
+                    $step = 4;
+                } elseif ( $avail < 2 || $lead( $b1 ) ) {
+                    $step = 1;
+                } elseif ( $avail < 3 || $lead( $b2 ) ) {
+                    $step = 2;
+                } elseif ( $avail < 4 || $lead( $b3 ) ) {
+                    $step = 3;
+                } else {
+                    $step = 4;
+                }
+            }
+            $out .= ( $cp >= 0 && $cp <= 0xFF ) ? chr( $cp ) : '?';
+            $pos += $step;
+        }
+        return $out;
+    }
+
+    /**
      * Method sanitize()
      *
      * Sanitize given string.

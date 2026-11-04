@@ -1467,11 +1467,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $websiteId = isset( $_POST['websiteId'] ) ? sanitize_text_field( wp_unslash( $_POST['websiteId'] ) ) : false;
         $pass      = isset( $_POST['update_password'] ) ? rawurldecode( wp_unslash( $_POST['update_password'] ) ) : '';
 
-        if ( function_exists( '\mb_convert_encoding' ) ) {
-            $pass = \mb_convert_encoding( $pass, 'ISO-8859-1', 'UTF-8' );
-        } else {
-            $pass = utf8_decode( $pass ); // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- PHP 7.4 fallback when mbstring is unavailable.
-        }
+        $pass = MainWP_Utility::utf8_to_latin1( $pass );
 
         if ( empty( $userId ) || empty( $websiteId ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Site ID or user ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );

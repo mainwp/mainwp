@@ -147,7 +147,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $caught->get_message_error_code() );
 			$this->assertStringContainsString( 'create database:', $caught->get_message_extra( false ) );
 			$this->assertStringContainsString( DB_USER, $caught->getMessage(), 'The message must identify the configured Dashboard database user.' );
-			$this->assertStringContainsString( 'GRANT SELECT, INSERT, CREATE, DROP, REFERENCES ON `mainwp\\_tr\\_%`.*', $caught->getMessage() );
+			$this->assertStringContainsString( 'GRANT SELECT, INSERT, DELETE, CREATE, DROP, ALTER, REFERENCES, LOCK TABLES, CREATE TEMPORARY TABLES ON `mainwp\\_tr\\_%`.*', $caught->getMessage() );
 			foreach ( array( 'DB_USER', 'mainwp_tr_', 'create and drop', 'Dashboard database', 'hosting provider', 'stays off' ) as $text ) {
 				$this->assertStringContainsString( $text, $caught->getMessage() );
 			}

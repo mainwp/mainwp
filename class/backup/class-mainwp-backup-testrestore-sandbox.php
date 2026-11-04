@@ -109,7 +109,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             __( 'The DB_USER account "%s" in the Dashboard wp-config.php needs permission to create and drop its own mainwp_tr_ temporary databases, import backup tables, and read them. Access to the Dashboard database alone is not enough. Ask your hosting provider to grant these permissions. Test Restore stays off until they are available.', 'mainwp' ),
             $user
         ) . "\n\n" . __( 'For built-in backups, your hosting provider can adapt this example to the Dashboard database account and its MySQL account host:', 'mainwp' )
-            . "\nGRANT SELECT, INSERT, CREATE, DROP, REFERENCES ON `mainwp\\_tr\\_%`.* TO '" . $sql_user . "'@'account_host';";
+            . "\nGRANT SELECT, INSERT, DELETE, CREATE, DROP, ALTER, REFERENCES, LOCK TABLES, CREATE TEMPORARY TABLES ON `mainwp\\_tr\\_%`.* TO '" . $sql_user . "'@'account_host';";
     }
 
     /**

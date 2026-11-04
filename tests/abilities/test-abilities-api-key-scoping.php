@@ -1852,6 +1852,62 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertSame( 1, (int) get_option( 'mainwp_batch_individual_updates_is_running' ) );
     }
 
+	/** A failed starter cannot stop a different site queued by an overlapping request. */
+	public function test_rest_site_update_legacy_failed_enqueue_keeps_other_site_running() {
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$failed = $this->create_test_site(
+			array(
+				'plugin_upgrades' => '[]',
+				'theme_upgrades'  => '[]',
+			)
+		);
+		$queued = $this->create_test_site(
+			array(
+				'plugin_upgrades' => '[]',
+				'theme_upgrades'  => '[]',
+			)
+		);
+		update_option( 'mainwp_batch_individual_updates_is_running', 0 );
+		$table          = $wpdb->prefix . 'mainwp_wp_options';
+		$other_response = null;
+		$interleave     = null;
+		$interleave     = function ( $query ) use ( $table, $queued, &$other_response, &$interleave ) {
+			if ( ! preg_match( '/^\s*(INSERT|UPDATE)\b.*' . preg_quote( $table, '/' ) . '.*batch_individual_queue_time/is', $query ) ) {
+				return $query;
+			}
+			// Run a second authorized legacy request while the first marker write is pending.
+			remove_filter( 'query', $interleave );
+			$request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates/' . $queued . '/update' );
+			$request->set_param( 'id_domain', $queued );
+			$other_response = ( new \MainWP_Rest_Updates_Controller() )->update_all_items_inidividual_site_start( $request );
+			return "UPDATE {$table} SET mwp2170_missing_column = 1";
+		};
+
+		$previous = $wpdb->suppress_errors( true );
+		add_filter( 'query', $interleave );
+		try {
+			$response = $this->without_ability(
+				'mainwp/run-updates-v1',
+				static function () use ( $failed ) {
+					$request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates/' . $failed . '/update' );
+					$request->set_param( 'id_domain', $failed );
+					return ( new \MainWP_Rest_Updates_Controller() )->update_all_items_inidividual_site_start( $request );
+				}
+			);
+		} finally {
+			remove_filter( 'query', $interleave );
+			$wpdb->suppress_errors( $previous );
+		}
+		$this->assertWPError( $response );
+		$this->assertSame( 'mainwp_rest_updates_queue_error', $response->get_error_code() );
+		$this->assertNotWPError( $other_response );
+		$this->assertSame( 1, $other_response->get_data()['success'] );
+		$this->assertSame( 1, (int) get_option( 'mainwp_batch_individual_updates_is_running' ) );
+		$this->assertNotEmpty( MainWP_DB::instance()->get_website_option( $queued, 'batch_individual_queue_time' ) );
+		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $failed, 'batch_individual_queue_time' ) );
+	}
+
     private function start_site_updates( $site ) {
         $request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates/' . $site . '/update' );
         $request->set_param( 'id_domain', $site );

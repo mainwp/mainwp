@@ -1056,12 +1056,13 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * Update client.
      *
-     * @param int   $client_id client id.
-     * @param array $site_ids site ids.
+     * @param int   $client_id          Client id.
+     * @param array $site_ids           Site ids.
+     * @param bool  $inherit_suspension Whether new assignments inherit suspension now. Client status transitions apply it after their hooks.
      *
      * @return bool true|false.
      */
-    public function update_selected_sites_for_client( $client_id, $site_ids ) {
+    public function update_selected_sites_for_client( $client_id, $site_ids, $inherit_suspension = true ) {
         if ( empty( $client_id ) ) {
             return false;
         }
@@ -1080,7 +1081,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             // A site joining a client that is already suspended must not stay active, but sites
             // the client already had keep any status set on them individually.
             $client_status = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT suspended FROM %i WHERE client_id=%d', $this->table_name( 'wp_clients' ), $client_id ) );
-            if ( 1 === (int) $client_status ) {
+            if ( $inherit_suspension && 1 === (int) $client_status ) {
                 $this->wpdb->query( $this->wpdb->prepare( 'UPDATE %i SET suspended=1 WHERE client_id<>%d AND id IN (' . $safe_site_ids . ')', $this->table_name( 'wp' ), $client_id ) );
             }
             $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $table_wp . ' SET client_id=0 WHERE client_id=%d AND id NOT IN (' . $safe_site_ids . ')', $client_id ) );

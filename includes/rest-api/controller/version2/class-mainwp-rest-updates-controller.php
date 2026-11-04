@@ -944,8 +944,6 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         // Fallback: Legacy logic when Abilities API is not available.
         $local_timestamp = MainWP_Utility::get_timestamp();
         $start_time      = $local_timestamp;
-        MainWP_Utility::update_option( 'mainwp_batch_updates_start_time', $start_time );
-        MainWP_Utility::update_option( 'mainwp_batch_updates_is_running', 1 ); // to start perform batch update job.
 
         $queued_count    = 0;
         $failed_site_ids = array();
@@ -965,13 +963,15 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         }
         MainWP_DB::free_result( $websites );
 
-        if ( 0 === $queued_count ) {
-            // A running batch returns early above, so this request set the flag and must not leave it holding the regular sync.
-            MainWP_Utility::update_option( 'mainwp_batch_updates_is_running', $batch_updates_running );
-        }
-
         if ( 0 === $queued_count && ! empty( $failed_site_ids ) ) {
             return new WP_Error( 'mainwp_rest_updates_queue_error', esc_html__( 'The updates could not be queued. Please try again.', 'mainwp' ), array( 'status' => 500 ) );
+        }
+
+        // Publish a run only after its queue exists. A failed starter must not clear
+        // a running flag another request set while this request was enqueueing.
+        if ( $queued_count > 0 ) {
+            MainWP_Utility::update_option( 'mainwp_batch_updates_start_time', $start_time );
+            MainWP_Utility::update_option( 'mainwp_batch_updates_is_running', 1 );
         }
 
         MainWP_Logger::instance()->log_update_check( 'Batch updates started' );
@@ -1102,19 +1102,17 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
 
         $local_timestamp = MainWP_Utility::get_timestamp();
 
+        // Do not claim or roll back shared run state until the queue write succeeds.
+        // Another site's request can start a valid run while this write is pending.
+        if ( false === MainWP_DB::instance()->update_website_option( $website, 'batch_individual_queue_time', $local_timestamp ) ) {
+            return new \WP_Error( 'mainwp_rest_updates_queue_error', esc_html__( 'The updates could not be queued. Please try again.', 'mainwp' ), array( 'status' => 500 ) );
+        }
+
         if ( ! $batch_individual_updates_running ) {
             $start_individual_time = $local_timestamp;
             MainWP_Utility::update_option( 'mainwp_batch_updates_individual_start_time', $start_individual_time ); // individual site batch start time.
             MainWP_Utility::update_option( 'mainwp_batch_individual_updates_is_running', 1 ); // individual site batch start time.
             MainWP_Logger::instance()->log_update_check( 'Batch individual updates start: [websiteid=' . $website->id . ']' );
-        }
-
-        // The batch cron selects sites by this marker, so a failed write means the site is not queued.
-        if ( false === MainWP_DB::instance()->update_website_option( $website, 'batch_individual_queue_time', $local_timestamp ) ) {
-            if ( ! $batch_individual_updates_running ) {
-                MainWP_Utility::update_option( 'mainwp_batch_individual_updates_is_running', $batch_individual_updates_running );
-            }
-            return new \WP_Error( 'mainwp_rest_updates_queue_error', esc_html__( 'The updates could not be queued. Please try again.', 'mainwp' ), array( 'status' => 500 ) );
         }
 
         $msg = esc_html__( 'Batch updates for the site started successfully. Please wait to completed.', 'mainwp' );

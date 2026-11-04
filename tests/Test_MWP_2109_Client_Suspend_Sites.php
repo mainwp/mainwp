@@ -260,11 +260,14 @@ class Test_MWP_2109_Client_Suspend_Sites extends \WP_UnitTestCase {
 
 	/** The Edit Client site update runs after mainwp_client_suspend, like the Client Info button. */
 	public function test_edit_client_suspend_hook_fires_before_sites_change(): void {
-		$client   = $this->create_client( 0 );
-		$site_ids = $this->create_client_sites( $client, 0 );
-		$seen     = array();
-		$listener = static function () use ( $site_ids, &$seen ) {
-			$seen[] = (int) MainWP_DB::instance()->get_website_by_id( $site_ids[0] )->suspended;
+		$client     = $this->create_client( 0 );
+		$site_ids   = $this->create_client_sites( $client, 0 );
+		$site_ids[] = $this->create_test_site( array( 'suspended' => 0 ) );
+		$seen       = array();
+		$listener   = static function () use ( $site_ids, &$seen ) {
+			foreach ( $site_ids as $site_id ) {
+				$seen[] = (int) MainWP_DB::instance()->get_website_by_id( $site_id )->suspended;
+			}
 		};
 		add_action( 'mainwp_client_suspend', $listener );
 		try {
@@ -273,8 +276,8 @@ class Test_MWP_2109_Client_Suspend_Sites extends \WP_UnitTestCase {
 			remove_action( 'mainwp_client_suspend', $listener );
 		}
 
-		$this->assertSame( array( 0 ), $seen );
-		$this->assert_site_statuses( $site_ids, array( 1, 1 ) );
+		$this->assertSame( array( 0, 0, 0 ), $seen, 'New assignments and existing sites must change after the hook.' );
+		$this->assert_site_statuses( $site_ids, array( 1, 1, 1 ) );
 	}
 
 	/** Edit Client keeps a suspended client's sites selectable, so saving it as Active keeps and reactivates them. */

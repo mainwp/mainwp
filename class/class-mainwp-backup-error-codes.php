@@ -31,6 +31,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_SSL_FAILED        = 'mainwp_backup_ssl_failed';
     const ERR_CONNECT_FAILED    = 'mainwp_backup_connect_failed';
     const ERR_CHILD_UNREACHABLE = 'mainwp_backup_child_unreachable';
+    // Users only see the registry text for a code, so a download 413 needs its own.
+    const ERR_DOWNLOAD_TOO_LARGE = 'mainwp_backup_download_too_large';
 
     // Child environment.
     const ERR_DISK_FULL                 = 'mainwp_backup_disk_full';
@@ -349,6 +351,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
         return array(
             self::ERR_TIMEOUT                       => esc_html__( 'The connection to the child site timed out during the backup. The child site may be overloaded or behind a server that limits long requests. Try again during low-traffic hours.', 'mainwp' ),
             self::ERR_HTTP_ERROR                    => esc_html__( 'The child site returned an unexpected response during the backup transfer. Check that the child site is reachable and the MainWP Child plugin is active, then try again.', 'mainwp' ),
+            self::ERR_DOWNLOAD_TOO_LARGE            => esc_html__( 'The child site\'s server refused the backup download because the response was too large (HTTP 413). MainWP downloads large backups in parts when the child site runs a current MainWP Child, so update MainWP Child if it is out of date and try again. If the error continues, ask the host whether a limit on response size applies to the site.', 'mainwp' ),
             self::ERR_SSL_FAILED                    => esc_html__( 'The secure connection to the child site could not be established. The SSL certificate may be invalid or expired. Check the child site SSL configuration.', 'mainwp' ),
             self::ERR_CONNECT_FAILED                => esc_html__( 'Could not connect to the child site. The site may be down or a firewall may be blocking the dashboard. Check the child site status and try again.', 'mainwp' ),
             self::ERR_CHILD_UNREACHABLE             => esc_html__( 'The child site did not respond. The site may be down, suspended by the host, or blocking dashboard requests. Verify the site loads in a browser and try again.', 'mainwp' ),

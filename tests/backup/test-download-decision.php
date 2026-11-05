@@ -242,4 +242,111 @@ class MainWP_Download_Decision_Test extends \WP_UnitTestCase {
 			$this->assertSame( 'mainwp_backup_http_error', $e->get_message_error_code() );
 		}
 	}
+
+	/**
+	 * MWP-2183: a bounded 206 is written from byte 0 or appended at its offset.
+	 *
+	 * @return void
+	 */
+	public function test_bounded_206_matching_range_writes_or_appends() {
+		$first = array(
+			'start' => 0,
+			'end'   => 4095,
+			'total' => 10000,
+		);
+		$later = array(
+			'start' => 4096,
+			'end'   => 8191,
+			'total' => 10000,
+		);
+		$this->assertSame( 'w', MainWP_Connect::decide_download_mode( 206, 0, $first, 0, 10000, 4095 ) );
+		$this->assertSame( 'a', MainWP_Connect::decide_download_mode( 206, 4096, $later, 4096, 10000, 8191 ) );
+	}
+
+	/**
+	 * MWP-2183: a Range-capable Child declares the closed archive's size, so a
+	 * part reporting another total, even inside the 200 path's stale-size
+	 * tolerance, comes from a changed file and is refused before append.
+	 *
+	 * @return void
+	 */
+	public function test_bounded_206_total_within_size_ceiling_is_refused() {
+		$range = array(
+			'start' => 4096,
+			'end'   => 8191,
+			'total' => 10050,
+		);
+		$this->expectException( MainWP_Exception::class );
+		MainWP_Connect::decide_download_mode( 206, 4096, $range, 4096, 10000, 8191 );
+	}
+
+	/**
+	 * MWP-2183: a bounded 206 must confirm the requested start, end and total.
+	 *
+	 * @dataProvider bounded_range_mismatches
+	 * @param array|false $range Parsed Content-Range.
+	 * @return void
+	 */
+	public function test_bounded_206_mismatch_throws( $range ) {
+		try {
+			MainWP_Connect::decide_download_mode( 206, 4096, $range, 4096, 10000, 8191 );
+			$this->fail( 'Expected the mismatched range to be refused.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_http_error', $e->get_message_error_code() );
+		}
+	}
+
+	/**
+	 * Content-Range answers that do not match bytes=4096-8191 of 10000.
+	 *
+	 * @return array
+	 */
+	public static function bounded_range_mismatches() {
+		return array(
+			'start'               => array(
+				array(
+					'start' => 0,
+					'end'   => 8191,
+					'total' => 10000,
+				),
+			),
+			'end'                 => array(
+				array(
+					'start' => 4096,
+					'end'   => 9999,
+					'total' => 10000,
+				),
+			),
+			'total'               => array(
+				array(
+					'start' => 4096,
+					'end'   => 8191,
+					'total' => 9999,
+				),
+			),
+			'total above ceiling' => array(
+				array(
+					'start' => 4096,
+					'end'   => 8191,
+					'total' => 20000,
+				),
+			),
+			'none'                => array( false ),
+		);
+	}
+
+	/**
+	 * MWP-2183: HTTP 413 has its own code.
+	 *
+	 * @return void
+	 */
+	public function test_http_413_throws_download_too_large() {
+		try {
+			MainWP_Connect::decide_download_mode( 413, 0, false, 0, 10000, 4095 );
+			$this->fail( 'Expected exception for HTTP 413.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_download_too_large', $e->get_message_error_code() );
+			$this->assertSame( 'HTTP 413', $e->get_message_extra( false ) );
+		}
+	}
 }

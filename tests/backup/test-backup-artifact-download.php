@@ -832,4 +832,193 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 	}
+
+	/**
+	 * Stand-in for a segmented transfer: the first part uses the given URL,
+	 * every later part asks the caller's renewer for a fresh one.
+	 *
+	 * @param string $content Archive bytes.
+	 * @param int    $parts   Number of parts.
+	 * @param array  $urls    By-ref list of requested URLs.
+	 * @return void
+	 */
+	private function mock_segmented_download( $content, $parts, &$urls ) {
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file, $size, $next_url = null ) use ( $content, $parts, &$urls ) {
+				unset( $pre, $size );
+				$length = (int) ceil( strlen( $content ) / $parts );
+				$urls[] = $url;
+				file_put_contents( $file, substr( $content, 0, $length ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture write.
+				for ( $part = 1; $part < $parts; $part++ ) {
+					$urls[] = $next_url();
+					file_put_contents( $file, substr( $content, $part * $length, $length ), FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture write.
+				}
+				return true;
+			},
+			10,
+			5
+		);
+	}
+
+	/**
+	 * MWP-2183: every part of a token download carries its own single-use token.
+	 *
+	 * @return void
+	 */
+	public function test_token_download_renews_token_per_segment() {
+		$website = $this->make_site( true );
+		$local   = $this->local_file( $website );
+		$content = str_repeat( 'segmented-artifact-', 30 );
+		$calls   = array();
+		$urls    = array();
+		$tokens  = array();
+		foreach ( array( 'a', 'b', 'c' ) as $letter ) {
+			$tokens[] = array(
+				'token' => str_repeat( $letter, 32 ),
+				'hash'  => hash( 'sha256', $content ),
+				'size'  => strlen( $content ),
+			);
+		}
+		$this->mock_token_callable( $tokens, $calls );
+		$this->mock_segmented_download( $content, 3, $urls );
+
+		MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-parts.zip', $local, strlen( $content ), null, null );
+
+		$this->assertCount( 3, $calls, 'One token per part.' );
+		$this->assertCount( 3, $urls );
+		foreach ( array( 'a', 'b', 'c' ) as $index => $letter ) {
+			$this->assertStringContainsString( 'dltoken=' . str_repeat( $letter, 32 ), $urls[ $index ] );
+			$this->assertSame( 'backup-parts.zip', $calls[ $index ]['file'] );
+		}
+		$this->assertSame( $content, file_get_contents( $local ) );
+	}
+
+	/**
+	 * MWP-2183: a renewed token that reports a different digest means the
+	 * Child archive changed between parts; the mixed partial is removed.
+	 *
+	 * @return void
+	 */
+	public function test_archive_changed_between_segments_deletes_partial() {
+		$website = $this->make_site( true );
+		$local   = $this->local_file( $website );
+		$content = str_repeat( 'changing-artifact-', 30 );
+		$calls   = array();
+		$urls    = array();
+		$this->mock_token_callable(
+			array(
+				array(
+					'token' => str_repeat( 'a', 32 ),
+					'hash'  => hash( 'sha256', $content ),
+					'size'  => strlen( $content ),
+				),
+				array(
+					'token' => str_repeat( 'b', 32 ),
+					'hash'  => hash( 'sha256', 'rewritten' ),
+					'size'  => strlen( $content ),
+				),
+			),
+			$calls
+		);
+		$this->mock_segmented_download( $content, 3, $urls );
+
+		try {
+			MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-changing.zip', $local, strlen( $content ), null, null );
+			$this->fail( 'A part from a rewritten archive was accepted.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH, $e->get_message_error_code() );
+		}
+		$this->assertCount( 2, $calls, 'No token may be requested after the change is seen.' );
+		$this->assertCount( 1, $urls );
+		clearstatcache( true, $local );
+		$this->assertFileDoesNotExist( $local );
+	}
+
+	/**
+	 * MWP-2183: a tokenless Child gets a freshly signed URL for every part.
+	 *
+	 * @return void
+	 */
+	public function test_tokenless_download_signs_each_segment() {
+		$website = $this->make_site( false );
+		$local   = $this->local_file( $website );
+		$content = str_repeat( 'legacy-parts-', 30 );
+		$calls   = array();
+		$urls    = array();
+		$this->mock_token_callable( array( 'error' => 'must never be called' ), $calls );
+		$this->mock_segmented_download( $content, 3, $urls );
+
+		MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-legacy-parts.zip', $local, strlen( $content ), null, null );
+
+		$this->assertCount( 0, $calls );
+		$this->assertCount( 3, $urls );
+		$nonces = array();
+		foreach ( $urls as $url ) {
+			$this->assertStringContainsString( 'fdl=', $url );
+			$this->assertStringNotContainsString( 'dltoken=', $url );
+			parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $query );
+			$nonces[] = $query['nonce'] ?? '';
+		}
+		$this->assertCount( 3, array_unique( array_filter( $nonces ) ), 'Each part needs its own signed nonce.' );
+		$this->assertSame( $content, file_get_contents( $local ) );
+	}
+
+	/**
+	 * An auth retry must not join bytes from an archive with a different digest.
+	 *
+	 * @dataProvider rejected_token_statuses
+	 * @param int $status Rejected download status.
+	 * @return void
+	 */
+	public function test_retry_token_hash_change_deletes_partial_before_another_get( $status ) {
+		$website = $this->make_site( true );
+		$local   = $this->local_file( $website );
+		$content = str_repeat( 'retry-artifact-', 30 );
+		$calls   = array();
+		$urls    = array();
+		$tokens  = array();
+		foreach ( array( 'a', 'b', 'c' ) as $letter ) {
+			$tokens[] = array(
+				'token' => str_repeat( $letter, 32 ),
+				'hash'  => hash( 'sha256', 'c' === $letter ? 'changed-archive' : $content ),
+				'size'  => strlen( $content ),
+			);
+		}
+		$this->mock_token_callable( $tokens, $calls );
+		add_filter(
+			'mainwp_download_to_file_pre',
+			static function ( $pre, $url, $file, $size, $next_url = null ) use ( &$urls, $content, $status ) {
+				unset( $pre, $size );
+				$urls[] = $url;
+				file_put_contents( $file, substr( $content, 0, 100 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture write.
+				$urls[] = $next_url();
+				return new MainWP_Exception( 'Token rejected.', 'HTTP ' . $status, MainWP_Backup_Error_Codes::ERR_HTTP_ERROR );
+			},
+			10,
+			5
+		);
+		try {
+			MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-retry-changing.zip', $local, strlen( $content ), null, null );
+			$this->fail( 'The retry accepted a changed archive.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH, $error->get_message_error_code() );
+		}
+		$this->assertCount( 3, $calls );
+		$this->assertCount( 2, $urls, 'The changed token must not authorize another GET.' );
+		clearstatcache( true, $local );
+		$this->assertFileDoesNotExist( $local );
+	}
+
+	/**
+	 * Both authentication refusals enter the outer token retry.
+	 *
+	 * @return array
+	 */
+	public static function rejected_token_statuses() {
+		return array(
+			'unauthorized' => array( 401 ),
+			'forbidden'    => array( 403 ),
+		);
+	}
 }

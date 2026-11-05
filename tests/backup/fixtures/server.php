@@ -181,6 +181,92 @@ switch ( $path ) {
         flush();
         exit;
 
+    case '/bounded':
+        // Child 6.3+ resolve_download_range(): one bytes=START-END or START- range, end clamped to EOF.
+        // limit=N answers 413 when the declared response length exceeds N, like a server response cap.
+        // log=mainwp-ranges-<hex> appends "<m>|<Range>" per request; fault=<kind>&at=<n> breaks request n.
+        $request_no = 1;
+        $log        = isset( $_GET['log'] ) ? (string) $_GET['log'] : '';
+        if ( preg_match( '/^mainwp-ranges-[a-f0-9]+$/D', $log ) ) {
+            // nosemgrep: AIK_php-file-operations -- test fixture; the anchored pattern above allows only a fixed prefix plus hex.
+            $log_file   = sys_get_temp_dir() . '/' . $log;
+            $request_no = ( is_file( $log_file ) ? count( file( $log_file ) ) : 0 ) + 1;
+            file_put_contents( $log_file, ( $_GET['m'] ?? '' ) . '|' . $range_header . '|' . ( $_SERVER['HTTP_X_MAINWP_PROBE'] ?? '' ) . "\n", FILE_APPEND );
+        }
+        $fault_at = array_map( 'intval', explode( ',', (string) ( $_GET['at'] ?? '1' ) ) );
+        $fault    = ( isset( $_GET['fault'] ) && in_array( $request_no, $fault_at, true ) ) ? (string) $_GET['fault'] : '';
+
+        if ( '500' === $fault ) {
+            http_response_code( 500 );
+            header( 'Content-Type: text/html' );
+            echo '<html><body><h1>Internal Server Error</h1></body></html>';
+            break;
+        }
+        if ( '416' === $fault ) {
+            http_response_code( 416 );
+            header( 'Content-Range: bytes */' . ( $size + 7 ) );
+            break;
+        }
+
+        $status = 200;
+        $start  = 0;
+        $end    = $size - 1;
+        if ( 'ignore' !== $fault && preg_match( '/^bytes=(\d+)-(\d*)$/', $range_header, $m ) ) {
+            $start = (int) $m[1];
+            $end   = '' !== $m[2] ? min( (int) $m[2], $size - 1 ) : $size - 1;
+            if ( $start >= $size || $end < $start ) {
+                http_response_code( 416 );
+                header( 'Content-Range: bytes */' . $size );
+                break;
+            }
+            $status = 206;
+        }
+        $length = $end - $start + 1;
+
+        $limit = isset( $_GET['limit'] ) ? (int) $_GET['limit'] : 0;
+        if ( $limit > 0 && $length > $limit ) {
+            http_response_code( 413 );
+            header( 'Content-Type: text/html' );
+            echo '<html><body><h1>413 Request Entity Too Large</h1></body></html>';
+            break;
+        }
+
+        http_response_code( $status );
+        header( 'Content-Type: application/octet-stream' );
+        $chunk = substr( $body, $start, $length );
+        if ( 206 === $status ) {
+            $range_end   = 'wrong-end' === $fault ? $end - 1 : $end;
+            $range_total = 'wrong-total' === $fault ? $size + 50 : $size;
+            header( 'Content-Range: bytes ' . $start . '-' . $range_end . '/' . $range_total );
+        }
+        if ( 'overflow' === $fault ) {
+            // No Content-Length: the body runs past the confirmed range until the connection closes.
+            // The in-range bytes go out first so the client has written part of this response
+            // before the overflow arrives, which is what the rollback has to undo.
+            echo $chunk;
+            flush();
+            usleep( 300000 );
+            echo str_repeat( 'Z', 100 );
+            break;
+        }
+        if ( 'short' === $fault ) {
+            // No Content-Length and a clean close before the confirmed range end.
+            echo substr( $chunk, 0, $length - 10 );
+            break;
+        }
+        if ( 'wrong-length' === $fault ) {
+            header( 'Content-Length: ' . ( $length - 1 ) );
+            echo substr( $chunk, 0, $length - 1 );
+            break;
+        }
+        if ( 'no-length' === $fault ) {
+            echo $chunk;
+            break;
+        }
+        header( 'Content-Length: ' . $length );
+        echo $chunk;
+        break;
+
     default:
         http_response_code( 404 );
         echo 'not found';

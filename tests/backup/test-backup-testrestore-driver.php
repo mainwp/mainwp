@@ -903,6 +903,20 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @return void
 	 */
+	public function test_save_failure_does_not_escape_the_driver_or_change_the_verdict() {
+		$dump = $this->write_db_dump( 'save-fail.sql.gz', $this->sentinel_sql() );
+		$id = $this->record( 'db', array( array( 'file' => 'save-fail.sql.gz', 'size' => filesize( $dump ), 'role' => 'db', 'path' => $dump ) ) );
+		$filter = 'pre_update_option_mainwp_testrestore_result_' . $id;
+		add_filter( $filter, '__return_false' );
+		try {
+			$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $id );
+			$this->assertSame( 'pass', $result['state'] );
+			$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->test_restore_state );
+		} finally {
+			remove_filter( $filter, '__return_false' );
+		}
+	}
+
 	public function test_sandbox_torn_down_on_pass_and_fail() {
 		// Pass run.
 		$dump_ok = $this->write_db_dump( 'ok.sql.gz', $this->sentinel_sql() );

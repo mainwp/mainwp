@@ -778,6 +778,11 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		}
 	}
 
+	public function test_tar_question_mark_does_not_bypass_raw_payload_name_agreement() {
+		$bytes = $this->raw_tar_member( 'first.txt', 'first' ) . $this->raw_tar_member( 'a\\b', 'XY' ) . $this->raw_tar_member( 'c?d', 'question' );
+		$this->assert_tar_name_refusal( $this->raw_tar( $bytes ), 'could not be read' );
+	}
+
 	/**
 	 * Refusal must precede any write into the sandbox.
 	 *

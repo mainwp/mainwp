@@ -414,7 +414,11 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      * @return void
      */
     private function record( int $snapshot_id, string $state, array $result = array() ): void {
-        MainWP_Backup_Snapshots::instance()->set_test_restore_result( $snapshot_id, $state, time(), $result );
+        try {
+            MainWP_Backup_Snapshots::instance()->set_test_restore_result( $snapshot_id, $state, time(), $result );
+        } catch ( MainWP_Exception $e ) {
+            MainWP_Logger::instance()->warning( 'Test restore result could not be saved for snapshot ' . $snapshot_id . ': ' . $e->get_message_error_code() );
+        }
     }
 
     /**

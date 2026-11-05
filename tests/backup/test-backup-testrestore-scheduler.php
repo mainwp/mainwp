@@ -356,6 +356,22 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 		$this->assertCount( 1, $scheduler->verified, 'An unavailable snapshot must not be re-selected next tick.' );
 	}
 
+	public function test_unavailable_save_failure_does_not_abort_scheduler_tick() {
+		$now = time();
+		$id = $this->insert_snapshot( $this->create_test_site(), $now - 100 );
+		$scheduler = new Testable_TestRestore_Scheduler();
+		$scheduler->verify_result = array( 'state' => 'fail', 'error_code' => MainWP_Backup_TestRestore_Driver::ERR_UNRESOLVABLE );
+		$filter = 'pre_update_option_mainwp_testrestore_result_' . $id;
+		add_filter( $filter, '__return_false' );
+		try {
+			$scheduler->process_pending_jobs( 120, $now );
+			$this->assertCount( 1, $scheduler->verified );
+			$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->test_restore_state );
+		} finally {
+			remove_filter( $filter, '__return_false' );
+		}
+	}
+
 	/**
 	 * The seam receives an absolute deadline derived from the tick's own
 	 * budget, so a slow verify cannot run past the slice this tick owns.

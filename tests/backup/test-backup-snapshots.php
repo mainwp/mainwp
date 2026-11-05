@@ -138,6 +138,21 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 		$this->assertSame( '', $store->get_snapshot_by_id( $id )->test_restore_state );
 	}
 
+	public function test_test_restore_message_preserves_relative_paths_urls_and_utf8() {
+		$method = new \ReflectionMethod( MainWP_Backup_Snapshots::class, 'test_restore_message' );
+		$method->setAccessible( true );
+		$store = MainWP_Backup_Snapshots::instance();
+		$relative = 'wp-content/uploads/2026/dump.sql';
+		$url = 'https://example.com/docs/backups/restore';
+		$this->assertSame( $relative, $method->invoke( $store, $relative ) );
+		$this->assertSame( $url, $method->invoke( $store, $url ) );
+		$long = str_repeat( 'a', 999 ) . 'ü';
+		$bounded = $method->invoke( $store, $long );
+		$this->assertNotEmpty( $bounded );
+		$this->assertSame( 1, preg_match( '//u', $bounded ) );
+		$this->assertLessThanOrEqual( 1000, strlen( $bounded ) );
+	}
+
 	public function test_record_snapshot_round_trips() {
 		$id = $this->record();
 

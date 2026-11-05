@@ -1559,6 +1559,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         try {
             $phar = new \PharData( $plain );
             foreach ( $this->tar_listing( $phar ) as list( $listed, $is_dir ) ) {
+                if ( ! $is_dir && ! isset( $this->tar_payloads[ $listed ] ) ) {
+                    throw $unreadable;
+                }
                 $key = $this->tar_comparison_name( $listed, $is_dir );
                 // PharData adds the parents of a member itself, so a listed directory without a header must lead to a
                 // walked member; every listed file needs a header, and a listed name keeps the walk's kind.
@@ -1612,7 +1615,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     protected function tar_listing( \PharData $phar ): \Generator {
         $pathname_only = (bool) preg_grep( '/\?/', array_keys( $this->tar_payloads ) );
         if ( $pathname_only ) {
-            $phar->setFlags( \FilesystemIterator::CURRENT_AS_PATHNAME );
+            $phar->setFlags( ( $phar->getFlags() & ~\FilesystemIterator::CURRENT_MODE_MASK ) | \FilesystemIterator::CURRENT_AS_PATHNAME );
         }
         $iterator = new \RecursiveIteratorIterator( $phar, \RecursiveIteratorIterator::SELF_FIRST );
         foreach ( $iterator as $file ) {

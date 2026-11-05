@@ -964,8 +964,16 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     private function test_restore_message( string $message ): string {
         $message = html_entity_decode( $message, ENT_QUOTES, 'UTF-8' );
         $message = MainWP_Backup_Error_Codes::sanitize_message( $message );
-        $message = preg_replace( '~(?:[A-Za-z]:)?[/\\\\](?:[^\s/\\\\]+[/\\\\])+([^\s/\\\\]+)~', '$1', $message );
-        return wp_check_invalid_utf8( substr( sanitize_text_field( $message ), 0, 1000 ), true );
+        $message = preg_replace( '~(?<![^\s"\'(=])(?:[A-Za-z]:)?[/\\\\](?:[^\s/\\\\]+[/\\\\])+([^\s/\\\\]+)~', '$1', $message );
+        $message = sanitize_text_field( $message );
+        if ( function_exists( 'mb_strcut' ) ) {
+            return mb_strcut( $message, 0, 1000, 'UTF-8' );
+        }
+        $message = substr( $message, 0, 1000 );
+        while ( '' !== $message && 1 !== preg_match( '//u', $message ) ) {
+            $message = substr( $message, 0, -1 );
+        }
+        return $message;
     }
 
     /**

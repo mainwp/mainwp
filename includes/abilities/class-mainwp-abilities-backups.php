@@ -1365,6 +1365,24 @@ class MainWP_Abilities_Backups {
             'additionalProperties' => false,
             'required'             => array( 'state', 'attempted_at', 'result_at', 'checks', 'scope' ),
             'properties'           => array(
+                'error_code'   => array( 'type' => 'string' ),
+                'error'        => array( 'type' => 'string' ),
+                'assertions'   => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'                 => 'object',
+                        'additionalProperties' => false,
+                        'required'             => array( 'name', 'ok', 'detail' ),
+                        'properties'           => array(
+                            'name'   => array(
+                                'type' => 'string',
+                                'enum' => array( 'files_extracted', 'db_imported', 'db_has_rows', 'sentinel_checksum' ),
+                            ),
+                            'ok'     => array( 'type' => 'boolean' ),
+                            'detail' => array( 'type' => 'string' ),
+                        ),
+                    ),
+                ),
                 'state'        => array(
                     'type'        => 'string',
                     'enum'        => array( 'never', 'pass', 'fail', 'unsupported', 'unavailable' ),

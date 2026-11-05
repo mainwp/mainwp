@@ -154,7 +154,7 @@ class MainWP_Backup_TestRestore_Scheduler { // phpcs:ignore Generic.Classes.Open
                 // "couldn't test" rather than "fail" - the claim already backed
                 // this snapshot off for the cadence window, so there is no
                 // sooner retry to preserve either way.
-                $snapshots->set_test_restore_result( $snapshot_id, self::STATE_UNAVAILABLE, $now );
+                $snapshots->set_test_restore_result( $snapshot_id, self::STATE_UNAVAILABLE, $now, $result );
             }
 
             ++$processed;

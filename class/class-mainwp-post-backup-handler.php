@@ -346,35 +346,39 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     'error_detail'   => mb_substr( $error['detail'], 0, 200 ),
                 );
             }
-            $archives        = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
-            $size_bytes      = (int) array_sum( array_column( $archives, 'size' ) );
-            $test_restore_at = isset( $entry['snapshot']->test_restore_at ) ? (int) $entry['snapshot']->test_restore_at : 0;
-            $skipped         = MainWP_Backup_Read_Model::snapshot_skipped_files( $entry['snapshot'] );
-            $rows[]          = array(
-                'id'                 => (int) $entry['snapshot']->id,
-                'task_id'            => (int) $entry['snapshot']->task_id,
-                'type'               => (string) $entry['snapshot']->type,
-                'created'            => (int) $entry['snapshot']->created,
+            $archives             = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
+            $size_bytes           = (int) array_sum( array_column( $archives, 'size' ) );
+            $test_restore_at      = isset( $entry['snapshot']->test_restore_at ) ? (int) $entry['snapshot']->test_restore_at : 0;
+            $test_restore_details = MainWP_Backup_Snapshots::instance()->get_test_restore_details( $entry['snapshot'] );
+            $skipped              = MainWP_Backup_Read_Model::snapshot_skipped_files( $entry['snapshot'] );
+            $rows[]               = array(
+                'id'                      => (int) $entry['snapshot']->id,
+                'task_id'                 => (int) $entry['snapshot']->task_id,
+                'type'                    => (string) $entry['snapshot']->type,
+                'created'                 => (int) $entry['snapshot']->created,
                 // Formatted here so the page uses the Dashboard date and time
                 // settings, as the task list does, not the browser locale.
-                'created_elapsed'    => MainWP_Utility::time_elapsed_string( (int) $entry['snapshot']->created ),
-                'created_label'      => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $entry['snapshot']->created ) ),
-                'age_days'           => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
-                'status'             => (string) $entry['snapshot']->status,
-                'offsite_state'      => 'pruned' !== $entry['snapshot']->status && isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
-                'uploads'            => $uploads,
-                'source'             => (string) $entry['source'],
-                'restorable'         => (bool) $entry['catalog_restorable'],
-                'damaged'            => (bool) $entry['damaged'],
-                'restore_reason'     => (string) $entry['catalog_restore_reason'],
-                'removal_reason'     => (string) $entry['removal_reason'],
-                'skipped_count'      => $skipped['count'],
-                'skipped_paths'      => $skipped['paths'],
-                'size_bytes'         => $size_bytes,
-                'size_label'         => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
-                'test_restore_state' => isset( $entry['snapshot']->test_restore_state ) ? (string) $entry['snapshot']->test_restore_state : '',
-                'test_restore_at'    => $test_restore_at,
-                'test_restore_label' => $test_restore_at > 0 ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $test_restore_at ) ) : '',
+                'created_elapsed'         => MainWP_Utility::time_elapsed_string( (int) $entry['snapshot']->created ),
+                'created_label'           => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $entry['snapshot']->created ) ),
+                'age_days'                => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
+                'status'                  => (string) $entry['snapshot']->status,
+                'offsite_state'           => 'pruned' !== $entry['snapshot']->status && isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
+                'uploads'                 => $uploads,
+                'source'                  => (string) $entry['source'],
+                'restorable'              => (bool) $entry['catalog_restorable'],
+                'damaged'                 => (bool) $entry['damaged'],
+                'restore_reason'          => (string) $entry['catalog_restore_reason'],
+                'removal_reason'          => (string) $entry['removal_reason'],
+                'skipped_count'           => $skipped['count'],
+                'skipped_paths'           => $skipped['paths'],
+                'size_bytes'              => $size_bytes,
+                'size_label'              => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
+                'test_restore_state'      => isset( $entry['snapshot']->test_restore_state ) ? (string) $entry['snapshot']->test_restore_state : '',
+                'test_restore_at'         => $test_restore_at,
+                'test_restore_label'      => $test_restore_at > 0 ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $test_restore_at ) ) : '',
+                'test_restore_error'      => $test_restore_details['error'],
+                'test_restore_error_code' => $test_restore_details['error_code'],
+                'test_restore_assertions' => $test_restore_details['assertions'],
             );
         }
         // The reload bootstrap: the server knows what is running for this

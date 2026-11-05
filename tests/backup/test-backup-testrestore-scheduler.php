@@ -340,6 +340,7 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 		$scheduler->verify_result = array(
 			'state'      => 'fail',
 			'error_code' => MainWP_Backup_TestRestore_Driver::ERR_UNRESOLVABLE,
+			'error'      => 'The backup chain is unavailable.',
 		);
 
 		$scheduler->process_pending_jobs( 120, $now );
@@ -347,6 +348,9 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
 		$this->assertSame( MainWP_Backup_TestRestore_Scheduler::STATE_UNAVAILABLE, (string) $snapshot->test_restore_state, 'An unresolvable chain records as unavailable, not fail.' );
 		$this->assertGreaterThan( 0, (int) $snapshot->test_restore_at, 'The unresolvable run still stamps a backoff time.' );
+		$details = MainWP_Backup_Snapshots::instance()->get_test_restore_details( $snapshot );
+		$this->assertSame( MainWP_Backup_TestRestore_Driver::ERR_UNRESOLVABLE, $details['error_code'] );
+		$this->assertSame( 'The backup chain is unavailable.', $details['error'] );
 
 		$scheduler->process_pending_jobs( 120, $now );
 		$this->assertCount( 1, $scheduler->verified, 'An unavailable snapshot must not be re-selected next tick.' );

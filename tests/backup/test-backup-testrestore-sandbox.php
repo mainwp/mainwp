@@ -750,6 +750,34 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		return array( array( './' ), array( '.' ), array( '' ) );
 	}
 
+	public function test_tar_literal_question_mark_preserves_names_and_bytes() {
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		$members = array( 'wp-content/uploads/test?x', 'ordinary', 'hash#name', '日本語', 'literal%3F', 'dir?/nested' );
+		$bytes = '';
+		foreach ( $members as $name ) {
+			$bytes .= $this->raw_tar_member( $name, "bytes\0" . $name );
+		}
+		try {
+			$method = new \ReflectionMethod( $sandbox, 'extract_tar' );
+			$method->setAccessible( true );
+			$method->invoke( $sandbox, $this->raw_tar( $bytes ) );
+			foreach ( $members as $name ) {
+				$this->assertSame( "bytes\0" . $name, file_get_contents( $sandbox->temp_dir() . $name ) );
+			}
+			$sql = '<?php exit(); ?>SELECT 1;';
+			$sql_path = $this->raw_tar( $this->raw_tar_member( 'db?/dump.sql.php', $sql ) );
+			$size = new \ReflectionMethod( $sandbox, 'archive_member_size_tar' );
+			$size->setAccessible( true );
+			$this->assertSame( strlen( $sql ), $size->invoke( $sandbox, $sql_path ) );
+			$read = new \ReflectionMethod( $sandbox, 'read_member_from_tar' );
+			$read->setAccessible( true );
+			$this->assertSame( 'SELECT 1;', $read->invoke( $sandbox, $sql_path ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
 	/**
 	 * Refusal must precede any write into the sandbox.
 	 *

@@ -937,6 +937,9 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		);
 		$fail     = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $fail_id );
 		$this->assertSame( 'fail', $fail['state'] );
+		$details = MainWP_Backup_Snapshots::instance()->get_test_restore_details( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $fail_id ) );
+		$this->assertSame( $fail['error_code'], $details['error_code'] );
+		$this->assertNotEmpty( $details['error'] );
 		$this->assertFalse( $this->db_exists( $fail['sandbox']['db_name'] ) );
 		$this->assertDirectoryDoesNotExist( $fail['sandbox']['temp_dir'] );
 	}

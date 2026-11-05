@@ -1097,8 +1097,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( $load_gridstack ) {
             static::$defer_js_handle[] = 'mainwp_gridstack';
-            wp_enqueue_script( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack-all.js', array( 'jquery' ), $this->current_version, true );
-            wp_enqueue_style( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack.min.css', array(), $this->current_version );
+            wp_enqueue_script( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack-all.js', array( 'jquery' ), '14.1.0', true );
+            wp_enqueue_style( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack.min.css', array(), '14.1.0' );
         }
 
         if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] || 'ManageGroups' === $_GET['page'] ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

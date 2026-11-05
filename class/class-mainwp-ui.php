@@ -2180,7 +2180,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             let gsOpts = {
                 auto: true,
                 cellHeight: '1rem',
-                float: false,
+                mode: 'top',
                 resizable: {
                     handles: 'e,se,s,sw,w'
                 },

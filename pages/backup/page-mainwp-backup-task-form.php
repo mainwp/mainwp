@@ -105,9 +105,10 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <div class="content active">
                 <?php
                 $sel_params = array(
-                    'selected_sites'       => $selected_websites,
-                    'selected_groups'      => $selected_groups,
-                    'enable_offline_sites' => true,
+                    'selected_sites'               => $selected_websites,
+                    'selected_groups'              => $selected_groups,
+                    'enable_offline_sites'         => true,
+                    'keep_selection_on_tab_change' => true,
                 );
                 MainWP_UI_Select_Sites::select_sites_box( $sel_params );
                 ?>

@@ -49,6 +49,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *  @type bool    $show_client (bool) True, if show clients. False if not.
      *  @type bool    $enable_suspended_clients (bool) True, if enable suspended clients. False if not.
      *  @type array   $selected_clients Selected Clients.
+     *  @type bool    $keep_selection_on_tab_change True keeps the selection when the user opens another tab; checking an item there replaces it. Default: false.
      * }
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
@@ -68,6 +69,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $enableSuspendedClients = isset( $params['enable_suspended_clients'] ) ? $params['enable_suspended_clients'] : false;
         $selected_clients       = isset( $params['selected_clients'] ) ? $params['selected_clients'] : array();
         $add_edit_client_id     = isset( $params['add_edit_client_id'] ) ? $params['add_edit_client_id'] : false;
+        $keep_tab_selection     = ! empty( $params['keep_selection_on_tab_change'] );
 
         if ( $postId ) {
 
@@ -122,7 +124,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'add_edit_client_id'         => $add_edit_client_id,
         );
         ?>
-        <div id="mainwp-select-sites" class="mainwp_select_sites_wrapper">
+        <div id="mainwp-select-sites" class="mainwp_select_sites_wrapper"<?php echo $keep_tab_selection ? ' data-keep-tab-selection="1"' : ''; ?>>
         <?php static::select_sites_box_body( $params ); ?>
     </div>
         <?php

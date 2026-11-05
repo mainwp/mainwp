@@ -277,10 +277,8 @@ let mainwp_ss_select_disconnected = function (me, val) {
     return false;
 };
 
-globalThis.mainwp_sites_selection_onvisible_callback = function (me) {
-    let selected_tab = jQuery(me).attr('select-by');
+let mainwp_sites_selection_clear_other_tabs = function (parent, selected_tab) {
     let select_by = 'site';
-    let parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
     if (selected_tab == 'staging') {
         // uncheck live sites
         parent.find('.mainwp-select-sites-list INPUT:checkbox').prop('checked', false);
@@ -304,6 +302,18 @@ globalThis.mainwp_sites_selection_onvisible_callback = function (me) {
         parent.find('#mainwp-select-staging-sites-list INPUT:checkbox').prop('checked', false);
         select_by = 'client';
     }
+    return select_by;
+};
+
+globalThis.mainwp_sites_selection_onvisible_callback = function (me) {
+    let selected_tab = jQuery(me).attr('select-by');
+    let parent = jQuery(me).closest('.mainwp_select_sites_wrapper');
+    let select_by;
+    if (parent.is('[data-keep-tab-selection]')) {
+        select_by = parent.find('input[name="select_by"]').val();
+    } else {
+        select_by = mainwp_sites_selection_clear_other_tabs(parent, selected_tab);
+    }
 
     console.log('select by: ' + select_by);
 
@@ -312,6 +322,29 @@ globalThis.mainwp_sites_selection_onvisible_callback = function (me) {
 
     mainwp_update_selection_counter();
 }
+
+// Opening a tab keeps the selection; checking an item there replaces the other tabs' selection.
+jQuery(document).on('change',
+    '.mainwp_select_sites_wrapper[data-keep-tab-selection] .mainwp-select-sites-list INPUT:checkbox, ' +
+    '.mainwp_select_sites_wrapper[data-keep-tab-selection] #mainwp-select-staging-sites-list INPUT:checkbox, ' +
+    '.mainwp_select_sites_wrapper[data-keep-tab-selection] .mainwp-select-groups-list INPUT:checkbox, ' +
+    '.mainwp_select_sites_wrapper[data-keep-tab-selection] #mainwp-select-clients-list INPUT:checkbox', function () {
+        if (!this.checked) {
+            return;
+        }
+        let item = jQuery(this);
+        let tab = 'site';
+        if (item.closest('#mainwp-select-staging-sites-list').length) {
+            tab = 'staging';
+        } else if (item.closest('.mainwp-select-groups-list').length) {
+            tab = 'group';
+        } else if (item.closest('#mainwp-select-clients-list').length) {
+            tab = 'client';
+        }
+        let parent = item.closest('.mainwp_select_sites_wrapper');
+        parent.find('input[name="select_by"]').val(mainwp_sites_selection_clear_other_tabs(parent, tab));
+        mainwp_update_selection_counter();
+    });
 
 
 let mainwp_newpost_updateCategories = function () {

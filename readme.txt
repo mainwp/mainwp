@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.4
 Requires PHP: 8.3
-Stable tag: 6.4.2-rc.1
+Stable tag: 6.4.2-rc.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -153,6 +153,18 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.4.2-rc.2 - 11-5-2026 =
+
+* Added: Optional delays to spread scheduled Built-In Backups task starts over a configurable time window.
+* Added: Optional Manage Sites column showing abandoned plugin and theme counts.
+* Added: Support for disabling site screenshot previews across the Dashboard.
+* Added: Support for custom Dashboard download URLs when wp-admin access is restricted.
+* Fixed: Selected sites are now preserved when switching selection tabs while editing Built-In Backups tasks.
+* Fixed: Large Built-In Backups downloads now use smaller parts to avoid server response-size limits.
+* Updated: Improved Built-In Backups error readability, added requirements guidance, and clarified folder locations in error messages.
+* Updated: New remote backup folders now include site names for easier identification.
+* Updated: Upgraded the Dashboard widget layout library to GridStack 14.1.0.
 
 = 6.4.2-rc.1 - 11-4-2026 =
 

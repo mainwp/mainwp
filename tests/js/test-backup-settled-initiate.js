@@ -30,7 +30,7 @@ function callback() {
     context.backupPollTimer = null;
     context.window.clearTimeout = () => {};
     vm.runInContext( source.slice( schedule, source.indexOf( '\n            }', schedule ) + '\n            }'.length ), context );
-    vm.runInContext( 'var initiate = ' + source.slice( start, end ) + '};', context );
+    vm.runInContext( 'var initiate = ' + source.slice( start, end ).replace( /<\?php[\s\S]*?\?>/g, 'Translated text' ) + '};', context );
     return { context, calls };
 }
 

@@ -584,13 +584,19 @@ managebackups_run_now = function (el) {
                 jQuery('<div class="header"></div>').text(site.name).appendTo(body);
                 let bar = jQuery('<div class="ui green progress managebackups-task-status-progress"><div class="bar"><div class="progress"></div></div><div class="label managebackups-task-status-phase"></div></div>').attr('siteId', site.id).appendTo(body);
                 let label = bar.find('.label').attr('siteId', site.id);
+                let error = jQuery('<div class="mainwp-red mainwp-backup-error-text"></div>').attr('aria-live', 'polite').appendTo(body);
                 let steps = jQuery('<div class="ui middle aligned divided list"></div>').appendTo(body);
                 bar.progress({value: 0, total: 100, autoSuccess: false});
-                rows[site.id] = {label: label, bar: bar, steps: steps, icon: icon};
+                rows[site.id] = {label: label, bar: bar, error: error, steps: steps, icon: icon};
             }
             let row = rows[site.id];
             row.label.removeClass('mainwp-red');
             row.bar.show();
+            // Rewriting the live region would announce an unchanged error on every poll.
+            const errorText = site.status === 'failed' ? (site.error || MainWP.I18n.t('Backup task failed.')) : '';
+            if (row.error.text() !== errorText) {
+                row.error.text(errorText);
+            }
             managebackups_render_task_phase(site.id, site);
             mainwpBackupProgressSteps(row.steps, site.phase || (site.status === 'queued' ? 'queued' : ''), site.percent, site.status, site.snapshot ? site.snapshot.type : el.attr('task_type'));
             row.icon.attr('class', (site.status === 'completed' ? 'green check' : site.status === 'failed' ? 'red times' : 'green circle notched loading') + ' icon');
@@ -617,7 +623,6 @@ managebackups_run_now = function (el) {
                     row.steps.append(uploadItem);
                 }
             } else if (site.status === 'failed') {
-                row.label.addClass('mainwp-red').text(site.error || MainWP.I18n.t('Backup task failed.'));
                 row.bar.hide();
             }
         });
@@ -637,7 +642,7 @@ managebackups_run_now = function (el) {
         jQuery('#mainwp-task-backup-progress-label').text(message);
         jQuery('<div class="ui message"></div>').addClass(response.status === 'completed' ? 'green' : 'yellow').text(message).prependTo(content);
         if (response.errors) {
-            jQuery('<div class="mainwp-red">').text(response.errors).appendTo(content);
+            jQuery('<div class="mainwp-red mainwp-backup-error-text">').text(response.errors).appendTo(content);
         }
         if (response.notices) {
             jQuery('<div>').text(response.notices).appendTo(content);

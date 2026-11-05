@@ -317,6 +317,10 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <?php esc_html_e( 'Files only backups archive the site\'s files without a database dump. Pair this task with a Database Backup task to cover the whole site. Because the archive carries no database, the dashboard cannot restore a site from it; download the archive to recover individual files.', 'mainwp' ); ?>
             </div>
             <?php
+            if ( ! isset( $task ) ) {
+                MainWP_Backup_Page::render_site_requirements_note();
+            }
+
             $schedule       = isset( $task->schedule ) ? (string) $task->schedule : 'daily';
             $interval_hours = isset( $task->interval_hours ) && (int) $task->interval_hours > 0 ? (int) $task->interval_hours : 1;
             $time_of_day    = isset( $task->time_of_day ) ? (string) $task->time_of_day : '';

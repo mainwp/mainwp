@@ -175,6 +175,47 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     }
 
     /**
+     * Render the collapsible list of what a site needs before a backup can run.
+     *
+     * @return void
+     */
+    public static function render_site_requirements_note(): void {
+        $groups = array(
+            array(
+                'heading' => __( 'On the child site:', 'mainwp' ),
+                'items'   => array(
+                    __( 'A MainWP Child version that supports Built-In Backups, connected to this Dashboard. Disconnected and suspended sites cannot be backed up.', 'mainwp' ),
+                    __( 'A writable MainWP backup folder in the site\'s uploads folder (usually wp-content/uploads).', 'mainwp' ),
+                    __( 'Free disk space for the backup plus a reserve of a tenth of the disk, at least 100 MB and at most 1 GB.', 'mainwp' ),
+                    __( 'The wp-content and uploads folders inside the WordPress folder. File backups do not run yet on hosts that move them, such as Pressable, WordPress.com and Bedrock installs. Database backups still work on those sites.', 'mainwp' ),
+                    __( 'A single database server for backups that include the database. Sites that split the database across several servers (for example with HyperDB or LudicrousDB) can only run Files Only backups.', 'mainwp' ),
+                ),
+            ),
+            array(
+                'heading' => __( 'On the Dashboard server:', 'mainwp' ),
+                'items'   => array(
+                    __( 'The cURL and OpenSSL PHP extensions.', 'mainwp' ),
+                    __( 'A private folder outside the web root that the web server can write to. The Dashboard creates a mainwp-private folder beside the WordPress folder. If that is not possible, set MAINWP_BACKUP_PRIVATE_DIR in the Dashboard wp-config.php.', 'mainwp' ),
+                    __( 'Free disk space for the downloaded backups.', 'mainwp' ),
+                ),
+            ),
+        );
+        ?>
+        <details class="ui blue message mainwp-backup-requirements">
+            <summary><?php esc_html_e( 'What a site needs before a backup can run', 'mainwp' ); ?></summary>
+            <?php foreach ( $groups as $group ) : ?>
+            <p><strong><?php echo esc_html( $group['heading'] ); ?></strong></p>
+            <ul class="ui list">
+                <?php foreach ( $group['items'] as $item ) : ?>
+                <li><?php echo esc_html( $item ); ?></li>
+                <?php endforeach; ?>
+            </ul>
+            <?php endforeach; ?>
+        </details>
+        <?php
+    }
+
+    /**
      * Instantiate the Backups Menu.
      *
      * @return void
@@ -745,7 +786,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         foreach ( $warnings as $warning ) {
             printf(
-                '<div class="ui yellow message" style="white-space: pre-line;">%s</div>',
+                '<div class="ui yellow message" style="white-space: pre-line; overflow-wrap: anywhere;">%s</div>',
                 esc_html( $warning )
             );
         }

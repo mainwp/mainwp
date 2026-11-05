@@ -111,6 +111,8 @@ for ( const status of [ 'completed', 'failed', 'error', 'transport' ] ) {
     test( 'terminal backup ' + status + ' reloads once', () => {
         const h = harness();
         h.load( 'reenableBackupBtn' );
+        h.context.backupFailureSummaries = {};
+        h.load( 'backupFailureSummary' );
         h.load( 'pollBackup' );
         h.context.backupPollRetries = 3;
         h.context.pollBackup( 12, 0 );

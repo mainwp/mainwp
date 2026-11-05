@@ -572,7 +572,18 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase {
 		$result = $provider->connection_test();
 
 		$this->assertFalse( $result['ok'] );
-		$this->assertStringContainsString( 'Base path', $result['error'] );
+		$this->assertSame( 'The folder does not exist on the SFTP server.', $result['error'] );
+
+		$translate = static function ( $translation, $text, $domain ) {
+			return 'mainwp' === $domain && 'The folder does not exist on the SFTP server.' === $text ? 'Translated missing folder.' : $translation;
+		};
+		add_filter( 'gettext', $translate, 10, 3 );
+		try {
+			$result = $this->make_provider( new Fake_SFTP_Connection( array() ) )->connection_test();
+		} finally {
+			remove_filter( 'gettext', $translate, 10 );
+		}
+		$this->assertSame( 'Translated missing folder.', $result['error'] );
 	}
 
 	/**

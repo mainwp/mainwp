@@ -135,16 +135,16 @@ class MainWP_Backup_Private_Root {
     private static function path_availability_reason( string $path ): string {
         if ( is_dir( $path ) ) {
             // An existing root still wins the ladder so snapshots are never abandoned, but the write probe would fail here.
-            return is_writable( $path ) ? '' : 'directory is not writable'; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
+            return is_writable( $path ) ? '' : __( 'directory is not writable', 'mainwp' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
         }
         while ( ! file_exists( $path ) && ! is_link( $path ) ) {
             $parent = dirname( $path );
             if ( $parent === $path ) {
-                return 'could not create directory';
+                return __( 'could not create directory', 'mainwp' );
             }
             $path = $parent;
         }
-        return is_dir( $path ) && is_writable( $path ) ? '' : 'could not create directory'; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
+        return is_dir( $path ) && is_writable( $path ) ? '' : __( 'could not create directory', 'mainwp' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
     }
 
     /**
@@ -261,7 +261,7 @@ class MainWP_Backup_Private_Root {
         }
         return sprintf(
             /* translators: 1: Directory path, 2: Failure reason. */
-            __( 'Backup directory "%1$s" cannot be used (%2$s). Choose a folder outside the WordPress and wp-content folders that the web server can write to.', 'mainwp' ),
+            __( 'Backup directory "%1$s" on the Dashboard server cannot be used (%2$s). Choose a folder outside the WordPress and wp-content folders that the web server can write to.', 'mainwp' ),
             str_replace( "\0", '[NUL]', $path ),
             $reason
         );
@@ -276,27 +276,27 @@ class MainWP_Backup_Private_Root {
      */
     private static function refusal_reason( $candidate, bool $allow_symlink = false ): string {
         if ( ! is_string( $candidate ) || '' === trim( $candidate ) || false !== strpos( $candidate, "\0" ) ) {
-            return 'expected a non-empty path without NUL bytes';
+            return __( 'expected a non-empty path without NUL bytes', 'mainwp' );
         }
         if ( ! path_is_absolute( $candidate ) ) {
-            return 'expected an absolute path';
+            return __( 'expected an absolute path', 'mainwp' );
         }
         $candidate = untrailingslashit( wp_normalize_path( $candidate ) );
         if ( in_array( '..', explode( '/', $candidate ), true ) ) {
-            return "expected a path without '..' segments";
+            return __( "expected a path without '..' segments", 'mainwp' );
         }
         if ( ! $allow_symlink && is_link( $candidate ) ) {
-            return 'directory is a symlink';
+            return __( 'directory is a symlink', 'mainwp' );
         }
         $canonical = self::canonical_path( $candidate );
         if ( null === $canonical ) {
-            return 'directory path is too deep';
+            return __( 'directory path is too deep', 'mainwp' );
         }
         foreach ( array( ABSPATH, WP_CONTENT_DIR ) as $boundary ) {
             $boundary    = untrailingslashit( wp_normalize_path( $boundary ) );
             $served_path = self::canonical_path( $boundary );
             if ( null === $served_path ) {
-                return 'served directory path is too deep';
+                return __( 'served directory path is too deep', 'mainwp' );
             }
             foreach ( array( $boundary, $served_path ) as $served ) {
                 foreach ( array( $candidate, $canonical ) as $private ) {
@@ -306,7 +306,7 @@ class MainWP_Backup_Private_Root {
                         $served  = strtolower( $served );
                     }
                     if ( $private === $served || str_starts_with( $private, $served . '/' ) ) {
-                        return 'directory is inside WordPress or its content directory';
+                        return __( 'directory is inside WordPress or its content directory', 'mainwp' );
                     }
                 }
             }
@@ -570,19 +570,19 @@ class MainWP_Backup_Private_Root {
         $dir       = untrailingslashit( wp_normalize_path( $dir ) );
         $candidate = self::canonical_path( $dir );
         if ( null === $candidate ) {
-            return self::unavailable( $dir, 'directory path is too deep' );
+            return self::unavailable( $dir, __( 'directory path is too deep', 'mainwp' ) );
         }
         $parent = null === $required_parent ? null : self::canonical_path( $required_parent );
         if ( null !== $required_parent && ( null === $parent || is_link( untrailingslashit( $required_parent ) ) || 0 !== strpos( $candidate . '/', trailingslashit( $parent ) ) ) ) {
-            return self::unavailable( $dir, 'directory escapes its private parent' );
+            return self::unavailable( $dir, __( 'directory escapes its private parent', 'mainwp' ) );
         }
         $existed = is_dir( $dir );
         if ( ! wp_mkdir_p( $dir ) ) {
-            return self::unavailable( $dir, 'could not create directory' );
+            return self::unavailable( $dir, __( 'could not create directory', 'mainwp' ) );
         }
         $real = realpath( $dir );
         if ( false === $real || is_link( $dir ) || wp_normalize_path( $real ) !== $candidate ) {
-            return self::unavailable( $dir, 'directory changed during creation' );
+            return self::unavailable( $dir, __( 'directory changed during creation', 'mainwp' ) );
         }
         $probe   = $real . '/.write-' . wp_generate_password( 24, false );
         $handle  = @fopen( $probe, 'x' );
@@ -593,7 +593,7 @@ class MainWP_Backup_Private_Root {
             $written = @unlink( $probe ) && $written;
         }
         if ( ! $written ) {
-            return self::unavailable( $dir, 'could not create and remove a write probe' );
+            return self::unavailable( $dir, __( 'could not create and remove a write probe', 'mainwp' ) );
         }
         if ( ! $existed ) {
             @chmod( $real, 0700 );

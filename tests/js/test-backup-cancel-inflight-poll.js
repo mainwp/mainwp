@@ -23,7 +23,7 @@ function harness() {
     const context = {
         currentSite: 7, ajaxurl: '/ajax', nonces: {}, siteDisconnected: false,
         currentJob: 0, rollbackRequestPending: false, canRestore: true,
-        backupMonitorResult: null, backupMonitorDismissed: false, updateBackupMonitor() {},
+        backupMonitorResult: null, backupMonitorDismissed: false, updateBackupMonitor() {}, backupFailureSummaries: {},
         mainwp_confirm( message, callback ) { callback(); },
         statusLabels: { pending: 'Queued' }, restoreCancelLabels: { cancelRollback: 'Cancel Rollback' },
         setPane() {}, startJobFollow( id ) { context.currentJob = id; },
@@ -69,7 +69,7 @@ function harness() {
     context.window.MainWPBackupCancelResult = context.MainWPBackupCancelResult;
     const vars = source.indexOf( 'var backupPollTimer = ' );
     vm.runInContext( source.slice( vars, source.indexOf( 'var currentSiteUrl', vars ) ), context );
-    for ( const name of [ 'stopBackupTimers', 'scheduleBackupPoll', 'showCancelBackup', 'enableSnapshotControls', 'showDisconnected', 'reenableBackupBtn', 'setBackupInProgress', 'setBackupFollowControls', 'resumeBackupFollow', 'pollBackup', 'cancelApplies', 'startRollback', 'loadSnapshots' ] ) {
+    for ( const name of [ 'stopBackupTimers', 'scheduleBackupPoll', 'showCancelBackup', 'enableSnapshotControls', 'showDisconnected', 'reenableBackupBtn', 'setBackupInProgress', 'setBackupFollowControls', 'resumeBackupFollow', 'pollBackup', 'backupFailureSummary', 'cancelApplies', 'startRollback', 'loadSnapshots' ] ) {
         const start = source.indexOf( 'function ' + name + '(' );
         if ( start < 0 && name === 'scheduleBackupPoll' ) continue; // Baseline has no scheduling helper.
         vm.runInContext( phpToJs( source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length ) ), context );

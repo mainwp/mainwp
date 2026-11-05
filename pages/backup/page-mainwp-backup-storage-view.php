@@ -428,7 +428,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Directory path', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-base-path" value=""/>
-                            <span class="ui small text"><?php esc_html_e( 'WordPress absolute path:', 'mainwp' ); ?> <?php echo esc_html( wp_normalize_path( ABSPATH ) ); ?></span>
+                            <span class="ui small text"><?php esc_html_e( 'A folder on the Dashboard server.', 'mainwp' ); ?> <?php esc_html_e( 'WordPress absolute path:', 'mainwp' ); ?> <?php echo esc_html( wp_normalize_path( ABSPATH ) ); ?></span>
                         </div>
                     </div>
                 </div>

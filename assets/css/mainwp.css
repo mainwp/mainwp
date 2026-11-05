@@ -1984,12 +1984,33 @@ div.http-response-ok span.http-notok-status {
 
 /* Backup errors are inserted as text and can carry long unbroken paths and paragraph breaks. */
 #mainwp-backup-phase-label,
+#mainwp-backup-monitor-label,
 #mainwp-native-backup-now-status .mainwp-backup-status-content {
     overflow-wrap: anywhere;
 }
 
 #mainwp-native-backup-now-status .mainwp-backup-status-content {
     white-space: pre-line;
+}
+
+.mainwp-backup-error-text {
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+
+/* The Run Now window's failed-site and summary errors. */
+.mainwp-backup-error-text.mainwp-red {
+    color: var(--mainwp-red, #b94141);
+    margin-top: .25em;
+}
+
+.mainwp-backup-requirements summary {
+    cursor: pointer;
+}
+
+.mainwp-backup-requirements summary:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
 }
 
 .mainwp-browse-themes .theme .image>img {

@@ -3,7 +3,7 @@ const assert = require( 'node:assert/strict' );
 const test = require( 'node:test' );
 const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
-const source = fs.readFileSync( require.resolve( '../../pages/backup/page-mainwp-backup-snapshots-view.php' ), 'utf8' );
+const source = fs.readFileSync( process.env.SRC || require.resolve( '../../pages/backup/page-mainwp-backup-snapshots-view.php' ), 'utf8' );
 
 function slice( start, end ) {
     const from = source.indexOf( start );
@@ -44,6 +44,7 @@ test( 'a failed upload shows the friendly text, then its detail and code on a mu
     } ] );
     assert.ok( html.includes( '<span class="ui small basic red label">Failed</span> ' + sftp + '<div><span class="ui small grey text">Permission denied (mainwp_backup_sftp_failed)</span></div>' ), html );
     assert.ok( ! html.includes( '[mainwp_backup_' ), html );
+    assert.ok( html.includes( '<div class="item mainwp-backup-error-text">Offsite SFTP (sftp)' ), 'The failed row wraps its message and detail lines: ' + html );
 } );
 
 test( 'provider text and codes are escaped as text', () => {
@@ -71,4 +72,5 @@ test( 'a completed upload shows no error text', () => {
         error_code: 'mainwp_backup_gcs_failed', error_message: 'old text', error_detail: 'old'
     } ] );
     assert.ok( ! html.includes( 'old' ), html );
+    assert.ok( ! html.includes( 'mainwp-backup-error-text' ), html );
 } );

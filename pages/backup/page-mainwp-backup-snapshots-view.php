@@ -169,6 +169,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em;<?php echo $site_id > 0 ? '' : ' display: none;'; ?>">
                 <div class="ui blue message mainwp-backup-local-note"<?php echo $backup_now_local_only ? '' : ' style="display: none;"'; ?>><?php echo esc_html( $local_note ); ?></div>
                 <div class="ui blue message mainwp-backup-destinations-note"<?php echo $backup_now_local_only ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $destinations_note ); ?></div>
+                <?php MainWP_Backup_Page::render_site_requirements_note(); ?>
             </div>
             <?php endif; ?>
 
@@ -185,7 +186,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     ?>
                 <div class="ui small info visible message">
                     <p><?php esc_html_e( 'Test Restore stays off until the sandbox can be set up.', 'mainwp' ); ?></p>
-                    <p style="white-space: pre-line;"><?php echo esc_html( $test_restore_notice ); ?></p>
+                    <p style="white-space: pre-line; overflow-wrap: anywhere;"><?php echo esc_html( $test_restore_notice ); ?></p>
                     <p><?php esc_html_e( 'After fixing the cause, save Backup Settings to clear the cached result. Test Restore will retry on the next automatic check.', 'mainwp' ); ?></p>
                 </div>
                 <?php endif; ?>
@@ -311,7 +312,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 <div id="mainwp-restore-progress-pane" style="display:none;">
                     <div class="ui small blue message" id="mainwp-restore-safety-note" style="display:none;"><?php esc_html_e( 'A safety backup was taken before this restore. If the result looks wrong, you can roll back to it.', 'mainwp' ); ?></div>
                     <div class="ui small yellow message" id="mainwp-restore-cancel-warning" style="display:none;"><?php esc_html_e( 'Cancelling now stops the restore partway through. Files already copied stay in place and the previous database tables are kept aside.', 'mainwp' ); ?> <span id="mainwp-restore-cancel-rollback-note" style="display:none;"><?php esc_html_e( 'You can roll back to the safety backup afterwards.', 'mainwp' ); ?></span></div>
-                    <div class="ui message" id="mainwp-restore-result-message" style="display:none;"></div>
+                    <div class="ui message mainwp-backup-error-text" id="mainwp-restore-result-message" style="display:none;"></div>
                     <div class="ui small yellow message" id="mainwp-restore-outcome-note" style="display:none;"></div>
                     <div class="ui small message" id="mainwp-restore-preserve-note" style="display:none;"></div>
                     <div class="ui small message" id="mainwp-restore-reconcile-note" style="display:none;"></div>
@@ -1095,8 +1096,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 var details = '<div class="ui mini divided list">';
                 ( row.data().uploads || [] ).forEach( function ( upload ) {
                     var label = uploadLabels[ upload.status ] || [ 'grey', escAttr( upload.status ) ];
-                    details += '<div class="item">' + escAttr( upload.name ) + ' (' + escAttr( upload.provider ) + ') <span class="ui small basic ' + label[0] + ' label">' + label[1] + '</span>';
-                    if ( [ 'failed_retryable', 'failed_permanent', 'credentials_invalid' ].indexOf( upload.status ) !== -1 && upload.last_error ) {
+                    var failed = [ 'failed_retryable', 'failed_permanent', 'credentials_invalid' ].indexOf( upload.status ) !== -1 && upload.last_error;
+                    details += '<div class="item' + ( failed ? ' mainwp-backup-error-text' : '' ) + '">' + escAttr( upload.name ) + ' (' + escAttr( upload.provider ) + ') <span class="ui small basic ' + label[0] + ' label">' + label[1] + '</span>';
+                    if ( failed ) {
                         details += ' ' + escAttr( upload.error_message || upload.last_error );
                         // The provider's own message and the error code stay visible for support.
                         var support = [ upload.error_detail, upload.error_code ? '(' + upload.error_code + ')' : '' ].filter( Boolean ).join( ' ' );
@@ -1188,7 +1190,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         }
                         var showRollback = job.has_rollback && canRestore;
                         var sentence = restoreOutcomeSentence( job, showRollback && ! job.is_rollback );
-                        var $details = $( '<td></td>' ).text( jobMessage );
+                        var $details = $( '<td></td>' ).text( jobMessage ).addClass( 'mainwp-backup-error-text' );
                         if ( sentence ) {
                             $details.append( $( '<div></div>' ).text( sentence ) );
                         }
@@ -1909,8 +1911,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-backup-monitor' ).removeClass( 'green yellow red blue' )
                     .addClass( hasResult ? backupMonitorResult.color : '' )
                     .toggle( ! backupMonitorDismissed && ( hasResult || ( running && ! modalOpen ) ) );
-                $( '#mainwp-backup-monitor-label' ).text( hasResult ? backupMonitorResult.text : '<?php echo esc_js( esc_html__( 'Backup in progress.', 'mainwp' ) ); ?>' );
-                $( '#mainwp-backup-view-progress' ).toggle( running );
+                $( '#mainwp-backup-monitor-label' ).text( hasResult ? ( backupInProgress ? backupMonitorResult.text : backupMonitorResult.label ) : '<?php echo esc_js( esc_html__( 'Backup in progress.', 'mainwp' ) ); ?>' );
+                // Link to details when the dialog has more text than the banner.
+                $( '#mainwp-backup-view-progress' )
+                    .text( backupInProgress ? '<?php echo esc_js( esc_html__( 'View progress', 'mainwp' ) ); ?>' : '<?php echo esc_js( esc_html__( 'View details', 'mainwp' ) ); ?>' )
+                    .toggle( backupInProgress || ( hasResult && backupMonitorResult.label !== backupMonitorResult.text && ! modalOpen ) );
                 $( '#mainwp-backup-monitor-dismiss' ).toggle( hasResult );
             }
             $( '#mainwp-native-backup-progress-modal' ).modal( {
@@ -1937,22 +1942,28 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 '<?php echo esc_js( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ); ?>': '<?php echo esc_js( esc_html__( 'Backup failed on the Dashboard server.', 'mainwp' ) ); ?>'
             };
 
-            function backupFailureSummary( code ) {
-                return Object.prototype.hasOwnProperty.call( backupFailureSummaries, code ) ? backupFailureSummaries[ code ] : '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>';
+            function backupFailureSummary( code, fallback ) {
+                if ( Object.prototype.hasOwnProperty.call( backupFailureSummaries, code ) ) {
+                    return backupFailureSummaries[ code ];
+                }
+                return fallback || '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>';
             }
 
-            function setBackupStatus( text, isError, color, progressTick, label ) {
+            function setBackupStatus( text, isError, color, progressTick, label, progressOnly ) {
                 if ( ! progressTick ) {
                     backupStatusDismissed = false;
                 }
                 if ( ! progressTick && text && ( color === 'green' || color === 'yellow' || isError ) ) {
-                    backupMonitorResult = { text: text, color: color || 'red' };
+                    backupMonitorResult = { text: text, label: label || text, color: color || 'red' };
                     backupMonitorDismissed = false;
                 }
                 if ( ! text ) {
                     backupMonitorResult = null;
                 }
                 updateBackupMonitor();
+                if ( progressOnly && ! progressTick && ! isError && ! color && text && backupMonitorResult && backupMonitorResult.label !== backupMonitorResult.text ) {
+                    return;
+                }
                 if ( ! progressTick ) {
                     $( '#mainwp-backup-phase-label' ).text( label || text );
                     if ( color === 'green' ) {
@@ -2070,8 +2081,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     if ( data.error ) {
                         stopBackupTimers();
-                        // Early refusals carry no status and stay short enough for the label.
-                        setBackupStatus( data.error, true, '', false, 'failed' === data.status ? backupFailureSummary( data.error_code ) : '' );
+                        backupInProgress = false;
+                        // Refusals without a failed status come before the run started.
+                        setBackupStatus( data.error, true, '', false, backupFailureSummary( data.error_code, 'failed' === data.status ? '' : '<?php echo esc_js( esc_html__( 'Backup could not start.', 'mainwp' ) ); ?>' ) );
                         reenableBackupBtn();
                         showCancelBackup( false );
                         loadSnapshots( siteId );
@@ -2079,6 +2091,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     if ( 'completed' === data.status ) {
                         stopBackupTimers();
+                        backupInProgress = false;
                         // An advisory note (like the large-site ZIP auto-switch)
                         // rides along with the success status; show it, never
                         // dress it up as a failure.
@@ -2094,7 +2107,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     if ( 'failed' === data.status ) {
                         stopBackupTimers();
-                        setBackupStatus( data.error || '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>', true );
+                        backupInProgress = false;
+                        setBackupStatus( data.error || '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>', true, '', false, backupFailureSummary( data.error_code ) );
                         reenableBackupBtn();
                         showCancelBackup( false );
                         loadSnapshots( siteId );
@@ -2211,7 +2225,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     if ( response.error ) {
                         stopBackupTimers();
-                        setBackupStatus( response.error, true );
+                        backupInProgress = false;
+                        setBackupStatus( response.error, true, '', false, '<?php echo esc_js( esc_html__( 'Backup could not start.', 'mainwp' ) ); ?>' );
                         reenableBackupBtn();
                         loadSnapshots( siteId );
                         // Keep the Cancel affordance only when the blocker is an
@@ -2221,6 +2236,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     if ( response.settled ) {
                         stopBackupTimers();
+                        backupInProgress = false;
                         setBackupStatus( response.message, false );
                         reenableBackupBtn();
                         showCancelBackup( false );
@@ -2246,6 +2262,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     // The kickoff request never reached the handler, so nothing
                     // started: stop the clock, report it, and re-enable the button.
                     stopBackupTimers();
+                    backupInProgress = false;
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not start the backup. Please try again.', 'mainwp' ) ); ?>', true );
                     reenableBackupBtn();
                     showCancelBackup( false );
@@ -2277,7 +2294,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 var cancelToken = ++backupCancelSeq;
                 backupCancelPending[ siteId ] = cancelToken;
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
-                setBackupStatus( '<?php echo esc_js( esc_html__( 'Cancelling backup...', 'mainwp' ) ); ?>', false );
+                setBackupStatus( '<?php echo esc_js( esc_html__( 'Cancelling backup...', 'mainwp' ) ); ?>', false, '', false, '', true );
                 $.post( ajaxurl, { action: 'mainwp_native_backup_cancel', security: nonces.nativeBackupCancel, site_id: siteId }, function ( response ) {
                     if ( backupCancelPending[ siteId ] === cancelToken ) {
                         delete backupCancelPending[ siteId ];
@@ -2303,9 +2320,15 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         return;
                     }
                     if ( response.error ) {
-                        setBackupStatus( response.error, true );
+                        setBackupStatus( response.error, true, '', false, '<?php echo esc_js( esc_html__( 'Could not cancel the backup.', 'mainwp' ) ); ?>' );
                         $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                         return;
+                    }
+                    if ( cancelResult.keepPolling ) {
+                        backupMonitorResult = null;
+                    }
+                    if ( 'cancelled' === response.result ) {
+                        backupInProgress = false;
                     }
                     setBackupStatus( cancelResult.message, false, cancelResult.keepPolling ? '' : 'yellow' );
                     if ( 'cancelled' === response.result ) {
@@ -2346,7 +2369,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
                 var runCleanup = function () {
                     $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', true ).addClass( 'disabled' );
-                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Cleaning up backups...', 'mainwp' ) ); ?>', false );
+                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Cleaning up backups...', 'mainwp' ) ); ?>', false, '', false, '', true );
                     $.post( ajaxurl, { action: 'mainwp_snapshots_cleanup', security: nonces.snapshotsCleanup, site_id: currentSite }, function ( response ) {
                         $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                         if ( ! response || response.error ) {

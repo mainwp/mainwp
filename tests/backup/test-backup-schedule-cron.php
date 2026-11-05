@@ -15,6 +15,7 @@ require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
+use MainWP\Dashboard\MainWP_Backup_Schedule_Calculator;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
@@ -27,6 +28,169 @@ use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 
 	use Backup_Private_Root_Fixture;
+
+	/**
+	 * Both cron lanes serve an overdue wall-clock slot once, then retain its offset.
+	 *
+	 * @dataProvider scheduled_start_lanes
+	 * @param string $lane Cron entry point.
+	 */
+	public function test_mwp_2166_overdue_wall_clock_starts_once( $lane ) {
+		update_option( 'timezone_string', 'UTC' );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( 'mainwp_backup_start_offset_minutes', 30 );
+		$base   = strtotime( gmdate( 'Y-m-d H:i:00', time() - 2 * HOUR_IN_SECONDS ) . ' UTC' );
+		$id     = $this->insert_task(
+			array(
+				'id'          => 58, // Delay 30 minutes in a 30-minute window, so a missing delay fails.
+				'userid'      => self::factory()->user->create( array( 'role' => 'administrator' ) ),
+				'time_of_day' => gmdate( 'H:i', $base ),
+				'next_run'    => $base,
+			)
+		);
+		$offset = 30 * MINUTE_IN_SECONDS;
+		$cron   = $this->start_only_cron();
+		$closed = 0;
+		$count  = static function ( $task_id ) use ( $id, &$closed ) {
+			if ( $id === $task_id ) {
+				++$closed;
+			}
+		};
+		add_action( 'mainwp_backup_diag_run_close', $count );
+		try {
+			$cron->$lane();
+			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+			$this->assertSame( $base + DAY_IN_SECONDS + $offset, (int) $task->next_run );
+			$cron->cron_backups_slice();
+			$cron->cron_backups();
+			$this->assertSame( 1, $closed );
+			$this->assertSame( (int) $task->last_run, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run );
+		} finally {
+			remove_action( 'mainwp_backup_diag_run_close', $count );
+		}
+	}
+
+	/** Raising the window after the base was served cannot schedule that base again. */
+	public function test_mwp_2166_raised_window_advance_honors_task_last_run() {
+		update_option( 'timezone_string', 'UTC' );
+		update_option( 'mainwp_backup_start_offset_minutes', 60 );
+		$base   = strtotime( gmdate( 'Y-m-d H:i:00', time() ) . ' UTC' );
+		$id     = $this->insert_task(
+			array(
+				'id'          => 58, // Delay 27 minutes in a 60-minute window.
+				'time_of_day' => gmdate( 'H:i', $base ),
+				'next_run'    => $base,
+				'last_run'    => time(),
+			)
+		);
+		$offset = 27 * MINUTE_IN_SECONDS;
+		MainWP_System_Cron_Jobs::instance()->maybe_advance_backup_next_run( $id, 0, $base );
+		$this->assertSame( $base + DAY_IN_SECONDS + $offset, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->next_run );
+	}
+
+	/**
+	 * Option hooks recompute only distant wall-clock slots and preserve concurrent saves.
+	 *
+	 * @dataProvider mwp_2166_option_changes
+	 * @param bool $existing Whether the option already exists.
+	 */
+	public function test_mwp_2166_option_change_recomputes_distant_slots( $existing ) {
+		update_option( 'timezone_string', 'UTC' );
+		delete_option( 'mainwp_backup_start_offset_minutes' );
+		if ( $existing ) {
+			update_option( 'mainwp_backup_start_offset_minutes', 0 );
+		}
+		$cron = MainWP_System_Cron_Jobs::instance();
+		$cron->init_cron_jobs();
+		$now = time();
+		// The next slot of this time of day, at least three hours out whatever the clock says.
+		$base = intdiv( $now + 3 * HOUR_IN_SECONDS, MINUTE_IN_SECONDS ) * MINUTE_IN_SECONDS;
+		$wall = array( 'time_of_day' => gmdate( 'H:i', $base ) );
+		// Today's slot ran with no delay ten minutes ago; its delayed slot would still be ahead.
+		$ran = intdiv( $now - 10 * MINUTE_IN_SECONDS, MINUTE_IN_SECONDS ) * MINUTE_IN_SECONDS;
+		$ids = array();
+		// Fixed ids give nonzero delays (1: 5 minutes, 58: 30 minutes) in a 30-minute window.
+		foreach ( array(
+			'distant'  => $wall + array(
+				'id'       => 1,
+				'next_run' => $base + 123,
+			),
+			'due'      => $wall + array(
+				'id'       => 2,
+				'next_run' => $now - 1,
+			),
+			'imminent' => $wall + array(
+				'id'       => 3,
+				'next_run' => $now + HOUR_IN_SECONDS,
+			),
+			'interval' => array(
+				'id'             => 4,
+				'schedule'       => 'interval',
+				'interval_hours' => 2,
+				'next_run'       => $base,
+			),
+			'legacy'   => array(
+				'id'       => 5,
+				'next_run' => 0,
+			),
+			'served'   => array(
+				'id'          => 58,
+				'time_of_day' => gmdate( 'H:i', $ran ),
+				'next_run'    => $ran + DAY_IN_SECONDS,
+				'last_run'    => $ran + MINUTE_IN_SECONDS,
+			),
+		) as $name => $fields ) {
+			$ids[ $name ] = $this->insert_task( $fields );
+		}
+		update_option( 'mainwp_backup_start_offset_minutes', 30 );
+		$db = MainWP_DB_Backup::instance();
+		foreach ( array(
+			'distant' => $base,
+			'served'  => $ran + DAY_IN_SECONDS,
+		) as $name => $slot ) {
+			$offset = ( (int) sprintf( '%u', crc32( 'mainwp_backup_start_offset_' . $ids[ $name ] ) ) % 31 ) * MINUTE_IN_SECONDS;
+			$this->assertSame( $slot + $offset, (int) $db->get_backup_task_by_id( $ids[ $name ] )->next_run, $name );
+		}
+		foreach ( array(
+			'due'      => $now - 1,
+			'imminent' => $now + HOUR_IN_SECONDS,
+			'interval' => $base,
+			'legacy'   => 0,
+		) as $name => $slot ) {
+			$this->assertSame( $slot, (int) $db->get_backup_task_by_id( $ids[ $name ] )->next_run, $name );
+		}
+		$task = $db->get_backup_task_by_id( $ids['distant'] );
+		$cron->recompute_backup_next_runs_for_start_offset();
+		$this->assertSame( (int) $task->next_run, (int) $db->get_backup_task_by_id( $task->id )->next_run, 'Recomputation must be idempotent.' );
+		$saved_next = $base + 5 * DAY_IN_SECONDS;
+		$interleave = static function ( $sql ) use ( &$interleave, $db, $task, $saved_next ) {
+			if ( str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, 'mainwp_wp_backup' ) && str_contains( $sql, '`next_run`' ) ) {
+				remove_filter( 'query', $interleave );
+				$db->update_backup_task_with_values( $task->id, array( 'next_run' => $saved_next ) );
+			}
+			return $sql;
+		};
+		$db->update_backup_task_with_values( $task->id, array( 'next_run' => $base + 123 ) );
+		add_filter( 'query', $interleave );
+		try {
+			$cron->recompute_backup_next_runs_for_start_offset();
+			$this->assertSame( $saved_next, (int) $db->get_backup_task_by_id( $task->id )->next_run );
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+	}
+
+	/**
+	 * Both WordPress option-write hooks must trigger recomputation.
+	 *
+	 * @return array
+	 */
+	public static function mwp_2166_option_changes() {
+		return array(
+			'add'    => array( false ),
+			'update' => array( true ),
+		);
+	}
 
 	/**
 	 * The minutely slice event follows the native-backup toggle.
@@ -380,6 +544,39 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( (int) $task->last_run, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run );
 	}
 
+	/** Run Now keeps its fresh identity as the interval anchor. */
+	public function test_run_now_before_interval_due_reanchors_next_run() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( 'mainwp_backup_start_offset_minutes', 0 );
+		$id      = $this->insert_task(
+			array(
+				'userid'         => get_current_user_id(),
+				'sites'          => (string) $this->create_test_site(),
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => time() + 1800,
+			)
+		);
+		$offline = static function () {
+			return array( 'error' => 'Fixture Child is offline.' );
+		};
+		add_filter( 'mainwp_pre_fetch_authed_data', $offline );
+		try {
+			$result = MainWP_Manage_Backups_Handler::run_backup_task_now( $id, 'ability' );
+		} finally {
+			remove_filter( 'mainwp_pre_fetch_authed_data', $offline );
+		}
+		$this->assertArrayNotHasKey( 'error', $result );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertGreaterThan( 0, (int) $task->last_run );
+		$this->assertSame( (int) $task->last_run + 3600, (int) $task->next_run );
+		$cron = $this->start_only_cron();
+		$cron->cron_backups_slice();
+		$cron->cron_backups();
+		$this->assertSame( (int) $task->last_run, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run );
+	}
+
 	/** A second process must be refused while the first starter owns the lane. */
 	public function test_slice_and_hourly_overlap_starts_due_task_once() {
 		update_option( 'mainwp_enableNativeBackups', 1 );
@@ -674,6 +871,32 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( '03:05', $task->time_of_day, 'Time of day normalizes to HH:MM.' );
 		$this->assertGreaterThan( time(), (int) $task->next_run, 'The next 03:05 slot is in the future.' );
 		$this->assertLessThanOrEqual( time() + DAY_IN_SECONDS, (int) $task->next_run, 'The next slot is within a day.' );
+	}
+
+	/**
+	 * With the spread window on, the schedule fields save stores the task's
+	 * own delay, the same slot the cron advance later computes.
+	 *
+	 * @return void
+	 */
+	public function test_mwp_2166_save_schedule_fields_applies_task_start_offset() {
+		update_option( 'mainwp_backup_start_offset_minutes', 30 );
+
+		// Pick an id with a non-zero delay so a missing id cannot pass as delay 0.
+		do {
+			$id    = $this->insert_task( array( 'schedule' => 'daily' ) );
+			$delay = ( (int) sprintf( '%u', crc32( 'mainwp_backup_start_offset_' . $id ) ) % 31 ) * MINUTE_IN_SECONDS;
+		} while ( 0 === $delay );
+
+		// Two hours ahead keeps the slot clear of now and of the delay window.
+		$_POST['schedule_time_of_day'] = wp_date( 'H:i', time() + 2 * HOUR_IN_SECONDS );
+
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id, $_POST );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$base = ( new MainWP_Backup_Schedule_Calculator( wp_timezone(), time(), 0 ) )->compute_next_run( $task );
+		$this->assertSame( $base + $delay, (int) $task->next_run, 'The saved slot carries the task id delay.' );
+		$this->assertSame( (int) $task->next_run, ( new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() ) )->compute_next_run( $task ), 'Save and cron advance agree on the slot.' );
 	}
 
 	/**

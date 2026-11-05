@@ -807,7 +807,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'max_chain_length'               => $values['retention']['max_chain_length'],
         );
         $calculator        = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
-        $write['next_run'] = empty( $task->paused ) ? $calculator->compute_next_run( (object) $write, empty( $task->last_run ) ? null : (int) $task->last_run ) : (int) $task->next_run;
+        $write['next_run'] = empty( $task->paused ) ? $calculator->compute_next_run( (object) ( $write + array( 'id' => $task ? (int) $task->id : 0 ) ), empty( $task->last_run ) ? null : (int) $task->last_run ) : (int) $task->next_run;
         $id                = $task ? (int) $task->id : 0;
         $before            = array();
         $option_before     = null;
@@ -842,7 +842,13 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( false === $saved ) {
                 return $error;
             }
-            $id            = (int) $wpdb->insert_id;
+            $id = (int) $wpdb->insert_id;
+            // The start delay derives from the task id, which only exists now.
+            $next_run = $calculator->compute_next_run( (object) ( $write + array( 'id' => $id ) ) );
+            if ( $next_run !== (int) $write['next_run'] ) {
+                $write['next_run'] = $next_run;
+                $saved             = $wpdb->update( $table, array( 'next_run' => $next_run ), array( 'id' => $id ) );
+            }
             $key           = MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $id;
             $option_before = $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $key ), ARRAY_A );
             if ( '' !== $wpdb->last_error ) {
@@ -2883,7 +2889,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return (int) $task->next_run > 0 ? (int) $task->next_run : null;
         }
         $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
-        $next       = $calculator->compute_next_run( (object) $values, empty( $task->last_run ) ? null : (int) $task->last_run );
+        $next       = $calculator->compute_next_run( (object) ( $values + array( 'id' => $task ? (int) $task->id : 0 ) ), empty( $task->last_run ) ? null : (int) $task->last_run );
         return $next > 0 ? $next : null;
     }
 

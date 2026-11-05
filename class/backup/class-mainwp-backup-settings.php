@@ -49,6 +49,15 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     );
 
     /**
+     * Upper bound for the scheduled start spread, in minutes. It must stay
+     * far below the shortest wall-clock period (one day) so a delayed run
+     * can never reach the task's next slot.
+     *
+     * @var int
+     */
+    public const MAX_START_OFFSET_MINUTES = 60;
+
+    /**
      * Whether the most recent handle_settings_post() call silently forced
      * archive encryption off because no recovery passphrase (recovery
      * blob) existed yet. Read by the settings save handler immediately
@@ -275,6 +284,33 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function get_on_demand_retention_count(): int {
         return max( 1, (int) get_option( 'mainwp_on_demand_retention_count', 5 ) );
+    }
+
+    /**
+     * Window, in minutes, over which daily, weekly and monthly task starts
+     * are spread. A stored value out of range is clamped rather than
+     * trusted, because the scheduler adds it to every computed slot.
+     *
+     * @return int Minutes from 0 (off, the default) to MAX_START_OFFSET_MINUTES.
+     */
+    public static function get_backup_start_offset_minutes(): int {
+        return min( self::MAX_START_OFFSET_MINUTES, max( 0, (int) get_option( 'mainwp_backup_start_offset_minutes', 0 ) ) );
+    }
+
+    /**
+     * Parse a submitted start spread without coercing malformed input.
+     *
+     * @param mixed $value Submitted value.
+     * @return int|null Whole minutes within range, or null when the value must be refused.
+     */
+    public static function normalize_start_offset_minutes( $value ): ?int {
+        if ( is_string( $value ) && MainWP_Utility::ctype_digit( $value ) && strlen( $value ) <= 5 ) {
+            $value = (int) $value;
+        }
+        if ( ! is_int( $value ) || $value < 0 || $value > self::MAX_START_OFFSET_MINUTES ) {
+            return null;
+        }
+        return $value;
     }
 
     /**
@@ -558,6 +594,17 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                     $counts[ $option ] = $count;
                 }
+                $start_offset = null;
+                if ( array_key_exists( 'mainwp_options_backupStartOffset', $_POST ) ) {
+                    $start_offset = self::normalize_start_offset_minutes( wp_unslash( $_POST['mainwp_options_backupStartOffset'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the parser refuses anything but whole minutes in range.
+                    if ( null === $start_offset ) {
+                        self::$count_errors['mainwp_options_backupStartOffset'] = sprintf(
+                            /* translators: %d: maximum number of minutes. */
+                            __( 'Enter a whole number from 0 to %d.', 'mainwp' ),
+                            self::MAX_START_OFFSET_MINUTES
+                        );
+                    }
+                }
                 if ( ! empty( self::$count_errors ) ) {
                     return false;
                 }
@@ -581,6 +628,9 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 if ( isset( $_POST['mainwp_options_maximumFileDescriptors'] ) && - 1 < $_POST['mainwp_options_maximumFileDescriptors'] ) {
                     MainWP_Utility::update_option( 'mainwp_maximumFileDescriptors', ( isset( $_POST['mainwp_options_maximumFileDescriptors'] ) ? intval( $_POST['mainwp_options_maximumFileDescriptors'] ) : 1 ) );
+                }
+                if ( null !== $start_offset ) {
+                    MainWP_Utility::update_option( 'mainwp_backup_start_offset_minutes', $start_offset );
                 }
                 MainWP_Utility::update_option( 'mainwp_maximumFileDescriptorsAuto', ( ! isset( $_POST['mainwp_maximumFileDescriptorsAuto'] ) ? 0 : 1 ) );
                 MainWP_Utility::update_option( 'mainwp_archiveFormat', ( isset( $_POST['mainwp_archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_archiveFormat'] ) ) : '' ) );

@@ -246,14 +246,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @return array Run identity and status, or error.
      */
     private static function claim_manual_task_run( object &$task, int $click, ?int $baseline = null, float $deadline = 0.0, bool &$driven = false ): array {
-        $task_id = (int) $task->id;
-        $before  = (int) $task->last_run;
-        $claimed = null;
-        $started = 0;
-        $settle  = MainWP_Backup_Settings::get_manual_run_settle_seconds();
-        $outcome = null;
+        $task_id    = (int) $task->id;
+        $before     = (int) $task->last_run;
+        $claimed    = null;
+        $started    = 0;
+        $settle     = MainWP_Backup_Settings::get_manual_run_settle_seconds();
+        $outcome    = null;
+        $claim_time = time();
         static::execute_backup_task( $task, 5, true, max( 1, $settle ), $claimed, $started, true, $outcome, $deadline );
-        if ( true === $claimed ) {
+        if ( true === $claimed && ( (int) $task->interval_hours > 0 || (int) $task->next_run <= $claim_time ) ) {
             MainWP_System_Cron_Jobs::instance()->maybe_advance_backup_next_run( $task_id, $before );
         }
         $driven = $driven || $outcome['sites_visited'] > 0;
@@ -1039,7 +1040,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             'day_of_month'   => $day_of_month,
         );
 
-        $sched_task = (object) array_merge( array( 'schedule' => $task->schedule ), $values );
+        // The id selects the task's start delay inside the spread window.
+        $sched_task = (object) array_merge(
+            array(
+                'id'       => (int) $task->id,
+                'schedule' => $task->schedule,
+            ),
+            $values
+        );
 
         $calculator         = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
         $values['next_run'] = empty( $task->paused ) ? $calculator->compute_next_run( $sched_task, empty( $task->last_run ) ? null : (int) $task->last_run ) : (int) $task->next_run;

@@ -3306,6 +3306,44 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	/** A queued claim serves a schedule that became due after the click. */
+	public function test_queued_manual_claim_advances_due_schedule() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$due                    = time() - MINUTE_IN_SECONDS;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'next_run'    => $due,
+				'time_of_day' => gmdate( 'H:i', $due ),
+				'schedule'    => 'daily',
+			)
+		);
+		$task   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$claim  = new \ReflectionMethod( MainWP_Manage_Backups_Handler::class, 'claim_manual_task_run' );
+		$result = $claim->invokeArgs( null, array( &$task, $due - MINUTE_IN_SECONDS, (int) $task->last_run ) );
+		$this->assertArrayNotHasKey( 'error', $result );
+		$this->assertGreaterThan( $due, (int) $task->next_run );
+	}
+
+	/** Run Now preserves a pending delayed scheduled occurrence. */
+	public function test_manual_run_preserves_pending_delayed_schedule() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$pending                = time() + 20 * MINUTE_IN_SECONDS;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'next_run'    => $pending,
+				'time_of_day' => gmdate( 'H:i', time() - 10 * MINUTE_IN_SECONDS ),
+				'schedule'    => 'daily',
+			)
+		);
+		$result = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$this->assertArrayNotHasKey( 'error', $result );
+		$current = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThan( (int) $task->last_run, (int) $current->last_run );
+		$this->assertSame( $pending, (int) $current->next_run );
+	}
+
 	/**
 	 * Zero settle time must not let a stale manual caller recover an open run.
 	 *

@@ -233,6 +233,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @return mixed preview content.
      */
     public function column_site_preview( $item ) {
+        if ( ! MainWP_UI::is_site_preview_enabled() ) {
+            return '';
+        }
         $site_mshot = MainWP_UI::get_mshots_image_sources( $item['url'], 900 );
 
         return '<span class="mainwp-preview-item ui mini grey icon basic button" data-position="left center" data-inverted="" data-tooltip="' . esc_html__( 'Click to see the site homepage screenshot.', 'mainwp' ) . '" preview-site-url="' . esc_url( $item['url'] ) . '" data-mainwp-mshot-src="' . esc_url( $site_mshot['src'] ) . '" data-mainwp-mshot-requeue-src="' . esc_url( $site_mshot['requeue_src'] ) . '" ><i class="camera icon"></i></span>';

@@ -505,7 +505,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
                 }
                 $chunked   = isset( $artifact['mode'] ) && 'chunked' === $artifact['mode'];
                 $candidate = array(
-                    'key'            => $snapshot->site_id . '/' . $snapshot->id . '/files/' . $artifact['file'],
+                    'key'            => MainWP_Backup_Remote_Path::for_upload( $snapshot, $job->checkpoint ) . 'files/' . $artifact['file'],
                     'chunked'        => $chunked,
                     'destination_id' => (int) $job->destination_id,
                     // Backup-time hash recorded at upload. Carried into the

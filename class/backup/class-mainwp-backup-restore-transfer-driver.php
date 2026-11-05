@@ -42,6 +42,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     private array $snapshot_prefixes = array();
 
     /**
+     * Upload identity bound to the provider selected by snapshot-level fallback.
+     *
+     * @var array<int,array{prefix:string,destination_id:int}>
+     */
+    private array $fallback_uploads = array();
+
+    /**
      * Get the singleton instance.
      *
      * @return MainWP_Backup_Restore_Transfer_Driver
@@ -283,7 +290,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             }
 
             $source        = (string) $entry['source_file'];
-            $prefix        = $this->snapshot_prefix( $snapshot_id );
+            $prefix        = $uploads[ $snapshot_id ]['prefix'] ?? $this->snapshot_prefix( $snapshot_id );
             $provider      = $uploads[ $snapshot_id ]['provider'];
             $expected_host = $provider->object_host();
             $item          = array(
@@ -389,6 +396,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $uploads[] = array(
                 'provider'  => $provider,
                 'artifacts' => $by_file,
+                'prefix'    => MainWP_Backup_Remote_Path::for_upload( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id ), $job->checkpoint ),
             );
         }
         return $uploads;
@@ -407,6 +415,14 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $snapshot                                = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
             $site_id                                 = null !== $snapshot ? (int) $snapshot->site_id : 0;
             $this->snapshot_prefixes[ $snapshot_id ] = $site_id . '/' . $snapshot_id . '/';
+            if ( null !== $snapshot ) {
+                foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id ) as $job ) {
+                    if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE === $job->status ) {
+                        $this->snapshot_prefixes[ $snapshot_id ] = MainWP_Backup_Remote_Path::for_upload( $snapshot, (array) $job->checkpoint );
+                        break;
+                    }
+                }
+            }
         }
         return $this->snapshot_prefixes[ $snapshot_id ];
     }
@@ -445,9 +461,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 continue;
             }
 
-            $key       = $this->snapshot_prefix( $snapshot_id ) . 'files/' . $source_file;
             $confirmed = true;
             foreach ( $uploads as $upload ) {
+                $key = ( $upload['prefix'] ?? $this->snapshot_prefix( $snapshot_id ) ) . 'files/' . $source_file;
                 if ( ! method_exists( $upload['provider'], 'head_object' ) ) {
                     $confirmed = false; // Absence cannot be confirmed here.
                     break;
@@ -848,7 +864,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array Stage state.
      */
     protected function stage_from_remote( string $staging, array &$entry, ?MainWP_Backup_Storage_Provider $provider = null ): array {
-        $provider = null !== $provider ? $provider : $this->provider_for_snapshot( (int) $entry['snapshot_id'] );
+        $provider = null !== $provider ? $provider : $this->fallback_provider( $entry, $staging );
         if ( null === $provider ) {
             return $this->stage_state( 'error', __( 'No storage destination holds a copy of this backup.', 'mainwp' ) );
         }
@@ -988,7 +1004,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array Stage state.
      */
     protected function stage_from_remote_chunked( string $staging, array &$entry, float $deadline, ?MainWP_Backup_Storage_Provider $provider = null ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- resumable verify-then-append loop.
-        $provider = null !== $provider ? $provider : $this->provider_for_snapshot( (int) $entry['snapshot_id'] );
+        $provider = null !== $provider ? $provider : $this->fallback_provider( $entry, $staging );
         if ( null === $provider ) {
             return $this->stage_state( 'error', __( 'No storage destination holds a copy of this backup.', 'mainwp' ) );
         }
@@ -1211,12 +1227,14 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      */
     protected function fetch_manifest( MainWP_Backup_Storage_Provider $provider, array &$entry, string $staging, bool &$retryable = false ): array|\WP_Error|null {
         $retryable = false;
-        // The manifest lives beside the artifact's chunks under the
-        // snapshot prefix, which the remote key scheme encodes as
-        // {site}/{snapshot}/.
+        // Use the selected replica's recorded folder, including its old name.
         $snapshot              = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $entry['snapshot_id'] );
-        $site_id               = null !== $snapshot ? (int) $snapshot->site_id : 0;
-        $entry['chunk_prefix'] = $site_id . '/' . (int) $entry['snapshot_id'] . '/';
+        $entry['chunk_prefix'] = $this->snapshot_prefix( (int) $entry['snapshot_id'] );
+        $key                   = (string) ( $entry['remote_key'] ?? '' );
+        $files_at              = strpos( $key, '/files/' );
+        if ( null !== $snapshot && false !== $files_at ) {
+            $entry['chunk_prefix'] = MainWP_Backup_Remote_Path::for_upload( $snapshot, array( 'remote_prefix' => substr( $key, 0, $files_at + 1 ) ) );
+        }
 
         $temp = $staging . 'manifest-' . (int) $entry['snapshot_id'] . '.json';
         try {
@@ -1287,15 +1305,50 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return MainWP_Backup_Storage_Provider|null Provider or null.
      */
     protected function provider_for_snapshot( int $snapshot_id ): ?MainWP_Backup_Storage_Provider {
+        unset( $this->fallback_uploads[ $snapshot_id ] );
         $destination = $this->find_destination_for_snapshot( $snapshot_id );
         if ( null === $destination ) {
             return null;
         }
         try {
-            return MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
+            $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+            if ( null !== $snapshot ) {
+                foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id ) as $job ) {
+                    if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE === $job->status && (int) $destination->id === (int) $job->destination_id ) {
+                        $this->fallback_uploads[ $snapshot_id ] = array(
+                            'prefix'         => MainWP_Backup_Remote_Path::for_upload( $snapshot, (array) $job->checkpoint ),
+                            'destination_id' => (int) $job->destination_id,
+                        );
+                        break;
+                    }
+                }
+            }
+            return $provider;
         } catch ( \Throwable $e ) {
             return null;
         }
+    }
+
+    /**
+     * Refresh a fallback entry when its original replica has disappeared.
+     *
+     * @param array  $entry Restore entry, updated with the selected copy's key.
+     * @param string $staging Local staging directory.
+     * @return MainWP_Backup_Storage_Provider|null Selected provider.
+     */
+    private function fallback_provider( array &$entry, string $staging ): ?MainWP_Backup_Storage_Provider {
+        $snapshot_id = (int) $entry['snapshot_id'];
+        $provider    = $this->provider_for_snapshot( $snapshot_id );
+        if ( null !== $provider && isset( $this->fallback_uploads[ $snapshot_id ] ) ) {
+            $upload = $this->fallback_uploads[ $snapshot_id ];
+            if ( ( isset( $entry['chunks'] ) || isset( $entry['reassembly'] ) ) && ( ( $entry['fallback_destination_id'] ?? null ) !== $upload['destination_id'] || ( $entry['chunk_prefix'] ?? '' ) !== $upload['prefix'] ) ) {
+                $this->drop_resume_state( $staging, $entry );
+            }
+            $entry['fallback_destination_id'] = $upload['destination_id'];
+            $entry['remote_key']              = $upload['prefix'] . 'files/' . ( $entry['source_file'] ?? $entry['file'] );
+        }
+        return $provider;
     }
 
     /**

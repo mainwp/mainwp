@@ -278,7 +278,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 				'snapshot_id'     => $snapshot_id,
 				'source'          => 'remote',
 				'local_path'      => '',
-				'remote_key'      => '4/' . $snapshot_id . '/files/db.sql.gz',
+				'remote_key'      => '4-site/' . $snapshot_id . '/files/db.sql.gz',
 				'expected_sha256' => hash( 'sha256', $small ),
 				'adopt_only'      => false,
 			),
@@ -365,7 +365,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 				'snapshot_id'     => $snapshot_id,
 				'source'          => 'remote',
 				'local_path'      => '',
-				'remote_key'      => '4/' . $snapshot_id . '/files/db.sql.gz',
+				'remote_key'      => '4-site/' . $snapshot_id . '/files/db.sql.gz',
 				'expected_sha256' => hash( 'sha256', $small ),
 				'adopt_only'      => false,
 			),
@@ -393,16 +393,16 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$snap_a  = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $a );
 		$dek_a   = $enc->dek_from_meta( $snap_a->encryption, $a, $enc->load_kek() );
 		$plain_a = 'encrypted artifact A bytes';
-		mkdir( $base . '/4/' . $a . '/files', 0777, true );
-		file_put_contents( $base . '/4/' . $a . '/files/a.tar.gz', MainWP_Backup_Archive_Cipher::seal( $plain_a, $dek_a, 'snapshot:' . $a . ':whole:a.tar.gz' ) );
+		mkdir( $base . '/4-site/' . $a . '/files', 0777, true );
+		file_put_contents( $base . '/4-site/' . $a . '/files/a.tar.gz', MainWP_Backup_Archive_Cipher::seal( $plain_a, $dek_a, 'snapshot:' . $a . ':whole:a.tar.gz' ) );
 
 		// Turn encryption off, then record a plaintext snapshot B and write its
 		// plaintext object. A must still decrypt: disabling must not lose keys.
 		update_option( MainWP_Backup_Encryption::ENABLED_OPTION, '' );
 		$b       = $this->record( 4, array() );
 		$plain_b = 'plaintext artifact B bytes';
-		mkdir( $base . '/4/' . $b . '/files', 0777, true );
-		file_put_contents( $base . '/4/' . $b . '/files/b.tar.gz', $plain_b );
+		mkdir( $base . '/4-site/' . $b . '/files', 0777, true );
+		file_put_contents( $base . '/4-site/' . $b . '/files/b.tar.gz', $plain_b );
 
 		$this->driver->remote_base = $base;
 		$plan                      = array(
@@ -414,7 +414,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 				'snapshot_id'     => $a,
 				'source'          => 'remote',
 				'local_path'      => '',
-				'remote_key'      => '4/' . $a . '/files/a.tar.gz',
+				'remote_key'      => '4-site/' . $a . '/files/a.tar.gz',
 				'expected_sha256' => hash( 'sha256', $plain_a ),
 				'adopt_only'      => false,
 			),
@@ -426,7 +426,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 				'snapshot_id'     => $b,
 				'source'          => 'remote',
 				'local_path'      => '',
-				'remote_key'      => '4/' . $b . '/files/b.tar.gz',
+				'remote_key'      => '4-site/' . $b . '/files/b.tar.gz',
 				'expected_sha256' => hash( 'sha256', $plain_b ),
 				'adopt_only'      => false,
 			),
@@ -451,8 +451,8 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$a    = $this->record( 4, array() );
 		$snap = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $a );
 		$dek  = $enc->dek_from_meta( $snap->encryption, $a, $enc->load_kek() );
-		mkdir( $base . '/4/' . $a . '/files', 0777, true );
-		file_put_contents( $base . '/4/' . $a . '/files/x.tar.gz', MainWP_Backup_Archive_Cipher::seal( 'secret bytes', $dek, 'snapshot:' . $a . ':whole:x.tar.gz' ) );
+		mkdir( $base . '/4-site/' . $a . '/files', 0777, true );
+		file_put_contents( $base . '/4-site/' . $a . '/files/x.tar.gz', MainWP_Backup_Archive_Cipher::seal( 'secret bytes', $dek, 'snapshot:' . $a . ':whole:x.tar.gz' ) );
 
 		// Lose the key after sealing.
 		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
@@ -467,7 +467,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 				'snapshot_id'     => $a,
 				'source'          => 'remote',
 				'local_path'      => '',
-				'remote_key'      => '4/' . $a . '/files/x.tar.gz',
+				'remote_key'      => '4-site/' . $a . '/files/x.tar.gz',
 				'expected_sha256' => '',
 				'adopt_only'      => false,
 			),
@@ -528,7 +528,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		// reason. Sealed size is plaintext + the fixed GCM overhead.
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 		$this->assertTrue( MainWP_Backup_Encryption::meta_is_encrypted( $snapshot->encryption ) );
-		$object = $base . '/4/' . $snapshot_id . '/files/db.sql.gz';
+		$object = $base . '/4-site/' . $snapshot_id . '/files/db.sql.gz';
 		$this->assertSame( strlen( $small ) + MainWP_Backup_Archive_Cipher::OVERHEAD, filesize( $object ) );
 
 		// Flip the first byte (the GCM nonce); any single-byte change to a
@@ -547,7 +547,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 				'snapshot_id'     => $snapshot_id,
 				'source'          => 'remote',
 				'local_path'      => '',
-				'remote_key'      => '4/' . $snapshot_id . '/files/db.sql.gz',
+				'remote_key'      => '4-site/' . $snapshot_id . '/files/db.sql.gz',
 				'expected_sha256' => hash( 'sha256', $small ),
 				'adopt_only'      => false,
 			),
@@ -580,9 +580,9 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$base = $this->dir . '/dest';
 
 		$a = $this->record( 4, array() );
-		mkdir( $base . '/4/' . $a . '/files', 0777, true );
+		mkdir( $base . '/4-site/' . $a . '/files', 0777, true );
 		// Below MainWP_Backup_Archive_Cipher::OVERHEAD (28 bytes).
-		file_put_contents( $base . '/4/' . $a . '/files/x.tar.gz', 'short' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $base . '/4-site/' . $a . '/files/x.tar.gz', 'short' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 
 		$this->driver->remote_base = $base;
 		$plan                      = array(
@@ -594,7 +594,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 				'snapshot_id'     => $a,
 				'source'          => 'remote',
 				'local_path'      => '',
-				'remote_key'      => '4/' . $a . '/files/x.tar.gz',
+				'remote_key'      => '4-site/' . $a . '/files/x.tar.gz',
 				'expected_sha256' => '',
 				'adopt_only'      => false,
 			),
@@ -653,7 +653,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		// Prove the artifact was both chunked and sealed before tampering.
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 		$this->assertTrue( MainWP_Backup_Encryption::meta_is_encrypted( $snapshot->encryption ) );
-		$chunks = glob( $base . '/4/' . $snapshot_id . '/chunks/*.bin' );
+		$chunks = glob( $base . '/4-site/' . $snapshot_id . '/chunks/*.bin' );
 		$this->assertGreaterThanOrEqual( 2, count( (array) $chunks ) );
 
 		// Flip the first byte of one sealed chunk; never touch manifest.json.
@@ -706,20 +706,20 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 
 		$base_a = $this->dir . '/dest-a';
 		$base_b = $this->dir . '/dest-b';
-		mkdir( $base_a . '/4/' . $snapshot_id . '/files', 0777, true );
-		mkdir( $base_b . '/4/' . $snapshot_id . '/files', 0777, true );
+		mkdir( $base_a . '/4-site/' . $snapshot_id . '/files', 0777, true );
+		mkdir( $base_b . '/4-site/' . $snapshot_id . '/files', 0777, true );
 
 		$tampered    = $sealed;
 		$tampered[0] = chr( ord( $tampered[0] ) ^ 0xFF );
-		file_put_contents( $base_a . '/4/' . $snapshot_id . '/files/db.sql.gz', $tampered ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
-		file_put_contents( $base_b . '/4/' . $snapshot_id . '/files/db.sql.gz', $sealed ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $base_a . '/4-site/' . $snapshot_id . '/files/db.sql.gz', $tampered ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $base_b . '/4-site/' . $snapshot_id . '/files/db.sql.gz', $sealed ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 
 		$this->driver->destination_bases = array(
 			31 => $base_a,
 			32 => $base_b,
 		);
 
-		$key  = '4/' . $snapshot_id . '/files/db.sql.gz';
+		$key  = '4-site/' . $snapshot_id . '/files/db.sql.gz';
 		$plan = array(
 			array(
 				'role'              => 'db',

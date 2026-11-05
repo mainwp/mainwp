@@ -368,7 +368,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 throw new \RuntimeException( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ), 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are escaped by consumers.
             }
 
-            $status = $job->status;
+            $job->checkpoint = $checkpoint;
+            $status          = $job->status;
 
             if ( in_array( $status, array( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING ), true ) ) {
                 $recorded_sizes = array();
@@ -502,6 +503,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         return array(
+            'remote_prefix'      => MainWP_Backup_Remote_Path::for_new_upload( $snapshot ),
             'artifacts'          => $artifacts,
             'chunk_size'         => max( 1024, $chunk_size ),
             'whole_threshold'    => $threshold,
@@ -1174,8 +1176,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      */
     private function remote_prefix( object $job ): string {
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $job->snapshot_id );
-        $site_id  = null !== $snapshot ? (int) $snapshot->site_id : 0;
-        return $site_id . '/' . (int) $job->snapshot_id . '/';
+        return MainWP_Backup_Remote_Path::for_upload( $snapshot, (array) $job->checkpoint );
     }
 
     /**

@@ -32,6 +32,238 @@ use MainWP\Dashboard\MainWP_DB;
  */
 class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
+	/**
+	 * Both remote layouts survive a display-name change.
+	 *
+	 * @dataProvider remote_folder_layouts
+	 * @param bool $legacy Resume an existing numeric-folder upload.
+	 * @param int  $size Artifact size in bytes.
+	 */
+	public function test_remote_folder_layout_survives_rename( $legacy, $size ) {
+		global $wpdb;
+		$this->create_test_site(
+			array(
+				'id'   => 9907,
+				'name' => 'Example Site',
+			)
+		);
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$id                     = $this->make_snapshot(
+			array(
+				'archive.bin' => array(
+					'size' => $size,
+					'role' => 'full',
+				),
+			),
+			0,
+			9907
+		);
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		if ( $legacy ) {
+			$build      = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+			$checkpoint = $build->invoke( MainWP_Backup_Upload_Driver::instance(), $snapshot );
+			unset( $checkpoint['remote_prefix'] );
+			$store->save_checkpoint( (int) $store->get_jobs_for_snapshot( $id )[0]->id, $checkpoint );
+		}
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( $store::STATUS_COMPLETE, $job->status, $job->last_error );
+		$prefix = $legacy ? '9907/' . $id . '/' : '9907-example-site/' . $id . '/';
+		$this->assertFileExists( $base . '/' . $prefix . 'manifest.json' );
+		$this->assertFileDoesNotExist( $base . '/' . ( $legacy ? '9907-example-site/' : '9907/' ) . $id . '/manifest.json' );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'name' => 'Renamed Site' ), array( 'id' => 9907 ) );
+		$expected_hash = hash_file( 'sha256', $snapshot->archives[0]['path'] );
+		unlink( $snapshot->archives[0]['path'] );
+		$catalog = \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog::instance();
+		$listed  = $catalog->list_snapshots_for_site( 9907 );
+		$this->assertCount( 1, $listed );
+		$this->assertSame( $size >= 2000 ? 'remote_chunked' : 'remote', $listed[0]['source'] );
+		$index  = new \ReflectionMethod( $catalog, 'remote_artifact_index' );
+		$remote = $index->invoke( $catalog, $snapshot );
+		$this->assertSame( $prefix . 'files/archive.bin', $remote['archive.bin']['key'] );
+		$plan   = $catalog->assemble_plan( array( $snapshot ) );
+		$driver = new \MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver();
+		$result = $driver->stage_artifacts( 9907, $plan, microtime( true ) + 30 );
+		$this->assertTrue( $result['done'], wp_json_encode( $result ) );
+		$this->assertNull( $result['error'] );
+		$this->assertSame( $snapshot->archives[0]['size'], filesize( $plan[0]['staged_path'] ) );
+		$this->assertSame( $expected_hash, hash_file( 'sha256', $plan[0]['staged_path'] ) );
+		$executor = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance();
+		$delete   = new \ReflectionMethod( $executor, 'enqueue_cloud_deletes' );
+		$queued   = array();
+		$inserted = array();
+		$this->assertTrue( $delete->invokeArgs( $executor, array( $snapshot, $store, &$queued, &$inserted, true ) ) );
+		$deletes = $store->get_jobs_for_snapshot( $id, $store::KIND_DELETE );
+		$this->assertSame( $prefix, $deletes[0]->checkpoint['prefix'] );
+		\MainWP\Dashboard\MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 30 );
+		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'manifest.json' );
+		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'files/archive.bin' );
+	}
+
+	/** Layout and transfer modes. */
+	public static function remote_folder_layouts() {
+		return array(
+			'legacy whole'  => array( true, 100 ),
+			'named whole'   => array( false, 100 ),
+			'legacy chunks' => array( true, 3000 ),
+			'named chunks'  => array( false, 3000 ),
+		);
+	}
+
+	/**
+	 * A replica completed after planning supplies its own folder on fallback.
+	 *
+	 * @dataProvider late_replica_modes
+	 * @param int  $size Artifact size in bytes.
+	 * @param bool $resume Resume a partial legacy plan between staging ticks.
+	 */
+	public function test_late_named_replica_replaces_deleted_legacy_destination( $size, $resume = false ) {
+		list( $first )  = $this->make_local_destination();
+		list( $second ) = $this->make_local_destination();
+		$id             = $this->make_snapshot(
+			array(
+				'archive.bin' => array(
+					'size' => $size,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot       = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$store          = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $first ) );
+		$build      = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+		$checkpoint = $build->invoke( MainWP_Backup_Upload_Driver::instance(), $snapshot );
+		unset( $checkpoint['remote_prefix'] );
+		$store->save_checkpoint( (int) $store->get_jobs_for_snapshot( $id )[0]->id, $checkpoint );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 60 );
+		$catalog         = \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog::instance();
+		$remote_index    = new \ReflectionMethod( $catalog, 'remote_artifact_index' );
+		$entry_method    = new \ReflectionMethod( $catalog, 'plan_entry' );
+		$remote          = $remote_index->invoke( $catalog, $snapshot );
+		$archive         = $snapshot->archives[0];
+		$archive['path'] = '';
+		$plan            = array( $entry_method->invoke( $catalog, $snapshot, $archive, $remote ) );
+		$this->assertSame( '4/' . $id . '/files/archive.bin', $plan[0]['remote_key'] );
+		$driver = new \MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver();
+		if ( $resume ) {
+			unset( $plan[0]['remote_candidates'] );
+			$pending = $driver->stage_artifacts( 9908, $plan, microtime( true ) - 1 );
+			$this->assertFalse( $pending['done'] );
+			$this->assertNull( $pending['error'] );
+			$this->assertNotEmpty( $plan[0]['chunks'] );
+			$this->assertSame( '4/' . $id . '/', $plan[0]['chunk_prefix'] );
+			$staging_method = new \ReflectionMethod( $driver, 'staging_dir' );
+			$staging        = $staging_method->invoke( $driver, 9908 );
+			$assembly       = $staging . $plan[0]['file'] . '.assembling';
+			$first_piece    = substr( file_get_contents( $snapshot->archives[0]['path'] ), 0, 1024 );
+			file_put_contents( $assembly, $first_piece );
+			$plan[0]['reassembly'] = array(
+				'next'  => 1,
+				'bytes' => 1024,
+			);
+			$driver                = new \MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver();
+			$again                 = $driver->stage_artifacts( 9908, $plan, microtime( true ) - 1 );
+			$this->assertFalse( $again['done'] );
+			$this->assertNull( $again['error'] );
+			$this->assertSame(
+				array(
+					'next'  => 1,
+					'bytes' => 1024,
+				),
+				$plan[0]['reassembly']
+			);
+			$this->assertSame( $first_piece, file_get_contents( $assembly ) );
+		}
+		$store->enqueue_for_snapshot( $id, array( $second ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 60 );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::instance()->delete_destination( $first ) );
+		$driver = new \MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver();
+		$result = $driver->stage_artifacts( 9908, $plan, microtime( true ) + 30 );
+		$this->assertTrue( $result['done'], wp_json_encode( $result ) );
+		$this->assertNull( $result['error'] );
+		$this->assertSame( hash_file( 'sha256', $snapshot->archives[0]['path'] ), hash_file( 'sha256', $plan[0]['staged_path'] ) );
+		$this->assertSame( '4-site/' . $id . '/files/archive.bin', $plan[0]['remote_key'] );
+	}
+
+	/** Whole-file and manifest-based fallback modes. */
+	public static function late_replica_modes() {
+		return array(
+			'whole'                  => array( 100 ),
+			'chunked'                => array( 3000 ),
+			'legacy partial chunked' => array( 3000, true ),
+		);
+	}
+
+	/**
+	 * Slugs remain safe and duplicate names retain distinct site IDs.
+	 *
+	 * @dataProvider remote_folder_names
+	 * @param string $name Site display name.
+	 * @param string $slug Expected folder slug.
+	 */
+	public function test_remote_folder_name_is_safe_and_id_scoped( $name, $slug ) {
+		$this->create_test_site(
+			array(
+				'id'   => 9910,
+				'name' => $name,
+			)
+		);
+		$this->create_test_site(
+			array(
+				'id'   => 9911,
+				'name' => $name,
+			)
+		);
+		$paths = \MainWP\Dashboard\MainWP_Backup_Remote_Path::class;
+		$this->assertSame(
+			'9910-' . $slug . '/123/',
+			$paths::for_new_upload(
+				(object) array(
+					'id'      => 123,
+					'site_id' => 9910,
+				)
+			)
+		);
+		$this->assertSame(
+			'9911-' . $slug . '/123/',
+			$paths::for_new_upload(
+				(object) array(
+					'id'      => 123,
+					'site_id' => 9911,
+				)
+			)
+		);
+	}
+
+	/** Readable ASCII folders with a defined fallback. */
+	public static function remote_folder_names() {
+		return array( array( 'Example Site', 'example-site' ), array( '', 'site' ), array( '!!!', 'site' ), array( '日本語', 'site' ), array( 'Café / Test .. \\ name', 'cafe-test-name' ), array( str_repeat( 'x', 100 ), str_repeat( 'x', 80 ) ) );
+	}
+
+	/**
+	 * Recorded prefixes cannot address another site's or snapshot's objects.
+	 *
+	 * @dataProvider invalid_remote_folders
+	 * @param mixed $prefix Invalid recorded prefix.
+	 */
+	public function test_remote_folder_cannot_escape_its_owner( $prefix ) {
+		$this->expectException( \RuntimeException::class );
+		\MainWP\Dashboard\MainWP_Backup_Remote_Path::for_upload(
+			(object) array(
+				'id'      => 123,
+				'site_id' => 42,
+			),
+			array( 'remote_prefix' => $prefix )
+		);
+	}
+
+	/** Reject malformed or foreign persisted paths. */
+	public static function invalid_remote_folders() {
+		return array( array( '../42-site/123/' ), array( '43-site/123/' ), array( '42-site/124/' ), array( '42-site/123/../../' ), array( '' ), array( array() ), array( '42-site/123/\n' ) );
+	}
+
 	use Backup_Private_Root_Fixture;
 
 	/**
@@ -433,8 +665,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id );
 		$this->assertSame( array( 'complete', 'complete' ), array_column( $jobs, 'status' ) );
-		$this->assertFileExists( $base_a . '/4/' . $snapshot_id . '/manifest.json' );
-		$this->assertFileExists( $base_b . '/4/' . $snapshot_id . '/manifest.json' );
+		$this->assertFileExists( $base_a . '/4-site/' . $snapshot_id . '/manifest.json' );
+		$this->assertFileExists( $base_b . '/4-site/' . $snapshot_id . '/manifest.json' );
 		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
 	}
 
@@ -518,7 +750,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $jobs[0]->status );
 
-		$prefix  = $base . '/4/' . $snapshot_id;
+		$prefix  = $base . '/4-site/' . $snapshot_id;
 		$big     = file_get_contents( $this->temp_dirs[1] . '/big.bin' );
 		$algo    = \MainWP\Dashboard\MainWP_Backup_Chunker::hash_algo();
 		$offsets = array( 0, 1024, 2048 );
@@ -647,7 +879,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status );
-		$this->assertFileExists( $base . '/4/' . $snapshot_id . '/manifest.json' );
+		$this->assertFileExists( $base . '/4-site/' . $snapshot_id . '/manifest.json' );
 	}
 
 	/**
@@ -667,7 +899,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status );
 
-		$prefix = $base . '/4/' . $snapshot_id;
+		$prefix = $base . '/4-site/' . $snapshot_id;
 		$chunks = glob( $prefix . '/chunks/*.bin' );
 		$this->assertCount( 3, $chunks );
 
@@ -1100,7 +1332,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_jobs_for_snapshot( $id )[0]->status );
 		$this->assertSame( array( $staging ), $checked, 'Check the staging filesystem once before writing the remainder.' );
-		$this->assertCount( 32, glob( $base . '/4/' . $id . '/chunks/*.bin' ) );
+		$this->assertCount( 32, glob( $base . '/4-site/' . $id . '/chunks/*.bin' ) );
 		$reported_free = false;
 		$this->assertCount( 32, MainWP_Backup_Chunker::plan_artifact( $snapshot->archives[0]['path'], $staging, 64 * KB_IN_BYTES ), 'An unavailable free-space report must still permit staging.' );
 		$this->assertSame( array( $staging, $staging ), $checked );
@@ -1907,7 +2139,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$paths    = array_column( $snapshot->archives, 'path', 'file' );
 		$kek      = $enc->load_kek();
 		$dek      = $enc->dek_from_meta( $snapshot->encryption, $snapshot_id, $kek );
-		$prefix   = $base . '/4/' . $snapshot_id;
+		$prefix   = $base . '/4-site/' . $snapshot_id;
 
 		// Each chunk object is ciphertext (plaintext + 28) and opens to the
 		// source slice under the snapshot DEK and the chunk-hash AAD.
@@ -2080,7 +2312,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status );
 		$this->assertCount( 'encrypted' === $outcome ? 7 : 6, $writes );
 		$this->assertSame( array(), $events );
-		$prefix   = '/4/' . $snapshot_id . '/';
+		$prefix   = '/4-site/' . $snapshot_id . '/';
 		$paths    = array_column( $snapshot->archives, 'path', 'file' );
 		$manifest = json_decode( $objects[ $prefix . 'manifest.json' ], true );
 		if ( 'encrypted' === $outcome ) {
@@ -2164,8 +2396,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$small    = file_get_contents( $paths['small.txt'] );
 		$aad      = 'snapshot:' . $snapshot_id . ':whole:small.txt';
 
-		$blob_a = file_get_contents( $base_a . '/4/' . $snapshot_id . '/files/small.txt' );
-		$blob_b = file_get_contents( $base_b . '/4/' . $snapshot_id . '/files/small.txt' );
+		$blob_a = file_get_contents( $base_a . '/4-site/' . $snapshot_id . '/files/small.txt' );
+		$blob_b = file_get_contents( $base_b . '/4-site/' . $snapshot_id . '/files/small.txt' );
 
 		$this->assertNotSame( $blob_a, $blob_b, 'Independent seals use fresh nonces, so the ciphertexts differ.' );
 		$this->assertSame( $small, MainWP_Backup_Archive_Cipher::open( $blob_a, $dek, $aad ) );
@@ -2188,7 +2420,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
 
-		$prefix = $base . '/4/' . $snapshot_id;
+		$prefix = $base . '/4-site/' . $snapshot_id;
 		$chunks = glob( $prefix . '/chunks/*.bin' );
 		$this->assertNotEmpty( $chunks );
 		$intact = $chunks[0];
@@ -2894,7 +3126,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $after->status );
 		$this->assertSame( $before->checkpoint['destination_binding'], $after->checkpoint['destination_binding'] );
 		$this->assertEmpty( glob( $new_base . '/*' ) );
-		$this->assertFileExists( $old_base . '/4/' . $id . '/manifest.json' );
+		$this->assertFileExists( $old_base . '/4-site/' . $id . '/manifest.json' );
 		foreach ( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives as $archive ) {
 			$this->assertFileExists( $archive['path'] );
 		}
@@ -3218,7 +3450,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assert_heads_ask_for_identity( $requests );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
 		$this->assertStringContainsString( '[' . MainWP_Backup_Error_Codes::ERR_S3_FAILED . ']', $job->last_error );
-		$this->assertStringContainsString( 'the storage provider did not report the size of 4/' . $snapshot_id . '/manifest.json', $job->last_error );
+		$this->assertStringContainsString( 'the storage provider did not report the size of 4-site/' . $snapshot_id . '/manifest.json', $job->last_error );
 		$this->assertStringNotContainsString( ' 0 bytes', $job->last_error );
 		$this->assertEmpty( $job->checkpoint['manifest_submitted'] );
 	}
@@ -3253,7 +3485,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
-		$this->assertStringContainsString( '4/' . $snapshot_id . '/manifest.json was not found at the destination after it was uploaded', $job->last_error );
+		$this->assertStringContainsString( '4-site/' . $snapshot_id . '/manifest.json was not found at the destination after it was uploaded', $job->last_error );
 		$this->assertEmpty( $job->checkpoint['manifest_submitted'] );
 	}
 
@@ -3276,7 +3508,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertGreaterThan( 0, $uploaded );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
-		$this->assertStringContainsString( 'the destination reported 4/' . $snapshot_id . '/manifest.json as ' . ( $uploaded + 7 ) . ' bytes, but ' . $uploaded . ' bytes were uploaded', $job->last_error );
+		$this->assertStringContainsString( 'the destination reported 4-site/' . $snapshot_id . '/manifest.json as ' . ( $uploaded + 7 ) . ' bytes, but ' . $uploaded . ' bytes were uploaded', $job->last_error );
 		$this->assertEmpty( $job->checkpoint['manifest_submitted'] );
 	}
 
@@ -3307,6 +3539,6 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		);
 		$this->assertCount( 1, $puts, 'The artifact must be uploaded, not skipped on an unknown size.' );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
-		$this->assertStringContainsString( 'did not report the size of 4/' . $snapshot_id . '/files/empty.sql', $job->last_error );
+		$this->assertStringContainsString( 'did not report the size of 4-site/' . $snapshot_id . '/files/empty.sql', $job->last_error );
 	}
 }

@@ -2027,7 +2027,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             // load custom MainWP theme.
             $selected_theme = MainWP_Settings::get_instance()->get_selected_theme();
             if ( ! empty( $selected_theme ) ) {
-                if ( 'dark' === $selected_theme ) {
+                if ( 'system' === $selected_theme ) {
+                    static::enqueue_system_theme();
+                } elseif ( 'dark' === $selected_theme ) {
                     wp_enqueue_style( 'mainwp-custom-dashboard-extension-dark-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-dark-theme.css', array(), $this->current_version );
                 } elseif ( 'wpadmin' === $selected_theme ) {
                     wp_enqueue_style( 'mainwp-custom-dashboard-extension-wp-admin-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-wpadmin-theme.css', array(), $this->current_version );
@@ -2051,6 +2053,14 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_style( 'mainwp-fonts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fonts.css', array(), $this->current_version );
             wp_enqueue_style( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), $this->current_version );
         }
+    }
+
+    /**
+     * Load the built-in themes according to the browser's appearance preference.
+     */
+    public static function enqueue_system_theme() {
+        wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-theme.css', array(), MAINWP_VERSION, '(prefers-color-scheme: light)' );
+        wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-dark-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-dark-theme.css', array(), MAINWP_VERSION, '(prefers-color-scheme: dark)' );
     }
 
     /**

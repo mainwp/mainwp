@@ -207,6 +207,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         if ( empty( $currentVersion ) ) {
             update_option( 'mainwp_run_quick_setup', 'yes' );
             add_option( 'mainwp_onboarding_fresh_install', time() );
+            add_option( 'mainwp_selected_theme', 'system' );
             // Route the default-off write through the settings helper so it also
             // mirrors mainwp_enableLegacyBackupFeature=0. A bare native write
             // would leave the legacy flag absent, and a rollback to a pre-rename
@@ -225,7 +226,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             MainWP_Utility::update_option( 'mainwp_native_backups_defaulted_off_on_upgrade', 1 );
         }
 
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.8', '<' ) ) {
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '8.8', '<' ) ) {
             MainWP_Utility::update_option( 'mainwp_selected_theme', 'default' );
         }
 

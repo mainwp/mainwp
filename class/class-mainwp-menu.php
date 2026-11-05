@@ -1308,6 +1308,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 ?>
             </div>
             <div class="actions">
+                <?php MainWP_UI::render_theme_picker( true ); ?>
             <?php
                     $go_back_wpadmin_url = admin_url( 'index.php' );
 

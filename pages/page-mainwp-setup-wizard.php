@@ -196,7 +196,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         // load custom MainWP theme.
         $selected_theme = MainWP_Settings::get_instance()->get_selected_theme();
         if ( ! empty( $selected_theme ) ) {
-            if ( 'dark' === $selected_theme ) {
+            if ( 'system' === $selected_theme ) {
+                MainWP_System::enqueue_system_theme();
+            } elseif ( 'dark' === $selected_theme ) {
                 wp_enqueue_style( 'mainwp-custom-dashboard-extension-dark-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-dark-theme.css', array(), MAINWP_VERSION );
             } elseif ( 'wpadmin' === $selected_theme ) {
                 wp_enqueue_style( 'mainwp-custom-dashboard-extension-wp-admin-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-wpadmin-theme.css', array(), MAINWP_VERSION );
@@ -284,6 +286,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <meta name="viewport" content="width=device-width" />
                 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
                 <title><?php esc_html_e( 'MainWP &rsaquo; Setup Wizard', 'mainwp' ); ?></title>
+                <?php MainWP_System_View::render_color_scheme( $selected_theme ); ?>
                 <?php wp_print_scripts( 'mainwp' ); ?>
                 <?php wp_print_scripts( 'mainwp-clients' ); ?>
                 <?php wp_print_scripts( 'mainwp-setup' ); ?>
@@ -490,30 +493,6 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
         </div>
         <?php
-        if ( empty( get_user_option( 'mainwp_selected_theme' ) ) ) {
-            $sites = MainWP_DB::instance()->get_sites(); // Get site data.
-            if ( empty( $sites ) ) {
-                ?>
-                <script>
-                    jQuery(function ($) {
-                        let detectedMode = '';
-                        if(window.matchMedia('(prefers-color-scheme: dark)').matches){
-                            detectedMode = 'dark';
-                        } else if(window.matchMedia('(prefers-color-scheme: light)').matches){
-                            detectedMode = 'light';
-                        }
-                        let data = mainwp_secure_data({
-                            action: 'mainwp_qsw_ui_mode_detected',
-                            ui_mode: detectedMode,
-                        });
-                        $.post(ajaxurl, data, function (response) {
-                            // nothing.
-                        }, 'json');
-                    });
-                </script>
-                <?php
-            }
-        }
     }
 
     /**

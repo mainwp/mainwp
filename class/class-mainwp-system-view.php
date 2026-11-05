@@ -1130,12 +1130,70 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
     /** Render Admin Header */
     public static function admin_head() {
+        if ( MainWP_System::is_mainwp_pages() ) {
+            static::render_color_scheme( MainWP_Settings::get_instance()->get_selected_theme() );
+        }
         ?>
         <script type="text/javascript">let mainwp_ajax_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_ajax' ) ); ?>", mainwp_js_nonce = "<?php echo esc_js( wp_create_nonce( 'mainwp_nonce' ) ); ?>";</script>
         <?php
         if ( ( MainWP_System::is_mainwp_pages() || ( isset( $_GET['page'] ) && 'mainwp-setup' === $_GET['page'] ) ) && get_option( 'mainwp_enable_guided_tours', 0 ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             static::mainwp_usetiful_tours();
         }
+    }
+
+    /**
+     * Expose the active built-in color scheme and sync theme classes in System mode.
+     *
+     * @param string|false $selected_theme The saved Dashboard theme.
+     */
+    public static function render_color_scheme( $selected_theme ) {
+        $schemes = array(
+            'system'       => 'system',
+            'default'      => 'light',
+            'default-dark' => 'dark',
+        );
+        if ( ! isset( $schemes[ $selected_theme ] ) ) {
+            return;
+        }
+        ?>
+        <script id="mainwp-color-scheme">
+            (() => {
+                const mode = '<?php echo esc_js( $schemes[ $selected_theme ] ); ?>';
+                const root = document.documentElement;
+                if (mode !== 'system') {
+                    root.dataset.mainwpColorScheme = mode;
+                    return;
+                }
+
+                const darkMode = window.matchMedia('(prefers-color-scheme: dark)');
+                const applyColorScheme = () => {
+                    root.dataset.mainwpColorScheme = darkMode.matches ? 'dark' : 'light';
+                    if (document.body) {
+                        document.body.classList.toggle('mainwp-default-theme', !darkMode.matches);
+                        document.body.classList.toggle('mainwp-default-dark-theme', darkMode.matches);
+                    }
+                };
+
+                applyColorScheme();
+                if (!document.body) {
+                    // The head script runs before the body exists.
+                    const observer = new MutationObserver(() => {
+                        if (document.body) {
+                            observer.disconnect();
+                            applyColorScheme();
+                        }
+                    });
+                    observer.observe(root, { childList: true });
+                }
+                darkMode.addEventListener('change', () => {
+                    applyColorScheme();
+                    document.dispatchEvent(new CustomEvent('mainwp:color-scheme-change', {
+                        detail: { scheme: root.dataset.mainwpColorScheme }
+                    }));
+                });
+            })();
+        </script>
+        <?php
     }
 
     /**

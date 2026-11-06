@@ -3488,6 +3488,14 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             }
         }
 
+        if ( isset( $data['sync_errors'] ) ) {
+            $data['sync_errors'] = MainWP_Connect_Failure_Ux::sanitize_sync_error( $data['sync_errors'] );
+        }
+        if ( isset( $item->sync_errors ) ) {
+            $item              = clone $item;
+            $item->sync_errors = MainWP_Connect_Failure_Ux::sanitize_sync_error( $item->sync_errors );
+        }
+
         // Requested custom_fields can JOIN secret site options onto the row, so strip
         // them before public callbacks see either value. The caller strips again
         // in case a callback adds them back.

@@ -355,7 +355,17 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string Error without response content.
      */
     public static function sanitize_sync_error( $message ) {
-        $descriptions = array();
+        $descriptions = array(
+            'Body: the site returned an empty response. Ask the host to check the registration request to wp-admin/admin-ajax.php.',
+            'Body: a MainWP response was found but could not be read. Ask the host to check whether a plugin or proxy altered the response.',
+            'Body: the site returned binary data, possibly encoded or compressed by the host. Ask the host to check response encoding for wp-admin/admin-ajax.php.',
+            'Body: the site returned a login or challenge page instead of the MainWP response. Check the site firewall, security and caching plugins.',
+            'Body: the site returned an HTML page instead of the MainWP response. A firewall, security or caching plugin may have replaced it. Check those rules for wp-admin/admin-ajax.php.',
+            'Body: the site returned text instead of the MainWP response. Ask the host to check the registration request to wp-admin/admin-ajax.php.',
+            'Body: the site returned a MainWP error response. Follow the specific error message to complete the connection.',
+            'Body: received but not shown, because it may contain sensitive data.',
+            'Body: no readable child response was returned.',
+        );
         foreach ( array( '', '<mainwp>', "\0", 'captcha', '<html>', 'text' ) as $sample ) {
             $descriptions[] = self::describe_received_response( $sample );
         }
@@ -370,7 +380,13 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         /* translators: %s: short redacted response excerpt. */
         $labels[] = sprintf( __( 'Excerpt: %s', 'mainwp' ), '' );
         $labels[] = esc_html( end( $labels ) );
-        $pattern  = '~(?:' . implode(
+        $labels   = array_filter(
+            $labels,
+            static function ( $label ) {
+                return strlen( trim( $label ) ) > 3;
+            }
+        );
+        $pattern  = '~(?:^|[\r\n>])\K(?:' . implode(
             '|',
             array_map(
                 static function ( $label ) {
@@ -378,9 +394,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 },
                 $labels
             )
-        ) . ').*?(?=</pre\s*>|$)~is';
+        ) . ').*?(?=(?i:</pre\s*>)|$)~s';
 
-        $message = preg_replace_callback(
+        $original = (string) $message;
+        $message  = preg_replace_callback(
             $pattern,
             static function ( $parts ) use ( $descriptions ) {
                 foreach ( $descriptions as $description ) {
@@ -392,10 +409,13 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             },
             (string) $message
         );
+        if ( ! is_string( $message ) ) {
+            return self::unredactable_text();
+        }
 
         // Older locales are unavailable after a language change. A generated
         // response ends with a body block; fixed descriptions occupy one line.
-        return preg_replace_callback(
+        $result = preg_replace_callback(
             '~(<pre\b[^>]*>)(.*?)(</pre\s*>)~is',
             static function ( $parts ) {
                 $boundary = strrpos( $parts[2], "\n\n" );
@@ -406,6 +426,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             },
             $message
         );
+        return is_string( $result ) && ( '' !== $result || '' === $original ) ? $result : self::unredactable_text();
     }
 
     /**

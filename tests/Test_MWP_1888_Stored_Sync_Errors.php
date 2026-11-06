@@ -38,13 +38,13 @@ class Test_MWP_1888_Stored_Sync_Errors extends \WP_UnitTestCase {
         $stored = $wpdb->get_var( $wpdb->prepare( 'SELECT sync_errors FROM %i WHERE wpid = %d', $wpdb->prefix . 'mainwp_wp_sync', $id ) );
         $this->assertSame( "<pre>Status: 403\n</pre>", $stored );
         $this->assertSame( '1', (string) get_site_option( 'mainwp_sync_error_excerpts_cleaned' ) );
-        MainWP_DB::instance()->update_website_sync_values( $id, array( 'sync_errors' => 'Connection failed. Excerpt: SYNTHETIC_EXCERPT' ) );
+        MainWP_DB::instance()->update_website_sync_values( $id, array( 'sync_errors' => "Connection failed.\nExcerpt: SYNTHETIC_EXCERPT" ) );
         $stored = $wpdb->get_var( $wpdb->prepare( 'SELECT sync_errors FROM %i WHERE wpid = %d', $wpdb->prefix . 'mainwp_wp_sync', $id ) );
         $this->assertStringNotContainsString( 'SYNTHETIC_EXCERPT', $stored );
     }
 
     public function test_cleanup_retries_after_failed_write(): void {
-        $this->create_test_site( array( 'sync_errors' => 'Body: SYNTHETIC_RESPONSE_MARKER' ) );
+        $id = $this->create_test_site( array( 'sync_errors' => 'Body: SYNTHETIC_RESPONSE_MARKER' ) );
         delete_site_option( 'mainwp_sync_error_excerpts_cleaned' );
         $block = static function ( $query ) {
             return str_starts_with( $query, 'UPDATE' ) && str_contains( $query, 'mainwp_wp_sync' ) ? 'SELECT * FROM mwp1888_missing_synthetic_table' : $query;
@@ -61,6 +61,9 @@ class Test_MWP_1888_Stored_Sync_Errors extends \WP_UnitTestCase {
         $this->assertFalse( get_site_option( 'mainwp_sync_error_excerpts_cleaned' ) );
         MainWP_Install::instance()->install();
         $this->assertSame( '1', (string) get_site_option( 'mainwp_sync_error_excerpts_cleaned' ) );
+        $stored = $wpdb->get_var( $wpdb->prepare( 'SELECT sync_errors FROM %i WHERE wpid = %d', $wpdb->prefix . 'mainwp_wp_sync', $id ) );
+        $this->assertNotSame( '', $stored );
+        $this->assertStringNotContainsString( 'SYNTHETIC_', $stored );
     }
 
     public function test_rest_formatter_hides_legacy_excerpt_before_cleanup(): void {
@@ -87,6 +90,8 @@ class Test_MWP_1888_Stored_Sync_Errors extends \WP_UnitTestCase {
         };
         add_filter( 'gettext', $translate, 10, 3 );
         try {
+            $english = 'Body: the site returned text instead of the MainWP response. Ask the host to check the registration request to wp-admin/admin-ajax.php.';
+            $this->assertSame( $english, MainWP_Connect_Failure_Ux::sanitize_sync_error( $english ) );
             $safe = esc_html( MainWP_Connect_Failure_Ux::describe_received_response( 'text' ) );
             $this->assertSame( '<pre>' . $safe . '</pre>', MainWP_Connect_Failure_Ux::sanitize_sync_error( '<pre>' . $safe . "\n" . esc_html( sprintf( __( 'Excerpt: %s', 'mainwp' ), 'SYNTHETIC_EXCERPT' ) ) . '</pre>' ) );
         } finally {
@@ -116,5 +121,52 @@ class Test_MWP_1888_Stored_Sync_Errors extends \WP_UnitTestCase {
         $prefix = "<pre>Status: 403\n\nHeaders: none\n\n";
         $this->assertSame( $prefix . '</pre>', MainWP_Connect_Failure_Ux::sanitize_sync_error( $prefix . "Corps : diagnostic fixe\nExtrait : SYNTHETIC_EXCERPT</pre>" ) );
         $this->assertSame( $prefix . 'Corps : diagnostic fixe</pre>', MainWP_Connect_Failure_Ux::sanitize_sync_error( $prefix . 'Corps : diagnostic fixe</pre>' ) );
+    }
+
+    public function test_ordinary_body_words_do_not_remove_failure_guidance(): void {
+        foreach ( array( 'Invalid request body: missing field', 'Nobody: available', 'Somebody: unavailable' ) as $text ) {
+            $message = $text . '<div><pre>Status: 403</pre></div>';
+            $this->assertSame( $message, MainWP_Connect_Failure_Ux::sanitize_sync_error( $message ) );
+        }
+    }
+
+    public function test_removed_dump_remains_a_disconnected_error(): void {
+        $clean = MainWP_Connect_Failure_Ux::sanitize_sync_error( 'Body: SYNTHETIC_RESPONSE_MARKER' );
+        $this->assertNotSame( '', $clean );
+        $this->assertStringNotContainsString( 'SYNTHETIC_', $clean );
+    }
+
+    public function test_regex_failure_does_not_mark_site_connected(): void {
+        $previous = ini_set( 'pcre.backtrack_limit', '1' );
+        try {
+            $clean = MainWP_Connect_Failure_Ux::sanitize_sync_error( '<pre>' . str_repeat( 'SYNTHETIC_', 500 ) . '</pre>' );
+        } finally {
+            ini_set( 'pcre.backtrack_limit', $previous );
+        }
+        $this->assertNotSame( '', $clean );
+        $this->assertStringNotContainsString( 'SYNTHETIC_', $clean );
+    }
+
+    public function test_live_rest_response_hides_stale_excerpt(): void {
+        $id = $this->create_test_site( array( 'sync_errors' => "<pre>Status: 403\n\nBody: SYNTHETIC_RESPONSE_MARKER\nExcerpt: SYNTHETIC_EXCERPT</pre>" ) );
+        $site = MainWP_DB::instance()->get_website_by_id( $id );
+        $request = new \WP_REST_Request( 'GET', '/mainwp/v2/sites/' . $id );
+        $request->set_param( '_fields', 'id,sync_errors' );
+        $data = ( new \MainWP_Rest_Sites_Controller() )->prepare_item_for_response( $site, $request );
+        $this->assertStringContainsString( 'Status: 403', $data['sync_errors'] );
+        $this->assertStringNotContainsString( 'SYNTHETIC_', $data['sync_errors'] );
+    }
+
+    public function test_upgrade_cleans_more_than_one_batch(): void {
+        global $wpdb;
+        $table = $wpdb->prefix . 'mainwp_wp_sync';
+        for ( $id = 100001; $id <= 100201; $id++ ) {
+            $this->assertNotFalse( $wpdb->insert( $table, array( 'wpid' => $id, 'sync_errors' => 'Body: SYNTHETIC_RESPONSE_MARKER' ) ) );
+        }
+        delete_site_option( 'mainwp_sync_error_excerpts_cleaned' );
+        MainWP_Install::instance()->install();
+        $this->assertSame( '1', (string) get_site_option( 'mainwp_sync_error_excerpts_cleaned' ) );
+        $remaining = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE sync_errors LIKE %s', $table, '%SYNTHETIC_RESPONSE_MARKER%' ) );
+        $this->assertSame( '0', (string) $remaining );
     }
 }

@@ -715,9 +715,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', ! empty( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365 );
                 MainWP_Utility::update_option( 'mainwp_abandoned_check_by_local_date', isset( $_POST['mainwp_abandoned_check_by_local_date'] ) ? 1 : 0 );
 
-                $actions_notification_enable = ( isset( $_POST['mainwp_site_actions_notification_enable'] ) ? 1 : 0 );
-                MainWP_Utility::update_option( 'mainwp_site_actions_notification_enable', $actions_notification_enable );
-
                 //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 // Handle custom date/time formats.
                 if ( ! empty( $_POST['date_format'] ) && isset( $_POST['date_format_custom'] )
@@ -818,7 +815,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_abandoned_check_by_local_date',
             'mainwp_check_http_response',
             'mainwp_check_http_response_method',
-            'mainwp_site_actions_notification_enable',
             'mainwp_use_favicon',
             'mainwp_backupsOnServer',
             'mainwp_maximumFileDescriptors',
@@ -2500,7 +2496,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Delete archived Network Activity data', 'mainwp' ); ?></label>
-                        <div class="ten wide column" id="mainwp-clear-archived-sites-changes-data" data-content="<?php esc_attr_e( 'Delete archived sNetwork Activity data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                        <div class="ten wide column" id="mainwp-clear-archived-sites-changes-data" data-content="<?php esc_attr_e( 'Delete archived Network Activity data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
                             <a href="admin.php?page=MainWPTools&clearArchivedSitesChangesData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_archived_sites_changes' ) ); ?>" onclick="mainwp_tool_confirm_to_process(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Archived Network Activity Data', 'mainwp' ); ?></a>
                         </div>
                     </div>

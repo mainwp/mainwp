@@ -4585,15 +4585,6 @@ jQuery(function ($) {
         mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-all'); });
     });
 
-    // Trigger the bulk actions
-    $('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').on('click', function () {
-        if (jQuery('#mainwp-module-log-records-body-table tr').find('input[type="checkbox"]:checked').length == 0) {
-            return;
-        }
-        let confirmMsg = MainWP.I18n.t("You are about to dismiss the selected changes?");
-        mainwp_confirm(confirmMsg, function () { mainwp_sites_changes_actions_bulk_action('dismiss-selected', 'widget'); });
-    });
-
     $(document).on('click', '.insights-actions-row-dismiss', function () {
         return mainwp_insights_row_actions_dismiss(this);
     });
@@ -4677,25 +4668,17 @@ let mainwp_insights_row_actions_dismiss = function (obj) {
 
 
 // Manage Bulk Actions
-let mainwp_sites_changes_actions_bulk_action = function (act, which_act) {
+let mainwp_sites_changes_actions_bulk_action = function (act) {
     mainwpVars.bulkInstallTotal = 0;
     bulkInstallCurrentThreads = 0;
     bulkInstallDone = 0;
-    mainwpVars.bulkActionIndent = '';
-    if (which_act === 'widget') {
-        mainwpVars.bulkActionIndent = 'widget';
-    }
     if (act === 'dismiss-selected') {
         jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
         let selector = '#mainwp-module-log-records-body-table tr';
         mainwpVars.bulkInstallTotal = jQuery(selector).find('input[type="checkbox"]:checked').length;
         jQuery(selector).addClass('queue');
         if (jQuery(selector).length) {
-            if (mainwpVars.bulkActionIndent === 'widget') {
-                jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
-            } else {
-                jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
-            }
+            jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
         }
         mainwp_sites_changes_actions_dismiss_start_next(selector);
     } else if (act === 'dismiss-all') {
@@ -4714,11 +4697,7 @@ let mainwp_sites_changes_actions_dismiss_start_next = function (selector) {
     }
 
     if (mainwpVars.bulkInstallTotal == bulkInstallDone) {
-        if (mainwpVars.bulkActionIndent === 'widget') {
-            jQuery('#mainwp_widget_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
-        } else {
-            jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
-        }
+        jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').removeClass('disabled');
         if (typeof mainwp_sites_changes_update_dismiss_button_state !== 'undefined') {
             mainwp_sites_changes_update_dismiss_button_state();
         }

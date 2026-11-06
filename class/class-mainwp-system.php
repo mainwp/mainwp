@@ -395,7 +395,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_notice_wp_mail_failed',
                 'mainwp_show_language_updates',
                 'mainwp_logger_check_daily',
-                'mainwp_site_actions_notification_enable',
                 'mainwp_update_check_version',
                 'mainwp_admin_init_update_data',
                 'mainwp_setting_demo_mode_enabled',

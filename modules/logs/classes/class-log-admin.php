@@ -77,8 +77,6 @@ class Log_Admin {
         // Auto purge setup.
         add_action( 'admin_init', array( $this, 'admin_init' ) );
         $log_page = Log_Insights_Page::instance();
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_delete_records', array( $this, 'ajax_delete_records' ) );
-        MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_compact_records', array( $this, 'ajax_compact_records' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_clean_up_child_logs', array( $this, 'ajax_clean_up_child_logs' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_manage_events_display_rows', array( Log_Manage_Insights_Events_Page::instance(), 'ajax_manage_events_display_rows' ) );
         MainWP_Post_Handler::instance()->add_action( 'mainwp_module_log_widget_insights_display_rows', array( $log_page, 'ajax_events_display_rows' ) );
@@ -194,62 +192,6 @@ class Log_Admin {
     }
 
     /**
-     * Handle ajax delete logs records.
-     */
-    public function ajax_delete_records() {
-        if ( ! MainWP_System_Utility::is_admin() ) {
-            die( 0 );
-        }
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-            wp_send_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
-        }
-        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_delete_records' );
-
-        $start_date = isset( $_POST['startdate'] ) ? sanitize_text_field( wp_unslash( $_POST['startdate'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $end_date   = isset( $_POST['enddate'] ) ? sanitize_text_field( wp_unslash( $_POST['enddate'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-        $start_time = ! empty( $start_date ) ? strtotime( $start_date . ' 00:00:00' ) : '';
-        $end_time   = ! empty( $end_date ) ? strtotime( $end_date . ' 23:59:59' ) : '';
-
-        if ( ! is_numeric( $start_time ) || ! is_numeric( $end_time ) || $start_time > $end_time ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid Start date or end date. Please try again.', 'mainwp' ) ) ) );
-        }
-
-        $this->manager->db->create_compact_and_erase_records( $start_time, $end_time );
-
-        wp_send_json( array( 'result' => 'SUCCESS' ) );
-    }
-
-
-    /**
-     * Handle ajax compact logs records.
-     */
-    public function ajax_compact_records() {
-        if ( ! MainWP_System_Utility::is_admin() ) {
-            die( 0 );
-        }
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-            wp_send_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
-        }
-        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_compact_records' );
-
-        $year = isset( $_POST['year'] ) ? intval( $_POST['year'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-        if ( $year < 2022 ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid selected year. Please try again.', 'mainwp' ) ) ) );
-        }
-
-        $aday = $year . '-12-15'; // a day in last month.
-
-        $start_time = strtotime( $year . '-1-1 00:00:00' );
-        $end_time   = strtotime( gmdate( 'Y-m-t', strtotime( $aday ) ) . ' 23:59:59' );
-
-        $this->manager->db->create_compact_and_erase_records( $start_time, $end_time );
-
-        wp_send_json( array( 'result' => 'SUCCESS' ) );
-    }
-
-    /**
      * Handle ajax clean up child logs.
      */
     public function ajax_clean_up_child_logs() {
@@ -288,48 +230,6 @@ class Log_Admin {
 
         wp_send_json( $rsult );
     }
-
-    /**
-     * Schedules a purge of records.
-     *
-     * @compatible
-     *
-     * @return void
-     */
-    public function hook_purge_scheduled_action() { //phpcs:ignore -- NOSONAR - complex.
-        $enable_schedule = is_array( $this->manager->settings->options ) && ! empty( $this->manager->settings->options['enabled'] ) && ! empty( $this->manager->settings->options['auto_purge'] ) ? true : false;
-        if ( $enable_schedule ) {
-            $last_purge = get_option( 'mainwp_module_log_last_time_auto_purge_logs' );
-            $next_purge = get_option( 'mainwp_module_log_next_time_auto_purge_logs' );
-            $days       = 100;
-            if ( is_array( $this->manager->settings->options ) && isset( $this->manager->settings->options['records_ttl'] ) ) {
-                $days = intval( $this->manager->settings->options['records_ttl'] );
-            }
-
-            if ( defined( 'MAINWP_MODULE_LOG_KEEP_RECORDS_TTL' ) && is_numeric( MAINWP_MODULE_LOG_KEEP_RECORDS_TTL ) && MAINWP_MODULE_LOG_KEEP_RECORDS_TTL > 0 ) {
-                $days = MAINWP_MODULE_LOG_KEEP_RECORDS_TTL;
-            }
-
-            if ( $days ) {
-                $time            = time();
-                $next_time_purge = false;
-                if ( false === $last_purge && false === $next_purge ) {
-                    $next_time_purge = $time + $days * DAY_IN_SECONDS;
-                } elseif ( ! empty( $next_purge ) && $time > (int) $next_purge ) {
-                    do_action( 'mainwp_log_action', 'module log :: purge logs schedule start.', MainWP_Logger::LOGS_AUTO_PURGE_LOG_PRIORITY );
-                    $end_time   = $time - $days * DAY_IN_SECONDS;
-                    $start_time = ! empty( $last_purge ) ? $last_purge : $end_time - $days * DAY_IN_SECONDS;
-                    $this->manager->db->create_compact_and_erase_records( $start_time, $end_time );
-                    update_option( 'mainwp_module_log_last_time_auto_purge_logs', $time );
-                    $next_time_purge = $time + $days * DAY_IN_SECONDS;
-                }
-                if ( $next_time_purge ) {
-                    update_option( 'mainwp_module_log_next_time_auto_purge_logs', $next_time_purge );
-                }
-            }
-        }
-    }
-
 
     /**
      * Render logs db large size notice.

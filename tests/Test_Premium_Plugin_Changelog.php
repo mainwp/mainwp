@@ -91,6 +91,17 @@ class Test_Premium_Plugin_Changelog extends \WP_UnitTestCase {
         );
     }
 
+    public function test_child_changelog_preserves_omitted_sections_and_overrides_duplicates() {
+        $this->store_sections( array( 'description' => 'Stored description', 'installation' => 'Stored installation' ) );
+        $this->child_result['update']['sections']['installation'] = 'Child installation';
+        $result = $this->details();
+        $this->assertSame( 'Stored description', $result->sections['description'] );
+        $this->assertSame( '<p>Premium changes</p>', $result->sections['changelog'] );
+        $this->assertSame( 'Child installation', $result->sections['installation'] );
+        $this->assertTrue( $result->external );
+        $this->assertCount( 1, $this->requests );
+    }
+
     public function test_failed_child_lookup_preserves_stored_description() {
         $this->store_sections( array( 'description' => 'Description' ) );
         $this->child_result = array( 'update' => array() );

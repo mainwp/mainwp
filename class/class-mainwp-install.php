@@ -236,6 +236,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $currentVersion = false;
         }
 
+        if ( ! empty( $currentVersion ) ) {
+            $this->maybe_clean_sync_error_excerpts();
+        }
+
         if ( $currentVersion === $this->mainwp_db_version ) {
             // The index repair keeps its own marker so a failed DROP is retried at
             // most hourly, without holding the DB version back and re-running every
@@ -823,6 +827,42 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      */
     public function get_db_version() {
         return get_site_option( $this->option_db_key );
+    }
+
+    /**
+     * Clean historical response dumps once; failed reads or writes retry next load.
+     *
+     * @return void
+     */
+    private function maybe_clean_sync_error_excerpts() {
+        if ( get_site_option( 'mainwp_sync_error_excerpts_cleaned' ) ) {
+            return;
+        }
+        $last_id = 0;
+        do {
+            $rows = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT wpid, sync_errors FROM %i WHERE wpid > %d ORDER BY wpid LIMIT 200', $this->table_name( 'wp_sync' ), $last_id ) );
+            if ( ! is_array( $rows ) || $this->wpdb->last_error ) {
+                return;
+            }
+            foreach ( $rows as $row ) {
+                $clean = MainWP_Connect_Failure_Ux::sanitize_sync_error( $row->sync_errors );
+                if ( $clean !== $row->sync_errors && false === $this->wpdb->update(
+                    $this->table_name( 'wp_sync' ),
+                    array( 'sync_errors' => $clean ),
+                    array(
+                        'wpid'        => $row->wpid,
+                        'sync_errors' => $row->sync_errors,
+                    ),
+                    array( '%s' ),
+                    array( '%d', '%s' )
+                ) ) {
+                    return;
+                }
+                $last_id = (int) $row->wpid;
+            }
+            $row_count = count( $rows );
+        } while ( 200 === $row_count );
+        update_site_option( 'mainwp_sync_error_excerpts_cleaned', 1 );
     }
 
     /**

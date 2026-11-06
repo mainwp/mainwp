@@ -8,6 +8,7 @@
  */
 
 use MainWP\Dashboard\MainWP_Sync;
+use MainWP\Dashboard\MainWP_Connect_Failure_Ux;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Database_Schema_Checker;
 use MainWP\Dashboard\MainWP_Abilities_Util;
@@ -3303,7 +3304,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'themes'               => $site_object->themes,
                 'plugins'              => $site_object->plugins,
                 'automatic_update'     => ! empty( $site_object->automatic_update ) ? $site_object->automatic_update : 0,
-                'sync_errors'          => $site_object->sync_errors,
+                'sync_errors'          => MainWP_Connect_Failure_Ux::sanitize_sync_error( $site_object->sync_errors ),
                 'last_post_gmt'        => $site_object->last_post_gmt,
                 'health_value'         => $site_object->health_value,
                 'phpversion'           => $site_object->phpversion,

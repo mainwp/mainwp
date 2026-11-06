@@ -3618,6 +3618,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( ! empty( $fields ) ) {
             $previous_sync_errors = null;
             if ( is_array( $fields ) && array_key_exists( 'sync_errors', $fields ) ) {
+                $fields['sync_errors'] = MainWP_Connect_Failure_Ux::sanitize_sync_error( $fields['sync_errors'] );
                 // get_var() also returns null for an empty string, so retain the row to distinguish missing sites.
                 $previous_sync_values = $this->wpdb->get_row(
                     $this->wpdb->prepare( 'SELECT sync_errors FROM %i WHERE wpid = %d', $this->table_name( 'wp_sync' ), $websiteid )

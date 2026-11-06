@@ -1140,6 +1140,11 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         $all_keys = get_option( 'mainwp_rest_api_keys', false );
         $cs       = get_option( 'mainwp_rest_api_consumer_key', false );
 
+        // Migration creates an ownerless key, so it requires the same access as creation.
+        if ( ! self::can_manage_legacy_api_keys() ) {
+            return $all_keys;
+        }
+
         // to compatible.
         if ( false === $all_keys || false !== $cs ) {
             if ( ! is_array( $all_keys ) ) {
@@ -2639,8 +2644,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * @return bool
      */
-    private static function can_manage_legacy_api_keys() {
-        return MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff();
+    public static function can_manage_legacy_api_keys() {
+        return MainWP_System_Utility::current_user_has_role( 'administrator' )
+            && 'all' === MainWP_Abilities_Util::get_allowed_site_ids()
+            && 'all' === MainWP_Abilities_Util::get_allowed_group_ids();
     }
 
     /**

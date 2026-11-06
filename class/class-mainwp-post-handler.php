@@ -809,6 +809,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             $ret['error']  = $ret['result'];
             MainWP_Client::exit_json( $ret );
         }
+        if ( in_array( strtolower( $name ), array( 'rest_api_keys', 'rest_api_consumer_key', 'rest_api_consumer_secret' ), true ) && ! MainWP_Rest_Api_Page::can_manage_legacy_api_keys() ) {
+            $ret           = array( 'success' => false );
+            $ret['result'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+            $ret['error']  = $ret['result'];
+            MainWP_Client::exit_json( $ret );
+        }
         if ( 0 === strcasecmp( 'mainwp_' . $name, MainWP_Backup_Encryption::RECOVERY_OPTION ) ) {
             $ret           = array( 'success' => false );
             $ret['result'] = esc_html__( 'The recovery passphrase cannot be saved here. Change it in the backup settings.', 'mainwp' );

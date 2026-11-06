@@ -1573,7 +1573,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $sidebar_pages                = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
         $sidebar_pages                = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
         $sidebar_pages                = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
-        $custom_theme                 = MainWP_Settings::get_instance()->get_current_user_theme();
         $screen                       = get_current_screen();
         $show_command_palette_trigger = wp_script_is( 'wp-core-commands', 'enqueued' );
         $command_palette_shortcut     = '';
@@ -1589,22 +1588,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
             /* translators: %s: Keyboard shortcut label. */
             $command_palette_label = sprintf( esc_attr__( 'Search sites, clients and commands (%s)', 'mainwp' ), $command_palette_shortcut );
-        }
-
-        if ( false === $custom_theme ) {
-            $compat_theme = null;
-            // to compatible with Custom Dashboard extension settings.
-            $compat_settings = get_option( 'mainwp_custom_dashboard_settings' );
-            if ( is_array( $compat_settings ) && isset( $compat_settings['theme'] ) ) {
-                $compat_theme = $compat_settings['theme'];
-            }
-            if ( null !== $compat_theme ) {
-                $custom_theme = $compat_theme;
-            }
-        }
-        $themes_files = MainWP_Settings::get_instance()->get_custom_themes_files();
-        if ( empty( $themes_files ) ) {
-            $themes_files = array();
         }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1751,23 +1734,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <a class="ui button icon" id="mainwp-sites-sidebar" aria-label="<?php esc_attr_e( 'Open sites shortcuts sidebar', 'mainwp' ); ?>">
                 <i class="globe icon"></i>
             </a>
-            <?php if ( in_array( $custom_theme, array( 'default', 'default-dark' ), true ) && empty( $themes_files ) ) : ?>
-                <?php $is_dark_theme = 'default-dark' === $custom_theme; ?>
-                <button type="button" id="<?php echo esc_attr( $is_dark_theme ? 'mainwp-select-light-theme-button' : 'mainwp-select-dark-theme-button' ); ?>" class="mainwp-theme-toggle" role="switch" aria-checked="<?php echo $is_dark_theme ? 'true' : 'false'; ?>" aria-label="<?php esc_attr_e( 'Dark mode', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php echo esc_attr( $is_dark_theme ? __( 'Switch to Light mode', 'mainwp' ) : __( 'Switch to Dark mode', 'mainwp' ) ); ?>">
-                    <span class="mainwp-theme-toggle-thumb" aria-hidden="true"></span>
-                    <svg class="mainwp-theme-toggle-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false">
-                        <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
-                        <path d="M12 1v3m0 16v3M1 12h3m16 0h3M4.22 4.22l2.12 2.12m11.32 11.32 2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
-                    </svg>
-                    <svg class="mainwp-theme-toggle-moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
-                    </svg>
-                </button>
-            <?php else : ?>
-                <a id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" aria-label="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Select MainWP theme', 'mainwp' ); ?>">
-                    <i class="palette icon"></i>
-                </a>
-            <?php endif; ?>
+            <?php static::render_theme_picker(); ?>
         </span>
 
         <?php
@@ -1850,6 +1817,57 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         </script>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Render the built-in appearance choices in the header or compact menu.
+     *
+     * @param bool $show_labels Whether to show the option names alongside the icons.
+     */
+    public static function render_theme_picker( $show_labels = false ) {
+        $settings       = MainWP_Settings::get_instance();
+        $selected_theme = $settings->get_selected_theme();
+        $choices        = MainWP_Settings::get_builtin_theme_choices();
+        if ( ! isset( $choices[ $selected_theme ] ) || ! empty( $settings->get_custom_themes_files() ) ) {
+            if ( $show_labels ) :
+                ?>
+                <div class="mainwp-theme-picker-labeled">
+                    <button type="button" class="ui mini basic button mainwp-selecte-theme-button">
+                        <i class="palette icon" aria-hidden="true"></i> <?php esc_html_e( 'Select MainWP theme', 'mainwp' ); ?>
+                    </button>
+                </div>
+            <?php else : ?>
+                <a id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" aria-label="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>">
+                    <i class="palette icon"></i>
+                </a>
+            <?php
+            endif;
+            return;
+        }
+
+        ?>
+        <div class="mainwp-theme-picker<?php echo $show_labels ? ' mainwp-theme-picker-labeled' : ''; ?>" role="group" aria-label="<?php esc_attr_e( 'Appearance', 'mainwp' ); ?>">
+            <?php foreach ( $choices as $theme => $label ) : ?>
+                <?php $tooltip = 'system' === $theme ? __( 'System (follows device)', 'mainwp' ) : $label; ?>
+                <button type="button" data-mainwp-theme="<?php echo esc_attr( $theme ); ?>" aria-label="<?php echo esc_attr( $tooltip ); ?>" aria-pressed="<?php echo $theme === $selected_theme ? 'true' : 'false'; ?>" data-tooltip="<?php echo esc_attr( $tooltip ); ?>" data-inverted="" data-position="<?php echo $show_labels ? 'top center' : 'bottom center'; ?>">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <?php if ( 'system' === $theme ) : ?>
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <path d="M12 17v4m-4 0h8" />
+                        <?php elseif ( 'default' === $theme ) : ?>
+                            <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+                            <path d="M12 1v3m0 16v3M1 12h3m16 0h3M4.22 4.22l2.12 2.12m11.32 11.32 2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
+                        <?php else : ?>
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+                        <?php endif; ?>
+                    </svg>
+                    <?php if ( $show_labels ) : ?>
+                        <?php echo esc_html( $label ); ?>
+                    <?php endif; ?>
+                </button>
+            <?php endforeach; ?>
+        </div>
+        <?php
     }
 
     /**

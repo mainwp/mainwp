@@ -2603,6 +2603,19 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
 
     /**
+     * Get the built-in appearance choices in display order.
+     *
+     * @return array Theme keys and translated labels.
+     */
+    public static function get_builtin_theme_choices() {
+        return array(
+            'system'       => __( 'System', 'mainwp' ),
+            'default'      => __( 'Light', 'mainwp' ),
+            'default-dark' => __( 'Dark', 'mainwp' ),
+        );
+    }
+
+    /**
      * Render MainWP themes selection.
      */
     public function render_select_custom_themes() { // phpcs:ignore -- NOSONAR - complex.
@@ -2611,10 +2624,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             // to compatible with Custom Dashboard extension settings.
             $compat_settings = get_option( 'mainwp_custom_dashboard_settings' );
             if ( is_array( $compat_settings ) && isset( $compat_settings['theme'] ) ) {
-                $compat_theme = $compat_settings['theme'];
-            }
-            if ( null !== $compat_theme ) {
-                $custom_theme = $compat_theme;
+                $custom_theme = $compat_settings['theme'];
             }
         }
         $themes_files = static::get_instance()->get_custom_themes_files();
@@ -2622,7 +2632,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             $themes_files = array();
         }
         ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="default">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="<?php echo esc_attr( MainWP_Settings_Indicator::get_defaults_value( 'mainwp_selected_theme' ) ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_selected_theme', $custom_theme );
@@ -2631,8 +2641,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             </label>
             <div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection settings-field-value-change-handler">
-                    <option value="default" <?php echo ( 'default' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Light', 'mainwp' ); ?></option>
-                    <option value="default-dark" <?php echo ( 'default-dark' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
+                    <?php foreach ( static::get_builtin_theme_choices() as $theme => $label ) : ?>
+                        <option value="<?php echo esc_attr( $theme ); ?>" <?php selected( $custom_theme ?: 'default', $theme ); ?>><?php echo esc_html( $label ); ?></option>
+                    <?php endforeach; ?>
                     <?php if ( 'default-2024' === $custom_theme ) { ?>
                     <option value="default-2024" <?php echo ( 'default-2024' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default 2024', 'mainwp' ); ?></option>
                     <?php } ?>
@@ -2704,16 +2715,12 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             // to compatible with Custom Dashboard extension settings.
             $compat_settings = get_option( 'mainwp_custom_dashboard_settings' );
             if ( is_array( $compat_settings ) && isset( $compat_settings['theme'] ) ) {
-                $compat_theme = $compat_settings['theme'];
-            }
-
-            if ( null !== $compat_theme ) {
-                $custom_theme = $compat_theme;
+                $custom_theme = $compat_settings['theme'];
             }
         }
 
         if ( ! empty( $custom_theme ) ) {
-            if ( 'default' === $custom_theme || 'default-dark' === $custom_theme || 'default-2024' === $custom_theme || 'dark' === $custom_theme || 'wpadmin' === $custom_theme || 'minimalistic' === $custom_theme ) {
+            if ( in_array( $custom_theme, array( 'system', 'default', 'default-dark', 'default-2024', 'dark', 'wpadmin', 'minimalistic' ), true ) ) {
                 return $custom_theme;
             }
             $dirs      = $this->get_custom_theme_folder();

@@ -467,8 +467,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $theme = sanitize_text_field( wp_unslash( $_GET['mainwp_quick_theme_change'] ) );
 
-        $allowed_themes = array( 'default', 'default-dark' );
-        if ( ! in_array( $theme, $allowed_themes, true ) ) {
+        if ( ! array_key_exists( $theme, MainWP_Settings::get_builtin_theme_choices() ) ) {
             wp_die( esc_html__( 'Invalid theme selection', 'mainwp' ) );
         }
 

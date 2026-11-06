@@ -641,6 +641,9 @@ jQuery(function () {
 
 
     jQuery(document).on('click', '.mainwp-selecte-theme-button', function () {
+        if (jQuery(this).closest('#mainwp-main-mobile-navigation-container').hasClass('visible')) {
+            jQuery('#mainwp-mobile-menu-trigger').trigger('click');
+        }
         jQuery('#mainwp-select-mainwp-themes-modal').modal({
             allowMultiple: false,
             closable: true,
@@ -933,18 +936,12 @@ let mainwp_help_modal_start_content_onclick = function (tour_id, video_id, show_
     }
 }
 
-jQuery(document).on('click', '#mainwp-select-light-theme-button', function (e) {
-    e.preventDefault();
+jQuery(document).on('click', '.mainwp-theme-picker [data-mainwp-theme]', function () {
+    if (this.getAttribute('aria-pressed') === 'true') {
+        return;
+    }
     const url = new URL(globalThis.location.href);
-    url.searchParams.set('mainwp_quick_theme_change', 'default');
-    url.searchParams.set('_wpnonce', mainwpParams.quickThemeChangeNonce);
-    globalThis.location.href = url.toString();
-});
-
-jQuery(document).on('click', '#mainwp-select-dark-theme-button', function (e) {
-    e.preventDefault();
-    const url = new URL(globalThis.location.href);
-    url.searchParams.set('mainwp_quick_theme_change', 'default-dark');
+    url.searchParams.set('mainwp_quick_theme_change', this.dataset.mainwpTheme);
     url.searchParams.set('_wpnonce', mainwpParams.quickThemeChangeNonce);
     globalThis.location.href = url.toString();
 });

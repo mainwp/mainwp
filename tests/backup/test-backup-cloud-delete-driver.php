@@ -14,6 +14,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/class-backup-pcloud-transport-fixture.php';
+
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Backup_Cloud_Delete_Driver;
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
@@ -867,5 +869,75 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 		MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
 		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'archive.tar' );
 		$this->assertSame( 'complete', $store->get_job( $job->id )->status );
+	}
+	/** A pCloud prune sweep removes leftovers, accepts missing keys and preserves other snapshots. */
+	public function test_pcloud_prune_sweep_and_missing_objects() {
+		// pCloud probe P4: a missing delete returns 2009 and counts as success.
+		// pCloud probe P6: recursive listfolder includes every leftover under the prefix.
+		$store       = MainWP_Backup_Storage_Destinations::instance();
+		$destination = $store->add_destination(
+			array(
+				'provider' => 'pcloud',
+				'name'     => 'Delete driver test pcloud',
+				'settings' => array(
+					'locationid'   => 1,
+					'access_token' => 'token',
+					'base_path'    => 'MainWP Backups',
+				),
+			)
+		);
+		$state       = array(
+			'objects' => array(
+				'/MainWP Backups/5/980120/manifest.json' => '{}',
+				'/MainWP Backups/5/980120/chunks/orphan.bin' => 'leftover',
+				'/MainWP Backups/5/980121/manifest.json' => 'preserved',
+			),
+		);
+		$transport   = MainWP_PCloud_Transport_Fixture::transport( $state );
+		$this->enqueue_delete( 980120, $destination, '5/980120/', array( '5/980120/manifest.json', '5/980120/already-missing.bin' ) );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( 980120, 'delete' )[0];
+			$this->assertSame( 'complete', $job->status );
+			$this->assertTrue( $job->checkpoint['swept'] );
+			$this->assertSame( array( '/MainWP Backups/5/980121/manifest.json' => 'preserved' ), $state['objects'] );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** pCloud deletion failures carry the provider-specific label and retry. */
+	public function test_pcloud_prune_error_mapping() {
+		// pCloud probe P9: result 4000 is retryable throttling.
+		$destination = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'pcloud',
+				'name'     => 'Delete driver test pcloud failure',
+				'settings' => array(
+					'locationid'   => 2,
+					'access_token' => 'token',
+				),
+			)
+		);
+		$state       = array(
+			'fail_method' => 'deletefile',
+			'result'      => 4000,
+		);
+		$transport   = MainWP_PCloud_Transport_Fixture::transport( $state );
+		$this->enqueue_delete( 980122, $destination, '5/980122/', array( '5/980122/manifest.json' ) );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( 980122, 'delete' )[0];
+			$this->assertSame( 'failed_retryable', $job->status );
+			$this->assertStringContainsString( '[mainwp_backup_pcloud_failed]', $job->last_error );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
 	}
 }

@@ -258,6 +258,38 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @throws \RuntimeException When proof or a conditional write fails.
      */
     public function prepare_retention_identity( object $destination ): object {
+        if ( 'pcloud' === $destination->provider ) {
+            // Sibling: the Dropbox preparation below uses the same conditional writes and readback.
+            if ( MainWP_Backup_Retention_Protection::pcloud_identity_valid( $destination->settings ) ) {
+                return $destination;
+            }
+            $field = MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD;
+            if ( ! isset( $destination->settings[ $field ] ) ) {
+                $settings           = $destination->settings;
+                $settings[ $field ] = array();
+                if ( ! $this->update_destination( (int) $destination->id, array( 'settings' => $settings ), $destination ) ) {
+                    throw new \RuntimeException( 'Storage destination changed while preparing its backup identity.' );
+                }
+                $destination = $this->get_destination( (int) $destination->id );
+                if ( null === $destination || 'pcloud' !== $destination->provider || $destination->settings !== $settings ) {
+                    throw new \RuntimeException( 'Storage destination changed while preparing its backup identity.' );
+                }
+            }
+            $provider = $this->make_provider( $destination );
+            if ( ! $provider instanceof MainWP_Backup_Storage_PCloud ) {
+                throw new \RuntimeException( 'pCloud storage identity could not be verified.' );
+            }
+            $settings = MainWP_Backup_Retention_Protection::with_pcloud_identity( $destination->settings, $provider->account_userid(), $provider->base_folder_id() );
+            if ( ! $this->update_destination( (int) $destination->id, array( 'settings' => $settings ), $destination ) ) {
+                throw new \RuntimeException( 'Storage destination changed before its backup identity could be saved.' );
+            }
+            $current = $this->get_destination( (int) $destination->id );
+            if ( null === $current || 'pcloud' !== $current->provider || $current->settings !== $settings
+                || ! MainWP_Backup_Retention_Protection::pcloud_identity_valid( $current->settings ) ) {
+                throw new \RuntimeException( 'Storage destination identity could not be read back.' );
+            }
+            return $current;
+        }
         if ( 'dropbox' !== $destination->provider || MainWP_Backup_Retention_Protection::dropbox_identity_valid( $destination->settings ) ) {
             return $destination;
         }
@@ -404,6 +436,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
                 return new MainWP_Backup_Storage_GCS( $settings );
             case 'dropbox':
                 return new MainWP_Backup_Storage_Dropbox( $settings );
+            case 'pcloud':
+                return new MainWP_Backup_Storage_PCloud( $settings );
             case 'sftp':
                 return new MainWP_Backup_Storage_SFTP( $settings );
             default:

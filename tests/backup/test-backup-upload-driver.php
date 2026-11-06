@@ -15,6 +15,7 @@
 namespace MainWP\Dashboard\Tests;
 
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+require_once __DIR__ . '/class-backup-pcloud-transport-fixture.php';
 
 use MainWP\Dashboard\MainWP_Backup_Archive_Cipher;
 use MainWP\Dashboard\MainWP_Backup_Chunker;
@@ -3448,6 +3449,26 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Seed pCloud credentials as a completed OAuth exchange would.
+	 *
+	 * @return int
+	 */
+	private function pcloud_driver_destination(): int {
+		return MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'pcloud',
+				'name'     => 'pCloud driver test',
+				'settings' => array(
+					'client_id'    => 'client',
+					'access_token' => 'original',
+					'locationid'   => 2,
+					'base_path'    => 'MainWP Backups',
+				),
+			)
+		);
+	}
+
+	/**
 	 * An S3 destination for the MWP-2129 manifest verification cases.
 	 *
 	 * @return int Destination id.
@@ -3464,6 +3485,224 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 					'secret_key' => 's',
 				),
 			)
+		);
+	}
+
+	/**
+	 * Chunked checkpoints resume with stable bindings and refuse a changed account with 410.
+	 *
+	 * @dataProvider pcloud_resume_cases
+	 * @param bool $changed_account Whether reconnection changes the account.
+	 */
+	public function test_pcloud_chunked_resume_binding_and_410( bool $changed_account ) {
+		// pCloud probe P2: bearer credentials authorize the EU API host.
+		// pCloud probe P5: uploadfile and stat agree on chunk byte lengths.
+		$state       = array();
+		$transport   = MainWP_PCloud_Transport_Fixture::transport( $state );
+		$store       = MainWP_Backup_Storage_Destinations::instance();
+		$destination = $this->pcloud_driver_destination();
+		$task        = $this->insert_task( array( $destination ) );
+		$protection  = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$protection::save_task_remove_local_archives( $task, true );
+		$id = $this->make_snapshot( $this->standard_files(), $task );
+		$this->assertTrue( $protection::capture_required_destinations( $id, array( $destination ) ) );
+		$failing  = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Refuse the final save to force resumption from durable chunk evidence.
+			 *
+			 * @param int         $job_id Job ID.
+			 * @param array       $checkpoint Checkpoint.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				return ! empty( $checkpoint['manifest_submitted'] ) ? false : parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$instance = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$original = MainWP_Backup_Upload_Job_Store::instance();
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$instance->setValue( null, $failing );
+			$failing->enqueue_for_snapshot( $id, array( $destination ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = $failing->get_jobs_for_snapshot( $id )[0];
+			$this->assertSame( 'submitting', $job->status );
+			$this->assertNotEmpty( $job->checkpoint['destination_binding'] );
+			$this->assertSame( 'chunked', $job->checkpoint['artifacts'][0]['mode'] );
+			$this->assertGreaterThan( 1, count( $job->checkpoint['artifacts'][0]['chunks'] ) );
+			$chunks_before = array_filter(
+				$state['requests'],
+				static function ( $request ) {
+					return 'PUT' === $request['args']['method'] && str_contains( $request['url'], 'filename=' ) && str_contains( $request['url'], '.bin' );
+				}
+			);
+			$this->assertNotEmpty( $chunks_before );
+			$binding = $job->checkpoint['destination_binding'];
+			$instance->setValue( null, $original );
+			$settings = $store->get_destination( $destination )->settings;
+			if ( $changed_account ) {
+				$state['userid'] = '202';
+			}
+			$this->assertSame(
+				array( 'id' => $destination ),
+				\MainWP\Dashboard\MainWP_Backup_Storage_Handler::save_destination(
+					array(
+						'id'       => $destination,
+						'provider' => 'pcloud',
+						'name'     => 'pCloud',
+						'settings' => $settings,
+					),
+					array(
+						'locationid'   => $settings['locationid'],
+						'access_token' => 'rotated',
+					)
+				)
+			);
+			if ( ! $changed_account ) {
+				$this->assertSame( $binding, $protection::destination_binding( $store->get_destination( $destination ) ) );
+			}
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = $original->get_jobs_for_snapshot( $id )[0];
+			if ( $changed_account ) {
+				$this->assertSame( 'failed_permanent', $job->status, 'The existing 410 rule must refuse resuming into another account.' );
+				$this->assertStringContainsString( 'settings changed before this upload finished', $job->last_error );
+				$this->assertFalse( $protection::required_uploads_verified( $id ) );
+				$this->assertTrue( $protection::holds_automatic_removal( array( $id ) ) );
+			} else {
+				$this->assertSame( 'complete', $job->status );
+				$this->assertTrue( $protection::required_uploads_verified( $id ) );
+				$this->assertFalse( $protection::holds_automatic_removal( array( $id ) ) );
+				$requests_before = count( $state['requests'] );
+				$this->assertTrue( $protection::required_uploads_verified( $id ) );
+				$this->assertFalse( $protection::holds_automatic_removal( array( $id ) ) );
+				$this->assertCount( $requests_before, $state['requests'], 'Retention must never contact pCloud.' );
+			}
+			$chunks_after = array_filter(
+				$state['requests'],
+				static function ( $request ) {
+					return 'PUT' === $request['args']['method'] && str_contains( $request['url'], 'filename=' ) && str_contains( $request['url'], '.bin' );
+				}
+			);
+			$this->assertCount( count( $chunks_before ), $chunks_after, 'Already uploaded chunks must not be uploaded again.' );
+		} finally {
+			$instance->setValue( null, $original );
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/**
+	 * Reconnection scenarios.
+	 *
+	 * @return array
+	 */
+	public static function pcloud_resume_cases(): array {
+		return array(
+			'same account'      => array( false ),
+			'different account' => array( true ),
+		);
+	}
+
+	/** Completed snapshots remain verified after rotation and are held after account or folder replacement. */
+	public function test_pcloud_verified_upload_holds_after_account_or_folder_change() {
+		// pCloud probe P5: uploaded chunk sizes can be confirmed by stat.
+		$state       = array();
+		$transport   = MainWP_PCloud_Transport_Fixture::transport( $state );
+		$store       = MainWP_Backup_Storage_Destinations::instance();
+		$destination = $this->pcloud_driver_destination();
+		$task        = $this->insert_task( array( $destination ) );
+		$protection  = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$protection::save_task_remove_local_archives( $task, true );
+		$id = $this->make_snapshot( $this->standard_files(), $task );
+		$protection::capture_required_destinations( $id, array( $destination ) );
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $id, array( $destination ) );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertTrue( $protection::required_uploads_verified( $id ) );
+			$this->assertFalse( $protection::holds_automatic_removal( array( $id ) ) );
+			foreach ( array( 'same', 'account', 'folder' ) as $change ) {
+				$settings        = $store->get_destination( $destination )->settings;
+				$state['userid'] = 'account' === $change ? '202' : '101';
+				if ( 'folder' === $change ) {
+					$state['folders']  = array( '' => '0' );
+					$state['folderid'] = '230808';
+				}
+				$this->assertArrayHasKey(
+					'id',
+					\MainWP\Dashboard\MainWP_Backup_Storage_Handler::save_destination(
+						array(
+							'id'       => $destination,
+							'provider' => 'pcloud',
+							'name'     => 'pCloud',
+							'settings' => $settings,
+						),
+						array(
+							'locationid'   => $settings['locationid'],
+							'access_token' => 'token-' . $change,
+						)
+					)
+				);
+				$this->assertSame( 'same' === $change, $protection::required_uploads_verified( $id ) );
+				$this->assertSame( 'same' !== $change, $protection::holds_automatic_removal( array( $id ) ) );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/**
+	 * Auth parks the job; throttling, quota and service failures retry with the pCloud label.
+	 *
+	 * @dataProvider pcloud_driver_failures
+	 * @param int    $result API result.
+	 * @param string $status Expected status.
+	 */
+	public function test_pcloud_upload_error_mapping( int $result, string $status ) {
+		// pCloud probe P3: nonzero results arrive with HTTP 200.
+		// pCloud probe P4: revoked tokens use 2094 and over-quota uses 2008.
+		// pCloud probe P9: 4000 throttles and 5000 is retryable.
+		$state       = array(
+			'fail_method' => '*',
+			'result'      => $result,
+		);
+		$transport   = MainWP_PCloud_Transport_Fixture::transport( $state );
+		$destination = $this->pcloud_driver_destination();
+		$id          = $this->make_snapshot( $this->standard_files() );
+		$jobs        = MainWP_Backup_Upload_Job_Store::instance();
+		$jobs->enqueue_for_snapshot( $id, array( $destination ) );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$now = time();
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+			$job = $jobs->get_jobs_for_snapshot( $id )[0];
+			$this->assertSame( $status, $job->status );
+			$this->assertStringContainsString( '[mainwp_backup_pcloud_failed]', $job->last_error );
+			if ( 'failed_retryable' === $status ) {
+				$this->assertGreaterThan( $now, (int) $job->next_retry_at );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/**
+	 * API failure outcomes.
+	 *
+	 * @return array
+	 */
+	public static function pcloud_driver_failures(): array {
+		return array(
+			'revoked'   => array( 2094, 'credentials_invalid' ),
+			'throttled' => array( 4000, 'failed_retryable' ),
+			'quota'     => array( 2008, 'failed_retryable' ),
+			'service'   => array( 5000, 'failed_retryable' ),
 		);
 	}
 

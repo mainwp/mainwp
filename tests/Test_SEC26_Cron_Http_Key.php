@@ -464,7 +464,7 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
     public function test_settings_right_is_required_for_notice_and_key_visibility() {
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
         update_option( 'mainwp_wp_cron', '0' );
-        update_option( 'mainwp_cron_secret', 'sec26-private-key', false );
+        update_option( 'mainwp_cron_secret', 'sec26-private-key', false ); // gitleaks:allow
         update_option(
             'mainwp_cron_key_state',
             array(

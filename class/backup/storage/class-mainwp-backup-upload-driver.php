@@ -330,7 +330,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $chunking = false;
         try {
-            if ( 'dropbox' === $destination->provider && MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot ) ) {
+            if ( in_array( $destination->provider, array( 'dropbox', 'pcloud' ), true ) && MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot ) ) {
                 $destination = MainWP_Backup_Storage_Destinations::instance()->prepare_retention_identity( $destination );
                 $provider    = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
             }
@@ -1160,6 +1160,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 return MainWP_Backup_Error_Codes::ERR_S3_FAILED;
             case 'gcs':
                 return MainWP_Backup_Error_Codes::ERR_GCS_FAILED;
+            case 'pcloud':
+                return MainWP_Backup_Error_Codes::ERR_PCLOUD_FAILED;
             case 'dropbox':
                 return MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED;
             case 'ftp':

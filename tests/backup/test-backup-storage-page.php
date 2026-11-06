@@ -13,6 +13,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/class-backup-pcloud-transport-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Backup_Storage_Handler;
 use MainWP\Dashboard\MainWP_Backup_Storage_View;
@@ -1915,7 +1917,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'class="ui visible message" id="mainwp-storage-form-message-zone"', $output );
 		$this->assertStringContainsString( 'feedback( zone, message, color );', $output, 'Messages go to core feedback(), which renders strings as text.' );
 		$this->assertStringNotContainsString( '.text( message ).html()', $output, 'Pre-escaping would double-escape now that feedback() renders text.' );
-		$this->assertMatchesRegularExpression( "/#mainwp-storage-test-only' \\).on\\( 'click'[^}]*busy\\( button, true \\);[^}]*formFeedback\\(/s", $output );
+		$this->assertMatchesRegularExpression( "/#mainwp-storage-test-only' \\).on\\( 'click'.*?busy\\( button, true \\);[^}]*formFeedback\\(/s", $output );
 	}
 
 	/**
@@ -2175,5 +2177,1092 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		} finally {
 			remove_filter( 'pre_http_request', $transport );
 		}
+	}
+	/**
+	 * Seed a server-owned OAuth row without implementing the callback.
+	 *
+	 * @param array  $overrides Settings overrides.
+	 * @param string $userid Stored account identity.
+	 * @param string $folderid Stored folder identity.
+	 * @return int
+	 */
+	private function pcloud_destination( array $overrides = array(), string $userid = '101', string $folderid = '230807' ): int {
+		$settings = array_merge(
+			array(
+				'client_id'    => 'client',
+				'access_token' => 'original',
+				'locationid'   => 1,
+				'base_path'    => 'MainWP Backups',
+			),
+			$overrides
+		);
+		$settings = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::with_pcloud_identity( $settings, $userid, $folderid );
+		return MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'pcloud',
+				'name'     => 'pCloud',
+				'settings' => $settings,
+			)
+		);
+	}
+
+	/** Unknown providers must refuse secret carry-over and connection testing. */
+	public function test_pcloud_handler_unknown_provider_fails_closed() {
+		$same = new \ReflectionMethod( MainWP_Backup_Storage_Handler::class, 'same_credential_target' );
+		$test = new \ReflectionMethod( MainWP_Backup_Storage_Handler::class, 'run_connection_test' );
+		$this->assertFalse( $same->invoke( null, 'unknown', array(), array() ) );
+		$this->assertFalse(
+			$test->invoke(
+				null,
+				array(
+					'provider' => 'unknown',
+					'settings' => array(),
+				)
+			)['ok']
+		);
+		$settings = array(
+			'client_id'  => 'client',
+			'locationid' => 2,
+		);
+		$this->assertTrue( $same->invoke( null, 'pcloud', $settings, $settings ) );
+		$this->assertFalse( $same->invoke( null, 'pcloud', array_merge( $settings, array( 'client_id' => 'other' ) ), $settings ) );
+		$this->assertFalse( $same->invoke( null, 'pcloud', array_merge( $settings, array( 'locationid' => 1 ) ), $settings ) );
+	}
+
+	/** Metadata saves keep either region and even an invalid cached receipt without HTTP. */
+	public function test_pcloud_us_eu_metadata_edits_keep_proof_with_zero_http() {
+		$store     = MainWP_Backup_Storage_Destinations::instance();
+		$calls     = 0;
+		$transport = static function () use ( &$calls ) {
+			++$calls;
+			return new \WP_Error( 'outage', 'Offline' );
+		};
+		add_filter( 'pre_http_request', $transport );
+		try {
+			foreach ( array( 1, 2 ) as $region ) {
+				foreach ( array( true, false ) as $valid ) {
+					$id     = $this->pcloud_destination(
+						array(
+							'locationid'    => $region,
+							'account_email' => 'owner@example.com',
+						)
+					);
+					$before = $store->get_destination( $id )->settings;
+					if ( ! $valid ) {
+						$before['_mainwp_retention_identity']['receipt'] = 'invalid';
+						$this->assertTrue( $store->update_destination( $id, array( 'settings' => $before ) ) );
+					}
+					$result = MainWP_Backup_Storage_Handler::save_destination(
+						array(
+							'id'         => $id,
+							'provider'   => 'pcloud',
+							'name'       => 'Renamed',
+							'is_default' => 1,
+							'settings'   => array(
+								'client_id'    => ' client ',
+								'access_token' => '',
+								'locationid'   => 3 - $region,
+								'base_path'    => '/MainWP Backups/',
+								'minimum_remote_retention_days' => 30,
+								'_mainwp_retention_identity' => array( 'userid' => 'forged' ),
+							),
+						)
+					);
+					$this->assertSame( array( 'id' => $id ), $result );
+					$after = $store->get_destination( $id );
+					$this->assertSame( 'Renamed', $after->name );
+					$this->assertSame( $region, $after->settings['locationid'] );
+					$this->assertSame( 'original', $after->settings['access_token'] );
+					$this->assertSame( 'owner@example.com', $after->settings['account_email'] );
+					$this->assertSame( 30, $after->settings['minimum_remote_retention_days'] );
+					$this->assertSame( $before['_mainwp_retention_identity'], $after->settings['_mainwp_retention_identity'] );
+				}
+			}
+			$this->assertSame( 0, $calls );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
+
+	/** Client secrets never survive generic saves, including stored-settings-only saves. */
+	public function test_pcloud_generic_save_drops_client_secret_and_redacts_secrets() {
+		$transport = function () {
+			$this->fail( 'Generic metadata saves must not make HTTP requests.' );
+		};
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport );
+		try {
+			$id    = $this->pcloud_destination( array( 'client_secret' => 'legacy-secret' ) ); // gitleaks:allow -- test fixture value, not a credential.
+			$store = MainWP_Backup_Storage_Destinations::instance();
+			$input = array(
+				'id'       => $id,
+				'provider' => 'pcloud',
+				'name'     => 'pCloud',
+			);
+			$this->assertArrayNotHasKey( 'client_secret', MainWP_Backup_Storage_Handler::destination_for_edit( $id )['settings'] );
+			$this->assertSame( array( 'id' => $id ), MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$this->assertArrayNotHasKey( 'client_secret', $store->get_destination( $id )->settings );
+			$input['settings'] = array(
+				'client_id'     => 'client',
+				'access_token'  => '',
+				'client_secret' => 'submitted-secret', // gitleaks:allow -- test fixture value, not a credential.
+				'base_path'     => 'MainWP Backups',
+			);
+			$this->assertSame( array( 'id' => $id ), MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$this->assertArrayNotHasKey( 'client_secret', $store->get_destination( $id )->settings );
+			$this->assertSame( 'original', $store->get_destination( $id )->settings['access_token'] );
+			$public = MainWP_Backup_Storage_Handler::destination_for_edit( $id )['settings'];
+			foreach ( array( 'access_token', 'client_secret', '_mainwp_retention_identity' ) as $field ) {
+				$this->assertArrayNotHasKey( $field, $public );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** The browser cannot name the app, region, token or code; submitted identity and region cannot create a row. */
+	public function test_pcloud_browser_cannot_supply_app_region_token_or_code() {
+		$merge = new \ReflectionMethod( MainWP_Backup_Storage_Handler::class, 'merge_candidate' );
+		$id    = $this->pcloud_destination(
+			array(
+				'locationid'    => 2,
+				'account_email' => 'owner@example.com',
+			)
+		);
+		$input = array(
+			'id'       => $id,
+			'provider' => 'pcloud',
+			'name'     => 'pCloud',
+			'settings' => array(
+				'client_id'          => 'other',
+				'client_secret'      => 'browser-secret', // gitleaks:allow -- test fixture value, not a credential.
+				'access_token'       => 'browser-token',
+				'locationid'         => 1,
+				'authorization_code' => 'browser-code',
+				'account_email'      => 'browser@example.com',
+				'base_path'          => 'MainWP Backups',
+			),
+		);
+		$row   = $merge->invoke( null, $input );
+		$this->assertSame( 'client', $row['settings']['client_id'] );
+		$this->assertSame( 'original', $row['settings']['access_token'] );
+		$this->assertSame( 2, $row['settings']['locationid'] );
+		$this->assertSame( 'owner@example.com', $row['settings']['account_email'] );
+		foreach ( array( 'client_secret', 'authorization_code' ) as $field ) {
+			$this->assertArrayNotHasKey( $field, $row['settings'] );
+		}
+		$calls     = 0;
+		$transport = static function () use ( &$calls ) {
+			++$calls;
+			return new \WP_Error( 'unexpected', 'No HTTP expected.' );
+		};
+		add_filter( 'pre_http_request', $transport );
+		try {
+			$this->assertSame( array( 'id' => $id ), MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$stored = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id )->settings;
+			$this->assertSame( 'client', $stored['client_id'] );
+			$this->assertSame( 'original', $stored['access_token'] );
+			$this->assertSame( 2, $stored['locationid'] );
+			$this->assertSame( 'owner@example.com', $stored['account_email'] );
+			$this->assertArrayNotHasKey( 'authorization_code', $stored );
+			$input['id'] = 0;
+			$this->assertArrayNotHasKey( 'account_email', $merge->invoke( null, $input )['settings'] );
+			$input['settings']['_mainwp_retention_identity'] = array(
+				'userid'  => 'forged',
+				'receipt' => 'forged',
+			);
+			$this->assertSame( 'Click Connect pCloud and paste the authorization code to finish adding this destination.', MainWP_Backup_Storage_Handler::save_destination( $input )['error'] );
+			$this->assertSame( 'Click Connect pCloud and paste the authorization code to finish adding this destination.', MainWP_Backup_Storage_Handler::test_saved_or_submitted( $input )['error'] );
+			$this->assertSame( 0, $calls );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
+
+	/** An undecryptable pCloud row asks for a reconnect from both Save and Test, without HTTP. */
+	public function test_pcloud_undecryptable_row_points_to_reconnect() {
+		global $wpdb;
+
+		$id = $this->pcloud_destination( array( 'locationid' => 2 ) );
+		$wpdb->update( // phpcs:ignore WordPress.DB -- test fixture: corrupt the stored envelope.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ),
+			array( 'settings' => 'garbage-not-an-envelope' ),
+			array( 'id' => $id )
+		);
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::instance()->get_destination( $id, true )->credentials_invalid );
+
+		$calls     = 0;
+		$transport = function () use ( &$calls ) {
+			++$calls;
+			return new \WP_Error( 'unexpected', 'No HTTP expected.' );
+		};
+		add_filter( 'pre_http_request', $transport );
+		try {
+			$input = array(
+				'id'       => $id,
+				'provider' => 'pcloud',
+				'name'     => 'Renamed pCloud',
+				'settings' => array(
+					'client_id' => 'client',
+					'base_path' => 'MainWP Backups',
+				),
+			);
+			$this->assertSame( array( 'error' => 'Click Connect pCloud and paste the authorization code to reconnect this destination.' ), MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$this->assertSame( 'Click Connect pCloud and paste the authorization code to reconnect this destination.', MainWP_Backup_Storage_Handler::test_saved_or_submitted( $input )['error'] );
+			$this->assertSame( 0, $calls );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
+
+	/** Folder edits preserve blank credentials in either region and re-prove the target. */
+	public function test_pcloud_us_eu_folder_edits_reprove_and_preserve_region() {
+		// pCloud probe P2: stored bearer tokens authorize both region hosts.
+		// pCloud probe P5: the connection probe reports its stored byte count.
+		$state     = array();
+		$transport = MainWP_PCloud_Transport_Fixture::transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			foreach ( array( 1, 2 ) as $region ) {
+				$id = $this->pcloud_destination( array( 'locationid' => $region ) );
+				$this->assertSame(
+					array( 'id' => $id ),
+					MainWP_Backup_Storage_Handler::save_destination(
+						array(
+							'id'       => $id,
+							'provider' => 'pcloud',
+							'name'     => 'Folder edit',
+							'settings' => array(
+								'client_id'    => 'client',
+								'access_token' => '',
+								'locationid'   => 3 - $region,
+								'base_path'    => '/Other Backups/',
+							),
+						)
+					)
+				);
+				$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
+				$this->assertSame( $region, $row->settings['locationid'] );
+				$this->assertSame( 'original', $row->settings['access_token'] );
+				$this->assertSame( 'Other Backups', $row->settings['base_path'] );
+				$this->assertTrue( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::pcloud_identity_valid( $row->settings ) );
+				$requests = $state['requests'];
+				$this->assertStringStartsWith( 1 === $region ? 'https://api.pcloud.com/' : 'https://eapi.pcloud.com/', end( $requests )['url'] );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** A re-proof failure refuses the entire edit after a successful connection probe. */
+	public function test_pcloud_save_proof_http_failure_leaves_stored_row_unchanged() {
+		// pCloud probe P5: the write/read/delete probe succeeds before identity proof.
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		try {
+			foreach ( array( 'userinfo', 'createfolderifnotexists' ) as $failure ) {
+				$id                      = $this->pcloud_destination();
+				$before                  = $store->get_destination( $id );
+				$state                   = array();
+				$transport               = MainWP_PCloud_Transport_Fixture::transport( $state );
+				$state['before_request'] = static function ( $method ) use ( &$state, $failure ) {
+					if ( 'userinfo' === $method ) {
+						$state['fail_method'] = $failure;
+					}
+				};
+				add_filter( 'pre_http_request', $transport, 10, 3 );
+				try {
+					$result = MainWP_Backup_Storage_Handler::save_destination(
+						array(
+							'id'       => $id,
+							'provider' => 'pcloud',
+							'name'     => 'Never saved',
+							'settings' => $before->settings,
+						),
+						array(
+							'locationid'   => 1,
+							'access_token' => 'new-token',
+						)
+					);
+					$this->assertArrayHasKey( 'error', $result );
+					$this->assertEquals( $before, $store->get_destination( $id ) );
+					$this->assertGreaterThanOrEqual( 5, count( $state['requests'] ) );
+				} finally {
+					remove_filter( 'pre_http_request', $transport );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** The list-row Test reads stored region and credentials without posted settings. */
+	public function test_pcloud_list_row_test_uses_stored_settings_only() {
+		// pCloud probe P2: a bearer token authorizes the connection probe.
+		// pCloud probe P5: uploadfile returns the probe byte count.
+		$id        = $this->pcloud_destination( array( 'locationid' => 2 ) );
+		$state     = array();
+		$transport = MainWP_PCloud_Transport_Fixture::transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$result = MainWP_Backup_Storage_Handler::test_saved_or_submitted(
+				array(
+					'id'       => $id,
+					'provider' => 'pcloud',
+					'name'     => 'pCloud',
+				)
+			);
+			$this->assertTrue( $result['ok'] );
+			$this->assertCount( 4, $state['requests'] );
+			foreach ( $state['requests'] as $request ) {
+				$this->assertStringStartsWith( 'https://eapi.pcloud.com/', $request['url'] );
+				$this->assertSame( 'Bearer original', $request['args']['headers']['Authorization'] );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** Reconnecting must re-prove a folder even when OAuth returns the stored token. */
+	public function test_pcloud_oauth_save_with_identical_token_reproves_identity(): void {
+		// pCloud probe P2: the stored bearer token authorizes a fresh identity check.
+		// pCloud probe P5: the connection probe confirms its stored byte count.
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		try {
+			foreach ( array( 1, 2 ) as $region ) {
+				$id        = $this->pcloud_destination( array( 'locationid' => $region ) );
+				$http      = array(
+					'userid'   => '202',
+					'folderid' => '230808',
+				);
+				$transport = MainWP_PCloud_Transport_Fixture::transport( $http );
+				add_filter( 'pre_http_request', $transport, 10, 3 );
+				try {
+					$this->assertSame(
+						array( 'id' => $id ),
+						MainWP_Backup_Storage_Handler::save_destination(
+							array(
+								'id'       => $id,
+								'provider' => 'pcloud',
+								'name'     => 'pCloud',
+								'settings' => array(
+									'client_id' => 'client',
+									'base_path' => 'MainWP Backups',
+								),
+							),
+							array(
+								'locationid'   => $region,
+								'access_token' => 'original',
+							)
+						)
+					);
+					$this->assertCount( 6, $http['requests'] );
+					$row = $store->get_destination( $id );
+					$this->assertSame( 'original', $row->settings['access_token'] );
+					$this->assertSame( '202', $row->settings['_mainwp_retention_identity']['userid'] );
+					$this->assertSame( '230808', $row->settings['_mainwp_retention_identity']['folderid'] );
+					$this->assertTrue( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::pcloud_identity_valid( $row->settings ) );
+				} finally {
+					remove_filter( 'pre_http_request', $transport, 10 );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+	/** A missing code, a missing name or an unconfigured app refuses before any pCloud request. */
+	public function test_pcloud_connect_refusals_send_nothing(): void {
+		$calls     = 0;
+		$transport = static function () use ( &$calls ) {
+			++$calls;
+			return new \WP_Error( 'unexpected', 'No HTTP expected.' );
+		};
+		add_filter( 'pre_http_request', $transport );
+		try {
+			$input = array(
+				'provider' => 'pcloud',
+				'name'     => 'pCloud',
+				'settings' => array( 'base_path' => 'Archive' ),
+			);
+			foreach ( array( '', '   ' ) as $code ) {
+				$this->assertSame( array( 'error' => 'Paste the authorization code from pCloud, then save.' ), MainWP_Backup_Storage_Handler::connect_pcloud( $input, $code ) );
+			}
+			$this->assertSame( array( 'error' => 'A destination name is required.' ), MainWP_Backup_Storage_Handler::connect_pcloud( array_merge( $input, array( 'name' => '' ) ), 'code' ) );
+			$this->assertSame(
+				array( 'error' => 'Minimum retention must be a whole number from 0 to 36500 days.' ),
+				MainWP_Backup_Storage_Handler::connect_pcloud( array_merge( $input, array( 'settings' => array( 'minimum_remote_retention_days' => -1 ) ) ), 'code' )
+			);
+			$this->assertSame( 0, $calls );
+			$this->assertEmpty( MainWP_Backup_Storage_Destinations::instance()->list_destinations() );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
+
+	/**
+	 * Extend the shared transport with an OAuth response; identity still comes from userinfo.
+	 *
+	 * @param array $state Mutable pCloud fixture state.
+	 * @return \Closure
+	 */
+	private function pcloud_connect_transport( array &$state ): \Closure {
+		$fixture = MainWP_PCloud_Transport_Fixture::transport( $state );
+		return static function ( $pre, $args, $url ) use ( &$state, $fixture ) {
+			if ( '/oauth2_token' !== wp_parse_url( $url, PHP_URL_PATH ) ) {
+				return $fixture( $pre, $args, $url );
+			}
+			$state['exchanges'] = ( $state['exchanges'] ?? 0 ) + 1;
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode(
+					array(
+						'result'       => 0,
+						'access_token' => str_repeat( 't', 52 ),
+						'locationid'   => $state['locationid'] ?? 1,
+						'userid'       => '999',
+					)
+				),
+				'response' => array( 'code' => 200 ),
+			);
+		};
+	}
+
+	/** A changed account or region needs consent before any destination write. */
+	public function test_pcloud_different_account_reconnect_stashes_without_saving(): void {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		try {
+			foreach ( array( array( 'userid' => '202' ), array( 'locationid' => 2 ) ) as $change ) {
+				$id        = $this->pcloud_destination( array( 'account_email' => 'old@example.com' ) );
+				$before    = $store->get_destination( $id );
+				$state     = $change + array( 'email' => 'new@example.com' );
+				$transport = $this->pcloud_connect_transport( $state );
+				add_filter( 'pre_http_request', $transport, 10, 3 );
+				try {
+					$result = MainWP_Backup_Storage_Handler::connect_pcloud(
+						array(
+							'id'   => $id,
+							'name' => 'Switch',
+						),
+						'one-use-code'
+					);
+					$this->assertArrayHasKey( 'error', $result );
+					$this->assertMatchesRegularExpression( '/^[a-f0-9]{32}$/D', $result['stash_key'] );
+					$this->assertSame( 'old@example.com', $result['old_account_email'] );
+					$this->assertSame( 'new@example.com', $result['new_account_email'] );
+					$this->assertStringContainsString( 'old@example.com', $result['error'] );
+					$this->assertStringContainsString( 'new@example.com', $result['error'] );
+					$this->assertStringContainsString( esc_html( "Switching doesn't revoke this Dashboard's access to old@example.com in pCloud." ), $result['error'] );
+					$this->assertStringNotContainsString( '%1$s', $result['error'] );
+					$this->assertStringNotContainsString( '%2$s', $result['error'] );
+					$this->assertStringContainsString( 'Linked Apps', $result['error'] );
+					$this->assertStringNotContainsString( str_repeat( 't', 52 ), wp_json_encode( $result ) );
+					$this->assertEquals( $before, $store->get_destination( $id ) );
+					$key      = 'mainwp_pcloud_connect_' . $result['stash_key'];
+					$envelope = get_transient( $key );
+					$this->assertTrue( \MainWP\Dashboard\MainWP_Credential_Storage::is_credential_envelope( $envelope ) );
+					$stash = json_decode( \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $envelope ), true );
+					$this->assertSame( get_current_user_id(), $stash['user_id'] );
+					$this->assertSame( $id, $stash['destination_id'] );
+					$this->assertSame( str_repeat( 't', 52 ), $stash['oauth']['access_token'] );
+					$this->assertSame( $state['userid'], $stash['oauth']['userid'] );
+					$this->assertStringNotContainsString( 'one-use-code', wp_json_encode( $stash ) );
+					$this->assertEqualsWithDelta( time() + 600, (int) get_option( '_transient_timeout_' . $key ), 2 );
+					$this->assertCount( 1, $state['requests'] );
+					MainWP_Backup_Storage_Handler::connect_pcloud( array( 'id' => $id + 1000 ), '', $result['stash_key'] );
+				} finally {
+					remove_filter( 'pre_http_request', $transport );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** Exchanging a code revokes sibling tokens even while an account switch awaits consent. */
+	public function test_pcloud_stashed_account_change_refreshes_siblings_before_confirmation(): void {
+		$store                   = MainWP_Backup_Storage_Destinations::instance();
+		$app                     = \MainWP\Dashboard\MainWP_Backup_Storage_PCloud::app_credentials()['client_id'];
+		$id                      = $this->pcloud_destination( array( 'account_email' => 'old@example.com' ) );
+		$edited                  = $store->get_destination( $id );
+		$sibling                 = $this->pcloud_destination(
+			array(
+				'client_id'     => $app,
+				'locationid'    => 2,
+				'base_path'     => 'Sibling',
+				'account_email' => 'keep@example.com',
+			),
+			'202',
+			'230808'
+		);
+		$before                  = $store->get_destination( $sibling );
+		$binding                 = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( $before );
+		$state                   = array(
+			'userid'     => '202',
+			'locationid' => 2,
+			'folders'    => array(
+				''         => '0',
+				'/Sibling' => '230808',
+			),
+		);
+		$sibling_proofs          = 0;
+		$state['before_request'] = static function ( $method ) use ( &$state, &$sibling_proofs ) {
+			$request = end( $state['requests'] );
+			parse_str( wp_parse_url( $request['url'], PHP_URL_QUERY ) ?? '', $query );
+			if ( 'createfolderifnotexists' === $method && 'Sibling' === ( $query['name'] ?? '' ) ) {
+				++$sibling_proofs;
+			}
+		};
+		$transport               = $this->pcloud_connect_transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$start = MainWP_Backup_Storage_Handler::connect_pcloud(
+				array(
+					'id'   => $id,
+					'name' => 'Switch',
+				),
+				'code'
+			);
+			$this->assertArrayHasKey( 'stash_key', $start );
+			$this->assertEquals( $edited, $store->get_destination( $id ) );
+			$row = $store->get_destination( $sibling );
+			$this->assertSame( str_repeat( 't', 52 ), $row->settings['access_token'] );
+			$this->assertTrue( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::pcloud_identity_valid( $row->settings ) );
+			$this->assertSame( $binding, \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( $row ) );
+			$expected                 = $before->settings;
+			$expected['access_token'] = str_repeat( 't', 52 );
+			$expected['_mainwp_retention_identity']['receipt'] = $row->settings['_mainwp_retention_identity']['receipt'];
+			$this->assertSame( $expected, $row->settings );
+			$this->assertSame( 1, $sibling_proofs );
+			$this->assertSame( array( 'id' => $id ), MainWP_Backup_Storage_Handler::connect_pcloud( array( 'id' => $id ), '', $start['stash_key'] ) );
+			$this->assertSame( 1, $sibling_proofs, 'Confirmation must not refresh siblings a second time.' );
+			$this->assertSame( 1, $state['exchanges'] );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** A failed connection test or main identity proof cannot leave sibling tokens revoked. */
+	public function test_pcloud_failed_save_after_exchange_still_refreshes_siblings(): void {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$app   = \MainWP\Dashboard\MainWP_Backup_Storage_PCloud::app_credentials()['client_id'];
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		try {
+			foreach ( array( 'uploadfile', 'userinfo' ) as $failure ) {
+				$id                      = $this->pcloud_destination( array(), '202' );
+				$edited                  = $store->get_destination( $id );
+				$sibling                 = $this->pcloud_destination(
+					array(
+						'client_id' => $app,
+						'base_path' => 'Sibling',
+					),
+					'202',
+					'230808'
+				);
+				$before                  = $store->get_destination( $sibling );
+				$binding                 = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( $before );
+				$state                   = array(
+					'userid'  => '202',
+					'folders' => array(
+						''         => '0',
+						'/Sibling' => '230808',
+					),
+				);
+				$state['before_request'] = static function ( $method ) use ( &$state, $failure ) {
+					$request = end( $state['requests'] );
+					parse_str( wp_parse_url( $request['url'], PHP_URL_QUERY ) ?? '', $query );
+					if ( 'createfolderifnotexists' === $method && 'Failing' === ( $query['name'] ?? '' ) ) {
+						$state['main_started'] = true;
+					}
+					$state['fail_method'] = empty( $state['main_started'] ) ? '' : $failure;
+				};
+				$transport               = $this->pcloud_connect_transport( $state );
+				add_filter( 'pre_http_request', $transport, 10, 3 );
+				try {
+					$result = MainWP_Backup_Storage_Handler::connect_pcloud(
+						array(
+							'id'       => $id,
+							'name'     => 'Failed save',
+							'settings' => array( 'base_path' => 'Failing' ),
+						),
+						'code'
+					);
+					$this->assertArrayHasKey( 'error', $result, $failure );
+					$this->assertArrayNotHasKey( 'stash_key', $result );
+					$this->assertStringContainsString( "ended this destination's earlier connection", html_entity_decode( $result['error'], ENT_QUOTES ), $failure );
+					$this->assertTrue( $state['main_started'] );
+					$this->assertSame( 1, $state['exchanges'] );
+					$this->assertEquals( $edited, $store->get_destination( $id ) );
+					$row = $store->get_destination( $sibling );
+					$this->assertSame( str_repeat( 't', 52 ), $row->settings['access_token'] );
+					$this->assertTrue( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::pcloud_identity_valid( $row->settings ) );
+					$this->assertSame( $binding, \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( $row ) );
+				} finally {
+					remove_filter( 'pre_http_request', $transport );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** A new destination has no earlier connection for a failed save to warn about. */
+	public function test_pcloud_failed_save_for_new_destination_has_no_earlier_connection_warning(): void {
+		$state                   = array( 'userid' => '202' );
+		$state['before_request'] = static function ( $method ) use ( &$state ) {
+			if ( 'createfolderifnotexists' === $method ) {
+				$state['fail_method'] = 'uploadfile';
+			}
+		};
+		$transport               = $this->pcloud_connect_transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$result = MainWP_Backup_Storage_Handler::connect_pcloud(
+				array(
+					'name'     => 'New',
+					'settings' => array( 'base_path' => 'Failing' ),
+				),
+				'code'
+			);
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 1, $state['exchanges'] );
+		$this->assertStringNotContainsString( 'earlier connection', html_entity_decode( $result['error'], ENT_QUOTES ) );
+	}
+
+	/** Confirming uses the spent code's token once and re-proves the new target. */
+	public function test_pcloud_account_change_confirmation_saves_once(): void {
+		$id        = $this->pcloud_destination( array( 'account_email' => 'old@example.com' ) );
+		$state     = array(
+			'userid'     => '202',
+			'email'      => 'new@example.com',
+			'locationid' => 2,
+			'folderid'   => '230808',
+		);
+		$transport = $this->pcloud_connect_transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$input = array(
+				'id'       => $id,
+				'name'     => 'Confirmed account',
+				'settings' => array(
+					'base_path'                     => 'Archive',
+					'minimum_remote_retention_days' => 30,
+				),
+			);
+			$start = MainWP_Backup_Storage_Handler::connect_pcloud( $input, 'code' );
+			$this->assertSame( array( 'id' => $id ), MainWP_Backup_Storage_Handler::connect_pcloud( array( 'id' => $id ), '', $start['stash_key'] ) );
+			$this->assertFalse( get_transient( 'mainwp_pcloud_connect_' . $start['stash_key'] ) );
+			$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
+			$this->assertSame( 'Confirmed account', $row->name );
+			$this->assertSame( 'Archive', $row->settings['base_path'] );
+			$this->assertSame( 30, $row->settings['minimum_remote_retention_days'] );
+			$this->assertSame( 'new@example.com', $row->settings['account_email'] );
+			$this->assertSame( str_repeat( 't', 52 ), $row->settings['access_token'] );
+			$this->assertSame( 2, $row->settings['locationid'] );
+			$this->assertSame( '202', $row->settings['_mainwp_retention_identity']['userid'] );
+			$this->assertSame( '230808', $row->settings['_mainwp_retention_identity']['folderid'] );
+			$this->assertTrue( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::pcloud_identity_valid( $row->settings ) );
+			$requests = count( $state['requests'] );
+			$this->assertArrayHasKey( 'error', MainWP_Backup_Storage_Handler::connect_pcloud( $input, '', $start['stash_key'] ) );
+			$this->assertSame( $requests, count( $state['requests'] ) );
+			$this->assertSame( 1, $state['exchanges'] );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** A confirmation cannot overwrite an account another admin connected while the dialog was open. */
+	public function test_pcloud_confirmation_refuses_destination_changed_since_dialog(): void {
+		$store     = MainWP_Backup_Storage_Destinations::instance();
+		$state     = array( 'userid' => '202' );
+		$transport = $this->pcloud_connect_transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			foreach ( array( 'reconnected', 'region', 'deleted' ) as $change ) {
+				$id    = $this->pcloud_destination();
+				$input = array(
+					'id'   => $id,
+					'name' => 'Switch',
+				);
+				$start = MainWP_Backup_Storage_Handler::connect_pcloud( $input, 'code' );
+				$this->assertArrayHasKey( 'stash_key', $start, $change );
+				$row      = $store->get_destination( $id );
+				$settings = $row->settings;
+				if ( 'reconnected' === $change ) {
+					$settings = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::with_pcloud_identity( $settings, '303', '230809' );
+					$store->update_destination( $id, array( 'settings' => $settings ) );
+				} elseif ( 'region' === $change ) {
+					$settings['locationid'] = 2;
+					$store->update_destination( $id, array( 'settings' => $settings ) );
+				} else {
+					$store->delete_destination( $id );
+				}
+				$before   = $store->get_destination( $id );
+				$requests = count( $state['requests'] );
+				$result   = MainWP_Backup_Storage_Handler::connect_pcloud( $input, '', $start['stash_key'] );
+				$expected = 'deleted' === $change ? 'The storage destination no longer exists.' : 'This destination changed before your connection was saved. Click Connect pCloud and paste a new code.';
+				$this->assertSame( $expected, $result['error'] ?? null, $change );
+				$this->assertArrayNotHasKey( 'stash_key', $result, $change );
+				$this->assertEquals( $before, $store->get_destination( $id ), $change );
+				$this->assertSame( $requests, count( $state['requests'] ), $change );
+				$this->assertFalse( get_transient( 'mainwp_pcloud_connect_' . $start['stash_key'] ), $change );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** A same-account reconnect cannot overwrite an account another admin connected during its requests. */
+	public function test_pcloud_same_account_reconnect_refuses_account_switched_mid_request(): void {
+		$store                   = MainWP_Backup_Storage_Destinations::instance();
+		$id                      = $this->pcloud_destination();
+		$state                   = array( 'userid' => '101' );
+		$switched                = false;
+		$state['before_request'] = static function ( $method ) use ( $store, $id, &$switched ) {
+			if ( $switched || 'userinfo' !== $method ) {
+				return;
+			}
+			$switched = true;
+			$row      = $store->get_destination( $id );
+			$store->update_destination( $id, array( 'settings' => \MainWP\Dashboard\MainWP_Backup_Retention_Protection::with_pcloud_identity( $row->settings, '303', '230809' ) ) );
+		};
+		$transport               = $this->pcloud_connect_transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$result = MainWP_Backup_Storage_Handler::connect_pcloud(
+				array(
+					'id'   => $id,
+					'name' => 'Reconnect',
+				),
+				'code'
+			);
+			$this->assertTrue( $switched );
+			$this->assertSame( array( 'error' => 'This destination changed before your connection was saved. Click Connect pCloud and paste a new code.' ), $result );
+			$row = $store->get_destination( $id );
+			$this->assertSame( '303', $row->settings['_mainwp_retention_identity']['userid'] );
+			$this->assertSame( 'original', $row->settings['access_token'] );
+			$this->assertSame( 'pCloud', $row->name );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** Missing, expired and transferred confirmations cannot save or exchange another code. */
+	public function test_pcloud_confirmation_is_user_destination_bound_and_expires(): void {
+		$store     = MainWP_Backup_Storage_Destinations::instance();
+		$id        = $this->pcloud_destination();
+		$other_id  = $this->pcloud_destination();
+		$before    = $store->get_destination( $id );
+		$other     = $store->get_destination( $other_id );
+		$user_id   = get_current_user_id();
+		$state     = array( 'userid' => '202' );
+		$transport = $this->pcloud_connect_transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			foreach ( array( 'user', 'destination', 'expired', 'missing', 'invalid' ) as $failure ) {
+				$start = MainWP_Backup_Storage_Handler::connect_pcloud(
+					array(
+						'id'   => $id,
+						'name' => 'Switch',
+					),
+					'code'
+				);
+				$key   = 'mainwp_pcloud_connect_' . $start['stash_key'];
+				if ( 'user' === $failure ) {
+					wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+				} elseif ( 'expired' === $failure ) {
+					update_option( '_transient_timeout_' . $key, time() - 1 );
+				} elseif ( 'missing' === $failure ) {
+					delete_transient( $key );
+				}
+				$requests  = count( $state['requests'] );
+				$exchanges = $state['exchanges'];
+				$result    = MainWP_Backup_Storage_Handler::connect_pcloud(
+					array( 'id' => 'destination' === $failure ? $other_id : $id ),
+					'',
+					'invalid' === $failure ? 'invalid!' : $start['stash_key']
+				);
+				$this->assertArrayHasKey( 'error', $result, $failure );
+				$this->assertSame( 'This confirmation expired or was already used. Click Connect pCloud and paste a new code.', $result['error'] );
+				$this->assertSame( $requests, count( $state['requests'] ) );
+				$this->assertSame( $exchanges, $state['exchanges'] );
+				wp_set_current_user( $user_id );
+				if ( 'invalid' === $failure ) {
+					MainWP_Backup_Storage_Handler::connect_pcloud( array( 'id' => $other_id ), '', $start['stash_key'] );
+				}
+				$this->assertFalse( get_transient( $key ) );
+				$this->assertArrayHasKey( 'error', MainWP_Backup_Storage_Handler::connect_pcloud( array( 'id' => $id ), '', $start['stash_key'] ) );
+				$this->assertEquals( $before, $store->get_destination( $id ) );
+				$this->assertEquals( $other, $store->get_destination( $other_id ) );
+			}
+		} finally {
+			wp_set_current_user( $user_id );
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** A failed proof consumes the confirmation while preserving the stored destination. */
+	public function test_pcloud_confirmation_failure_keeps_row_and_spends_stash(): void {
+		$id        = $this->pcloud_destination();
+		$before    = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
+		$state     = array( 'userid' => '202' );
+		$transport = $this->pcloud_connect_transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$input                = array(
+				'id'   => $id,
+				'name' => 'Switch',
+			);
+			$start                = MainWP_Backup_Storage_Handler::connect_pcloud( $input, 'code' );
+			$state['fail_method'] = 'userinfo';
+			$this->assertArrayHasKey( 'error', MainWP_Backup_Storage_Handler::connect_pcloud( $input, '', $start['stash_key'] ) );
+			$this->assertEquals( $before, MainWP_Backup_Storage_Destinations::instance()->get_destination( $id ) );
+			$this->assertFalse( get_transient( 'mainwp_pcloud_connect_' . $start['stash_key'] ) );
+			$this->assertSame( 1, $state['exchanges'] );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** Same-account reconnects need no confirmation and retain the upload binding. */
+	public function test_pcloud_same_account_reconnect_preserves_binding(): void {
+		$id        = $this->pcloud_destination();
+		$store     = MainWP_Backup_Storage_Destinations::instance();
+		$binding   = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( $store->get_destination( $id ) );
+		$state     = array();
+		$transport = $this->pcloud_connect_transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$this->assertSame(
+				array( 'id' => $id ),
+				MainWP_Backup_Storage_Handler::connect_pcloud(
+					array(
+						'id'   => $id,
+						'name' => 'Reconnect',
+					),
+					'code'
+				)
+			);
+			$row = $store->get_destination( $id );
+			$this->assertSame( $binding, \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( $row ) );
+			$this->assertSame( str_repeat( 't', 52 ), $row->settings['access_token'] );
+			$this->assertTrue( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::pcloud_identity_valid( $row->settings ) );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** Sibling tokens need new receipts, but their proven account and folder must stay the same. */
+	public function test_pcloud_connect_refreshes_only_reproved_siblings_and_keeps_binding(): void {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$app   = \MainWP\Dashboard\MainWP_Backup_Storage_PCloud::app_credentials()['client_id'];
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		try {
+			foreach ( array( false, true ) as $reconnect ) {
+				$sibling = $this->pcloud_destination(
+					array(
+						'client_id'     => $app,
+						'base_path'     => 'Sibling',
+						'account_email' => 'keep@example.com',
+					),
+					'101',
+					'230808'
+				);
+				$store->update_destination( $sibling, array( 'name' => 'Z sibling' ) );
+				$before    = $store->get_destination( $sibling );
+				$binding   = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( $before );
+				$untouched = array(
+					$this->pcloud_destination( array( 'client_id' => $app ), '202' ),
+					$this->pcloud_destination(
+						array(
+							'client_id'  => $app,
+							'locationid' => 2,
+						)
+					),
+					$this->pcloud_destination( array( 'client_id' => 'other-app' ) ),
+					$this->pcloud_destination(
+						array(
+							'client_id' => $app,
+							'base_path' => 'Moved',
+						),
+						'101',
+						'230809'
+					),
+					$this->pcloud_destination(
+						array(
+							'client_id' => $app,
+							'base_path' => 'Unavailable',
+						)
+					),
+				);
+				foreach ( $untouched as $untouched_id ) {
+					$store->update_destination( $untouched_id, array( 'name' => 'A unchanged ' . $untouched_id ) );
+				}
+				$originals               = array_map( array( $store, 'get_destination' ), $untouched );
+				$id                      = $reconnect ? $this->pcloud_destination( array( 'client_id' => $app ) ) : 0;
+				$state                   = array(
+					'folders' => array(
+						''         => '0',
+						'/Sibling' => '230808',
+						'/Moved'   => '230810',
+					),
+				);
+				$state['before_request'] = static function ( $method ) use ( &$state ) {
+					$request = end( $state['requests'] );
+					parse_str( wp_parse_url( $request['url'], PHP_URL_QUERY ) ?? '', $query );
+					$state['fail_method'] = 'createfolderifnotexists' === $method && 'Unavailable' === ( $query['name'] ?? '' ) ? $method : '';
+				};
+				$transport               = $this->pcloud_connect_transport( $state );
+				add_filter( 'pre_http_request', $transport, 10, 3 );
+				try {
+					$result = MainWP_Backup_Storage_Handler::connect_pcloud(
+						array(
+							'id'       => $id,
+							'name'     => 'Connect',
+							'settings' => array( 'base_path' => 'MainWP Backups' ),
+						),
+						'code'
+					);
+					$this->assertArrayHasKey( 'id', $result );
+					$row = $store->get_destination( $sibling );
+					$this->assertSame( str_repeat( 't', 52 ), $row->settings['access_token'] );
+					$this->assertSame( $binding, \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( $row ) );
+					$this->assertTrue( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::pcloud_identity_valid( $row->settings ) );
+					$this->assertNotSame( $before->settings['_mainwp_retention_identity']['receipt'], $row->settings['_mainwp_retention_identity']['receipt'] );
+					$expected                 = $before->settings;
+					$expected['access_token'] = str_repeat( 't', 52 );
+					$expected['_mainwp_retention_identity']['receipt'] = $row->settings['_mainwp_retention_identity']['receipt'];
+					$this->assertSame( $expected, $row->settings );
+					$this->assertSame( $before->name, $row->name );
+					$this->assertSame( $before->is_default, $row->is_default );
+					foreach ( $untouched as $index => $untouched_id ) {
+						$this->assertEquals( $originals[ $index ], $store->get_destination( $untouched_id ) );
+					}
+				} finally {
+					remove_filter( 'pre_http_request', $transport );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** A token must prove the sibling's account before it can resolve or create a folder. */
+	public function test_pcloud_sibling_account_mismatch_keeps_row_unchanged(): void {
+		$store                   = MainWP_Backup_Storage_Destinations::instance();
+		$app                     = \MainWP\Dashboard\MainWP_Backup_Storage_PCloud::app_credentials()['client_id'];
+		$sibling                 = $this->pcloud_destination( array( 'client_id' => $app ) );
+		$before                  = $store->get_destination( $sibling );
+		$state                   = array();
+		$checks                  = 0;
+		$state['before_request'] = static function ( $method ) use ( &$state, &$checks ) {
+			if ( 'userinfo' === $method ) {
+				++$checks;
+				$state['userid'] = 2 === $checks ? '202' : '101';
+			}
+		};
+		$transport               = $this->pcloud_connect_transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$result = MainWP_Backup_Storage_Handler::connect_pcloud( array( 'name' => 'New connection' ), 'code' );
+			$this->assertArrayHasKey( 'id', $result );
+			$this->assertSame( 3, $checks );
+			$this->assertEquals( $before, $store->get_destination( $sibling ) );
+			$folders = array_filter(
+				$state['requests'],
+				static function ( $request ) {
+					return '/createfolderifnotexists' === wp_parse_url( $request['url'], PHP_URL_PATH );
+				}
+			);
+			$this->assertCount( 2, $folders, 'Only the main connection may resolve the folder after the sibling account mismatch.' );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** Registering via the post-base handler provides both the AJAX hook and its nonce. */
+	public function test_pcloud_connect_ajax_and_nonce_are_registered(): void {
+		$handler = MainWP_Backup_Storage_Handler::instance();
+		$handler->init();
+		$this->assertNotFalse( has_action( 'wp_ajax_mainwp_pcloud_connect', array( $handler, 'ajax_pcloud_connect' ) ) );
+		$nonces = $handler->create_security_nonces();
+		$this->assertNotFalse( wp_verify_nonce( $nonces['mainwp_pcloud_connect'], 'mainwp_pcloud_connect' ) );
+	}
+
+	/** The pCloud form takes a folder and a pasted code, never app credentials, and lists the region without secrets. */
+	public function test_pcloud_form_offers_connect_and_code_fields(): void {
+		$this->pcloud_destination(
+			array(
+				'locationid'    => 2,
+				'access_token'  => 'private-render-token',
+				'client_secret' => 'private-render-secret', // gitleaks:allow -- test fixture value, not a credential.
+				'account_email' => 'owner@example.com',
+			)
+		);
+		ob_start();
+		MainWP_Backup_Storage_View::render_form();
+		$html = ob_get_clean();
+		foreach ( array( 'data-provider="pcloud"', 'mainwp-storage-pcloud-base-path', 'mainwp-storage-pcloud-connect', 'mainwp-storage-pcloud-authorization-code' ) as $expected ) {
+			$this->assertStringContainsString( $expected, $html );
+		}
+		$this->assertStringContainsString( 'pCloud allows one MainWP connection per account. Connecting the same pCloud account from another Dashboard disconnects it here.', $html );
+		foreach ( array( 'mainwp-storage-pcloud-client', 'mainwp-storage-pcloud-redirect', 'mainwp-storage-pcloud-copy', 'docs.pcloud.com/my_apps', 'redirect_uri', 'private-render-secret', 'mainwp-storage-pcloud-access-token', 'mainwp-storage-pcloud-locationid' ) as $absent ) {
+			$this->assertStringNotContainsString( $absent, $html );
+		}
+		$order  = array_map(
+			static function ( $id ) use ( $html ) {
+				return strpos( $html, 'id="' . $id . '"' );
+			},
+			array( 'mainwp-storage-pcloud-base-path', 'mainwp-storage-minimum-remote-retention-days', 'mainwp-storage-pcloud-connect', 'mainwp-storage-pcloud-authorization-code', 'mainwp-storage-save' )
+		);
+		$sorted = $order;
+		sort( $sorted );
+		$this->assertSame( $sorted, $order );
+		$this->assertStringNotContainsString( 'pCloud connections are not available on this Dashboard yet.', $html );
+		$dom = new \DOMDocument();
+		@$dom->loadHTML( $html ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- HTML5 markup warnings.
+		$connect = $dom->getElementById( 'mainwp-storage-pcloud-connect' );
+		$this->assertSame( 'a', $connect->tagName );
+		$this->assertFalse( $connect->hasAttribute( 'disabled' ) );
+		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Storage_PCloud::authorize_url(), $connect->getAttribute( 'href' ) );
+		ob_start();
+		MainWP_Backup_Storage_View::render_list_table();
+		$list = ob_get_clean();
+		$this->assertStringContainsString( 'pCloud (EU): /MainWP Backups', $list );
+		$this->assertStringContainsString( '<div class="description"><span class="ui small text">' . esc_html( 'Connected as owner@example.com' ) . '</span></div>', $list );
+		$this->assertStringNotContainsString( 'private-render-token', $list );
+		$this->assertStringNotContainsString( 'private-render-secret', $list );
+		ob_start();
+		MainWP_Backup_Storage_View::render_list_table( true );
+		$restricted = ob_get_clean();
+		$this->assertStringNotContainsString( 'Connected as', $restricted );
+		$this->assertStringNotContainsString( 'owner@example.com', $restricted );
 	}
 }

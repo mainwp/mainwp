@@ -308,7 +308,7 @@ class MainWP_Abilities_Backups {
                             ),
                             'provider' => array(
                                 'type' => 'string',
-                                'enum' => array( 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                                'enum' => array( 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local' ),
                             ),
                         ),
                     ),
@@ -1439,7 +1439,7 @@ class MainWP_Abilities_Backups {
                 ),
                 'provider'         => array(
                     'type'        => array( 'string', 'null' ),
-                    'enum'        => array( 's3', 'gcs', 'dropbox', 'sftp', 'local', null ),
+                    'enum'        => array( 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local', null ),
                     'description' => 'Null when the destination was deleted before the upload was queued.',
                 ),
                 'status'           => array(
@@ -2071,7 +2071,7 @@ class MainWP_Abilities_Backups {
             'properties'           => array(
                 'provider' => array(
                     'type'    => 'string',
-                    'enum'    => array( 'any', 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                    'enum'    => array( 'any', 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local' ),
                     'default' => 'any',
                 ),
                 'page'     => self::page_schema(),
@@ -2315,7 +2315,7 @@ class MainWP_Abilities_Backups {
                 ),
                 'provider'                      => array(
                     'type' => 'string',
-                    'enum' => array( 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                    'enum' => array( 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local' ),
                 ),
                 'is_default'                    => array(
                     'type' => 'boolean',
@@ -3020,6 +3020,7 @@ class MainWP_Abilities_Backups {
                                         's3',
                                         'gcs',
                                         'dropbox',
+                                        'pcloud',
                                         'sftp',
                                         'local',
                                     ),
@@ -3238,6 +3239,7 @@ class MainWP_Abilities_Backups {
                                         's3',
                                         'gcs',
                                         'dropbox',
+                                        'pcloud',
                                         'sftp',
                                         'local',
                                     ),
@@ -5920,7 +5922,7 @@ class MainWP_Abilities_Backups {
                     ),
                     'provider'            => array(
                         'type' => 'string',
-                        'enum' => array( 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                        'enum' => array( 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local' ),
                     ),
                     'writes_probe_object' => array(
                         'type' => 'boolean',

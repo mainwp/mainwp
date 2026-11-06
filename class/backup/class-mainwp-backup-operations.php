@@ -1807,6 +1807,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $codes = array(
                 's3'      => MainWP_Backup_Error_Codes::ERR_S3_FAILED,
                 'gcs'     => MainWP_Backup_Error_Codes::ERR_GCS_FAILED,
+                'pcloud'  => MainWP_Backup_Error_Codes::ERR_PCLOUD_FAILED,
                 'dropbox' => MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED,
                 'sftp'    => MainWP_Backup_Error_Codes::ERR_FTP_FAILED,
                 'local'   => MainWP_Backup_Error_Codes::ERR_LOCAL_FAILED,

@@ -106,6 +106,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             's3'      => esc_html__( 'S3 Compatible Storage', 'mainwp' ),
             'gcs'     => esc_html__( 'Google Cloud Storage', 'mainwp' ),
             'dropbox' => esc_html__( 'Dropbox', 'mainwp' ),
+            'pcloud'  => esc_html__( 'pCloud', 'mainwp' ),
             'sftp'    => esc_html__( 'SFTP', 'mainwp' ),
             'local'   => esc_html__( 'Local Path', 'mainwp' ),
         );
@@ -150,8 +151,16 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     $details  = ! $restricted ? MainWP_Backup_Storage_Handler::destination_for_edit( (int) $destination->id ) : array();
                     $settings = $details['settings'] ?? array();
                     $location = '';
+                    $email    = 'pcloud' === $destination->provider && ! $restricted ? (string) ( $settings['account_email'] ?? '' ) : '';
                     if ( in_array( $destination->provider, array( 's3', 'gcs' ), true ) ) {
                         $location = (string) ( $settings['bucket'] ?? '' );
+                    } elseif ( 'pcloud' === $destination->provider && ! $restricted && isset( $settings['locationid'] ) ) {
+                        $location = sprintf(
+                            /* translators: 1: pCloud region (US or EU), 2: backup folder path. */
+                            __( 'pCloud (%1$s): /%2$s', 'mainwp' ),
+                            2 === (int) $settings['locationid'] ? 'EU' : 'US',
+                            trim( (string) ( $settings['base_path'] ?? '' ), '/' )
+                        );
                     } elseif ( ! empty( $settings['base_path'] ) ) {
                         $location = (string) $settings['base_path'];
                     } elseif ( 'dropbox' === $destination->provider && ! $restricted && empty( $details['credentials_invalid'] ) ) {
@@ -161,6 +170,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         's3'      => 'cloud',
                         'gcs'     => 'google',
                         'dropbox' => 'dropbox',
+                        'pcloud'  => 'cloud',
                         'sftp'    => 'server',
                         'local'   => 'hdd outline',
                     );
@@ -183,6 +193,9 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                                     <strong><?php echo $provider_labels[ $destination->provider ] ?? esc_html( $destination->provider ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- labels escaped in provider_labels(). ?></strong>
                                     <?php if ( '' !== $location ) : ?>
                                         <div class="description"><span class="ui small text"><?php echo esc_html( $location ); ?></span></div>
+                                    <?php endif; ?>
+                                    <?php if ( '' !== $email ) : ?>
+                                        <div class="description"><span class="ui small text"><?php echo esc_html( sprintf( /* translators: %s: pCloud account email address. */ __( 'Connected as %s', 'mainwp' ), $email ) ); ?></span></div>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -375,6 +388,16 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         </div>
                     </div>
                 </div>
+                <div class="mainwp-storage-fields" data-provider="pcloud" style="display:none">
+                    <div class="ui grid field">
+                        <label for="mainwp-storage-pcloud-base-path" class="six wide column middle aligned"><?php esc_html_e( 'Folder', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-pcloud-base-path" value="" placeholder="MainWP Backups"/>
+                            <span class="ui small text"><?php esc_html_e( 'Backups store under this folder. Leave empty to use the account root.', 'mainwp' ); ?></span>
+                        </div>
+                    </div>
+                    <div class="ui message"><?php esc_html_e( 'Pruned backups stay in pCloud Trash for 15 days on free plans and 30 days on paid plans.', 'mainwp' ); ?></div>
+                </div>
                 <div class="mainwp-storage-fields" data-provider="sftp" style="display:none">
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Host', 'mainwp' ); ?></label>
@@ -439,6 +462,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <span class="ui small text"><?php esc_html_e( 'Automatic cleanup keeps copies at this destination for at least this many days after a verified upload. Older backups without a recorded upload time use backup creation instead. Count and storage limits do not override the minimum. 0 disables it. Manual deletion can override it.', 'mainwp' ); ?></span>
                     </div>
                 </div>
+                <?php static::render_pcloud_connect_fields(); ?>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Use as default destination', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
@@ -451,6 +475,41 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             <div class="actions">
                 <button type="button" class="ui basic grey button" id="mainwp-storage-test-only"><i class="plug icon"></i><?php esc_html_e( 'Test Connection', 'mainwp' ); ?></button>
                 <button type="button" class="ui green button" id="mainwp-storage-save"><i class="save outline icon"></i><?php esc_html_e( 'Test Connection & Save', 'mainwp' ); ?></button>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render the Connect pCloud link and the field for the code pCloud shows after approval.
+     *
+     * These follow the shared minimum retention field so the user connects, pastes and saves in order.
+     *
+     * @return void
+     */
+    private static function render_pcloud_connect_fields(): void {
+        $authorize_url = MainWP_Backup_Storage_PCloud::authorize_url();
+        ?>
+        <div class="mainwp-storage-fields" data-provider="pcloud" style="display:none">
+            <div class="ui grid field">
+                <label class="six wide column middle aligned"></label>
+                <div class="ten wide column">
+                    <?php if ( '' === $authorize_url ) : ?>
+                        <button type="button" class="ui basic green disabled button" id="mainwp-storage-pcloud-connect" disabled><?php esc_html_e( 'Connect pCloud', 'mainwp' ); ?></button>
+                        <div class="ui visible yellow message"><?php esc_html_e( 'pCloud connections are not available on this Dashboard yet.', 'mainwp' ); ?></div>
+                    <?php else : ?>
+                        <a class="ui basic green button" id="mainwp-storage-pcloud-connect" href="<?php echo esc_url( $authorize_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Connect pCloud', 'mainwp' ); ?></a>
+                        <span class="ui small text"><?php esc_html_e( 'pCloud opens in a new tab. Approve access, then copy the code pCloud shows.', 'mainwp' ); ?></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="ui grid field">
+                <label for="mainwp-storage-pcloud-authorization-code" class="six wide column middle aligned"><?php esc_html_e( 'Authorization code', 'mainwp' ); ?></label>
+                <div class="ten wide column">
+                    <input type="text" id="mainwp-storage-pcloud-authorization-code" value="" autocomplete="off" spellcheck="false"/>
+                    <span class="ui small text"><?php esc_html_e( 'Paste the code from pCloud, then save. When editing, leave this empty to keep the current connection.', 'mainwp' ); ?></span>
+                    <p class="ui small text"><?php echo esc_html__( 'pCloud allows one MainWP connection per account. Connecting the same pCloud account from another Dashboard disconnects it here.', 'mainwp' ); ?></p>
+                </div>
             </div>
         </div>
         <?php
@@ -504,6 +563,9 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         refresh_token: jQuery( '#mainwp-storage-dropbox-refresh-token' ).val(),
                         base_path: jQuery( '#mainwp-storage-dropbox-base-path' ).val()
                     };
+                }
+                if ( jQuery( '#mainwp-storage-provider' ).val() === 'pcloud' ) {
+                    return { base_path: jQuery( '#mainwp-storage-pcloud-base-path' ).val() };
                 }
                 if ( jQuery( '#mainwp-storage-provider' ).val() === 'sftp' ) {
                     return {
@@ -573,23 +635,46 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             jQuery( '#mainwp-storage-save' ).on( 'click', function () {
                 let button = this;
-                busy( button, true );
-                formFeedback( '<?php echo esc_js( __( 'Testing the connection and saving...', 'mainwp' ) ); ?>', 'green' );
-                jQuery.post( ajaxurl, destinationData( 'mainwp_storage_save' ), function ( response ) {
-                    if ( response && response.error ) {
+                // The code travels outside settings[] so it can never be merged into the saved destination.
+                let pcloudCode = 'pcloud' === jQuery( '#mainwp-storage-provider' ).val() ? String( jQuery( '#mainwp-storage-pcloud-authorization-code' ).val() ).trim() : '';
+                let data = pcloudCode ? destinationData( 'mainwp_pcloud_connect' ) : destinationData( 'mainwp_storage_save' );
+                if ( pcloudCode ) {
+                    data.authorization_code = pcloudCode;
+                }
+                let submit = function ( payload ) {
+                    busy( button, true );
+                    formFeedback( '<?php echo esc_js( __( 'Testing the connection and saving...', 'mainwp' ) ); ?>', 'green' );
+                    jQuery.post( ajaxurl, payload, function ( response ) {
+                        if ( response && response.stash_key && response.error ) {
+                            busy( button, false );
+                            jQuery( '#mainwp-storage-pcloud-authorization-code' ).val( '' );
+                            mainwp_confirm( response.error, function () {
+                                let confirmed = Object.assign( {}, payload, { stash_key: response.stash_key } );
+                                delete confirmed.authorization_code;
+                                submit( confirmed );
+                            }, false, false, true );
+                        } else if ( response && response.error ) {
+                            busy( button, false );
+                            formFeedback( response.error, 'red' );
+                        } else {
+                            location.href = location.pathname + location.search.replace( /&saved=1|&sftp_trust_reset=1/g, '' ) + '&saved=1' + ( response && response.notice ? '&sftp_trust_reset=1' : '' );
+                        }
+                    }, 'json' ).fail( function () {
                         busy( button, false );
-                        formFeedback( response.error, 'red' );
-                    } else {
-                        location.href = location.pathname + location.search.replace( /&saved=1|&sftp_trust_reset=1/g, '' ) + '&saved=1' + ( response && response.notice ? '&sftp_trust_reset=1' : '' );
-                    }
-                }, 'json' ).fail( function () {
-                    busy( button, false );
-                    formFeedback( requestFailed, 'red' );
-                } );
+                        formFeedback( requestFailed, 'red' );
+                    } );
+                };
+                submit( data );
             } );
 
             jQuery( '#mainwp-storage-test-only' ).on( 'click', function () {
                 let button = this;
+                // A test-only exchange would spend the single-use code, so the code only goes through Save.
+                if ( 'pcloud' === jQuery( '#mainwp-storage-provider' ).val() && '' !== String( jQuery( '#mainwp-storage-pcloud-authorization-code' ).val() ).trim() ) {
+                    // esc_js() would turn "&" into "&amp;", which feedback() then shows literally because it renders text.
+                    formFeedback( <?php echo wp_json_encode( __( 'A pCloud code works only once, so Test Connection does not use it. Click Test Connection & Save to connect.', 'mainwp' ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>, 'yellow' );
+                    return;
+                }
                 busy( button, true );
                 formFeedback( '<?php echo esc_js( __( 'Testing the connection...', 'mainwp' ) ); ?>', 'green' );
                 jQuery.post( ajaxurl, destinationData( 'mainwp_storage_test' ), function ( response ) {
@@ -609,7 +694,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 jQuery( '#mainwp-storage-id' ).val( 0 );
                 jQuery( '#mainwp-storage-minimum-remote-retention-days' ).val( 0 );
                 jQuery( '#mainwp-storage-provider' ).dropdown( 'set selected', String( 's3' ) );
-                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path, #mainwp-storage-sftp-host-fingerprint' ).val( '' );
+                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-pcloud-authorization-code, #mainwp-storage-pcloud-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path, #mainwp-storage-sftp-host-fingerprint' ).val( '' );
                 jQuery( '#mainwp-storage-path-style, #mainwp-storage-is-default' ).prop( 'checked', false );
                 // Fomantic owns this select's visible label, so clearing the
                 // underlying value would leave the previous choice on screen.
@@ -708,6 +793,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 s3: { endpoint: '#mainwp-storage-endpoint', bucket: '#mainwp-storage-bucket', region: '#mainwp-storage-region', access_key: '#mainwp-storage-access-key', sse: '#mainwp-storage-sse' },
                 gcs: { bucket: '#mainwp-storage-gcs-bucket', access_key: '#mainwp-storage-gcs-access-key' },
                 dropbox: { app_key: '#mainwp-storage-dropbox-app-key', base_path: '#mainwp-storage-dropbox-base-path' },
+                pcloud: { base_path: '#mainwp-storage-pcloud-base-path' },
                 sftp: { host: '#mainwp-storage-sftp-host', port: '#mainwp-storage-sftp-port', username: '#mainwp-storage-sftp-username', base_path: '#mainwp-storage-sftp-base-path', host_fingerprint: '#mainwp-storage-sftp-host-fingerprint' },
                 local: { base_path: '#mainwp-storage-base-path' }
             };
@@ -807,8 +893,13 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             };
 
             jQuery( '.mainwp-storage-delete' ).on( 'click', function () {
-                let id = jQuery( this ).closest( 'tr' ).data( 'destination-id' );
-                mainwp_confirm( '<?php echo esc_js( __( 'Delete this storage destination?', 'mainwp' ) ); ?>', function () {
+                let row = jQuery( this ).closest( 'tr' );
+                let id = row.data( 'destination-id' );
+                let message = '<?php echo esc_js( __( 'Delete this storage destination?', 'mainwp' ) ); ?>';
+                if ( 'pcloud' === row.data( 'provider' ) ) {
+                    message += ' ' + <?php echo wp_json_encode( esc_html__( "Deleting this destination doesn't revoke its access in pCloud.", 'mainwp' ) . ' ' . MainWP_Backup_Storage_Handler::pcloud_revoke_guidance() ); ?>;
+                }
+                mainwp_confirm( message, function () {
                     deleteDestination( id, false );
                 } );
             } );

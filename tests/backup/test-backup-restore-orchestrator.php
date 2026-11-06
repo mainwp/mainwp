@@ -3558,6 +3558,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertNotNull( $job );
 		$token = new \ReflectionProperty( MainWP_Backup_Restore_Orchestrator::class, 'lock_token' );
 		$token->setValue( $this->orchestrator, 'verifying-holder' );
+		// Each lease check renews the lease for lease_seconds. Left at 0, the
+		// first tick's renewal ends the lease within the current second, so a
+		// second tick that starts in a later second no longer holds it.
+		$lease = new \ReflectionProperty( MainWP_Backup_Restore_Orchestrator::class, 'lease_seconds' );
+		$lease->setValue( $this->orchestrator, 90 );
 		$driver  = MainWP_Backup_Restore_Transfer_Driver::instance();
 		$staging = $driver->staging_dir( (int) $job->id );
 		wp_mkdir_p( $staging );
@@ -3594,6 +3599,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			remove_filter( 'query', $refuse );
 			remove_action( 'mainwp_backup_restored', $record );
 			$token->setValue( $this->orchestrator, null );
+			$lease->setValue( $this->orchestrator, 0 );
 			$driver->cleanup_staging( (int) $job->id );
 		}
 	}

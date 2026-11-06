@@ -3187,15 +3187,17 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php if ( empty( $mainwp_api_key ) ) : ?>
                 <div class="header"><?php esc_html_e( 'Get MainWP Pro', 'mainwp' ); ?></div>
                 <div class="content">
-                    <div class="ui header"><?php esc_html_e( 'With your MainWP Pro subscription, you get access to:', 'mainwp' ); ?></div>
-                    <div class="ui bulleted list">
-                        <div class="item"><?php esc_html_e( 'All 30+ Existing Premium Add-ons', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'All Future Add-ons', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'Critical Security & Performance Updates', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'Priority Support with Subscription', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'Manage Unlimited Websites', 'mainwp' ); ?></div>
-                    </div>
-                    <a href="https://mainwp.com/signup/?utm_campaign=Dashboard%20-%20Upgrade%20to%20Pro&utm_source=Dashboard&utm_medium=grey%20link%20modal&utm_term=get%20mainwp%20pro" class="ui big green button" target="_blank">Get MainWP Pro</a> <?php // NOSONAR - noopener - open safe. ?>
+                    <p><?php esc_html_e( 'With your MainWP Pro subscription, you get access to:', 'mainwp' ); ?></p>
+                    <ul class="ui list">
+                        <li><?php esc_html_e( 'All 30+ Existing Premium Add-ons', 'mainwp' ); ?></li>
+                        <li><?php esc_html_e( 'All Future Add-ons', 'mainwp' ); ?></li>
+                        <li><?php esc_html_e( 'Critical Security & Performance Updates', 'mainwp' ); ?></li>
+                        <li><?php esc_html_e( 'Priority Support with Subscription', 'mainwp' ); ?></li>
+                        <li><?php esc_html_e( 'Manage Unlimited Websites', 'mainwp' ); ?></li>
+                    </ul>
+                </div>
+                <div class="actions">
+                    <a href="https://mainwp.com/signup/?utm_campaign=Dashboard%20-%20Upgrade%20to%20Pro&utm_source=Dashboard&utm_medium=grey%20link%20modal&utm_term=get%20mainwp%20pro" class="ui green button" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get MainWP Pro', 'mainwp' ); ?></a>
                 </div>
             <?php else : ?>
                 <div class="header"><?php esc_html_e( 'Install Add-ons', 'mainwp' ); ?></div>

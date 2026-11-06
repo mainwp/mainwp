@@ -913,7 +913,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                                 )
                             );
                             if ( is_array( $info ) && isset( $info['update'] ) && ! empty( $info['update']['sections'] ) ) {
-                                $info_update           = (object) $info['update'];
+                                $info_update = (object) $info['update'];
                                 if ( null !== $stored_update && is_array( $stored_update->sections ) && is_array( $info_update->sections ) ) {
                                     $info_update->sections = array_merge( $stored_update->sections, $info_update->sections );
                                 }

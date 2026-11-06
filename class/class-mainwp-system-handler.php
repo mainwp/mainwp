@@ -885,13 +885,16 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( is_array( $plugin_upgrades ) ) {
                     $found_update   = false;
                     $empty_sections = false;
+                    $stored_update  = null;
                     foreach ( $plugin_upgrades as $plugin_slug => $info ) {
                         if ( false !== strpos( $plugin_slug, $arg->slug ) && isset( $info['update'] ) ) {
                             $found_update = true;
                             if ( isset( $info['update']['slug'] ) && $arg->slug === $info['update']['slug'] && isset( $info['update']['new_version'] ) && ! empty( $info['update']['new_version'] ) && isset( $info['update']['sections'] ) && ! empty( $info['update']['sections'] ) ) {
-                                $info_update           = (object) $info['update'];
-                                $info_update->external = false;
-                                return $info_update;
+                                $stored_update           = (object) $info['update'];
+                                $stored_update->external = false;
+                                if ( isset( $info['update']['sections']['changelog'] ) && is_string( $info['update']['sections']['changelog'] ) && '' !== trim( $info['update']['sections']['changelog'] ) ) {
+                                    return $stored_update;
+                                }
                             }
                             $empty_sections = true;
                             break;
@@ -909,12 +912,18 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                                 )
                             );
                             if ( is_array( $info ) && isset( $info['update'] ) && ! empty( $info['update']['sections'] ) ) {
-                                $info_update           = (object) $info['update'];
+                                $info_update = (object) $info['update'];
+                                if ( null !== $stored_update && is_array( $stored_update->sections ) && is_array( $info_update->sections ) ) {
+                                    $info_update->sections = array_merge( $stored_update->sections, $info_update->sections );
+                                }
                                 $info_update->external = true;
                                 return $info_update;
                             }
                         } catch ( \Exception $e ) {
                             // error happen.
+                        }
+                        if ( null !== $stored_update ) {
+                            return $stored_update;
                         }
                     }
                 }

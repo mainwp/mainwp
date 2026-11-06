@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.4
 Requires PHP: 8.3
-Stable tag: 6.4.2-rc.2
+Stable tag: 6.4.2-rc.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -153,6 +153,29 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.4.2-rc.3 - 11-6-2026 =
+
+* Added: pCloud as a storage destination for Built-In Backups, with support for US and EU accounts.
+* Added: System appearance mode that follows device preferences, alongside per-user Light and Dark settings.
+* Added: Reconnect all accessible disconnected sites from the Connection Status widget, with per-site results.
+* Fixed: TAR Test Restore failures involving filenames containing literal question marks and mixed filename spellings.
+* Fixed: Test Restore failure details are now retained and displayed in snapshot tooltips, including after automatic status refreshes.
+* Fixed: Backup upload progress and retry reporting, with more reliable background upload continuation.
+* Fixed: Restore and rollback dialogs recovering incorrectly after failed or lost requests.
+* Fixed: Missing premium plugin changelogs are now retrieved from the Child site while preserving existing details.
+* Fixed: Kept the second-level navigation toggle visible when its menu is collapsed.
+* Fixed: Site Hardening visibility for users without the required permission.
+* Updated: Flagged sites running MainWP Child versions older than 6.4 and prevented adding them to Built-In Backups tasks.
+* Updated: Backup task API results now count retrying uploads as pending and permanent upload failures as failed.
+* Updated: Improved API Access labels, API key save messages, and copy-key guidance.
+* Updated: Corrected Site management labels, help links, CSV guidance, and markup.
+* Updated: Improved Network Activity labels, guidance, and event naming.
+* Updated: Identified MainWP MCP activity in Network Activity.
+* Updated: Removed stored sync-response excerpts and sanitized diagnostic output.
+* Updated: Improved the Get MainWP Pro overlay layout and accessibility.
+* Updated: Corrected Password Policy documentation to describe password-change reminders.
+* Updated: Restricted creation, migration, and editing of legacy REST API v1-compatible keys to unrestricted administrators.
 
 = 6.4.2-rc.2 - 11-5-2026 =
 

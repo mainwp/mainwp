@@ -752,6 +752,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 
 	/** Supported question-mark members retain their names and binary contents. */
 	public function test_tar_literal_question_mark_preserves_names_and_bytes() {
+		if ( 'Windows' === PHP_OS_FAMILY ) {
+			$this->markTestSkipped( 'Windows cannot extract filenames containing ?.' );
+		}
 		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
 		$sandbox->bring_up();
 		$members = array( 'wp-content/uploads/test?x', 'ordinary', 'hash#name', '日本語', 'literal%3F', 'dir?/nested' );
@@ -766,6 +769,16 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			foreach ( $members as $name ) {
 				$this->assertSame( "bytes\0" . $name, file_get_contents( $sandbox->temp_dir() . $name ) );
 			}
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/** SQL member sizing and reading do not require filesystem extraction. */
+	public function test_tar_literal_question_mark_sql_member_size_and_read() {
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
 			$sql      = '<?php exit(); ?>SELECT 1;';
 			$sql_path = $this->raw_tar( $this->raw_tar_member( 'db?/dump.sql.php', $sql ) );
 			$size     = new \ReflectionMethod( $sandbox, 'archive_member_size_tar' );

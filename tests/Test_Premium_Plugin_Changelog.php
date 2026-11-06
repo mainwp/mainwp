@@ -16,11 +16,13 @@ class Test_Premium_Plugin_Changelog extends \WP_UnitTestCase {
     private $get_backup;
     private $requests;
     private $child_result;
+    private $throw_on_request = false;
 
     public function set_up() {
         parent::set_up();
         $this->get_backup = $_GET;
         $this->requests = array();
+        $this->throw_on_request = false;
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
         $this->site_id = $this->create_test_site();
         $_GET['wpplugin'] = $this->site_id;
@@ -36,6 +38,9 @@ class Test_Premium_Plugin_Changelog extends \WP_UnitTestCase {
 
     public function child_response( $preempt, $website, $action, $params ) {
         $this->requests[] = array( (int) $website->id, $action, $params );
+        if ( $this->throw_on_request ) {
+            throw new \RuntimeException( 'Child unavailable.' );
+        }
         return $this->child_result;
     }
 
@@ -86,8 +91,26 @@ class Test_Premium_Plugin_Changelog extends \WP_UnitTestCase {
         );
     }
 
-    public function test_failed_child_lookup_preserves_original_error() {
+    public function test_failed_child_lookup_preserves_stored_description() {
         $this->store_sections( array( 'description' => 'Description' ) );
+        $this->child_result = array( 'update' => array() );
+        $result = $this->details();
+        $this->assertSame( 'Description', $result->sections['description'] );
+        $this->assertFalse( $result->external );
+        $this->assertCount( 1, $this->requests );
+    }
+
+    public function test_child_exception_preserves_stored_description() {
+        $this->store_sections( array( 'description' => 'Description' ) );
+        $this->throw_on_request = true;
+        $result = $this->details();
+        $this->assertSame( 'Description', $result->sections['description'] );
+        $this->assertFalse( $result->external );
+        $this->assertCount( 1, $this->requests );
+    }
+
+    public function test_missing_sections_and_child_failure_preserve_original_error() {
+        $this->store_sections( null );
         $this->child_result = array( 'update' => array() );
         $error = new \WP_Error( 'plugins_api_failed', 'No plugin information.' );
         $this->assertSame( $error, $this->details( $error ) );

@@ -162,7 +162,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
                 $result['error_code'] = is_wp_error( $metadata ) ? $metadata->get_error_code() : MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_BACKUP_FORMAT;
                 $result['error']      = MainWP_Backup_Error_Codes::message( $result['error_code'] );
                 // The sampler already consumed this cadence window, so the verdict must be visible.
-                $this->record( $snapshot_id, $result['state'] );
+                $this->record( $snapshot_id, $result['state'], $result );
                 return $result;
             }
             $own_deadline    = microtime( true ) + (float) self::DEFAULT_STAGE_BUDGET_SECONDS;
@@ -211,6 +211,10 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
 
                 $result['checks'] = $checks;
                 $result['state']  = $passed ? self::STATE_PASS : self::STATE_FAIL;
+                if ( ! $passed ) {
+                    $result['error']      = esc_html__( 'One or more test restore checks failed.', 'mainwp' );
+                    $result['error_code'] = 'mainwp_testrestore_assertion_failed';
+                }
                 if ( ! $applied['db'] && ! $applied['files'] ) {
                     $result['error']      = esc_html__( 'The backup had no database or files to test-restore.', 'mainwp' );
                     $result['error_code'] = 'mainwp_testrestore_empty';
@@ -247,7 +251,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             }
         }
 
-        $this->record( $snapshot_id, $result['state'] );
+        $this->record( $snapshot_id, $result['state'], $result );
         return $result;
     }
 
@@ -405,11 +409,16 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      *
      * @param int    $snapshot_id Snapshot id.
      * @param string $state       Result state.
+     * @param array  $result      Failure details and assertion outcomes.
      *
      * @return void
      */
-    private function record( int $snapshot_id, string $state ): void {
-        MainWP_Backup_Snapshots::instance()->set_test_restore_result( $snapshot_id, $state, time() );
+    private function record( int $snapshot_id, string $state, array $result = array() ): void {
+        try {
+            MainWP_Backup_Snapshots::instance()->set_test_restore_result( $snapshot_id, $state, time(), $result );
+        } catch ( MainWP_Exception $e ) {
+            MainWP_Logger::instance()->warning( 'Test restore result could not be saved for snapshot ' . $snapshot_id . ': ' . $e->get_message_error_code() );
+        }
     }
 
     /**

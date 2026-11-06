@@ -739,6 +739,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 };
                 var state = states[ snap.test_restore_state ] || [ 'grey', 'clock outline', '<?php echo esc_js( esc_html__( 'Not Tested Yet', 'mainwp' ) ); ?>', '<?php echo esc_js( esc_html__( 'No automatic restore test result has been recorded for this backup. Testing samples the newest completed backups on a weekly cadence.', 'mainwp' ) ); ?>' ];
                 var tooltip = state[3];
+                if ( snap.test_restore_error ) {
+                    tooltip += ' ' + snap.test_restore_error;
+                }
                 if ( snap.test_restore_label && states[ snap.test_restore_state ] ) {
                     tooltip += ' ' + '<?php echo esc_js( esc_html__( 'Test date:', 'mainwp' ) ); ?>' + ' ' + snap.test_restore_label;
                 }

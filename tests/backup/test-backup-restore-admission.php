@@ -580,14 +580,23 @@ class MainWP_Backup_Restore_Admission_Test extends MainWP_Abilities_Test_Case {
 	/** Activity is the list's exact dynamic subset, including uploads and test state. */
 	public function test_snapshot_activity_equals_list_subset_and_marks_foreign_ids_missing(): void {
 		global $wpdb;
-		$id = $this->fixture['snapshot'];
-		$wpdb->update(
-			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+		$id        = $this->fixture['snapshot'];
+		$snapshots = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance();
+		$snapshots->set_test_restore_result(
+			$id,
+			'fail',
+			1700000000,
 			array(
-				'test_restore_state' => 'pass',
-				'test_restore_at'    => 1700000000,
-			),
-			array( 'id' => $id )
+				'error_code' => 'mainwp_sandbox_apply_failed',
+				'error'      => 'Archive could not be read.',
+				'checks'     => array(
+					array(
+						'name'   => 'files_extracted',
+						'ok'     => false,
+						'detail' => '0 files',
+					),
+				),
+			)
 		);
 		$wpdb->insert(
 			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
@@ -624,12 +633,24 @@ class MainWP_Backup_Restore_Admission_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array( $foreign, 999999999 ), $activity['missing'] );
 		$this->assertCount( 1, $activity['snapshots'] );
 		$entry = $activity['snapshots'][0];
-		$this->assertSame( array( 'id', 'status', 'offsite_state', 'uploads', 'test_restore_running', 'test_restore_state', 'test_restore_at', 'test_restore_label' ), array_keys( $entry ) );
+		$this->assertSame( array( 'id', 'status', 'offsite_state', 'uploads', 'test_restore_running', 'test_restore_state', 'test_restore_at', 'test_restore_label', 'test_restore_error', 'test_restore_error_code', 'test_restore_assertions' ), array_keys( $entry ) );
 		foreach ( $entry as $key => $value ) {
 			$this->assertSame( $list['snapshots'][0][ $key ], $value, $key );
 		}
+		$this->assertSame( 'Archive could not be read.', $entry['test_restore_error'] );
+		$this->assertSame( 'mainwp_sandbox_apply_failed', $entry['test_restore_error_code'] );
+		$this->assertFalse( $entry['test_restore_assertions'][0]['ok'] );
 		$this->assertTrue( $entry['test_restore_running'] );
 		$this->assertIsInt( $activity['server_time'] );
+
+		$snapshots->set_test_restore_result( $id, 'pass', 1700000001 );
+		foreach ( array( 'mainwp_restore_snapshot_list', 'mainwp_restore_snapshot_activity' ) as $handler ) {
+			$reply = $this->invoke_ajax_handler( $handler, array( 'snapshot_ids' => array( $id ) ) );
+			$this->assertSame( 'pass', $reply['snapshots'][0]['test_restore_state'], $handler );
+			$this->assertSame( '', $reply['snapshots'][0]['test_restore_error'], $handler );
+			$this->assertSame( '', $reply['snapshots'][0]['test_restore_error_code'], $handler );
+			$this->assertSame( array(), $reply['snapshots'][0]['test_restore_assertions'], $handler );
+		}
 	}
 
 	/** Activity accepts at most fifty exact positive snapshot ids. */

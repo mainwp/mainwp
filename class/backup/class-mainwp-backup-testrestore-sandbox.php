@@ -24,6 +24,13 @@ defined( 'ABSPATH' ) || exit;
  */
 class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
+    /**
+     * Validated TAR payload positions, keyed by member name.
+     *
+     * @var array
+     */
+    private $tar_payloads = array();
+
     // Every exception below carries an esc_html__()-wrapped user message plus a
     // debug detail and a stable error code; the latter two are for logging and
     // matching, so the sniff that wants every throw argument escaped does not
@@ -1118,11 +1125,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $readable = $this->phar_readable_path( $path );
         $size     = 0;
         try {
-            $phar     = $this->validated_tar( $readable );
-            $iterator = new \RecursiveIteratorIterator( $phar );
-            foreach ( $iterator as $file ) {
-                if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
-                    $member_size = $file->getSize();
+            $phar = $this->validated_tar( $readable );
+            foreach ( $this->tar_listing( $phar ) as list( $name, $is_dir ) ) {
+                if ( ! $is_dir && $this->is_sql_dump_member( basename( $name ) ) ) {
+                    $key         = $this->tar_comparison_name( $name, $is_dir );
+                    $member_size = $this->tar_payloads[ $key ]['size'];
                     if ( false === $member_size ) {
                         throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar stat entry', self::ERR_APPLY );
                     }
@@ -1255,12 +1262,16 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $readable = $this->phar_readable_path( $path );
         $sql      = '';
         try {
-            $phar     = $this->validated_tar( $readable );
-            $iterator = new \RecursiveIteratorIterator( $phar );
-            foreach ( $iterator as $file ) {
-                if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
-                    $body = (string) file_get_contents( $file->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- reading a phar stream member.
-                    $body = $this->strip_sql_dump_guard( $file->getFilename(), $body );
+            $phar = $this->validated_tar( $readable );
+            foreach ( $this->tar_listing( $phar ) as list( $name, $is_dir ) ) {
+                if ( ! $is_dir && $this->is_sql_dump_member( basename( $name ) ) ) {
+                    $key     = $this->tar_comparison_name( $name, $is_dir );
+                    $payload = $this->tar_payloads[ $key ];
+                    $body    = file_get_contents( $readable, false, null, $payload['offset'], $payload['size'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- read only the validated member payload.
+                    if ( false === $body || strlen( $body ) !== $payload['size'] ) {
+                        throw new MainWP_Exception( esc_html__( 'A backup archive member could not be read.', 'mainwp' ), 'tar payload read', self::ERR_APPLY );
+                    }
+                    $body = $this->strip_sql_dump_guard( basename( $name ), $body );
                     if ( '' !== $body ) {
                         $sql .= ( '' !== $sql && "\n" !== substr( $sql, -1 ) ? "\n" : '' ) . $body;
                     }
@@ -1358,16 +1369,15 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
         $readable = $this->phar_readable_path( $path );
         try {
-            $phar     = $this->validated_tar( $readable );
-            $iterator = new \RecursiveIteratorIterator( $phar );
-            $total    = 0;
-            $free     = function_exists( 'disk_free_space' ) ? disk_free_space( $this->temp_dir ) : false;
-            foreach ( $iterator as $file ) {
-                $name = $iterator->getSubPathname();
+            $phar  = $this->validated_tar( $readable );
+            $total = 0;
+            $free  = function_exists( 'disk_free_space' ) ? disk_free_space( $this->temp_dir ) : false;
+            foreach ( $this->tar_listing( $phar ) as list( $name, $is_dir ) ) {
                 if ( $this->has_unsafe_entry_name( $name ) ) {
                     throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
                 }
-                $total += $file->getSize();
+                $key    = $this->tar_comparison_name( $name, $is_dir );
+                $total += $is_dir ? 0 : $this->tar_payloads[ $key ]['size'];
                 if ( is_float( $free ) && $free < $total + 64 * MB_IN_BYTES ) {
                     throw new MainWP_Exception( esc_html__( 'The test-restore sandbox does not have enough free space to extract the archive.', 'mainwp' ), 'tar extract free space: ' . basename( $path ), self::ERR_UNSUPPORTED );
                 }
@@ -1394,8 +1404,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * @return \PharData Archive with a complete, validated listing.
      */
     private function validated_tar( string $plain ): \PharData { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- one bounded header walk over the accepted shapes.
-        $unreadable = new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar malformed, truncated or unsupported header or entry', self::ERR_APPLY );
-        $stream     = fopen( $plain, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- inspect headers without extracting members.
+        $this->tar_payloads = array();
+        $unreadable         = new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar malformed, truncated or unsupported header or entry', self::ERR_APPLY );
+        $stream             = fopen( $plain, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- inspect headers without extracting members.
         if ( false === $stream ) {
             throw $unreadable;
         }
@@ -1486,8 +1497,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     if ( $this->has_unsafe_entry_name( $name ) ) {
                         throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
                     }
-                    $is_dir = '5' === $type;
-                    $key    = $this->tar_comparison_name( $name, $is_dir );
+                    $is_dir                     = '5' === $type;
+                    $key                        = $this->tar_comparison_name( $name, $is_dir );
+                    $this->tar_payloads[ $key ] = array(
+                        'offset' => ftell( $stream ), // phpcs:ignore WordPress.WP.AlternativeFunctions -- validated payload start.
+                        'size'   => $size,
+                    );
                     // Charged per header before duplicates merge, as PharData allocates them.
                     if ( null === $long_name ) {
                         $name_bytes += strlen( $name );
@@ -1548,6 +1563,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             $phar = new \PharData( $plain );
             foreach ( $this->tar_listing( $phar ) as list( $listed, $is_dir ) ) {
                 $key = $this->tar_comparison_name( $listed, $is_dir );
+                if ( ! $is_dir && ! isset( $this->tar_payloads[ $key ] ) ) {
+                    throw $unreadable;
+                }
                 // PharData adds the parents of a member itself, so a listed directory without a header must lead to a
                 // walked member; every listed file needs a header, and a listed name keeps the walk's kind.
                 if ( $is_dir ? ! isset( $dirs[ $key ] ) && ! isset( $ancestors[ $key ] ) : ! isset( $members[ $key ] ) ) {
@@ -1594,12 +1612,22 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * PharData's listing, parents included, as it would extract the archive.
      *
      * @param \PharData $phar Archive.
+     * @throws \RuntimeException When a member name contains a NUL byte.
      * @return \Generator<array{0: string, 1: bool}> Listed path and whether it is a directory.
      */
     protected function tar_listing( \PharData $phar ): \Generator {
+        $pathname_only = (bool) preg_grep( '/\?/', array_keys( $this->tar_payloads ) );
+        if ( $pathname_only ) {
+            $phar->setFlags( ( $phar->getFlags() & ~\FilesystemIterator::CURRENT_MODE_MASK ) | \FilesystemIterator::CURRENT_AS_PATHNAME );
+        }
         $iterator = new \RecursiveIteratorIterator( $phar, \RecursiveIteratorIterator::SELF_FIRST );
         foreach ( $iterator as $file ) {
-            yield array( $iterator->getSubPathname(), $file->isDir() );
+            $name = $iterator->getSubPathname();
+            if ( false !== strpos( $name, "\0" ) ) {
+                throw new \RuntimeException( 'Unreadable TAR member name.' );
+            }
+            $info = $pathname_only ? $iterator->getInnerIterator() : $file;
+            yield array( $name, $info->isDir() );
         }
     }
 

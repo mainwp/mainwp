@@ -750,6 +750,106 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		return array( array( './' ), array( '.' ), array( '' ) );
 	}
 
+	/** Supported question-mark members retain their names and binary contents. */
+	public function test_tar_literal_question_mark_preserves_names_and_bytes() {
+		if ( 'Windows' === PHP_OS_FAMILY ) {
+			$this->markTestSkipped( 'Windows cannot extract filenames containing ?.' );
+		}
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		$members = array( 'wp-content/uploads/test?x', 'ordinary', 'hash#name', '日本語', 'literal%3F', 'dir?/nested', 'a\\b' );
+		$bytes   = '';
+		foreach ( $members as $name ) {
+			$bytes .= $this->raw_tar_member( $name, "bytes\0" . $name );
+		}
+		try {
+			$method = new \ReflectionMethod( $sandbox, 'extract_tar' );
+			$method->setAccessible( true );
+			$method->invoke( $sandbox, $this->raw_tar( $bytes ) );
+			foreach ( $members as $name ) {
+				$this->assertSame( "bytes\0" . $name, file_get_contents( $sandbox->temp_dir() . $name ) );
+			}
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * SQL payload keys agree with the normalized listing without extracting files.
+	 *
+	 * @dataProvider tar_sql_payload_names
+	 * @param string $name SQL member name.
+	 */
+	public function test_tar_literal_question_mark_sql_member_size_and_read( $name ) {
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$sql      = '<?php exit(); ?>SELECT 1;';
+			$sql_path = $this->raw_tar( $this->raw_tar_member( $name, $sql ) . $this->raw_tar_member( 'literal?name', 'question' ) );
+			$size     = new \ReflectionMethod( $sandbox, 'archive_member_size_tar' );
+			$size->setAccessible( true );
+			$this->assertSame( strlen( $sql ), $size->invoke( $sandbox, $sql_path ) );
+			$read = new \ReflectionMethod( $sandbox, 'read_member_from_tar' );
+			$read->setAccessible( true );
+			$this->assertSame( 'SELECT 1;', $read->invoke( $sandbox, $sql_path ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * A question-mark member selects pathname iteration for both SQL spellings.
+	 *
+	 * @return array
+	 */
+	public static function tar_sql_payload_names() {
+		return array(
+			'question-mark directory' => array( 'db?/dump.sql.php' ),
+			'literal backslash'       => array( 'db\\dump.sql.php' ),
+		);
+	}
+
+	/**
+	 * Distinct listed members cannot share one normalized payload key.
+	 *
+	 * @dataProvider tar_normalized_payload_collisions
+	 * @param bool   $reverse Reverse the two conflicting headers.
+	 * @param string $action Tar consumer.
+	 */
+	public function test_tar_normalized_payload_name_collisions_are_refused( $reverse, $action ) {
+		$members = array( 'a/b.sql', 'a\\b.sql' );
+		if ( $reverse ) {
+			$members = array_reverse( $members );
+		}
+		$bytes   = $this->raw_tar_member( $members[0], 'SELECT 1;' ) . $this->raw_tar_member( $members[1], 'SELECT 2;' ) . $this->raw_tar_member( 'c?d', 'question' );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $this->raw_tar( $bytes ), $action );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+			$this->assertStringContainsString( 'could not be read', $caught->getMessage() );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Both header orders must fail before extraction, SQL reading or sizing.
+	 *
+	 * @return array
+	 */
+	public static function tar_normalized_payload_collisions() {
+		$cases = array();
+		foreach ( array( false, true ) as $reverse ) {
+			foreach ( array( 'extract', 'read', 'size' ) as $action ) {
+				$cases[ ( $reverse ? 'backslash first ' : 'slash first ' ) . $action ] = array( $reverse, $action );
+			}
+		}
+		return $cases;
+	}
+
 	/**
 	 * Refusal must precede any write into the sandbox.
 	 *

@@ -335,31 +335,34 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $size_bytes = (int) array_sum( array_column( $archives, 'size' ) );
             $skipped    = MainWP_Backup_Read_Model::snapshot_skipped_files( $entry['snapshot'] );
             $rows[]     = array(
-                'id'                   => (int) $entry['snapshot']->id,
-                'task_id'              => (int) $entry['snapshot']->task_id,
-                'type'                 => (string) $entry['snapshot']->type,
-                'created'              => (int) $entry['snapshot']->created,
+                'id'                      => (int) $entry['snapshot']->id,
+                'task_id'                 => (int) $entry['snapshot']->task_id,
+                'type'                    => (string) $entry['snapshot']->type,
+                'created'                 => (int) $entry['snapshot']->created,
                 // Formatted here so the page uses the Dashboard date and time
                 // settings, as the task list does, not the browser locale.
-                'created_elapsed'      => MainWP_Utility::time_elapsed_string( (int) $entry['snapshot']->created ),
-                'created_label'        => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $entry['snapshot']->created ) ),
-                'age_days'             => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
-                'status'               => $activity['status'],
-                'offsite_state'        => $activity['offsite_state'],
-                'uploads'              => $activity['uploads'],
-                'test_restore_running' => $activity['test_restore_running'],
-                'source'               => (string) $entry['source'],
-                'restorable'           => (bool) $entry['catalog_restorable'],
-                'damaged'              => (bool) $entry['damaged'],
-                'restore_reason'       => (string) $entry['catalog_restore_reason'],
-                'removal_reason'       => (string) $entry['removal_reason'],
-                'skipped_count'        => $skipped['count'],
-                'skipped_paths'        => $skipped['paths'],
-                'size_bytes'           => $size_bytes,
-                'size_label'           => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
-                'test_restore_state'   => $activity['test_restore_state'],
-                'test_restore_at'      => $activity['test_restore_at'],
-                'test_restore_label'   => $activity['test_restore_label'],
+                'created_elapsed'         => MainWP_Utility::time_elapsed_string( (int) $entry['snapshot']->created ),
+                'created_label'           => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $entry['snapshot']->created ) ),
+                'age_days'                => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
+                'status'                  => $activity['status'],
+                'offsite_state'           => $activity['offsite_state'],
+                'uploads'                 => $activity['uploads'],
+                'test_restore_running'    => $activity['test_restore_running'],
+                'source'                  => (string) $entry['source'],
+                'restorable'              => (bool) $entry['catalog_restorable'],
+                'damaged'                 => (bool) $entry['damaged'],
+                'restore_reason'          => (string) $entry['catalog_restore_reason'],
+                'removal_reason'          => (string) $entry['removal_reason'],
+                'skipped_count'           => $skipped['count'],
+                'skipped_paths'           => $skipped['paths'],
+                'size_bytes'              => $size_bytes,
+                'size_label'              => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
+                'test_restore_state'      => $activity['test_restore_state'],
+                'test_restore_at'         => $activity['test_restore_at'],
+                'test_restore_label'      => $activity['test_restore_label'],
+                'test_restore_error'      => $activity['test_restore_error'],
+                'test_restore_error_code' => $activity['test_restore_error_code'],
+                'test_restore_assertions' => $activity['test_restore_assertions'],
             );
         }
         // The reload bootstrap: the server knows what is running for this
@@ -435,15 +438,19 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
         $snapshot = $entry['snapshot'];
         $tested   = (int) ( $snapshot->test_restore_at ?? 0 );
+        $details  = MainWP_Backup_Snapshots::instance()->get_test_restore_details( $snapshot );
         return array(
-            'id'                   => (int) $snapshot->id,
-            'status'               => (string) $snapshot->status,
-            'offsite_state'        => 'pruned' !== $snapshot->status && isset( $snapshot->offsite_state ) ? (string) $snapshot->offsite_state : '',
-            'uploads'              => $uploads,
-            'test_restore_running' => $entry['test_restore_running'],
-            'test_restore_state'   => (string) ( $snapshot->test_restore_state ?? '' ),
-            'test_restore_at'      => $tested,
-            'test_restore_label'   => $tested > 0 ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $tested ) ) : '',
+            'id'                      => (int) $snapshot->id,
+            'status'                  => (string) $snapshot->status,
+            'offsite_state'           => 'pruned' !== $snapshot->status && isset( $snapshot->offsite_state ) ? (string) $snapshot->offsite_state : '',
+            'uploads'                 => $uploads,
+            'test_restore_running'    => $entry['test_restore_running'],
+            'test_restore_state'      => (string) ( $snapshot->test_restore_state ?? '' ),
+            'test_restore_at'         => $tested,
+            'test_restore_label'      => $tested > 0 ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $tested ) ) : '',
+            'test_restore_error'      => $details['error'],
+            'test_restore_error_code' => $details['error_code'],
+            'test_restore_assertions' => $details['assertions'],
         );
     }
 

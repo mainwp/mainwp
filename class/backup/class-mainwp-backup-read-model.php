@@ -479,7 +479,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array
      */
     private static function snapshot_test_restore( object $snapshot ): array {
-        $checks = array( 'files_extracted', 'db_imported', 'db_has_rows' );
+        $details = MainWP_Backup_Snapshots::instance()->get_test_restore_details( $snapshot );
+        $checks  = array( 'files_extracted', 'db_imported', 'db_has_rows' );
         if ( 'files' === $snapshot->type ) {
             $checks = array( 'files_extracted' );
         } elseif ( 'db' === $snapshot->type ) {
@@ -491,6 +492,9 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'result_at'    => empty( $snapshot->test_restore_result_at ) ? null : (int) $snapshot->test_restore_result_at,
             'checks'       => $checks,
             'scope'        => 'dashboard_sandbox',
+            'error_code'   => $details['error_code'],
+            'error'        => $details['error'],
+            'assertions'   => $details['assertions'],
         );
     }
 

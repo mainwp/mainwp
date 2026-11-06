@@ -16,8 +16,29 @@ use MainWP\Dashboard\Module\Log\Log_Events_List_Table;
 class Test_Network_Activity_MCP_Agent extends \WP_UnitTestCase {
 	use Site_Fixture;
 
-	/** @var int Fixture site ID. */
+	/**
+	 * Fixture site ID.
+	 *
+	 * @var int
+	 */
 	private $site;
+
+	/**
+	 * Let native WordPress configuration own constants in isolated request tests.
+	 *
+	 * @param \PHPUnit\Framework\TestResult|null $result Current result collector.
+	 * @return \PHPUnit\Framework\TestResult
+	 */
+	public function run( ?\PHPUnit\Framework\TestResult $result = null ): \PHPUnit\Framework\TestResult {
+		$configuration                           = $GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] ?? null;
+		$GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = '';
+		try {
+			return parent::run( $result );
+		} finally {
+			$GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = $configuration;
+		}
+	}
+
 	/**
 	 * Request origins and expected stored agents.
 	 *
@@ -25,18 +46,20 @@ class Test_Network_Activity_MCP_Agent extends \WP_UnitTestCase {
 	 */
 	public static function origins() {
 		return array(
-			'mcp'          => array( '/wp-abilities/v1/abilities/mainwp/update_site_v1/run', true, 'mainwp_mcp' ),
-			'trailing'     => array( '/wp-abilities/v1/abilities/mainwp/update_site_v1/run/', true, 'mainwp_mcp' ),
+			'mcp'          => array( '/wp-abilities/v1/abilities/mainwp/update-site-v1/run', true, 'mainwp_mcp' ),
+			'trailing'     => array( '/wp-abilities/v1/abilities/mainwp/update-site-v1/run/', true, 'mainwp_mcp' ),
 			'generic rest' => array( '/wp/v2/posts', true, '' ),
 			'other owner'  => array( '/wp-abilities/v1/abilities/example/update/run', true, '' ),
-			'catalog'      => array( '/wp-abilities/v1/abilities/mainwp/update_site_v1', true, '' ),
-			'cookie'       => array( '/wp-abilities/v1/abilities/mainwp/update_site_v1/run', false, '' ),
+			'catalog'      => array( '/wp-abilities/v1/abilities/mainwp/update-site-v1', true, '' ),
+			'cookie'       => array( '/wp-abilities/v1/abilities/mainwp/update-site-v1/run', false, '' ),
 			'ui click'     => array( '', false, '' ),
 		);
 	}
 
 	/**
 	 * Persist the authenticated origin and render the stored named actor.
+	 *
+	 * REST_REQUEST would make later AJAX tests emit wp_send_json usage notices.
 	 *
 	 * @dataProvider origins
 	 * @runInSeparateProcess
@@ -47,10 +70,17 @@ class Test_Network_Activity_MCP_Agent extends \WP_UnitTestCase {
 	 */
 	public function test_request_origin( $route, $app_password, $expected ) {
 		global $wp, $wp_rest_application_password_uuid;
-		define( 'REST_REQUEST', true );
-		$actor = self::factory()->user->create( array( 'role' => 'administrator', 'user_login' => 'network_actor' ) );
+		if ( ! defined( 'REST_REQUEST' ) ) {
+			define( 'REST_REQUEST', true );
+		}
+		$actor = self::factory()->user->create(
+			array(
+				'role'       => 'administrator',
+				'user_login' => 'network_actor',
+			)
+		);
 		wp_set_current_user( $actor );
-		$this->site = $this->create_test_site();
+		$this->site                        = $this->create_test_site();
 		$wp_rest_application_password_uuid = null;
 		if ( $app_password ) {
 			add_filter( 'wp_is_application_passwords_available', '__return_true' );
@@ -62,7 +92,7 @@ class Test_Network_Activity_MCP_Agent extends \WP_UnitTestCase {
 			$this->assertSame( $password[1]['uuid'], rest_get_authenticated_app_password() );
 		}
 		$wp->query_vars['rest_route'] = $route;
-		$server = new \WP_REST_Server();
+		$server                       = new \WP_REST_Server();
 		$server->register_route(
 			'fixture',
 			$route ?: '/fixture-click',
@@ -77,8 +107,23 @@ class Test_Network_Activity_MCP_Agent extends \WP_UnitTestCase {
 		$response = $server->dispatch( new \WP_REST_Request( 'POST', $route ?: '/fixture-click' ) );
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertGreaterThan( 0, $response->get_data() );
-		$records = ( new Log_Query() )->query( array( 'view' => 'events_list', 'start' => 0, 'records_per_page' => 20, 'orderby' => 'created', 'order' => 'DESC' ) );
-		$rows = array_values( array_filter( $records['items'], static function ( $row ) use ( $actor ) { return (int) $row->user_id === $actor; } ) );
+		$records = ( new Log_Query() )->query(
+			array(
+				'view'             => 'events_list',
+				'start'            => 0,
+				'records_per_page' => 20,
+				'orderby'          => 'created',
+				'order'            => 'DESC',
+			)
+		);
+		$rows    = array_values(
+			array_filter(
+				$records['items'],
+				static function ( $row ) use ( $actor ) {
+					return (int) $row->user_id === $actor;
+				}
+			)
+		);
 		$this->assertNotEmpty( $rows );
 		$meta = json_decode( $rows[0]->user_meta_json, true );
 		$this->assertSame( $expected, $meta['agent'] );
@@ -100,6 +145,8 @@ class Test_Network_Activity_MCP_Agent extends \WP_UnitTestCase {
 	/**
 	 * Existing automation keeps precedence over an MCP-shaped request.
 	 *
+	 * The request constants cannot be reset between data sets in one process.
+	 *
 	 * @dataProvider automation
 	 * @runInSeparateProcess
 	 * @preserveGlobalState disabled
@@ -109,8 +156,10 @@ class Test_Network_Activity_MCP_Agent extends \WP_UnitTestCase {
 	 */
 	public function test_existing_automation( $constant, $agent, $label ) {
 		global $wp, $wp_rest_application_password_uuid;
-		define( 'REST_REQUEST', true );
-		$wp->query_vars['rest_route']       = '/wp-abilities/v1/abilities/mainwp/update_site_v1/run';
+		if ( ! defined( 'REST_REQUEST' ) ) {
+			define( 'REST_REQUEST', true );
+		}
+		$wp->query_vars['rest_route']      = '/wp-abilities/v1/abilities/mainwp/update-site-v1/run';
 		$wp_rest_application_password_uuid = wp_generate_uuid4();
 		define( $constant, true );
 		$author = new Log_Author( 0 );

@@ -488,11 +488,11 @@ class Test_Legacy_Bulk_Widget_Ownership extends \WP_UnitTestCase {
         global $wpdb;
         $wpdb->update( $wpdb->prefix . 'mainwp_wp_sync', array( 'sync_errors' => 'fixture disconnected' ), array( 'wpid' => $this->foreign_site ) );
         $body = $this->response( array( MainWP_Connection_Status::class, 'render_widget_content' ) );
-        $this->assertMatchesRegularExpression( '/een check icon"><\/i>\s+1<\/span>/', $body );
-        $this->assertMatchesRegularExpression( '/unlink icon"><\/i>\s+0<\/span>/', $body );
+        $this->assertMatchesRegularExpression( '/id="mainwp-connection-status-count-connected">1<\/span>/', $body );
+        $this->assertMatchesRegularExpression( '/id="mainwp-connection-status-count-disconnected">0<\/span>/', $body );
         remove_filter( 'mainwp_is_single_user', '__return_false' );
         $body = $this->response( array( MainWP_Connection_Status::class, 'render_widget_content' ) );
-        $this->assertMatchesRegularExpression( '/unlink icon"><\/i>\s+1<\/span>/', $body );
+        $this->assertMatchesRegularExpression( '/id="mainwp-connection-status-count-disconnected">1<\/span>/', $body );
     }
 
     /** The extension-facing SQL helper keeps its existing userless behavior. */

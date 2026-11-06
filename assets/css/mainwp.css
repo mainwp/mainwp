@@ -672,6 +672,7 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
     margin: 0 !important;
 }
 
+#mainwp-collapse-second-level-navigation.collapsed,
 #mainwp-divider-handle:hover #mainwp-collapse-second-level-navigation {
   opacity: 1 !important;
 }

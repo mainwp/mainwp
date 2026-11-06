@@ -210,7 +210,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                             </div>
                         </div>
                         <?php if ( $is_demo ) : ?>
-                            <a href="<?php echo esc_html( $website->url ) . 'wp-admin.html'; ?>" target="_blank"><i class="sign in alternate icon"></i></a>
+                            <a href="<?php echo esc_url( $website->url . 'wp-admin.html' ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
                         <?php else : ?>
                             <a href="<?php MainWP_Site_Open::get_open_site_admin_link( $website->id, true ); ?>" target="_blank"><i class="sign in alternate icon"></i></a>
                         <?php endif; ?>

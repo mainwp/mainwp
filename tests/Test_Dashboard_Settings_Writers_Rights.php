@@ -162,6 +162,50 @@ class Test_Dashboard_Settings_Writers_Rights extends \WP_UnitTestCase {
         }
     }
 
+    /** @return array Legacy credential options and actors. */
+    public static function sec31_options(): array {
+        $cases = array();
+        foreach ( array( 'rest_api_keys', 'rest_api_consumer_key', 'rest_api_consumer_secret' ) as $name ) {
+            foreach ( array( 'staff', 'level10', 'admin' ) as $actor ) {
+                foreach ( array( $name, strtoupper( $name ) ) as $input ) {
+                    $cases[ $input . ' ' . $actor ] = array( $name, $input, $actor );
+                }
+            }
+        }
+        return $cases;
+    }
+
+    /**
+     * Generic settings writes must not bypass the legacy key gate.
+     *
+     * @dataProvider sec31_options
+     */
+    public function test_sec31_settings_legacy_options( $name, $input, $actor ): void {
+        global $wpdb;
+        $added = null !== add_role( 'mainwp_sec31_settings_fixture', 'Settings fixture', array( 'read' => true, 'level_10' => true ) );
+        try {
+            if ( 'admin' !== $actor ) {
+                wp_set_current_user( self::factory()->user->create( array( 'role' => 'staff' === $actor ? 'mainwp_sec31_settings_fixture' : 'editor' ) ) );
+                wp_get_current_user()->add_cap( 'level_10' );
+                $this->assertFalse( current_user_can( 'manage_options' ) );
+            }
+            $this->assertTrue( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) );
+            update_option( 'mainwp_' . $name, 'preserve' );
+            $response = $this->ajax( 'mainwp_save_settings', array( 'name' => $input, 'value' => 'replacement' ) );
+            $stored = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", 'mainwp_' . $name ) );
+            $this->assertSame( 'admin' === $actor ? 'replacement' : 'preserve', $stored );
+            if ( 'admin' === $actor ) {
+                $this->assertSame( 'ok', $response );
+            } else {
+                $this->assertFalse( json_decode( $response, true )['success'] );
+            }
+        } finally {
+            if ( $added ) {
+                remove_role( 'mainwp_sec31_settings_fixture' );
+            }
+        }
+    }
+
     /**
      * Refusal must preserve the user extension as well as every option.
      *

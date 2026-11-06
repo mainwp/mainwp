@@ -5214,14 +5214,6 @@ msgstr ""
 msgid "Insights"
 msgstr ""
 
-#: class/class-mainwp-menu.php:1217
-msgid "REST API"
-msgstr ""
-
-#: class/class-mainwp-menu.php:1219
-msgid "Manage API Keys"
-msgstr ""
-
 #: class/class-mainwp-menu.php:1220 pages/page-mainwp-rest-api-page.php:142
 #: pages/page-mainwp-rest-api-page.php:296
 #: pages/page-mainwp-rest-api-page.php:590
@@ -14822,14 +14814,6 @@ msgstr ""
 msgid "Once daily"
 msgstr ""
 
-#: modules/logs/classes/class-log-admin.php:202
-msgid "Invalid Start date or end date. Please try again."
-msgstr ""
-
-#: modules/logs/classes/class-log-admin.php:220
-msgid "Invalid selected year. Please try again."
-msgstr ""
-
 #: modules/logs/classes/class-log-admin.php:290
 #, php-format
 msgid ""
@@ -15051,9 +15035,8 @@ msgstr ""
 
 #: modules/logs/classes/class-log-settings.php:291
 msgid ""
-"Automatically move older logs to the archive after a specified period of "
-"time. This helps keep your active logs organized while maintaining a "
-"searchable history."
+"Automatically archive older entries after a specified period. Archived entries "
+"no longer appear in Network Activity or Insights. Delete them on the Tools page."
 msgstr ""
 
 #: modules/logs/classes/class-log-settings.php:300
@@ -16222,10 +16205,6 @@ msgstr ""
 msgid ""
 "Start by configuring your %1$sNetwork Activity Settings%2$s to begin "
 "collecting data."
-msgstr ""
-
-#: modules/logs/pages/page-log-insights-page.php:1101
-msgid "Recent Activity Log"
 msgstr ""
 
 #: modules/logs/pages/page-log-insights-page.php:1102
@@ -19497,6 +19476,7 @@ msgid ""
 "If you need help with managing posts, please review following help documents"
 msgstr ""
 
+#: class/class-mainwp-menu.php:1267
 #: pages/page-mainwp-rest-api-page.php:143
 #: pages/page-mainwp-rest-api-page.php:217
 #: pages/page-mainwp-rest-api-page.php:263
@@ -19506,6 +19486,7 @@ msgstr ""
 msgid "API Access"
 msgstr ""
 
+#: class/class-mainwp-menu.php:1269
 #: pages/page-mainwp-rest-api-page.php:251
 #: pages/page-mainwp-rest-api-page.php:572
 #: pages/page-mainwp-rest-api-page.php:654
@@ -19647,8 +19628,8 @@ msgstr ""
 msgid "Create New API Key"
 msgstr ""
 
-#: pages/page-mainwp-rest-api-page.php:1141
-msgid "API Key have been saved successfully!"
+#: pages/page-mainwp-rest-api-page.php:1177
+msgid "API key saved."
 msgstr ""
 
 #: pages/page-mainwp-rest-api-page.php:1158
@@ -19667,12 +19648,8 @@ msgid ""
 "REST API. Ensure you're using the correct version for your integrations."
 msgstr ""
 
-#: pages/page-mainwp-rest-api-page.php:1211
-msgid "API Key Created Successfully!"
-msgstr ""
-
-#: pages/page-mainwp-rest-api-page.php:1212
-msgid "Copy your key and store it securely. It will not be visible again!"
+#: pages/page-mainwp-rest-api-page.php:1251
+msgid "Copy this key now. You won't see it again after you save."
 msgstr ""
 
 #: pages/page-mainwp-rest-api-page.php:1218
@@ -19754,10 +19731,6 @@ msgstr ""
 msgid "Consumer secret"
 msgstr ""
 
-#: pages/page-mainwp-rest-api-page.php:1361
-msgid "Save Key"
-msgstr ""
-
 #: pages/page-mainwp-rest-api-page.php:1369
 msgid "API Key Copied"
 msgstr ""
@@ -19785,8 +19758,9 @@ msgstr ""
 msgid "Consumer key ending in..."
 msgstr ""
 
-#: pages/page-mainwp-rest-api-page.php:1524
-#: pages/page-mainwp-rest-api-page.php:1650
+#: pages/page-mainwp-rest-api-page.php:1403
+#: pages/page-mainwp-rest-api-page.php:1566
+#: pages/page-mainwp-rest-api-page.php:1695
 msgid "Save API Key"
 msgstr ""
 
@@ -21600,11 +21574,19 @@ msgid "Delete archived Network Activity data"
 msgstr ""
 
 #: pages/page-mainwp-settings.php:2216
-msgid "Delete archived sNetwork Activity data."
+msgid "Delete archived Network Activity data."
 msgstr ""
 
 #: pages/page-mainwp-settings.php:2217
 msgid "Delete Archived Network Activity Data"
+msgstr ""
+
+#: modules/logs/includes/default-logs.php:1013
+msgid "Recurring task (cron job) rescheduled"
+msgstr ""
+
+#: modules/logs/pages/page-log-insights-page.php:1179
+msgid "Select widgets that you want to hide in the MainWP Insights page."
 msgstr ""
 
 #: pages/page-mainwp-settings.php:2221

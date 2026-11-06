@@ -74,8 +74,18 @@ class MainWP_Backup_Task_UI_Staff_Rights_Test extends MainWP_Abilities_Test_Case
 		$this->set_current_user_as_admin();
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		delete_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
-		$this->fixture['a'] = $this->create_test_site( array( 'name' => 'Staff site A' ) );
-		$this->fixture['b'] = $this->create_test_site( array( 'name' => 'Staff site B' ) );
+		$this->fixture['a'] = $this->create_test_site(
+			array(
+				'name'    => 'Staff site A',
+				'version' => '6.4',
+			)
+		);
+		$this->fixture['b'] = $this->create_test_site(
+			array(
+				'name'    => 'Staff site B',
+				'version' => '6.4',
+			)
+		);
 		foreach ( array(
 			'ta'       => array( 'a' ),
 			'tab'      => array( 'a', 'b' ),

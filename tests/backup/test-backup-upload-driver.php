@@ -26,6 +26,7 @@ use MainWP\Dashboard\MainWP_Backup_Upload_Driver;
 use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
 /**
  * Class MainWP_Backup_Upload_Driver_Test
@@ -356,6 +357,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		add_filter( 'wp_doing_cron', '__return_true' );
 		$this->set_up_private_root();
 		remove_all_actions( 'mainwp_backup_snapshot_recorded' );
 		remove_all_actions( 'mainwp_backup_upload_job_settled' );
@@ -380,6 +383,9 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tear_down() {
+		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		remove_filter( 'wp_doing_cron', '__return_true' );
+		remove_action( 'shutdown', array( MainWP_Post_Backup_Handler::class, 'spawn_backup_continuation' ) );
 		foreach ( $this->temp_dirs as $dir ) {
 			$this->remove_dir( $dir );
 		}
@@ -638,6 +644,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function test_snapshot_recording_enqueues_jobs_for_task_destinations() {
+		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		add_filter( 'wp_doing_cron', '__return_true' );
 		list( $dest_a ) = $this->make_local_destination();
 		list( $dest_b ) = $this->make_local_destination();
 		$task_id        = $this->insert_task( array( $dest_a, $dest_b ) );
@@ -649,6 +657,10 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id );
 		$this->assertCount( 2, $jobs );
 		$this->assertSame( array( $dest_a, $dest_b ), array_map( 'intval', array_column( $jobs, 'destination_id' ) ) );
+		$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'Enqueued uploads need an immediate continuation.' );
+		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		remove_filter( 'wp_doing_cron', '__return_true' );
+		remove_action( 'shutdown', array( \MainWP\Dashboard\MainWP_Post_Backup_Handler::class, 'spawn_backup_continuation' ) );
 	}
 
 	/**
@@ -689,6 +701,96 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array( '', '' ), array_column( $jobs, 'locked_by' ) );
 	}
 
+	/** A released upload slice needs a successor before the periodic cron tick. */
+	public function test_deadline_kicks_continuation_for_chunked_upload() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$driver          = MainWP_Backup_Upload_Driver::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$build      = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking   = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$checkpoint = $build->invoke( $driver, $snapshot );
+		$this->assertTrue( $chunking->invokeArgs( $driver, array( $job, &$checkpoint, microtime( true ) + 60 ) ) );
+		$this->assertSame( 'chunked', $checkpoint['artifacts'][0]['mode'] );
+		$this->assertNotEmpty( $checkpoint['artifacts'][0]['chunks'] );
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		$this->assertTrue( $store->set_status( (int) $job->id, $store::STATUS_UPLOADING ) );
+		$scheduled = 0;
+		add_filter(
+			'schedule_event',
+			static function ( $event ) use ( &$scheduled ) {
+				if ( 'mainwp_native_backup_continue_action' === $event->hook ) {
+					++$scheduled;
+				}
+				return $event;
+			}
+		);
+
+		$driver->process_pending_jobs( 0 );
+
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_UPLOADING, $job->status );
+		$this->assertSame( '', $job->locked_by );
+		$this->assertSame( 0, (int) $job->locked_until );
+		$this->assertSame( 0, (int) $job->next_retry_at );
+		$this->assertFalse( $job->checkpoint['artifacts'][0]['done'] );
+		$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ) );
+		$this->assertSame( 1, $scheduled );
+	}
+
+	/** An empty or fully drained queue needs no immediate follow-up. */
+	public function test_drained_queue_does_not_kick_continuation() {
+		$driver = MainWP_Backup_Upload_Driver::instance();
+		$driver->process_pending_jobs( 0 );
+		$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ) );
+
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$driver->process_pending_jobs( 240 );
+		$this->assertSame( $store::STATUS_COMPLETE, $store->get_jobs_for_snapshot( $snapshot_id )[0]->status );
+		$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ) );
+	}
+
+	/** Terminal failures can happen before the first budget check. */
+	public function test_deadline_terminal_failure_does_not_kick_continuation() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->record_bare_snapshot();
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 0 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( '', $job->locked_by );
+		$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ) );
+	}
+
+	/** A missing encryption key must wait for its retry window. */
+	public function test_deadline_retry_backoff_does_not_kick_continuation() {
+		$enc             = $this->arm_encryption();
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		$this->assertNull( $enc->load_kek() );
+		$now = time();
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 0, $now );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( $store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at );
+		$this->assertSame( '', $job->locked_by );
+		$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ) );
+	}
+
 	/**
 	 * A large queue cannot monopolize the continuation lane.
 	 */
@@ -708,6 +810,41 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			$expected = $index < MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK ? 'complete' : 'pending';
 			$this->assertSame( $expected, $store->get_jobs_for_snapshot( $snapshot_id )[0]->status, 'Unexpected status for queued job ' . $index );
 		}
+		$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'Jobs past the per-tick limit need a successor before the periodic cron tick.' );
+	}
+
+	/** A job the tick never reached needs a successor even when the attempted job went terminal. */
+	public function test_deadline_kicks_continuation_for_unattempted_job() {
+		list( $dest_a ) = $this->make_local_destination();
+		list( $dest_b ) = $this->make_local_destination();
+		$snapshot_id    = $this->make_snapshot( $this->standard_files() );
+		$store          = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_a, $dest_b ) );
+		MainWP_Backup_Storage_Destinations::instance()->delete_destination( $dest_a );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 0 );
+
+		$this->assertSame( array( 'failed_permanent', 'pending' ), array_column( $store->get_jobs_for_snapshot( $snapshot_id ), 'status' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ) );
+	}
+
+	/** Only a job the next tick could acquire counts as remaining work. */
+	public function test_has_runnable_job_matches_acquisition() {
+		list( $dest_id ) = $this->make_local_destination();
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$now             = time();
+		$this->assertFalse( $store->has_runnable_job( $now ) );
+
+		$store->enqueue_for_snapshot( $this->make_snapshot( $this->standard_files() ), array( $dest_id ) );
+		$this->assertTrue( $store->has_runnable_job( $now ) );
+
+		$token = uniqid( 'other_worker_', true );
+		$job   = $store->acquire_next_job( $token, 300, $now );
+		$this->assertFalse( $store->has_runnable_job( $now ), 'Another worker holds a live lease.' );
+		$this->assertTrue( $store->has_runnable_job( $now + 301 ), 'An expired lease can be reclaimed.' );
+
+		$this->assertTrue( $store->complete_job( (int) $job->id, $token ) );
+		$this->assertFalse( $store->has_runnable_job( $now + 301 ), 'A finished job is not remaining work.' );
 	}
 
 	/**

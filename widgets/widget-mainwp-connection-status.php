@@ -237,6 +237,71 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
 
             jQuery( document ).ready( function () {
+                let reconnecting = false;
+                jQuery('#mainwp-connection-status-reconnect-all').on('click', function() {
+                    if (reconnecting) {
+                        return;
+                    }
+                    reconnecting = true;
+                    let button = jQuery(this).prop('disabled', true);
+                    let results = jQuery('#mainwp-connection-status-reconnect-results').empty();
+                    let progress = jQuery('<p>').text('<?php echo esc_js( __( 'Loading disconnected sites…', 'mainwp' ) ); ?>').appendTo(results);
+                    const failed = '<?php echo esc_js( __( 'Reconnect failed. Try Reconnect Site for this site.', 'mainwp' ) ); ?>';
+                    const success = mainwp_entities_text('<?php echo esc_js( __( 'Site has been reconnected successfully!', 'mainwp' ) ); ?>');
+                    const finish = function() {
+                        ['all-sites', 'connected', 'disconnected'].forEach(function(tab) {
+                            mainwp_widgets_connections_status_get_table(tab).ajax.reload(function(json) {
+                                jQuery('#mainwp-connection-status-count-' + tab).text(json.recordsTotal);
+                            });
+                        });
+                        reconnecting = false;
+                        button.prop('disabled', false);
+                    };
+                    jQuery.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        dataType: 'json',
+                        data: mainwp_secure_data({action: 'mainwp_widgets_connections_status_details_display_rows', reconnect_all: 1})
+                    }).done(function(data) {
+                        if (!data || !Array.isArray(data.sites)) {
+                            progress.text(failed);
+                            finish();
+                            return;
+                        }
+                        let index = 0;
+                        const next = function() {
+                            progress.text(index + ' / ' + data.sites.length);
+                            if (index >= data.sites.length) {
+                                finish();
+                                return;
+                            }
+                            const site = data.sites[index];
+                            const row = jQuery('<p>').text(site.name + ': …').appendTo(results);
+                            jQuery.ajax({
+                                url: ajaxurl,
+                                type: 'POST',
+                                dataType: 'text',
+                                data: mainwp_secure_data({action: 'mainwp_reconnectwp', siteid: site.id})
+                            }).done(function(response) {
+                                response = response.trim();
+                                const ok = mainwp_entities_text(response) === success;
+                                row.addClass(ok ? 'green' : 'red').text(site.name + ': ').append(
+                                    ok ? document.createTextNode(success) :
+                                    (response.indexOf('ERROR ') === 0 ? mainwp_reconnect_error_nodes(response.substring(6)) : document.createTextNode(failed))
+                                );
+                            }).fail(function() {
+                                row.addClass('red').text(site.name + ': ' + failed);
+                            }).always(function() {
+                                index++;
+                                next();
+                            });
+                        };
+                        next();
+                    }).fail(function() {
+                        progress.text(failed);
+                        finish();
+                    });
+                });
                 setTimeout(() => {
                     jQuery( '#widget-connect-status-dropdown-selector' ).dropdown( {
                         onChange: function( val ) {
@@ -286,6 +351,10 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         ?>
 
         <div class="ui tab" data-tab="<?php echo esc_attr( $tab ); ?>" loaded-data="no" current-page="1">
+            <?php if ( 'disconnected' === $tab && MainWP_System_Utility::is_admin() ) { ?>
+                <button type="button" class="ui mini green button" id="mainwp-connection-status-reconnect-all"><?php esc_html_e( 'Reconnect all', 'mainwp' ); ?></button>
+                <div id="mainwp-connection-status-reconnect-results" role="status" aria-live="polite"></div>
+            <?php } ?>
             <div class="ui message widget-connections-status-message-zone" style="display:none;" ></div>
 
         <?php
@@ -421,7 +490,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Echo the column headers.
      *
-     * @return void
+     * @return array Columns.
      */
     public static function get_columns() {
         return array(
@@ -541,10 +610,56 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public function ajax_display_rows() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_widgets_connections_status_details_display_rows' );
+        if ( ! empty( $_POST['reconnect_all'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked above.
+            if ( ! MainWP_System_Utility::is_admin() ) {
+                wp_send_json_error( __( 'You are not allowed to reconnect sites.', 'mainwp' ), 403 );
+            }
+            wp_send_json( array( 'sites' => $this->get_reconnect_sites() ) );
+        }
         $current_tab = isset( $_POST['current_tab'] ) ? sanitize_text_field( wp_unslash( $_POST['current_tab'] ) ) : ''; // phpcs:ignore -- NOSONAR - ok.
         $this->prepare_items( $current_tab );
         $output = $this->ajax_get_datatable_rows( $current_tab );
         wp_send_json( $output );
+    }
+
+    /**
+     * Get every editable disconnected site, independently of table pagination.
+     *
+     * @return array Site IDs and display names.
+     */
+    public function get_reconnect_sites() {
+        $args = array(
+            'select_wp_fields'   => array( 'id', 'name', 'userid' ),
+            'select_sync_fields' => array( 'sync_errors' ),
+            'status'             => 'disconnected',
+            'orderby'            => 'wp.url',
+            'view'               => 'custom_view',
+            'others_fields'      => array(),
+        );
+        if ( MainWP_System::instance()->is_multi_user() ) {
+            $args['where'] = 'wp.userid = ' . get_current_user_id();
+        }
+        $args = apply_filters( 'mainwp_connection_status_widget_get_sites_query_params', $args );
+        unset(
+            $args['offset'],
+            $args['rowcount'],
+            $args['limit'],
+            $args['page'],
+            $args['per_page'],
+            $args['limit_sites']
+        );
+        $results = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $args ) );
+        $sites   = array();
+        while ( $results && $site = MainWP_DB::fetch_object( $results ) ) {
+            if ( '' !== $site->sync_errors && MainWP_System_Utility::can_edit_website( $site ) ) {
+                $sites[] = array(
+                    'id'   => (int) $site->id,
+                    'name' => $site->name,
+                );
+            }
+        }
+        MainWP_DB::free_result( $results );
+        return $sites;
     }
 
     /**
@@ -656,7 +771,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="ui card">
                 <div class="content">
                     <div class="header">
-                        <span class="ui large text"><i class="ui een check icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $count_connected ) ); ?></span>
+                        <span class="ui large text"><i class="ui een check icon"></i> <span id="mainwp-connection-status-count-connected"><?php echo esc_html( MainWP_Utility::short_number_format( $count_connected ) ); ?></span></span>
                     </div>
                     <div class="description"><strong><?php esc_html_e( 'Connected Sites', 'mainwp' ); ?></strong></div>
                 </div>
@@ -664,7 +779,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="ui card">
                 <div class="content">
                     <div class="header">
-                        <span class="ui large text"><i class="ui unlink icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $count_disconnected ) ); ?></span>
+                        <span class="ui large text"><i class="ui unlink icon"></i> <span id="mainwp-connection-status-count-disconnected"><?php echo esc_html( MainWP_Utility::short_number_format( $count_disconnected ) ); ?></span></span>
                     </div>
                     <div class="description"><strong><?php esc_html_e( 'Disconnected Sites', 'mainwp' ); ?></strong></div>
                 </div>

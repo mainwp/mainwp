@@ -237,7 +237,7 @@ class Log_Changes_Logs_Helper {
     public function map_changes_action( $event ) {
 
         $map_actions = array(
-            'installed'   => 'install',
+            'installed'   => 'installed',
             'deleted'     => 'delete',
             'activated'   => 'activate',
             'deactivated' => 'deactivate',

@@ -53,7 +53,7 @@ class MainWP_Backup_Filename_Tokens_Test extends MainWP_Abilities_Test_Case {
 					'name'     => 'Token task',
 					'type'     => 'full',
 					'schedule' => 'daily',
-					'site_ids' => array( $this->create_test_site() ),
+					'site_ids' => array( $this->create_test_site( array( 'version' => '6.4' ) ) ),
 				),
 				$fields
 			),

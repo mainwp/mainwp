@@ -96,6 +96,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // Page: ManageBackupsSnapshots (restore).
         if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
             $this->add_action( 'mainwp_restore_snapshot_list', array( &$this, 'mainwp_restore_snapshot_list' ) );
+            $this->add_action( 'mainwp_restore_snapshot_activity', array( &$this, 'mainwp_restore_snapshot_activity' ) );
             if ( MainWP_Backup_Operations::current_user_can_delete() ) {
                 $this->add_action( 'mainwp_backup_snapshot_delete_preview', array( &$this, 'mainwp_backup_snapshot_delete_preview' ) );
                 $this->add_action( 'mainwp_backup_snapshot_delete', array( &$this, 'mainwp_backup_snapshot_delete' ) );
@@ -105,6 +106,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_restore_progress', array( &$this, 'mainwp_restore_progress' ) );
             if ( \mainwp_current_user_can( 'dashboard', 'restore_backups' ) ) {
                 $this->add_action( 'mainwp_restore_initiate', array( &$this, 'mainwp_restore_initiate' ) );
+                $this->add_action( 'mainwp_restore_admission_status', array( &$this, 'mainwp_restore_admission_status' ) );
                 $this->add_action( 'mainwp_restore_cancel', array( &$this, 'mainwp_restore_cancel' ) );
                 $this->add_action( 'mainwp_restore_rollback', array( &$this, 'mainwp_restore_rollback' ) );
             }
@@ -327,31 +329,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
             $destination_names[ (int) $destination->id ] = (string) $destination->name;
         }
-        $registered_codes = MainWP_Backup_Error_Codes::get_registered_codes();
         foreach ( $entries as $entry ) {
-            $uploads = array();
-            foreach ( $entry['uploads'] as $job ) {
-                $error     = MainWP_Backup_Error_Codes::stored_error_parts( $job->last_error['source_text'] );
-                $uploads[] = array(
-                    'destination_id' => (int) $job->destination_id,
-                    /* translators: %d: storage destination ID. */
-                    'name'           => $destination_names[ (int) $job->destination_id ] ?? sprintf( __( 'Destination #%d (removed)', 'mainwp' ), (int) $job->destination_id ),
-                    'provider'       => (string) $job->provider,
-                    'status'         => (string) $job->status,
-                    'updated'        => (int) $job->updated,
-                    'last_error'     => mb_substr( $job->last_error['source_text'], 0, 200 ),
-                    'error_code'     => $error['code'],
-                    // Registry text is complete; text without a known code keeps last_error's bound.
-                    'error_message'  => in_array( $error['code'], $registered_codes, true ) ? $error['message'] : mb_substr( $error['message'], 0, 200 ),
-                    'error_detail'   => mb_substr( $error['detail'], 0, 200 ),
-                );
-            }
-            $archives             = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
-            $size_bytes           = (int) array_sum( array_column( $archives, 'size' ) );
-            $test_restore_at      = isset( $entry['snapshot']->test_restore_at ) ? (int) $entry['snapshot']->test_restore_at : 0;
-            $test_restore_details = MainWP_Backup_Snapshots::instance()->get_test_restore_details( $entry['snapshot'] );
-            $skipped              = MainWP_Backup_Read_Model::snapshot_skipped_files( $entry['snapshot'] );
-            $rows[]               = array(
+            $activity   = $this->serialize_snapshot_activity( $entry );
+            $archives   = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
+            $size_bytes = (int) array_sum( array_column( $archives, 'size' ) );
+            $skipped    = MainWP_Backup_Read_Model::snapshot_skipped_files( $entry['snapshot'] );
+            $rows[]     = array(
                 'id'                      => (int) $entry['snapshot']->id,
                 'task_id'                 => (int) $entry['snapshot']->task_id,
                 'type'                    => (string) $entry['snapshot']->type,
@@ -361,9 +344,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'created_elapsed'         => MainWP_Utility::time_elapsed_string( (int) $entry['snapshot']->created ),
                 'created_label'           => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $entry['snapshot']->created ) ),
                 'age_days'                => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
-                'status'                  => (string) $entry['snapshot']->status,
-                'offsite_state'           => 'pruned' !== $entry['snapshot']->status && isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
-                'uploads'                 => $uploads,
+                'status'                  => $activity['status'],
+                'offsite_state'           => $activity['offsite_state'],
+                'uploads'                 => $activity['uploads'],
+                'test_restore_running'    => $activity['test_restore_running'],
                 'source'                  => (string) $entry['source'],
                 'restorable'              => (bool) $entry['catalog_restorable'],
                 'damaged'                 => (bool) $entry['damaged'],
@@ -373,12 +357,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'skipped_paths'           => $skipped['paths'],
                 'size_bytes'              => $size_bytes,
                 'size_label'              => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
-                'test_restore_state'      => isset( $entry['snapshot']->test_restore_state ) ? (string) $entry['snapshot']->test_restore_state : '',
-                'test_restore_at'         => $test_restore_at,
-                'test_restore_label'      => $test_restore_at > 0 ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $test_restore_at ) ) : '',
-                'test_restore_error'      => $test_restore_details['error'],
-                'test_restore_error_code' => $test_restore_details['error_code'],
-                'test_restore_assertions' => $test_restore_details['assertions'],
+                'test_restore_state'      => $activity['test_restore_state'],
+                'test_restore_at'         => $activity['test_restore_at'],
+                'test_restore_label'      => $activity['test_restore_label'],
+                'test_restore_error'      => $activity['test_restore_error'],
+                'test_restore_error_code' => $activity['test_restore_error_code'],
+                'test_restore_assertions' => $activity['test_restore_assertions'],
             );
         }
         // The reload bootstrap: the server knows what is running for this
@@ -416,11 +400,104 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'manual_destinations'   => $manual_destinations,
                 'destinations_source'   => $manual_plan['source'],
                 'active_restore_job_id' => $restore_jobs['active_restore_job_id'],
+                'server_time'           => time(),
                 'failed_restore_jobs'   => $failed_rows,
                 'site_disconnected'     => static::site_is_disconnected( $website ),
                 'reconnect_url'         => admin_url( 'admin.php?page=managesites&dashboard=' . (int) $website->id ),
                 'snapshot_delete_busy'  => MainWP_Backup_Operations::snapshot_delete_busy( $site_id ),
                 'manual_backup_running' => ! empty( $manual_task ) && (int) $manual_task->completed < (int) $manual_task->last_run,
+            )
+        );
+    }
+
+    /**
+     * The list and activity poll must describe the same stored state.
+     *
+     * @param array $entry Snapshot and upload evidence.
+     * @return array
+     */
+    private function serialize_snapshot_activity( array $entry ): array {
+        $registered_codes = MainWP_Backup_Error_Codes::get_registered_codes();
+        $uploads          = array();
+        foreach ( $entry['uploads'] as $job ) {
+            $error     = MainWP_Backup_Error_Codes::stored_error_parts( $job->last_error['source_text'] );
+            $uploads[] = array(
+                'destination_id'  => (int) $job->destination_id,
+                /* translators: %d: storage destination ID. */
+                'name'            => $job->upload_progress['destination'] ?? sprintf( __( 'Destination #%d (removed)', 'mainwp' ), (int) $job->destination_id ),
+                'provider'        => (string) $job->provider,
+                'status'          => (string) $job->status,
+                'updated'         => (int) $job->updated,
+                'upload_progress' => $job->upload_progress,
+                'last_error'      => mb_substr( $job->last_error['source_text'], 0, 200 ),
+                'error_code'      => $error['code'],
+                // Registry text is complete; text without a known code keeps last_error's bound.
+                'error_message'   => in_array( $error['code'], $registered_codes, true ) ? $error['message'] : mb_substr( $error['message'], 0, 200 ),
+                'error_detail'    => mb_substr( $error['detail'], 0, 200 ),
+            );
+        }
+        $snapshot = $entry['snapshot'];
+        $tested   = (int) ( $snapshot->test_restore_at ?? 0 );
+        $details  = MainWP_Backup_Snapshots::instance()->get_test_restore_details( $snapshot );
+        return array(
+            'id'                      => (int) $snapshot->id,
+            'status'                  => (string) $snapshot->status,
+            'offsite_state'           => 'pruned' !== $snapshot->status && isset( $snapshot->offsite_state ) ? (string) $snapshot->offsite_state : '',
+            'uploads'                 => $uploads,
+            'test_restore_running'    => $entry['test_restore_running'],
+            'test_restore_state'      => (string) ( $snapshot->test_restore_state ?? '' ),
+            'test_restore_at'         => $tested,
+            'test_restore_label'      => $tested > 0 ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $tested ) ) : '',
+            'test_restore_error'      => $details['error'],
+            'test_restore_error_code' => $details['error_code'],
+            'test_restore_assertions' => $details['assertions'],
+        );
+    }
+
+    /** Activity polling avoids catalog admission and page bootstrap reads. */
+    public function mainwp_restore_snapshot_activity() {
+        $this->secure_request( 'mainwp_restore_snapshot_activity' );
+        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        if ( null === $this->authorize_native_backup_site( $site_id ) ) {
+            return;
+        }
+        $ids = isset( $_POST['snapshot_ids'] ) ? wp_unslash( $_POST['snapshot_ids'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- exact integer validation follows.
+        if ( ! is_array( $ids ) || count( $ids ) > 50 ) {
+            wp_send_json(
+                array(
+                    'error'      => __( 'Reload the page and try again.', 'mainwp' ),
+                    'error_code' => 'mainwp_invalid_input',
+                )
+            );
+            return;
+        }
+        foreach ( $ids as $id ) {
+            if ( ! ( ( is_int( $id ) && $id > 0 ) || ( is_string( $id ) && preg_match( '/^[1-9][0-9]*$/D', $id ) && (string) (int) $id === $id ) ) ) {
+                wp_send_json(
+                    array(
+                        'error'      => __( 'Reload the page and try again.', 'mainwp' ),
+                        'error_code' => 'mainwp_invalid_input',
+                    )
+                );
+                return;
+            }
+        }
+        $rows         = array();
+        $missing      = array();
+        $test_restore = MainWP_Backup_Restore_Job_Store::instance()->get_live_test_restore_for_site( $site_id );
+        foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+            if ( null === $snapshot || (int) $snapshot->site_id !== $site_id ) {
+                $missing[] = $id;
+                continue;
+            }
+            $rows[] = $this->serialize_snapshot_activity( MainWP_Backup_Read_Model::snapshot_activity_evidence( $snapshot, $test_restore ) );
+        }
+        wp_send_json(
+            array(
+                'snapshots'   => $rows,
+                'missing'     => $missing,
+                'server_time' => time(),
             )
         );
     }
@@ -521,6 +598,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     public function mainwp_restore_initiate() {
         $this->secure_request( 'mainwp_restore_initiate' );
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+        $token = $this->posted_admission_token();
+        if ( null === $token ) {
+            return;
+        }
         $site_id     = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0;
         $snapshot_id = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;
         if ( array_key_exists( 'target_site_id', $_POST ) ) {
@@ -545,28 +626,160 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         );
         // phpcs:enable WordPress.Security.NonceVerification.Missing
         try {
-            $result = MainWP_Backup_Operations::restore_snapshot( $site_id, $snapshot_id, $options, 'ui' );
-        } catch ( MainWP_Exception $e ) {
-            $code = $e->get_message_error_code();
-            if ( 'mainwp_confirmation_required' === $code ) {
-                wp_send_json( array_merge( array( 'needs_confirmation' => true ), (array) $e->get_data() ) );
-            } elseif ( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED === $code || MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND === $code ) {
-                wp_send_json( array( 'error' => static::plain_text( $e->getMessage() ) ) );
+            $site    = MainWP_Backup_Operations::authorize_site( $site_id, 'execute_backups', 'ui' );
+            $restore = MainWP_Backup_Operations::authorize_ui( 'restore_backups' );
+            if ( is_wp_error( $site ) || is_wp_error( $restore ) ) {
+                $reply = array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) );
             } else {
-                wp_send_json(
-                    array(
-                        'error'      => static::plain_text( $e->getMessage() ),
-                        'error_code' => $code,
-                    )
+                $options['admission_token'] = $token;
+                $reply                      = $this->guard_restore_admission(
+                    $site_id,
+                    $token,
+                    'restore',
+                    static function () use ( $site_id, $snapshot_id, $options ) {
+                        $result = MainWP_Backup_Operations::restore_snapshot( $site_id, $snapshot_id, $options, 'ui' );
+                        return is_wp_error( $result ) ? array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) : $result;
+                    }
                 );
             }
+        } catch ( \Throwable $error ) {
+            $reply = $this->restore_admission_exception_reply( $error, $site_id, $token, 'restore', 0 );
+        }
+        wp_send_json( $reply );
+    }
+
+    /**
+     * Browser tokens must be validated without changing their identity.
+     *
+     * @return string|null
+     */
+    private function posted_admission_token(): ?string {
+        $token = isset( $_POST['admission_token'] ) && is_string( $_POST['admission_token'] ) ? wp_unslash( $_POST['admission_token'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each caller verifies its nonce; the exact hex format is validated below.
+        if ( ! MainWP_Backup_Restore_Job_Store::valid_admission_token( $token ) ) {
+            wp_send_json(
+                array(
+                    'error'      => __( 'Reload the page and try again.', 'mainwp' ),
+                    'error_code' => 'mainwp_invalid_input',
+                )
+            );
+            return null;
+        }
+        return $token;
+    }
+
+    /**
+     * JSON exits skip finally, so every guarded path returns its reply first.
+     *
+     * @param int      $site_id Authorized site.
+     * @param string   $token Validated attempt token.
+     * @param string   $kind Restore or rollback.
+     * @param callable $admit Admission operation.
+     * @param int      $source_job Rollback source, or zero.
+     * @return array
+     */
+    private function guard_restore_admission( int $site_id, string $token, string $kind, callable $admit, int $source_job = 0 ): array {
+        $store = MainWP_Backup_Restore_Job_Store::instance();
+        if ( ! $store->lock_admission( $token ) ) {
+            return array(
+                'error'      => __( 'Checking whether the request started.', 'mainwp' ),
+                'error_code' => 'mainwp_restore_admission_busy',
+            );
+        }
+        try {
+            if ( ! $store->claim_admission( $token, $site_id, $kind ) ) {
+                return array(
+                    'error'      => __( 'This restore attempt was already used.', 'mainwp' ),
+                    'error_code' => 'mainwp_restore_admission_used',
+                );
+            }
+            return $admit();
+        } catch ( \Throwable $error ) {
+            return $this->restore_admission_exception_reply( $error, $site_id, $token, $kind, $source_job );
+        } finally {
+            $store->release_admission( $token );
+        }
+    }
+
+    /**
+     * A scheduling failure can follow admission, so job evidence wins over errors.
+     *
+     * @param \Throwable $error Caught admission error.
+     * @param int        $site_id Authorized site.
+     * @param string     $token Attempt token.
+     * @param string     $kind Restore or rollback.
+     * @param int        $source_job Rollback source, or zero.
+     * @return array
+     */
+    private function restore_admission_exception_reply( \Throwable $error, int $site_id, string $token, string $kind, int $source_job ): array {
+        $reply = array(
+            'error'      => 'rollback' === $kind ? __( 'The rollback could not start. Try again.', 'mainwp' ) : __( 'The restore could not start. Try again.', 'mainwp' ),
+            'error_code' => MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR,
+            'retryable'  => true,
+        );
+        try {
+            $store = MainWP_Backup_Restore_Job_Store::instance();
+            $job   = $store->get_job_by_admission_token( $site_id, $token );
+            if ( null !== $job ) {
+                $record = $store->get_admission_record( $token );
+                if ( (int) ( $record[2] ?? 0 ) === $site_id && (int) ( $record[3] ?? 0 ) === get_current_user_id() ) {
+                    return array( 'job_id' => (int) $job->id );
+                }
+                return $reply;
+            }
+            if ( $error instanceof MainWP_Exception ) {
+                $code  = $error->get_message_error_code();
+                $facts = (array) $error->get_data();
+                if ( 'mainwp_confirmation_required' === $code ) {
+                    return array_merge( array( 'needs_confirmation' => true ), $facts );
+                }
+                if ( 'restore' === $kind && in_array( $code, array( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED, MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND ), true ) ) {
+                    return array( 'error' => static::plain_text( $error->getMessage() ) );
+                }
+                if ( 'rollback' === $kind && MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED === $code ) {
+                    return array(
+                        'error'     => static::disconnected_site_error(),
+                        'retryable' => true,
+                    );
+                }
+                $retryable = in_array( $code, array( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR ), true );
+                if ( 'rollback' === $kind ) {
+                    $source    = $store->get_job( $source_job );
+                    $retryable = null !== $source && in_array( $source->status, array( 'failed_permanent', 'cancelled', 'completed' ), true ) && MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $source );
+                }
+                return array(
+                    'error'                => static::plain_text( $error->getMessage() ),
+                    'error_code'           => $code,
+                    'retryable'            => $retryable,
+                    'test_restore_running' => ! empty( $facts['test_restore_running'] ),
+                    'snapshot_id'          => (int) ( $facts['snapshot_id'] ?? 0 ),
+                );
+            }
+        } catch ( \Throwable $lookup_error ) {
+            MainWP_Logger::instance()->warning( 'Restore admission lookup failed: ' . $lookup_error->getMessage() );
+            return $reply;
+        }
+        MainWP_Logger::instance()->warning( 'Restore admission failed: ' . $error->getMessage() );
+        return $reply;
+    }
+
+    /** Reconciliation has the same site and operation rights as admission. */
+    public function mainwp_restore_admission_status() {
+        $this->secure_request( 'mainwp_restore_admission_status' );
+        $token = $this->posted_admission_token();
+        if ( null === $token ) {
             return;
         }
-        if ( is_wp_error( $result ) ) {
-            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
+        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        if ( null === $this->authorize_native_backup_site( $site_id ) || null === $this->authorize_native_backup_site( $site_id, 'restore_backups' ) ) {
             return;
         }
-        wp_send_json( $result );
+        try {
+            $reply = MainWP_Backup_Restore_Job_Store::instance()->admission_status( $site_id, $token );
+        } catch ( \Throwable $error ) {
+            MainWP_Logger::instance()->warning( 'Restore admission status failed: ' . $error->getMessage() );
+            $reply = array( 'error' => __( 'Could not check the restore attempt. Try again.', 'mainwp' ) );
+        }
+        wp_send_json( $reply );
     }
 
     /**
@@ -643,42 +856,35 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function mainwp_restore_rollback() {
         $this->secure_request( 'mainwp_restore_rollback' );
-        $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
-        try {
-            $result = MainWP_Backup_Operations::rollback_restore( $job_id, 'ui' );
-        } catch ( MainWP_Exception $e ) {
-            if ( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED === $e->get_message_error_code() ) {
-                wp_send_json(
-                    array(
-                        'error'     => static::disconnected_site_error(),
-                        'retryable' => true,
-                    )
-                );
-                return;
-            }
-            $job       = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
-            $retryable = null !== $job
-                && in_array( $job->status, array( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ), true )
-                && MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $job );
-            wp_send_json(
-                array(
-                    'error'      => static::plain_text( $e->getMessage() ),
-                    'error_code' => $e->get_message_error_code(),
-                    'retryable'  => $retryable,
-                )
-            );
+        $token = $this->posted_admission_token();
+        if ( null === $token ) {
             return;
         }
-        if ( is_wp_error( $result ) ) {
-            wp_send_json(
-                array(
+        $job_id  = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $site_id = 0;
+        try {
+            $job = MainWP_Backup_Operations::authorize_restore_job( $job_id, true, 'ui' );
+            if ( is_wp_error( $job ) || null === $job || 'reserved' === $job->status ) {
+                $reply = array(
                     'error'     => esc_html__( 'Restore job not found.', 'mainwp' ),
                     'retryable' => false,
-                )
-            );
-            return;
+                );
+            } else {
+                $site_id = (int) $job->site_id;
+                $reply   = $this->guard_restore_admission(
+                    $site_id,
+                    $token,
+                    'rollback',
+                    static function () use ( $job, $token ) {
+                        return array( 'job_id' => MainWP_Backup_Restore_Orchestrator::instance()->initiate_rollback( $job, array( 'admission_token' => $token ) ) );
+                    },
+                    $job_id
+                );
+            }
+        } catch ( \Throwable $error ) {
+            $reply = $this->restore_admission_exception_reply( $error, $site_id, $token, 'rollback', $job_id );
         }
-        wp_send_json( $result );
+        wp_send_json( $reply );
     }
 
     /**
@@ -722,10 +928,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * its lock. Under DISABLE_WP_CRON or ALTERNATE_WP_CRON the shutdown spawn is
      * a no-op; system or page-load cron, respectively, is the backstop.
      *
+     * A slice that ran for minutes still holds the cron array it read at start.
+     * That copy can list a continuation another cron request has already run,
+     * which would skip scheduling, and writing it back would drop events added
+     * since. Reading the options again gives the current schedule.
+     *
      * @param int $when Unix timestamp, or zero for the current time.
      * @return void
      */
     public static function kick_backup_continuation( int $when = 0 ) {
+        wp_cache_delete( 'alloptions', 'options' );
+        wp_cache_delete( 'cron', 'options' );
         if ( ! wp_next_scheduled( 'mainwp_native_backup_continue_action' ) ) {
             wp_schedule_single_event( 0 === $when ? time() : $when, 'mainwp_native_backup_continue_action' );
         }
@@ -1593,6 +1806,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $response      = MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $started, $click, false, $baseline );
         if ( '' !== $baseline_key && $started > 0 ) {
             delete_transient( $baseline_key );
+        }
+        // The modal measures upload activity age against this, not the browser clock.
+        if ( ! isset( $response['error'] ) ) {
+            $response['server_time'] = time();
         }
         wp_send_json( $response );
     }

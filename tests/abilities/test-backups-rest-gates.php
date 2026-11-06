@@ -128,7 +128,7 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 			'wp_sync',
 			array(
 				'wpid'        => $args['id'],
-				'version'     => '5.0.0',
+				'version'     => '6.4.0',
 				'sync_errors' => '',
 			)
 		);

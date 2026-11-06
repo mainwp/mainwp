@@ -682,18 +682,18 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_onetime_selected_siteids', $selected_one_time_siteids );
         }
 
-        if ( ! $reset_filter && empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) && '' === $selected_group_logic && ! isset( $_REQUEST['backup_health'] ) ) {
+        if ( ! $reset_filter && empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) && '' === $selected_group_logic && ! isset( $_REQUEST['backup_health'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reads a list filter to decide whether to load saved display preferences.
             $selected_backup_health = get_user_option( 'mainwp_managesites_filter_backup_health' );
-            $selected_status      = get_user_option( 'mainwp_managesites_filter_status' );
-            $selected_group       = get_user_option( 'mainwp_managesites_filter_group' );
-            $selected_client      = get_user_option( 'mainwp_managesites_filter_client' );
-            $is_not               = get_user_option( 'mainwp_managesites_filter_is_not' );
-            $selected_group_logic = get_user_option( 'mainwp_managesites_filter_group_logic' );
+            $selected_status        = get_user_option( 'mainwp_managesites_filter_status' );
+            $selected_group         = get_user_option( 'mainwp_managesites_filter_group' );
+            $selected_client        = get_user_option( 'mainwp_managesites_filter_client' );
+            $is_not                 = get_user_option( 'mainwp_managesites_filter_is_not' );
+            $selected_group_logic   = get_user_option( 'mainwp_managesites_filter_group_logic' );
         }
         // Keep existing widget links and saved status selections compatible.
         if ( 0 === strpos( (string) $selected_status, 'backup_health_' ) ) {
             $selected_backup_health = substr( $selected_status, strlen( 'backup_health_' ) );
-            $selected_status = 'all';
+            $selected_status        = 'all';
         }
         if ( ! static::backup_health_visible() ) {
             $selected_backup_health = '';
@@ -1053,7 +1053,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $backup_health = isset( $_REQUEST['backup_health'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['backup_health'] ) ) : ( $get_saved_state ? get_user_option( 'mainwp_managesites_filter_backup_health' ) : '' );
         if ( 0 === strpos( (string) $site_status, 'backup_health_' ) ) {
             $backup_health = substr( $site_status, strlen( 'backup_health_' ) );
-            $site_status = 'all';
+            $site_status   = 'all';
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_status', 'all' );
         }
         if ( ! static::backup_health_visible() || ! in_array( $backup_health, array( 'protected', 'at_risk', 'critical', 'unknown' ), true ) ) {
@@ -1178,7 +1178,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $health_ids = static::get_backup_health_site_ids_for_bucket( $backup_health );
             if ( null !== $health_ids ) {
                 $health_where = empty( $health_ids ) ? ( $is_not ? 'wp.id != -1' : 'wp.id = -1' ) : 'wp.id ' . ( $is_not ? 'NOT IN' : 'IN' ) . ' (' . implode( ',', $health_ids ) . ')';
-                $where = empty( $where ) ? $health_where : '(' . $where . ') AND (' . $health_where . ')';
+                $where        = empty( $where ) ? $health_where : '(' . $where . ') AND (' . $health_where . ')';
             }
         }
 
@@ -2337,7 +2337,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 <a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
                                 <?php else : ?>
                                     <?php if ( \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
-                                        <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin item" target="_blank"><?php esc_html_e( 'Go To WP Admin', 'mainwp' ); ?></a>
+                                        <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin item" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
                                     <?php endif; ?>
                                 <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
                                 <?php endif; ?>

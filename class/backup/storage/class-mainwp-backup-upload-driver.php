@@ -140,6 +140,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( (int) $snapshot_id, array_map( 'intval', $destination_ids ) );
+        MainWP_Post_Backup_Handler::kick_backup_continuation();
         $this->resolve_snapshot_offsite_state( (int) $snapshot_id );
     }
 
@@ -209,7 +210,9 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * backups-continue cron lane. Stop after MAX_JOBS_PER_TICK attempts
      * or a repeated acquisition, so a parked job cannot spin within the tick.
      * A repeated acquisition ends the tick; jobs behind it wait for the next one.
-     * A zero budget still allows one attempt to checkpoint.
+     * A zero budget still allows one attempt to checkpoint. Stopping on the
+     * attempt limit or the deadline with uploads still due schedules a
+     * continuation, so they do not wait for the periodic cron tick.
      *
      * @param int      $budget_seconds Work budget for this tick.
      * @param int|null $now            Clock override for tests.
@@ -245,6 +248,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 $store->release_lock( (int) $job->id, $token );
             }
         } while ( $job_count < self::MAX_JOBS_PER_TICK && microtime( true ) < $deadline );
+
+        if ( $store->has_runnable_job( null === $now ? time() : $now ) ) {
+            MainWP_Post_Backup_Handler::kick_backup_continuation();
+        }
     }
 
     /**

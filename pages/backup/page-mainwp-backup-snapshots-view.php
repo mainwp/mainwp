@@ -173,6 +173,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             </div>
             <?php endif; ?>
 
+            <div class="ui yellow message" id="mainwp-snapshot-poll-note" style="display:none;"></div>
+
             <div class="ui yellow message" id="mainwp-snapshots-disconnected"<?php echo $disconnected ? '' : ' style="display: none;"'; ?>>
                 <?php esc_html_e( 'This site is disconnected from the Dashboard, so Back Up Now and Restore are turned off until it reconnects.', 'mainwp' ); ?>
                 <a href="<?php echo esc_url( $reconnect_url ); ?>" id="mainwp-snapshots-reconnect-link"><?php esc_html_e( 'Reconnect the site', 'mainwp' ); ?></a>
@@ -284,6 +286,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             <div class="content">
                 <div id="mainwp-restore-confirm-pane">
+                    <div class="ui red message" id="mainwp-restore-confirm-error" role="alert" style="display:none;"></div>
                     <div class="ui yellow message">
                         <span id="mainwp-restore-warning-text"><?php esc_html_e( 'Restoring replaces the site\'s files and database with the contents of this backup. Anything changed since the backup was taken will be overwritten.', 'mainwp' ); ?></span>
                     </div>
@@ -446,6 +449,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         <script type="text/javascript">
         jQuery( function ( $ ) {
             var nonces = {
+                activity: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_snapshot_activity' ) ); ?>',
+                admissionStatus: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_admission_status' ) ); ?>',
                 list:     '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_snapshot_list' ) ); ?>',
                 deletePreview: '<?php echo esc_js( wp_create_nonce( 'mainwp_backup_snapshot_delete_preview' ) ); ?>',
                 deleteConfirm: '<?php echo esc_js( wp_create_nonce( 'mainwp_backup_snapshot_delete' ) ); ?>',
@@ -514,9 +519,18 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var showRemovedSnapshots = false;
             var currentSnapshot = 0;
             var currentJob = 0;
-            var rollbackRequestPending = false;
             var pollTimer = null;
             var restorePollRetries = 0;
+            var restorePollInFlight = false;
+            var restoreGeneration = 0;
+            var restorePolling = false;
+            var restoreFollowSite = 0;
+            // Per site for the life of the page, whether the dialog is open or
+            // not: the Start this page sent and has not resolved, and the job
+            // it last followed there. See siteRecord().
+            var restoreSites = {};
+            var restoreDialogOpen = false;
+            var serverClockOffset = null;
             var backupPollTimer = null;
             var backupFollowGen = 0;
             var backupFollowStops = 0;
@@ -714,6 +728,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // breaks inside: the hyphen in "Test-restored" and the spaces in
             // the Dashboard's long date format would otherwise split them.
             function testRestoreCell( snap ) {
+                if ( snap.test_restore_running ) {
+                    return '<span class="ui small basic blue label"><i class="circle notched loading icon"></i><?php echo esc_js( esc_html__( 'Test restore running', 'mainwp' ) ); ?></span>';
+                }
                 var states = {
                     pass: [ 'green', 'check circle', testRestoreLabels.pass, '<?php echo esc_js( esc_html__( 'This backup passed an automatic restore test in a temporary sandbox on this Dashboard.', 'mainwp' ) ); ?>' ],
                     fail: [ 'red', 'times circle', testRestoreLabels.fail, '<?php echo esc_js( esc_html__( 'The automatic sandbox restore test failed for this backup.', 'mainwp' ) ); ?>' ],
@@ -949,6 +966,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                                 if ( snap.uploads && snap.uploads.length ) {
                                     var complete = snap.uploads.filter( function ( upload ) { return 'complete' === upload.status; } ).length;
                                     var summary = '<?php /* translators: 1: completed uploads, 2: total uploads. */ echo esc_js( esc_html__( '%1$d of %2$d uploaded', 'mainwp' ) ); ?>'.replace( '%1$d', complete ).replace( '%2$d', snap.uploads.length );
+                                    var progressText = snap.uploads.filter( function ( upload ) {
+                                        return [ 'pending', 'chunking', 'uploading', 'submitting', 'failed_retryable' ].indexOf( upload.status ) !== -1;
+                                    } ).map( uploadProgressText ).filter( Boolean ).join( ', ' );
+                                    if ( progressText ) {
+                                        summary += ' (' + progressText + ')';
+                                    }
                                     sourceCell += ' <a href="#" class="mainwp-snapshot-uploads-toggle"><small>' + summary + '</small></a>';
                                 }
                             }
@@ -1088,19 +1111,31 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
             } );
 
-            $( '#mainwp-restore-snapshots-table' ).on( 'click', '.mainwp-snapshot-uploads-toggle', function ( event ) {
-                event.preventDefault();
-                var row = snapshotsTable.row( $( this ).closest( 'tr' ) );
-                var $row = $( row.node() );
-                if ( row.child.isShown() && 'uploads' === $row.attr( 'data-mainwp-snapshot-child' ) ) {
-                    row.child.hide();
-                    return;
+            function uploadProgressText( upload ) {
+                var progress = upload.upload_progress;
+                if ( ! progress ) {
+                    return '';
                 }
+                // Whole megabytes would show a small database-only upload as 0 MB.
+                var size = function ( bytes ) {
+                    var value = Math.max( 0, Number( bytes ) || 0 );
+                    return value < 1048576 ? Math.round( value / 1024 ) + ' KB' : Math.round( value / 1048576 ) + ' MB';
+                };
+                return '<?php /* translators: 1: uploaded size, 2: total size. */ echo esc_js( __( '%1$s of %2$s', 'mainwp' ) ); ?>'
+                    .replace( '%1$s', size( progress.bytes_done ) )
+                    .replace( '%2$s', size( progress.bytes_total ) );
+            }
+
+            function uploadDetails( snap ) {
                 var details = '<div class="ui mini divided list">';
-                ( row.data().uploads || [] ).forEach( function ( upload ) {
+                ( snap.uploads || [] ).forEach( function ( upload ) {
                     var label = uploadLabels[ upload.status ] || [ 'grey', escAttr( upload.status ) ];
                     var failed = [ 'failed_retryable', 'failed_permanent', 'credentials_invalid' ].indexOf( upload.status ) !== -1 && upload.last_error;
                     details += '<div class="item' + ( failed ? ' mainwp-backup-error-text' : '' ) + '">' + escAttr( upload.name ) + ' (' + escAttr( upload.provider ) + ') <span class="ui small basic ' + label[0] + ' label">' + label[1] + '</span>';
+                    var progressText = uploadProgressText( upload );
+                    if ( progressText ) {
+                        details += ' ' + escAttr( progressText );
+                    }
                     if ( failed ) {
                         details += ' ' + escAttr( upload.error_message || upload.last_error );
                         // The provider's own message and the error code stay visible for support.
@@ -1111,7 +1146,18 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     details += '</div>';
                 } );
-                row.child( details + '</div>' ).show();
+                return details + '</div>';
+            }
+
+            $( '#mainwp-restore-snapshots-table' ).on( 'click', '.mainwp-snapshot-uploads-toggle', function ( event ) {
+                event.preventDefault();
+                var row = snapshotsTable.row( $( this ).closest( 'tr' ) );
+                var $row = $( row.node() );
+                if ( row.child.isShown() && 'uploads' === $row.attr( 'data-mainwp-snapshot-child' ) ) {
+                    row.child.hide();
+                    return;
+                }
+                row.child( uploadDetails( row.data() ) ).show();
                 $row.attr( 'data-mainwp-snapshot-child', 'uploads' );
             } );
 
@@ -1133,7 +1179,129 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // Every reload path - a site switch, a finished restore, a finished
             // backup, a cleanup - comes through here, so the table is only ever
             // refilled through the DataTables API.
+            var snapshotPollTimer = 0;
+            var snapshotPollFailures = 0;
+            var snapshotPollOffset = 0;
+            var activeUploadStates = [ 'pending', 'chunking', 'uploading', 'submitting', 'failed_retryable' ];
+
+            function snapshotHasActivity( snap ) {
+                return !! snap.test_restore_running || ( snap.uploads || [] ).some( function ( job ) {
+                    return activeUploadStates.indexOf( job.status ) !== -1;
+                } );
+            }
+
+            function scheduleSnapshotPoll( snapshots, siteId, requestId ) {
+                window.clearTimeout( snapshotPollTimer );
+                snapshotPollTimer = 0;
+                if ( ! snapshots.some( snapshotHasActivity ) ) {
+                    return;
+                }
+                snapshotPollTimer = window.setTimeout( function () {
+                    pollSnapshots( siteId, requestId );
+                }, Math.max( Math.min( 60000, 5000 * Math.pow( 2, snapshotPollFailures ) ), snapshotRetryWait( snapshots ) ) );
+            }
+
+            // An upload's retry backoff can run to hours. While every active
+            // upload is only waiting for its retry, nothing changes before the
+            // earliest retry, so poll then (between 5 s and 5 min) and not every 5 s.
+            function snapshotRetryWait( snapshots ) {
+                var retryAt = 0;
+                var waitingOnly = snapshots.every( function ( snap ) {
+                    return ! snap.test_restore_running && ( snap.uploads || [] ).every( function ( job ) {
+                        if ( 'failed_retryable' === job.status ) {
+                            var next = parseInt( job.upload_progress && job.upload_progress.next_retry_at, 10 ) || 0;
+                            retryAt = 0 === retryAt || next < retryAt ? next : retryAt;
+                            // Without a retry time the next change is unknown.
+                            return next > 0;
+                        }
+                        return activeUploadStates.indexOf( job.status ) === -1;
+                    } );
+                } );
+                if ( ! waitingOnly || 0 === retryAt ) {
+                    return 0;
+                }
+                var serverNow = Date.now() / 1000 + ( null === serverClockOffset ? 0 : serverClockOffset );
+                return Math.min( 300000, Math.max( 5000, Math.round( ( retryAt - serverNow ) * 1000 ) ) );
+            }
+
+            function pollSnapshots( siteId, requestId, refreshRestore ) {
+                if ( siteId !== currentSite || requestId !== snapshotListRequest ) {
+                    return;
+                }
+                if ( refreshRestore ) {
+                    loadSnapshots( siteId );
+                    return;
+                }
+                var activeIds = snapshotsTable.rows().data().toArray().filter( snapshotHasActivity ).map( function ( snap ) { return snap.id; } );
+                if ( ! activeIds.length ) {
+                    return;
+                }
+                var offset = snapshotPollOffset % activeIds.length;
+                var ids = activeIds.slice( offset ).concat( activeIds.slice( 0, offset ) ).slice( 0, 50 );
+                snapshotPollOffset = ( offset + ids.length ) % activeIds.length;
+                $.ajax( { url: ajaxurl, method: 'POST', dataType: 'json', timeout: 30000,
+                    data: { action: 'mainwp_restore_snapshot_activity', security: nonces.activity, site_id: siteId, snapshot_ids: ids }
+                } ).done( function ( response ) {
+                    if ( siteId !== currentSite || requestId !== snapshotListRequest ) {
+                        return;
+                    }
+                    if ( ! response || response.error || ! Array.isArray( response.snapshots ) ) {
+                        retrySnapshotPoll( siteId, requestId );
+                        return;
+                    }
+                    snapshotPollFailures = 0;
+                    if ( response.server_time > 0 ) {
+                        serverClockOffset = response.server_time - Date.now() / 1000;
+                    }
+                    if ( response.missing && response.missing.length ) {
+                        loadSnapshots( siteId );
+                        return;
+                    }
+                    var activityEnded = false;
+                    snapshotsTable.rows().every( function () {
+                        var previous = this.data();
+                        var fresh = response.snapshots.find( function ( snap ) { return snap.id === previous.id; } );
+                        if ( fresh ) {
+                            var merged = Object.assign( {}, previous, fresh );
+                            if ( snapshotHasActivity( previous ) && ! snapshotHasActivity( merged ) ) {
+                                activityEnded = true;
+                            }
+                            this.data( merged );
+                            if ( this.child.isShown() && $( this.node() ).attr( 'data-mainwp-snapshot-child' ) === 'uploads' ) {
+                                this.child( uploadDetails( merged ) ).show();
+                            }
+                        }
+                    } );
+                    if ( activityEnded ) {
+                        loadSnapshots( siteId );
+                        return;
+                    }
+                    snapshotsTable.draw( false );
+                    scheduleSnapshotPoll( snapshotsTable.rows().data().toArray(), siteId, requestId );
+                } ).fail( function () {
+                    retrySnapshotPoll( siteId, requestId );
+                } );
+            }
+
+            function retrySnapshotPoll( siteId, requestId ) {
+                if ( siteId !== currentSite || requestId !== snapshotListRequest ) {
+                    return;
+                }
+                snapshotPollFailures++;
+                if ( snapshotPollFailures >= 8 ) {
+                    window.clearTimeout( snapshotPollTimer );
+                    snapshotPollTimer = 0;
+                    $( '#mainwp-snapshot-poll-note' ).text( '<?php echo esc_js( __( 'Reload the page to refresh the upload status.', 'mainwp' ) ); ?>' ).show();
+                    return;
+                }
+                scheduleSnapshotPoll( [ { test_restore_running: true } ], siteId, requestId );
+            }
+
             function loadSnapshots( siteId ) {
+                window.clearTimeout( snapshotPollTimer );
+                snapshotPollTimer = 0;
+                snapshotPollFailures = 0;
+                $( '#mainwp-snapshot-poll-note' ).hide();
                 var followGen = backupFollowGen;
                 var requestId = ++snapshotListRequest;
                 if ( currentSite !== siteId ) {
@@ -1158,7 +1326,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( siteId !== currentSite || requestId !== snapshotListRequest ) {
                         return; // A site switch superseded this request; its response must not repaint the newer site's list.
                     }
-                    // Before the rows draw: the Restore buttons read this flag.
+                    serverClockOffset = response.server_time > 0 ? response.server_time - Date.now() / 1000 : null;
                     showDisconnected( response.site_disconnected, response.reconnect_url );
                     enableSnapshotControls( siteId > 0 );
                     $( '#mainwp-snapshots-cleanup-btn' ).data( 'retention-warnings', ! response.error && Array.isArray( response.cleanup_warnings ) ? response.cleanup_warnings : null );
@@ -1182,6 +1350,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     snapshotsTable.clear();
                     snapshotsTable.rows.add( response.snapshots || [] );
                     snapshotsTable.draw();
+                    scheduleSnapshotPoll( response.snapshots || [], siteId, requestId );
 
                     var failedJobs = response.failed_restore_jobs || [];
                     var $history = $( '#mainwp-restore-history-table tbody' ).empty();
@@ -1223,10 +1392,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     // running for this site. A restore mid-flight reopens the
                     // progress panel and an open on-demand run resumes its
                     // poll, so neither depends on the tab that started it.
-                    if ( response.active_restore_job_id && ! currentJob ) {
-                        if ( ! $( '#mainwp-restore-modal' ).modal( 'is active' ) ) {
-                            $( '#mainwp-restore-modal' ).modal( 'show' );
-                        }
+                    // An unresolved Start settles through its own reconciliation.
+                    if ( response.active_restore_job_id && ! siteRecord( siteId ).attempt && siteRecord( siteId ).jobId !== response.active_restore_job_id ) {
+                        showRestoreModal();
                         startJobFollow( response.active_restore_job_id );
                     }
                     if ( response.manual_backup_running || Object.prototype.hasOwnProperty.call( backupPendingStarts, siteId ) ) {
@@ -1360,8 +1528,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-cancel-warning' ).toggle( canRestore && 'running' === data.status && ! cancelPending );
                 $( '#mainwp-restore-cancel-rollback-note' ).toggle( safetyBackup );
                 $( '#mainwp-restore-rollback-btn' ).text( retryRollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack );
-                $( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ! rollbackRequestPending && terminal && ( safetyBackup || retryRollback ) );
-                showRestoreOutcomeNote( data, canRestore && ! rollbackRequestPending && terminal && safetyBackup );
+                $( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ! siteRecord( currentSite ).attempt && terminal && ( safetyBackup || retryRollback ) );
+                showRestoreOutcomeNote( data, canRestore && ! siteRecord( currentSite ).attempt && terminal && safetyBackup );
 
                 // Surface the safety backup whenever one exists for this run,
                 // so the safety net is visible and not implied (L4).
@@ -1595,7 +1763,22 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function poll() {
-                $.post( ajaxurl, { action: 'mainwp_restore_progress', security: nonces.progress, job_id: currentJob }, function ( data ) {
+                window.clearTimeout( pollTimer );
+                if ( ! restorePolling || restorePollInFlight ) {
+                    return;
+                }
+                restorePollInFlight = true;
+                var jobId = currentJob;
+                var generation = restoreGeneration;
+                $.post( ajaxurl, { action: 'mainwp_restore_progress', security: nonces.progress, job_id: jobId }, function ( data ) {
+                    if ( generation !== restoreGeneration ) {
+                        return;
+                    }
+                    restorePollInFlight = false;
+                    if ( currentJob !== jobId ) {
+                        poll();
+                        return;
+                    }
                     restorePollRetries = 0;
                     // A security or job-lookup refusal arrives as HTTP 200
                     // with an error body and no status field (the handler
@@ -1611,9 +1794,21 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( [ 'completed', 'failed_permanent', 'cancelled' ].indexOf( data.status ) === -1 ) {
                         pollTimer = window.setTimeout( poll, 5000 );
                     } else if ( 'completed' === data.status || 'failed_permanent' === data.status || 'cancelled' === data.status ) {
+                        var followed = siteRecord( restoreFollowSite );
+                        if ( followed.jobId === jobId ) {
+                            followed.active = false;
+                        }
                         loadSnapshots( currentSite );
                     }
                 }, 'json' ).fail( function () {
+                    if ( generation !== restoreGeneration ) {
+                        return;
+                    }
+                    restorePollInFlight = false;
+                    if ( currentJob !== jobId ) {
+                        poll();
+                        return;
+                    }
                     // A transport error (lost connection, timeout, a 500)
                     // skips the success callback. Each foreground poll also
                     // drives a work slice, so a silently dead poller slows
@@ -1631,7 +1826,45 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 } );
             }
 
+            // What a site's restore dialog should show lives here, not in the
+            // dialog: closing it, reopening it or switching sites must not lose
+            // a Start that has not resolved, or a later click could send a
+            // second destructive restore.
+            function siteRecord( siteId ) {
+                if ( ! Object.prototype.hasOwnProperty.call( restoreSites, siteId ) ) {
+                    restoreSites[ siteId ] = { attempt: null, jobId: 0, active: false };
+                }
+                return restoreSites[ siteId ];
+            }
+
+            function restoreDialogShows( siteId ) {
+                return restoreDialogOpen && siteId === currentSite;
+            }
+
+            function showRestoreModal() {
+                restoreDialogOpen = true;
+                if ( ! $( '#mainwp-restore-modal' ).modal( 'is active' ) ) {
+                    $( '#mainwp-restore-modal' ).modal( 'show' );
+                }
+            }
+
+            // The generation only ends a poll chain; it never decides whether
+            // an initiate or reconciliation answer is recorded.
+            function stopRestoreFollow() {
+                ++restoreGeneration;
+                window.clearTimeout( pollTimer );
+                restorePollInFlight = false;
+                restorePolling = false;
+            }
+
             function startJobFollow( jobId ) {
+                stopRestoreFollow();
+                var record = siteRecord( currentSite );
+                record.jobId = jobId;
+                record.active = true;
+                restoreFollowSite = currentSite;
+                restorePolling = true;
+                $( '#mainwp-restore-start-btn' ).prop( 'disabled', false );
                 setSnapshotDeleteBusy( true );
                 currentJob = jobId;
                 restorePollRetries = 0;
@@ -1643,6 +1876,29 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-maintenance-note' ).hide();
                 $( '#mainwp-restore-visit-site-wrap' ).hide();
                 poll();
+            }
+
+            function adoptRestoreJob( siteId, jobId ) {
+                var record = siteRecord( siteId );
+                record.attempt = null;
+                record.jobId = jobId;
+                record.active = true;
+                if ( restoreDialogShows( siteId ) ) {
+                    startJobFollow( jobId );
+                }
+            }
+
+            function showRestoreChecking() {
+                currentJob = 0;
+                setPane( false );
+                var attempt = siteRecord( currentSite ).attempt;
+                var rollback = attempt && 'rollback' === attempt.kind;
+                $( '#mainwp-restore-start-btn' ).prop( 'disabled', true ).addClass( 'disabled' );
+                $( '#mainwp-restore-status-text' ).text( rollback ? '<?php echo esc_js( __( 'Checking whether the rollback started', 'mainwp' ) ); ?>' : '<?php echo esc_js( __( 'Checking whether the restore started', 'mainwp' ) ); ?>' );
+                $( '#mainwp-restore-spinner' ).show();
+                [ '#mainwp-restore-completed-steps', '#mainwp-restore-cancel-btn', '#mainwp-restore-rollback-btn', '#mainwp-restore-result-message', '#mainwp-restore-outcome-note', '#mainwp-restore-safety-note', '#mainwp-restore-cancel-warning', '#mainwp-restore-preserve-note', '#mainwp-restore-reconcile-note', '#mainwp-restore-cache-note', '#mainwp-restore-maintenance-note', '#mainwp-restore-visit-site-wrap' ].forEach( function ( selector ) {
+                    $( selector ).hide();
+                } );
             }
 
             // Fomantic returns the wrapper div for a select it has already
@@ -1661,11 +1917,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         // the old click's state. loadSnapshots resumes the
                         // new site's own run if one is in flight.
                         stopBackupTimers();
+                        stopRestoreFollow();
                         setBackupInProgress( false );
                         backupSinceTs = 0;
                         backupProgressCache = null;
                         $( '#mainwp-native-backup-progress-modal' ).modal( 'hide' );
-                        $( '#mainwp-backup-phase-steps' ).empty().removeData( 'backup-phase' );
+                        $( '#mainwp-backup-phase-steps' ).empty().removeData( 'backup-phase backup-steps' );
                         backupStartTime = null;
                         setBackupStatus( '', false );
                         showCancelBackup( false );
@@ -1754,6 +2011,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( backupInProgress || $( this ).hasClass( 'disabled' ) ) {
                     return;
                 }
+                stopRestoreFollow();
+                currentJob = 0;
+                var record = siteRecord( currentSite );
                 var warningText = restoreWarnings[ snapType ] || restoreWarnings['default'];
                 if ( siteIsMultisite ) {
                     warningText += ' ' + networkWarning;
@@ -1766,7 +2026,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // restore must not promise it only covers files.
                 $( 'label[for="mainwp-restore-presnapshot"]' ).text( 'db' === snapType ? safetyBackupLabels.db : safetyBackupLabels['default'] );
                 $( '#mainwp-restore-consent' ).prop( 'checked', false );
-                $( '#mainwp-restore-start-btn' ).addClass( 'disabled' );
+                $( '#mainwp-restore-start-btn' ).prop( 'disabled', !! record.attempt ).addClass( 'disabled' );
                 // The keep-orders option only applies to a WooCommerce store
                 // restoring a database-bearing snapshot. The child enforces the
                 // supported configuration; this just offers the opt-in.
@@ -1775,107 +2035,300 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( ! showPreserve ) {
                     $( '#mainwp-restore-preserve-orders' ).prop( 'checked', false );
                 }
+                $( '#mainwp-restore-confirm-error' ).hide();
                 setPane( true );
-                if ( ! $( '#mainwp-restore-modal' ).modal( 'is active' ) ) {
-                    $( '#mainwp-restore-modal' ).modal( 'show' );
+                if ( record.attempt ) {
+                    showRestoreChecking();
+                    if ( ! record.attempt.inflight ) {
+                        reconcileRestoreAttempt( record.attempt );
+                    }
+                } else if ( record.jobId && record.active ) {
+                    startJobFollow( record.jobId );
                 }
+                showRestoreModal();
             } );
 
             $( '#mainwp-restore-consent' ).on( 'change', function () {
-                $( '#mainwp-restore-start-btn' ).toggleClass( 'disabled', backupInProgress || ! this.checked );
+                $( '#mainwp-restore-start-btn' ).toggleClass( 'disabled', !! siteRecord( currentSite ).attempt || backupInProgress || ! this.checked );
             } );
 
-            $( '#mainwp-restore-start-btn' ).on( 'click', function () {
-                if ( backupInProgress || $( this ).hasClass( 'disabled' ) ) {
+            function showRestoreInitiateError( message, retryable, statusKnown ) {
+                setPane( true );
+                $( '#mainwp-restore-confirm-error' ).text( message ).show();
+                $( '#mainwp-restore-start-btn' ).prop( 'disabled', statusKnown === false );
+                $( '#mainwp-restore-start-btn' ).toggleClass( 'disabled', ! retryable || backupInProgress || ! $( '#mainwp-restore-consent' ).is( ':checked' ) );
+            }
+
+            function newAdmissionToken() {
+                var bytes = window.crypto.getRandomValues( new Uint8Array( 16 ) );
+                return Array.from( bytes, function ( byte ) { return byte.toString( 16 ).padStart( 2, '0' ); } ).join( '' );
+            }
+
+            function unresolvedAdmission( response ) {
+                return ! response || ( ! response.error && ! response.job_id && ! response.needs_confirmation ) ||
+                    [ 'mainwp_backup_unclassified_error', 'mainwp_restore_admission_busy', 'mainwp_restore_admission_used' ].indexOf( response.error_code ) !== -1 ||
+                    ( 'mainwp_backup_already_running' === response.error_code && ! response.test_restore_running );
+            }
+
+            function reconcileRestoreAttempt( attempt, message ) {
+                if ( siteRecord( attempt.siteId ).attempt !== attempt ) {
                     return;
                 }
-                $( this ).addClass( 'disabled' ); // Block a second submit while this request is in flight.
-                $.post( ajaxurl, {
-                    action: 'mainwp_restore_initiate',
-                    security: nonces.initiate,
-                    site_id: currentSite,
-                    snapshot_id: currentSnapshot,
-                    pre_snapshot: $( '#mainwp-restore-presnapshot' ).is( ':checked' ) ? 1 : 0,
-                    confirm_destructive: $( '#mainwp-restore-consent' ).is( ':checked' ) ? 1 : 0,
-                    preserve_orders: $( '#mainwp-restore-preserve-orders' ).is( ':checked' ) ? 1 : 0
-                }, function ( response ) {
-                    if ( response.needs_confirmation ) {
-                        setPane( true );
-                        $( '#mainwp-restore-consent' ).prop( 'checked', false );
-                        $( '#mainwp-restore-start-btn' ).addClass( 'disabled' );
-                        $( '#mainwp-restore-result-message' ).addClass( 'red' ).text( '<?php echo esc_js( esc_html__( 'This restore needs confirmation. Review the warning and check the box to continue.', 'mainwp' ) ); ?>' ).show();
+                window.clearTimeout( attempt.timer );
+                if ( Date.now() - attempt.startedAt >= 600000 ) {
+                    restoreAttemptUnknown( attempt );
+                    return;
+                }
+                attempt.inflight = true;
+                if ( message ) {
+                    attempt.message = message;
+                }
+                if ( restoreDialogShows( attempt.siteId ) ) {
+                    showRestoreChecking();
+                }
+                $.ajax( { url: ajaxurl, method: 'POST', dataType: 'json', timeout: 30000,
+                    data: { action: 'mainwp_restore_admission_status', security: nonces.admissionStatus, site_id: attempt.siteId, admission_token: attempt.token }
+                } ).done( function ( response ) {
+                    var record = siteRecord( attempt.siteId );
+                    if ( record.attempt !== attempt ) {
                         return;
                     }
-                    if ( response.error ) {
+                    attempt.inflight = false;
+                    if ( response && 'admitted' === response.state && response.job_id ) {
+                        adoptRestoreJob( attempt.siteId, response.job_id );
+                    } else if ( response && 'pending' === response.state ) {
+                        attempt.failures = 0;
+                        scheduleAdmissionRecheck( attempt, 3000 );
+                    } else if ( response && 'not_admitted' === response.state ) {
+                        if ( 'rollback' === attempt.kind ) {
+                            attempt.onRefused( attempt.message || '<?php echo esc_js( __( 'The rollback did not start. Try again.', 'mainwp' ) ); ?>', true );
+                            return;
+                        }
+                        record.attempt = null;
+                        if ( restoreDialogShows( attempt.siteId ) ) {
+                            $( '#mainwp-restore-consent' ).prop( 'checked', false );
+                            showRestoreInitiateError( attempt.message || '<?php echo esc_js( __( 'The restore did not start. Try again.', 'mainwp' ) ); ?>', true, true );
+                        }
+                        if ( attempt.siteId === currentSite ) {
+                            pollSnapshots( currentSite, snapshotListRequest, true );
+                        }
+                    } else {
+                        admissionStatusFailed( attempt );
+                    }
+                } ).fail( function () {
+                    if ( siteRecord( attempt.siteId ).attempt === attempt ) {
+                        admissionStatusFailed( attempt );
+                    }
+                } );
+            }
+
+            function scheduleAdmissionRecheck( attempt, delay ) {
+                window.clearTimeout( attempt.timer );
+                if ( Date.now() - attempt.startedAt >= 600000 ) {
+                    restoreAttemptUnknown( attempt );
+                    return;
+                }
+                attempt.timer = window.setTimeout( function () {
+                    reconcileRestoreAttempt( attempt );
+                }, Math.min( delay, 600000 - ( Date.now() - attempt.startedAt ) ) );
+            }
+
+            function admissionStatusFailed( attempt ) {
+                attempt.inflight = false;
+                attempt.failures++;
+                if ( attempt.failures >= 8 ) {
+                    restoreAttemptUnknown( attempt );
+                    return;
+                }
+                scheduleAdmissionRecheck( attempt, Math.min( 60000, 3000 * Math.pow( 2, attempt.failures ) ) );
+            }
+
+            // An unanswered request can still admit, so a fresh Start stays unavailable.
+            function restoreAttemptUnknown( attempt ) {
+                window.clearTimeout( attempt.timer );
+                attempt.inflight = false;
+                if ( restoreDialogShows( attempt.siteId ) ) {
+                    $( '#mainwp-restore-consent' ).prop( 'checked', false );
+                    if ( 'rollback' === attempt.kind ) {
                         setPane( false );
                         $( '#mainwp-restore-spinner' ).hide();
                         $( '#mainwp-restore-status-text' ).text( '' );
-                        $( '#mainwp-restore-result-message' ).addClass( 'red' ).text( response.error ).show();
+                        $( '#mainwp-restore-rollback-btn' ).hide();
+                        $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( '<?php echo esc_js( __( 'Reload the page to see whether the rollback started.', 'mainwp' ) ); ?>' ).show();
                         return;
                     }
-                    $( '#mainwp-restore-status-text' ).text( statusLabels.pending );
-                    $( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels.cancel ).toggle( canRestore );
-                    startJobFollow( response.job_id );
-                }, 'json' );
+                    showRestoreInitiateError( '<?php echo esc_js( __( 'Reload the page to see whether the restore started.', 'mainwp' ) ); ?>', false, false );
+                }
+            }
+
+            $( '#mainwp-restore-start-btn' ).on( 'click', function () {
+                if ( backupInProgress || $( this ).prop( 'disabled' ) || $( this ).hasClass( 'disabled' ) ) {
+                    return;
+                }
+                var siteId = currentSite;
+                var record = siteRecord( siteId );
+                if ( record.attempt || record.active ) {
+                    return;
+                }
+                stopRestoreFollow();
+                var attempt = {
+                    siteId: siteId,
+                    snapshotId: currentSnapshot,
+                    kind: 'restore',
+                    token: newAdmissionToken(),
+                    startedAt: Date.now(),
+                    failures: 0,
+                    inflight: true,
+                    message: ''
+                };
+                record.attempt = attempt;
+                $( this ).prop( 'disabled', true ).addClass( 'disabled' );
+                $( '#mainwp-restore-confirm-error' ).hide();
+                showRestoreChecking();
+                $.ajax( { url: ajaxurl, method: 'POST', dataType: 'json', timeout: 90000, data: {
+                    action: 'mainwp_restore_initiate',
+                    security: nonces.initiate,
+                    site_id: siteId,
+                    snapshot_id: attempt.snapshotId,
+                    admission_token: attempt.token,
+                    pre_snapshot: $( '#mainwp-restore-presnapshot' ).is( ':checked' ) ? 1 : 0,
+                    confirm_destructive: $( '#mainwp-restore-consent' ).is( ':checked' ) ? 1 : 0,
+                    preserve_orders: $( '#mainwp-restore-preserve-orders' ).is( ':checked' ) ? 1 : 0
+                } } ).done( function ( response ) {
+                    if ( record.attempt !== attempt ) {
+                        return;
+                    }
+                    var shown = restoreDialogShows( siteId );
+                    if ( response && response.needs_confirmation ) {
+                        record.attempt = null;
+                        if ( shown ) {
+                            $( '#mainwp-restore-consent' ).prop( 'checked', false );
+                            showRestoreInitiateError( '<?php echo esc_js( esc_html__( 'This restore needs confirmation. Review the warning and check the box to continue.', 'mainwp' ) ); ?>', false );
+                        }
+                        return;
+                    }
+                    if ( unresolvedAdmission( response ) ) {
+                        reconcileRestoreAttempt( attempt, response && response.error );
+                        return;
+                    }
+                    if ( response && response.error ) {
+                        record.attempt = null;
+                        if ( shown ) {
+                            showRestoreInitiateError( response.error, response.retryable || 'mainwp_backup_already_running' === response.error_code );
+                        }
+                        if ( siteId === currentSite ) {
+                            pollSnapshots( currentSite, snapshotListRequest, true );
+                        }
+                        return;
+                    }
+                    if ( shown ) {
+                        $( '#mainwp-restore-status-text' ).text( statusLabels.pending );
+                        $( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels.cancel ).toggle( canRestore );
+                    }
+                    adoptRestoreJob( siteId, response.job_id );
+                } ).fail( function () {
+                    reconcileRestoreAttempt( attempt );
+                } );
             } );
 
+            function restoreCancelLost( jobId ) {
+                if ( currentJob !== jobId ) {
+                    return;
+                }
+                setPane( false );
+                $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( '<?php echo esc_js( __( 'The cancel request did not get a response. Checking the restore status. You can try Cancel again.', 'mainwp' ) ); ?>' ).show();
+                window.clearTimeout( pollTimer );
+                if ( ! restorePollInFlight ) {
+                    pollTimer = window.setTimeout( poll, 1000 );
+                }
+            }
+
             $( '#mainwp-restore-cancel-btn' ).on( 'click', function () {
-                $.post( ajaxurl, { action: 'mainwp_restore_cancel', security: nonces.cancel, job_id: currentJob }, function ( response ) {
-                    if ( response.error ) {
+                var jobId = currentJob;
+                $.ajax( { url: ajaxurl, method: 'POST', dataType: 'json', timeout: 30000,
+                    data: { action: 'mainwp_restore_cancel', security: nonces.cancel, job_id: jobId }
+                } ).done( function ( response ) {
+                    if ( currentJob !== jobId ) {
+                        return;
+                    }
+                    if ( ! response || ( ! response.error && ! response.result ) ) {
+                        restoreCancelLost( jobId );
+                    } else if ( response.error ) {
                         $( '#mainwp-restore-result-message' ).addClass( 'red' ).text( 'mainwp_restore_checking_changed' === response.error_code ? restoreCancelLabels.checking : response.error ).show();
                     } else if ( 'stopped' === response.result ) {
                         window.clearTimeout( pollTimer );
                         poll();
                     }
-                }, 'json' );
+                } ).fail( function () {
+                    restoreCancelLost( jobId );
+                } );
             } );
 
             function startRollback( jobId ) {
-                if ( rollbackRequestPending ) {
+                if ( siteRecord( currentSite ).attempt ) {
                     return;
                 }
                 var visitSiteWasVisible = $( '#mainwp-restore-visit-site-wrap' ).is( ':visible' );
-                rollbackRequestPending = true;
-                currentJob = jobId;
-                setPane( false );
+                // The answer belongs to the site the rollback was sent for, and
+                // until it lands a reopened dialog must not offer a restore.
+                var siteId = currentSite;
+                var record = siteRecord( siteId );
+                var attempt = { kind: 'rollback', siteId: siteId, jobId: jobId, token: newAdmissionToken(), startedAt: Date.now(), failures: 0, inflight: true, message: '' };
+                record.attempt = attempt;
+                stopRestoreFollow();
+                showRestoreChecking();
                 $( '#mainwp-restore-rollback-btn' ).prop( 'disabled', true ).hide();
                 $( '.mainwp-restore-failed-job' ).prop( 'disabled', true );
                 $( '#mainwp-restore-result-message' ).hide();
                 $( '#mainwp-restore-visit-site-wrap' ).hide();
-                function rollbackRefused( message, retryable, unanswered ) {
-                    $( '#mainwp-restore-spinner' ).hide();
-                    $( '#mainwp-restore-status-text' ).text( '' );
-                    $( '#mainwp-restore-rollback-btn' ).toggle( retryable === true );
-                    $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( message ).show();
-                    // A definite refusal leaves the completed restore in place.
-                    // An unanswered request may have opened a rollback instead.
-                    if ( ! unanswered ) {
+                function rollbackRefused( message, retryable ) {
+                    if ( record.attempt !== attempt ) {
+                        return;
+                    }
+                    record.attempt = null;
+                    if ( restoreDialogShows( siteId ) ) {
+                        setPane( false );
+                        $( '#mainwp-restore-spinner' ).hide();
+                        $( '#mainwp-restore-status-text' ).text( '' );
+                        $( '#mainwp-restore-rollback-btn' ).prop( 'disabled', false ).toggle( retryable === true );
+                        $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( message ).show();
                         $( '#mainwp-restore-visit-site-wrap' ).toggle( visitSiteWasVisible );
+                        // A reopened dialog cleared currentJob; Retry needs the job back.
+                        currentJob = retryable === true ? jobId : 0;
                     }
-                    if ( retryable !== true ) {
-                        currentJob = 0;
+                    if ( siteId === currentSite ) {
+                        loadSnapshots( currentSite );
                     }
-                    loadSnapshots( currentSite );
                 }
-                function rollbackResponseLost() {
-                    rollbackRefused( '<?php echo esc_js( __( 'The rollback request got no answer. Reloading the list to show where it stands.', 'mainwp' ) ); ?>', false, true );
-                }
-                $.post( ajaxurl, { action: 'mainwp_restore_rollback', security: nonces.rollback, job_id: jobId }, function ( response ) {
+                attempt.onRefused = rollbackRefused;
+                $.ajax( { url: ajaxurl, method: 'POST', dataType: 'json', timeout: 90000,
+                    data: { action: 'mainwp_restore_rollback', security: nonces.rollback, job_id: jobId, admission_token: attempt.token }
+                } ).done( function ( response ) {
+                    if ( unresolvedAdmission( response ) ) {
+                        reconcileRestoreAttempt( attempt, response && response.error );
+                        return;
+                    }
                     if ( response && response.error ) {
                         rollbackRefused( response.error, response.retryable );
                         return;
                     }
-                    if ( ! response || ! response.job_id ) {
-                        rollbackResponseLost();
+                    if ( record.attempt !== attempt ) {
                         return;
                     }
-                    $( '#mainwp-restore-status-text' ).text( statusLabels.pending );
-                    $( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels.cancelRollback ).toggle( canRestore );
-                    startJobFollow( response.job_id );
-                    loadSnapshots( currentSite );
-                }, 'json' ).fail( rollbackResponseLost ).always( function () {
-                    rollbackRequestPending = false;
-                    $( '#mainwp-restore-rollback-btn' ).prop( 'disabled', false );
+                    if ( restoreDialogShows( siteId ) ) {
+                        $( '#mainwp-restore-status-text' ).text( statusLabels.pending );
+                        $( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels.cancelRollback ).toggle( canRestore );
+                    }
+                    adoptRestoreJob( siteId, response.job_id );
+                    if ( siteId === currentSite ) {
+                        loadSnapshots( currentSite );
+                    }
+                } ).fail( function () {
+                    reconcileRestoreAttempt( attempt );
+                } ).always( function () {
+                    if ( siteId === currentSite ) {
+                        $( '#mainwp-restore-rollback-btn' ).prop( 'disabled', false );
+                    }
                 } );
             }
 
@@ -1885,9 +2338,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             $( '#mainwp-restore-failed-jobs' ).on( 'click', '.mainwp-restore-failed-job', function () {
                 var jobId = parseInt( $( this ).attr( 'data-job-id' ), 10 );
-                if ( ! $( '#mainwp-restore-modal' ).modal( 'is active' ) ) {
-                    $( '#mainwp-restore-modal' ).modal( 'show' );
-                }
+                showRestoreModal();
                 startRollback( jobId );
             } );
 
@@ -1899,7 +2350,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             } );
 
             $( '#mainwp-restore-close-btn' ).on( 'click', function () {
-                window.clearTimeout( pollTimer );
+                restoreDialogOpen = false;
+                stopRestoreFollow();
             } );
 
             // On-demand "Back Up Now": kick the native backup, then poll the
@@ -2046,7 +2498,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // kickoff keeps its since; other resumed views use the current run.
             function resumeBackupFollow( sinceTs ) {
                 $( '#mainwp-native-backup-progress-modal' ).modal( 'show' );
-                $( '#mainwp-backup-phase-steps' ).empty().removeData( 'backup-phase' );
+                $( '#mainwp-backup-phase-steps' ).empty().removeData( 'backup-phase backup-steps' );
                 $( '#mainwp-backup-phase-progress' ).removeClass( 'success error' ).progress( { percent: 0, autoSuccess: false } );
                 setBackupFollowControls();
                 stopBackupTimers();
@@ -2190,7 +2642,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // never redirect this run's follow-up at another site.
                 var siteId = currentSite;
                 $( '#mainwp-native-backup-progress-modal' ).modal( 'show' );
-                $( '#mainwp-backup-phase-steps' ).empty().removeData( 'backup-phase' );
+                $( '#mainwp-backup-phase-steps' ).empty().removeData( 'backup-phase backup-steps' );
                 $( '#mainwp-backup-phase-progress' ).removeClass( 'success error' ).progress( { percent: 0, autoSuccess: false } );
                 // An older cancel cannot end this click, so it no longer
                 // holds the Cancel button for the new follow.

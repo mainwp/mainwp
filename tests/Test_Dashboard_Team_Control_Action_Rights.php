@@ -282,6 +282,78 @@ class Test_Dashboard_Team_Control_Action_Rights extends \WP_UnitTestCase {
         $this->assertSame( ! $staff, false !== strpos( $html, 'name="editkey_id"' ) );
     }
 
+    /** @return array Legacy writer actors and effective scopes. */
+    public static function legacy_key_actors(): array {
+        $actors = array(
+            'staff' => array( 'staff', 'all', 'all', false ),
+            'level ten nonadministrator' => array( 'level10', 'all', 'all', false ),
+            'site restricted administrator' => array( 'admin', array( 1 ), 'all', false ),
+            'tag restricted administrator' => array( 'admin', 'all', array( 1 ), false ),
+            'invalid site scope' => array( 'admin', null, 'all', false ),
+            'unrestricted administrator' => array( 'admin', 'all', 'all', true ),
+        );
+        $cases = array();
+        foreach ( array( 'migration', 'create', 'edit' ) as $writer ) {
+            foreach ( $actors as $label => $values ) {
+                $cases[ $writer . ' ' . $label ] = array_merge( $values, array( $writer ) );
+            }
+        }
+        $cases['userless migration'] = array( 'userless', 'all', 'all', false, 'migration' );
+        return $cases;
+    }
+
+    /**
+     * Exercise migration, creation and edits with valid nonces and granted rights.
+     *
+     * @dataProvider legacy_key_actors
+     */
+    public function test_sec31_legacy_writers( $actor, $sites, $groups, $allowed, $writer ): void {
+        $this->actor( 'level10' === $actor ? 'default' : $actor, 'unused' );
+        if ( 'level10' === $actor ) {
+            wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+            wp_get_current_user()->add_cap( 'level_10' );
+        }
+        if ( 'userless' === $actor ) {
+            wp_set_current_user( 0 );
+        }
+        $this->filter( 'mainwp_currentuserallowedaccesssites', static function () use ( $sites ) { return $sites; } );
+        $this->filter( 'mainwp_currentuserallowedaccessgroups', static function () use ( $groups ) { return $groups; } );
+        $this->assertTrue( Rights_REST_API_Page::can_create_rest_api_keys() );
+        $this->assertTrue( Rights_REST_API_Page::can_edit_rest_api_keys() );
+        $legacy = array( 'existing' => array( 'cs' => 'fixture-hash', 'desc' => 'Keep', 'enabled' => 0, 'perms' => 'r' ) );
+        update_option( 'mainwp_rest_api_keys', $legacy );
+        if ( 'migration' === $writer ) {
+            update_option( 'mainwp_rest_api_consumer_key', 'migration-fixture' );
+            update_option( 'mainwp_rest_api_consumer_secret', 'fixture-secret' );
+            Rights_REST_API_Page::check_rest_api_updates();
+            $this->assertSame( $allowed, isset( get_option( 'mainwp_rest_api_keys' )['migration-fixture'] ), 'Unauthorized legacy migration.' );
+            $this->assertSame( $allowed ? false : 'migration-fixture', get_option( 'mainwp_rest_api_consumer_key' ), 'Denied migration must preserve the old credential.' );
+            return;
+        }
+        delete_option( 'mainwp_rest_api_consumer_key' );
+        delete_option( 'mainwp_rest_api_consumer_secret' );
+        $_GET = array( 'page' => 'AddApiKeys' );
+        $_POST = array( 'submit' => '1', 'wp_nonce' => wp_create_nonce( 'RESTAPI' ), 'mainwp_consumer_key' => 'sec31-new', 'mainwp_consumer_secret' => 'fixture-secret', 'mainwp_rest_api_keys_compatible_v1' => '1' );
+        $page = new Rights_REST_API_Page();
+        if ( 'create' === $writer ) {
+            $this->capture( array( $page, 'handle_rest_api_add_new' ) );
+            $this->assertSame( $allowed, isset( get_option( 'mainwp_rest_api_keys' )['sec31-new'] ), 'Unauthorized legacy creation.' );
+            return;
+        }
+        $_POST = array( 'submit' => '1', 'editkey_id' => 'existing', 'edit_key_nonce' => wp_create_nonce( 'edit-key-nonce-existing' ), 'mainwp_enable_rest_api' => '1', 'mainwp_rest_api_key_desc' => 'Changed' );
+        $this->capture( array( $page, 'handle_rest_api_edit' ) );
+        $this->assertSame( $allowed ? 'Changed' : 'Keep', get_option( 'mainwp_rest_api_keys' )['existing']['desc'], 'Unauthorized legacy edit.' );
+    }
+
+    /** Staff page access must not initialize the ownerless key store. */
+    public function test_sec31_staff_cannot_initialize_legacy_keys(): void {
+        $this->actor( 'staff', 'unused' );
+        delete_option( 'mainwp_rest_api_keys' );
+        delete_option( 'mainwp_rest_api_consumer_key' );
+        $this->assertFalse( Rights_REST_API_Page::check_rest_api_updates() );
+        $this->assertFalse( get_option( 'mainwp_rest_api_keys' ) );
+    }
+
     /**
      * The widget uses the existing activate_themes right in both directions.
      *

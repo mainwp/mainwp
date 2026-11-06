@@ -263,75 +263,83 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
     padding-top: 0;
 }
 
-#mainwp-top-header .mainwp-theme-toggle {
+.mainwp-ui .mainwp-theme-picker {
     --mainwp-toggle-track: #e9ecef;
     --mainwp-toggle-thumb: #ffffff;
-    --mainwp-toggle-icon: #737b83;
+    --mainwp-toggle-icon: #555d65;
     --mainwp-toggle-selected: #805700;
-    position: relative;
     display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    direction: ltr;
     box-sizing: border-box;
     vertical-align: middle;
-    width: 64px;
-    height: 32px;
+    gap: 2px;
     padding: 3px;
-    margin: 0 2px 0 10px;
     border: 1px solid var(--mainwp-border, #cbd0d5);
     border-radius: 999px;
     background: var(--mainwp-toggle-track);
     color: var(--mainwp-toggle-icon);
-    cursor: pointer;
-    appearance: none;
 }
 
-#mainwp-top-header .mainwp-theme-toggle[aria-checked="true"] {
+.mainwp-ui.mainwp-default-dark-theme .mainwp-theme-picker {
     --mainwp-toggle-track: #121313;
     --mainwp-toggle-thumb: #dcdee0;
     --mainwp-toggle-icon: #9a9b9d;
     --mainwp-toggle-selected: #1c1d1b;
 }
 
-#mainwp-top-header .mainwp-theme-toggle > .mainwp-theme-toggle-thumb {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--mainwp-toggle-thumb);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+#mainwp-top-header .mainwp-theme-picker {
+    margin: 0 2px 0 10px;
 }
 
-#mainwp-top-header .mainwp-theme-toggle[aria-checked="true"] > .mainwp-theme-toggle-thumb {
-    transform: translateX(32px);
+.mainwp-ui .mainwp-theme-picker > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 28px;
+    min-height: 24px;
+    padding: 0 6px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
 }
 
-#mainwp-top-header .mainwp-theme-toggle > svg {
-    position: relative;
-    z-index: 1;
-    box-sizing: border-box;
+.mainwp-ui .mainwp-theme-picker > button > svg {
     flex-shrink: 0;
-    width: 24px;
-    height: 24px;
-    padding: 4px;
-    pointer-events: none;
 }
 
-#mainwp-top-header .mainwp-theme-toggle[aria-checked="false"] .mainwp-theme-toggle-sun,
-#mainwp-top-header .mainwp-theme-toggle[aria-checked="true"] .mainwp-theme-toggle-moon {
+.mainwp-ui .mainwp-theme-picker > button:hover,
+.mainwp-ui .mainwp-theme-picker > button[aria-pressed="true"] {
+    background: var(--mainwp-toggle-thumb);
     color: var(--mainwp-toggle-selected);
 }
 
-#mainwp-top-header .mainwp-theme-toggle:hover {
-    border-color: var(--mainwp-green, #6c9800);
+.mainwp-ui .mainwp-theme-picker > button[aria-pressed="true"] {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 }
 
-#mainwp-top-header .mainwp-theme-toggle:focus-visible {
+.mainwp-ui .mainwp-theme-picker > button:focus-visible {
     outline: 2px solid var(--mainwp-green, #6c9800);
-    outline-offset: 3px;
+    outline-offset: 1px;
+}
+
+.mainwp-ui .mainwp-theme-picker-labeled {
+    margin-bottom: 0.75rem;
+}
+
+.mainwp-ui .mainwp-theme-picker-labeled > button {
+    min-height: 36px;
+    padding: 0 8px;
+}
+
+@media (pointer: coarse) {
+    .mainwp-ui .mainwp-theme-picker > button {
+        min-width: 44px;
+        min-height: 44px;
+    }
 }
 
 .mainwp-sync-button-icon {
@@ -672,6 +680,7 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
     margin: 0 !important;
 }
 
+#mainwp-collapse-second-level-navigation.collapsed,
 #mainwp-divider-handle:hover #mainwp-collapse-second-level-navigation {
   opacity: 1 !important;
 }
@@ -1980,6 +1989,10 @@ div.http-response-ok span.http-notok-status {
 
 .mainwp-modal-progress {
     margin-top: 0 !important;
+}
+
+#mainwp-install-extensions-promo-modal ul.ui.list li::before {
+    color: inherit;
 }
 
 /* Backup errors are inserted as text and can carry long unbroken paths and paragraph breaks. */

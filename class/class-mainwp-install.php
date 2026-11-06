@@ -207,6 +207,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         if ( empty( $currentVersion ) ) {
             update_option( 'mainwp_run_quick_setup', 'yes' );
             add_option( 'mainwp_onboarding_fresh_install', time() );
+            add_option( 'mainwp_selected_theme', 'system' );
             // Route the default-off write through the settings helper so it also
             // mirrors mainwp_enableLegacyBackupFeature=0. A bare native write
             // would leave the legacy flag absent, and a rollback to a pre-rename
@@ -225,7 +226,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             MainWP_Utility::update_option( 'mainwp_native_backups_defaulted_off_on_upgrade', 1 );
         }
 
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.8', '<' ) ) {
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '8.8', '<' ) ) {
             MainWP_Utility::update_option( 'mainwp_selected_theme', 'default' );
         }
 
@@ -234,6 +235,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $rslt = static::instance()->query( "SHOW TABLES LIKE '{$wp_table}'" );
         if ( empty( static::num_rows( $rslt ) ) ) {
             $currentVersion = false;
+        }
+
+        if ( ! empty( $currentVersion ) ) {
+            $this->maybe_clean_sync_error_excerpts();
         }
 
         if ( $currentVersion === $this->mainwp_db_version ) {
@@ -823,6 +828,42 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      */
     public function get_db_version() {
         return get_site_option( $this->option_db_key );
+    }
+
+    /**
+     * Clean historical response dumps once; failed reads or writes retry next load.
+     *
+     * @return void
+     */
+    private function maybe_clean_sync_error_excerpts() {
+        if ( get_site_option( 'mainwp_sync_error_excerpts_cleaned' ) ) {
+            return;
+        }
+        $last_id = 0;
+        do {
+            $rows = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT wpid, sync_errors FROM %i WHERE wpid > %d ORDER BY wpid LIMIT 200', $this->table_name( 'wp_sync' ), $last_id ) );
+            if ( ! is_array( $rows ) || $this->wpdb->last_error ) {
+                return;
+            }
+            foreach ( $rows as $row ) {
+                $clean = MainWP_Connect_Failure_Ux::sanitize_sync_error( $row->sync_errors );
+                if ( $clean !== $row->sync_errors && false === $this->wpdb->update(
+                    $this->table_name( 'wp_sync' ),
+                    array( 'sync_errors' => $clean ),
+                    array(
+                        'wpid'        => $row->wpid,
+                        'sync_errors' => $row->sync_errors,
+                    ),
+                    array( '%s' ),
+                    array( '%d', '%s' )
+                ) ) {
+                    return;
+                }
+                $last_id = (int) $row->wpid;
+            }
+            $row_count = count( $rows );
+        } while ( 200 === $row_count );
+        update_site_option( 'mainwp_sync_error_excerpts_cleaned', 1 );
     }
 
     /**

@@ -270,6 +270,11 @@ class Log_Author {
             $agent = 'wp_cron';
         } elseif ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) {
             $agent = 'wp_rest_api';
+        } elseif ( defined( 'REST_REQUEST' ) && REST_REQUEST && function_exists( 'rest_get_authenticated_app_password' ) && rest_get_authenticated_app_password() ) {
+            $route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
+            if ( is_string( $route ) && preg_match( '#^/wp-abilities/v1/abilities/mainwp/[^/]+/run/?$#', $route ) ) {
+                $agent = 'mainwp_mcp';
+            }
         }
 
         /**
@@ -296,6 +301,8 @@ class Log_Author {
             $label = esc_html__( 'during WP Cron', 'mainwp' );
         } elseif ( 'wp_rest_api' === $agent ) {
             $label = esc_html__( 'during WP REST API', 'mainwp' );
+        } elseif ( 'mainwp_mcp' === $agent ) {
+            $label = esc_html__( 'via MainWP MCP', 'mainwp' );
         } else {
             $label = '';
         }

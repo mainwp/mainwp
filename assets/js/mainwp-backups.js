@@ -17,19 +17,29 @@ globalThis.mainwpBackupProgressSteps = function (list, phase, percent, status, b
     const knownIndex = phases.findIndex(step => step[0] === phase);
     if (knownIndex >= 0) list.data('backup-phase', phase);
     const index = knownIndex >= 0 ? knownIndex : phases.findIndex(step => step[0] === list.data('backup-phase'));
-    list.empty();
+    let rows = list.data('backup-steps');
+    if (!rows || list.data('backup-type') !== backupType) {
+        list.empty();
+        rows = [];
+        list.data('backup-steps', rows).data('backup-type', backupType);
+    }
     phases.forEach(function (step, position) {
         const done = completed || (index >= 0 && position < index);
         const current = !completed && position === index;
-        const row = jQuery('<div class="item"></div>');
-        const icon = done ? 'green check' : current ? (failed ? 'red times' : cancelled ? 'yellow stop' : 'green circle notched loading') : 'grey clock outline';
-        jQuery('<div class="right floated content"></div>').append(jQuery('<i></i>').attr('class', icon + ' icon')).appendTo(row);
-        jQuery('<div class="content"></div>').text(done ? step[3] : current ? step[2] : step[1]).appendTo(row);
-        list.append(row);
+        if (!rows[position]) {
+            const row = jQuery('<div class="item"></div>').appendTo(list);
+            const icon = jQuery('<i></i>').appendTo(jQuery('<div class="right floated content"></div>').appendTo(row));
+            const label = jQuery('<div class="content"></div>').appendTo(row);
+            rows[position] = {icon, label};
+        }
+        const icon = (done ? 'green check' : current ? (failed ? 'red times' : cancelled ? 'yellow stop' : 'green circle notched loading') : 'grey clock outline') + ' icon';
+        if (rows[position].icon.attr('class') !== icon) rows[position].icon.attr('class', icon);
+        rows[position].label.text(done ? step[3] : current ? step[2] : step[1]);
     });
 };
 
-let mainwpBackupTaskMonitor = {taskId: null, active: false, result: false};
+let mainwpBackupTaskMonitor = null;
+const mainwpBackupTaskMonitors = new Map();
 
 /**
  * Backup
@@ -439,6 +449,9 @@ jQuery(function () {
     });
     jQuery(document).on('click', '#managebackups-task-status-close', function () {
         backupDownloadRunning = false;
+        if (mainwpBackupTaskMonitor) {
+            mainwpBackupTaskMonitor.close();
+        }
         jQuery('#managebackups-task-status-box').modal('hide');
     });
     managebackups_init();
@@ -451,9 +464,6 @@ managebackups_exclude_folder = function (pElement) {
 
     jQuery('#excluded_folders_list').val(jQuery('#excluded_folders_list').val() + folder);
 };
-
-let manageBackupsPollTimer = null;
-let manageBackupsPollGeneration = 0;
 
 // Render the recorded phase and percent in the site's existing progress bar.
 let managebackups_render_task_phase = function (siteId, progress) {
@@ -469,37 +479,56 @@ let managebackups_render_task_phase = function (siteId, progress) {
     }
 };
 managebackups_run_now = function (el) {
-    if (mainwpBackupTaskMonitor.active || (mainwpBackupTaskMonitor.result && mainwpBackupTaskMonitor.taskId === jQuery(el).attr('task_id'))) {
-        jQuery('#managebackups-task-status-box').modal('show');
+    const clickedTask = jQuery(el).attr('task_id');
+    const previous = mainwpBackupTaskMonitor;
+    const existing = mainwpBackupTaskMonitors.get(clickedTask);
+    if (previous && previous !== existing) {
+        previous.pause();
+    }
+    if (existing && (existing.active || existing.result)) {
+        mainwpBackupTaskMonitor = existing;
+        existing.resume();
         return;
     }
-    const generation = ++manageBackupsPollGeneration;
+    let manageBackupsPollTimer = null;
+    let manageBackupsPollGeneration = 1;
+    let generation = manageBackupsPollGeneration;
+    // Whole megabytes would show a small database-only upload as 0 MB.
+    const uploadBytes = bytes => {
+        const value = Math.max(0, Number(bytes) || 0);
+        return value < 1048576 ? Math.round(value / 1024) + ' KB' : Math.round(value / 1048576) + ' MB';
+    };
     const POLL_INTERVAL_MS = 3000;
     const QUEUED_NOTICE_MS = 2 * 60 * 1000;
     const QUEUED_LIMIT_MS = 15 * 60 * 1000;
-    const UPLOAD_LIMIT_MS = 10 * 60 * 1000;
+    const UPLOAD_LIMIT_MS = 60 * 60 * 1000;
     el = jQuery(el);
-    clearTimeout(manageBackupsPollTimer);
-    mainwpBackupTaskMonitor = {taskId: el.attr('task_id'), active: true, result: false};
+    const originalText = el.text();
+    const monitor = {taskId: el.attr('task_id'), active: true, result: false, paused: false};
+    mainwpBackupTaskMonitor = monitor;
+    mainwpBackupTaskMonitors.set(clickedTask, monitor);
     el.text(MainWP.I18n.t('View Progress'));
     const modal = jQuery('#managebackups-task-status-box');
-    const content = modal.find('.mainwp-modal-content').empty();
+    const content = jQuery('<div></div>').appendTo(modal.find('.mainwp-modal-content').empty());
     const overall = jQuery('#mainwp-task-backup-progress').removeClass('success error').progress({percent: 0, autoSuccess: false});
     jQuery('#mainwp-task-backup-progress-label').text(MainWP.I18n.t('Starting the backup task...'));
-    modal.modal({closable: false, onHidden: function () { if (!mainwpBackupTaskMonitor.active) location.reload(); }}).modal('show');
+    modal.modal({closable: false}).modal('show');
     let taskId = el.attr('task_id');
-    jQuery('#mainwp-task-backup-cancel').off('click').on('click', function () {
+    const cancelRun = function () {
         const button = jQuery(this);
         mainwp_confirm(MainWP.I18n.t('Cancel this backup run? Finished sites keep their backups and the schedule does not change.'), function () {
+            if (mainwpBackupTaskMonitor !== monitor || monitor.paused) return;
             button.prop('disabled', true);
             jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_native_backup_task_cancel_run', task_id: taskId, run: started}), function (response) {
                 const result = managebackups_cancel_run_message(response);
-                waiting.show().removeClass('green yellow red').addClass(result.color).text(result.text);
+                if (mainwpBackupTaskMonitor === monitor && !monitor.paused) waiting.show().removeClass('green yellow red').addClass(result.color).text(result.text);
             }, 'json').fail(function () {
-                waiting.show().addClass('red').text(MainWP.I18n.t('Could not cancel the backup. Try again.'));
-            }).always(function () { button.prop('disabled', false); });
+                if (mainwpBackupTaskMonitor === monitor && !monitor.paused) waiting.show().addClass('red').text(MainWP.I18n.t('Could not cancel the backup. Try again.'));
+            }).always(function () { if (mainwpBackupTaskMonitor === monitor && !monitor.paused) button.prop('disabled', false); });
         });
-    });
+    };
+    jQuery('#mainwp-task-backup-cancel').off('click').on('click', cancelRun);
+    let admitted = false;
     let started = 0;
     let click = 0;
     let baseline = null;
@@ -508,13 +537,17 @@ managebackups_run_now = function (el) {
     let queuedSince = null;
     let closedSince = null;
     let lastResponse = null;
+    let startError = null;
+    let serverOffset = 0;
+    let display = null;
     let rows = {};
     let waiting = jQuery('<div class="ui message">').text(MainWP.I18n.t('Please wait…')).appendTo(content);
     let siteList = jQuery('<div class="ui middle aligned divided list">').appendTo(content);
     let restoreLink = function () {
         el.removeClass('loading disabled').text(MainWP.I18n.t('View Result'));
-        mainwpBackupTaskMonitor.active = false;
-        mainwpBackupTaskMonitor.result = true;
+        monitor.active = false;
+        monitor.paused = false;
+        monitor.result = true;
         jQuery('#mainwp-task-backup-cancel').hide();
     };
     let startFailed = function (error) {
@@ -530,11 +563,15 @@ managebackups_run_now = function (el) {
         jQuery('#mainwp-task-backup-progress-label').text(MainWP.I18n.t('Backup status unavailable'));
         appendToDiv(content, mainwp_backup_error_html(error || MainWP.I18n.t('The backup status could not be read. The backup may still be running. Reload the page to check its status.')));
     };
-    let schedulePoll = function () {
+    let schedulePoll = function (delay = POLL_INTERVAL_MS) {
         if (generation !== manageBackupsPollGeneration) {
             return;
         }
-        manageBackupsPollTimer = setTimeout(poll, POLL_INTERVAL_MS);
+        const remaining = closedSince === null ? delay : Math.max(0, closedSince + UPLOAD_LIMIT_MS - Date.now());
+        const scheduledGeneration = generation;
+        manageBackupsPollTimer = setTimeout(function () {
+            if (scheduledGeneration === manageBackupsPollGeneration) poll();
+        }, Math.min(delay, remaining));
     };
     let queuedExpired = function () {
         if (queuedSince === null || Date.now() - queuedSince < QUEUED_LIMIT_MS) {
@@ -565,8 +602,18 @@ managebackups_run_now = function (el) {
         let closed = response.status === 'completed' || response.status === 'completed_with_errors';
         const sites = response.sites || [];
         const finished = sites.filter(site => site.status === 'completed' || site.status === 'failed').length;
-        overall.progress({percent: sites.length ? Math.round(finished * 100 / sites.length) : 0, autoSuccess: false});
-        jQuery('#mainwp-task-backup-progress-label').text(closed ? MainWP.I18n.t('Backup task finished; checking storage uploads') : MainWP.I18n.t('%1$d of %2$d sites finished').replace('%1$d', finished).replace('%2$d', sites.length));
+        const uploadProgress = sites.flatMap(site => site.upload_progress || []);
+        const uploadTotal = uploadProgress.reduce((total, job) => total + job.bytes_total, 0);
+        const uploadDone = uploadProgress.reduce((total, job) => total + job.bytes_done, 0);
+        const pendingUploads = uploadProgress.filter(job => !['done', 'failed'].includes(job.state));
+        const serverNow = Date.now() / 1000 + serverOffset;
+        const retryWait = closed && pendingUploads.length > 0 && pendingUploads.every(job => job.state === 'retrying' && job.next_retry_at > 0)
+            ? Math.min(300000, Math.max(POLL_INTERVAL_MS, (Math.min(...pendingUploads.map(job => job.next_retry_at)) - serverNow) * 1000))
+            : POLL_INTERVAL_MS;
+        const uploading = closed && uploadProgress.some(job => !['done', 'failed'].includes(job.state));
+        const percent = uploading ? (uploadTotal ? Math.min(100, Math.floor(uploadDone * 100 / uploadTotal)) : 0) : (sites.length ? Math.round(finished * 100 / sites.length) : 0);
+        overall.progress({percent: percent, autoSuccess: false});
+        jQuery('#mainwp-task-backup-progress-label').text(uploading ? MainWP.I18n.t('Uploading backups to storage: %d%').replace('%d', percent) : closed ? MainWP.I18n.t('Backup task finished; checking storage uploads') : MainWP.I18n.t('%1$d of %2$d sites finished').replace('%1$d', finished).replace('%2$d', sites.length));
         jQuery('#mainwp-task-backup-cancel').toggle(!!response.run_open && Number(started) > 0).attr('task_id', taskId).attr('run', started);
         if (closed && closedSince === null) {
             closedSince = Date.now();
@@ -574,7 +621,6 @@ managebackups_run_now = function (el) {
         let uploadsPending = closed && (response.sites || []).some(function (site) {
             return site.uploads && site.uploads.pending > 0;
         });
-        let uploadsExpired = uploadsPending && Date.now() - closedSince >= UPLOAD_LIMIT_MS;
         (response.sites || []).forEach(function (site) {
             if (!rows[site.id]) {
                 let row = jQuery('<div class="item"></div>').appendTo(siteList);
@@ -603,31 +649,56 @@ managebackups_run_now = function (el) {
             if (site.status === 'completed') {
                 let label = MainWP.I18n.t('Snapshot recorded') + ' (' + (site.snapshot ? site.snapshot.type : el.attr('task_type')) + ')';
                 if (site.uploads && site.uploads.total > 0) {
-                    if (uploadsExpired && site.uploads.pending > 0) {
-                        label += ' — ' + MainWP.I18n.t('Remaining uploads continue in the background. Check the Snapshots page for their state.');
-                    } else {
-                        label += ' — ' + MainWP.I18n.t('%1$d of %2$d uploaded').replace('%1$d', site.uploads.complete).replace('%2$d', site.uploads.total);
-                    }
+                    label += '. ' + MainWP.I18n.t('%1$d of %2$d uploaded').replace('%1$d', site.uploads.complete).replace('%2$d', site.uploads.total);
                     if (site.uploads.failed > 0) {
-                        label += ' — ' + MainWP.I18n.t('%d upload(s) failed.').replace('%d', site.uploads.failed);
+                        label += '. ' + MainWP.I18n.t('%d upload(s) failed.').replace('%d', site.uploads.failed);
                         row.label.addClass('mainwp-red');
                     }
                 }
                 row.label.text(label);
                 row.bar.progress('set percent', 100);
-                if (site.uploads && site.uploads.total > 0) {
-                    const uploadItem = jQuery('<div class="item"></div>');
-                    const uploadIcon = site.uploads.failed > 0 ? 'red times' : site.uploads.pending > 0 ? 'green circle notched loading' : 'green check';
-                    jQuery('<div class="right floated content"></div>').append(jQuery('<i></i>').attr('class', uploadIcon + ' icon')).appendTo(uploadItem);
-                    jQuery('<div class="content"></div>').text(MainWP.I18n.t('Uploading to Storage') + ' — ' + MainWP.I18n.t('%1$d of %2$d uploaded').replace('%1$d', site.uploads.complete).replace('%2$d', site.uploads.total)).appendTo(uploadItem);
-                    row.steps.append(uploadItem);
+                if (site.uploads && site.uploads.pending > 0) {
+                    let pendingLabel = MainWP.I18n.t('Backup done, uploading to storage');
+                    if (site.uploads.failed > 0) {
+                        pendingLabel += '. ' + MainWP.I18n.t('%d upload(s) failed.').replace('%d', site.uploads.failed);
+                    }
+                    row.label.text(pendingLabel);
                 }
+                (site.upload_progress || []).forEach(function (job, index) {
+                    row.uploads = row.uploads || [];
+                    if (!row.uploads[index]) {
+                        const item = jQuery('<div class="item"></div>').appendTo(row.steps);
+                        const icon = jQuery('<i></i>').appendTo(jQuery('<div class="right floated content"></div>').appendTo(item));
+                        const body = jQuery('<div class="content"></div>').appendTo(item);
+                        const label = jQuery('<div></div>').appendTo(body);
+                        const bar = jQuery('<div class="ui small blue progress"><div class="bar"></div></div>').appendTo(body);
+                        const activity = jQuery('<small></small>').appendTo(body);
+                        row.uploads[index] = {icon, label, bar, activity};
+                    }
+                    const upload = row.uploads[index];
+                    const icon = (job.state === 'failed' ? 'red times' : job.state === 'done' ? 'green check' : 'green circle notched loading') + ' icon';
+                    if (upload.icon.attr('class') !== icon) upload.icon.attr('class', icon);
+                    let label = MainWP.I18n.t('Uploading to %1$s: %2$s of %3$s').replace('%1$s', () => job.destination).replace('%2$s', uploadBytes(job.bytes_done)).replace('%3$s', uploadBytes(job.bytes_total));
+                    if (job.state === 'waiting') label = MainWP.I18n.t('Waiting for the upload to start');
+                    if (job.state === 'verifying') label = MainWP.I18n.t('Verifying the upload');
+                    if (job.state === 'retrying') label = MainWP.I18n.t('Upload interrupted, retrying at %s').replace('%s', new Date(job.next_retry_at * 1000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+                    if (job.state === 'failed') label = MainWP.I18n.t('Upload failed');
+                    if (job.state === 'done') label = MainWP.I18n.t('Uploaded to %s').replace('%s', () => job.destination);
+                    upload.label.text(label);
+                    upload.bar.progress({percent: job.bytes_total ? Math.min(100, Math.floor(job.bytes_done * 100 / job.bytes_total)) : 0, autoSuccess: false});
+                    const age = Math.max(0, Math.floor(Date.now() / 1000 + serverOffset) - job.updated);
+                    upload.activity.text(age > 60 && !['done', 'failed'].includes(job.state) ? MainWP.I18n.t('Last activity %d seconds ago').replace('%d', age) : '');
+                });
             } else if (site.status === 'failed') {
                 row.bar.hide();
             }
         });
+        const uploadsExpired = uploadsPending && Date.now() - closedSince >= UPLOAD_LIMIT_MS;
+        if (uploadsExpired) {
+            waiting.show().text(MainWP.I18n.t('Remaining uploads continue in the background. Check the Snapshots page for their state.'));
+        }
         if (response.status === 'running' || response.status === 'queued' || (uploadsPending && !uploadsExpired)) {
-            schedulePoll();
+            schedulePoll(retryWait);
             return;
         }
         restoreLink();
@@ -647,11 +718,12 @@ managebackups_run_now = function (el) {
         if (response.notices) {
             jQuery('<div>').text(response.notices).appendTo(content);
         }
-        // The dialog stays open so the result and upload counts can be read;
-        // closing it reloads the list.
     };
     let poll = function () {
-        if (generation !== manageBackupsPollGeneration) {
+        // Resuming after a close starts a new generation; a reply sent before
+        // the close must not count as the resumed chain's.
+        const pollGeneration = generation;
+        if (pollGeneration !== manageBackupsPollGeneration) {
             return;
         }
         // A status request can claim a slot, so enforce the wait limit before posting.
@@ -663,7 +735,7 @@ managebackups_run_now = function (el) {
             return;
         }
         jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_status', task_id: taskId, started: started, click: click, baseline: baseline, initiation_id: initiationId}), function (response) {
-            if (generation !== manageBackupsPollGeneration) {
+            if (pollGeneration !== manageBackupsPollGeneration) {
                 return;
             }
             failures = 0;
@@ -671,12 +743,13 @@ managebackups_run_now = function (el) {
                 statusFailed(response && response.error);
                 return;
             }
+            if (Number(response.server_time) > 0) serverOffset = Number(response.server_time) - Date.now() / 1000;
             started = response.started;
             click = response.click;
             baseline = response.baseline ?? baseline;
             render(response);
         }, 'json').fail(function () {
-            if (generation !== manageBackupsPollGeneration) {
+            if (pollGeneration !== manageBackupsPollGeneration) {
                 return;
             }
             if (++failures >= 3) {
@@ -686,24 +759,67 @@ managebackups_run_now = function (el) {
             }
         });
     };
+    monitor.pause = function () {
+        if (monitor.paused) return;
+        ++manageBackupsPollGeneration;
+        clearTimeout(manageBackupsPollTimer);
+        manageBackupsPollTimer = null;
+        monitor.paused = true;
+        display = {
+            percent: overall.progress('get percent'),
+            classes: overall.attr('class'),
+            label: jQuery('#mainwp-task-backup-progress-label').text(),
+            cancel: jQuery('#mainwp-task-backup-cancel').is(':visible')
+        };
+        // Detached rows retain their progress widgets when another task owns the modal.
+        content.detach();
+    };
+    monitor.close = function () {
+        monitor.pause();
+        if (monitor.result) {
+            mainwpBackupTaskMonitors.delete(taskId);
+            el.removeClass('loading disabled').text(originalText);
+        }
+        if (mainwpBackupTaskMonitor === monitor) mainwpBackupTaskMonitor = null;
+    };
+    monitor.resume = function () {
+        if (!monitor.paused) {
+            modal.modal('show');
+            return;
+        }
+        monitor.paused = false;
+        generation = ++manageBackupsPollGeneration;
+        modal.find('.mainwp-modal-content').empty().append(content);
+        overall.attr('class', display.classes).progress({percent: display.percent, autoSuccess: false});
+        jQuery('#mainwp-task-backup-progress-label').text(display.label);
+        jQuery('#mainwp-task-backup-cancel').toggle(display.cancel).prop('disabled', false).attr('task_id', taskId).attr('run', started).off('click').on('click', cancelRun);
+        modal.modal('show');
+        if (startError !== null && !monitor.result) {
+            startFailed(startError);
+        } else if (admitted && monitor.active) {
+            poll();
+        }
+    };
+    // A dialog closed before run_now answers still keeps the run's identity,
+    // so View Progress can follow the run this click started.
     jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_now', task_id: taskId}), function (response) {
-        if (generation !== manageBackupsPollGeneration) {
-            return;
-        }
         if (!response || response.error || !response.job_id) {
-            startFailed(response && response.error);
+            startError = response && response.error || MainWP.I18n.t('The backup task could not be started. Reload the page and try again.');
+            if (mainwpBackupTaskMonitor === monitor && !monitor.paused) startFailed(startError);
             return;
         }
+        admitted = true;
         started = response.started;
         click = response.click;
         baseline = response.baseline ?? null;
         initiationId = response.initiation_id ?? '';
-        render(response);
-    }, 'json').fail(function () {
-        if (generation !== manageBackupsPollGeneration) {
-            return;
+        if (Number(response.server_time) > 0) serverOffset = Number(response.server_time) - Date.now() / 1000;
+        if (mainwpBackupTaskMonitor === monitor && !monitor.paused) {
+            render(response);
         }
-        startFailed();
+    }, 'json').fail(function () {
+        startError = MainWP.I18n.t('The backup task could not be started. Reload the page and try again.');
+        if (mainwpBackupTaskMonitor === monitor && !monitor.paused) startFailed(startError);
     });
 };
 

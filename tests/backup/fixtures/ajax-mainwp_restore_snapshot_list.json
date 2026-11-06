@@ -17,12 +17,21 @@
                     "provider": "s3",
                     "status": "failed_permanent",
                     "updated": 1700000000,
+                    "upload_progress": {
+                        "bytes_done": 0,
+                        "bytes_total": 1024,
+                        "state": "failed",
+                        "destination": "Destination #987676 (removed)",
+                        "updated": 1700000000,
+                        "next_retry_at": 0
+                    },
                     "last_error": "[mainwp_backup_s3_failed] Upload & disk error.",
                     "error_code": "mainwp_backup_s3_failed",
                     "error_message": "Could not upload the backup to Amazon S3. Check the S3 credentials, bucket name, and permissions, then try again.",
                     "error_detail": "Upload & disk error."
                 }
             ],
+            "test_restore_running": false,
             "source": "local",
             "restorable": true,
             "damaged": false,
@@ -48,6 +57,7 @@
     "manual_destinations": [],
     "destinations_source": "tasks",
     "active_restore_job_id": 0,
+    "server_time": 0,
     "failed_restore_jobs": [
         {
             "job_id": 987674,

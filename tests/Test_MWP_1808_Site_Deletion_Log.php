@@ -638,19 +638,6 @@ class Test_MWP_1808_Site_Deletion_Log extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'https://alpha.example/', $html );
 	}
 
-	/** Age compaction removes old deletion events while leaving fresh ones alone. */
-	public function test_age_compaction_is_unchanged() {
-		global $wpdb;
-		list( $site, $id ) = $this->deleted();
-		$cutoff            = ( time() - DAY_IN_SECONDS ) * 1000000;
-		$db                = Log_Manager::instance()->db;
-		$db->create_compact_and_erase_records( 0, $cutoff );
-		$this->assertSame( $id, (int) $wpdb->get_var( $wpdb->prepare( 'SELECT log_id FROM %i WHERE log_id = %d', $wpdb->mainwp_tbl_logs, $id ) ) );
-		$wpdb->update( $wpdb->mainwp_tbl_logs, array( 'created' => $cutoff - DAY_IN_SECONDS * 1000000 ), array( 'log_id' => $id ) );
-		$db->create_compact_and_erase_records( 0, $cutoff );
-		$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SELECT log_id FROM %i WHERE log_id = %d', $wpdb->mainwp_tbl_logs, $id ) ) );
-	}
-
 	/** Historical deletion rows remain visible without synthesizing identity. */
 	public function test_legacy_deletion_without_identity() {
 		$id     = $this->event( 987659, 'deleted' );

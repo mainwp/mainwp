@@ -25,37 +25,12 @@ use MainWP\Dashboard\MainWP_Password_Policy_Settings;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Server_Information;
 use MainWP\Dashboard\Module\Log\Log_DB_Archive;
-use MainWP\Dashboard\Module\Log\Log_DB;
 use MainWP\Dashboard\Module\Log\Log_DB_Helper;
 use MainWP\Dashboard\Module\Log\Log_Manager;
-use MainWP\Dashboard\Module\Log\Logs_Data_Log_Admin;
 use MainWP\Dashboard\Module\Log\Logs_Data_Insights_Page;
 
 /** An Error escapes legacy handlers that catch Exception. */
 class Logs_Data_Response_Stop extends \Error {}
-
-/** Record compact dispatch while retaining the production SQL worker. */
-class Logs_Data_Compact_DB extends Log_DB {
-
-    /**
-     * Submitted ranges.
-     *
-     * @var array
-     */
-    public $ranges = array();
-
-    /**
-     * Observe entry without changing dates or database operations.
-     *
-     * @param int $start_time Range start.
-     * @param int $end_time Range end.
-     * @return mixed Worker result.
-     */
-    public function create_compact_and_erase_records( $start_time, $end_time ) {
-        $this->ranges[] = array( $start_time, $end_time );
-        return parent::create_compact_and_erase_records( $start_time, $end_time );
-    }
-}
 
 /** Exercise real writers while preserving unrelated database state. */
 class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
@@ -111,14 +86,12 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
             'MainWP_Post_Base_Handler'        => 'Logs_Data_Base_Handler',
             'MainWP_Post_Handler'             => 'Logs_Data_Post_Handler',
             'MainWP_Demo_Handle'              => 'Logs_Data_Demo_Handle',
-            'Log_Admin'                       => 'Logs_Data_Log_Admin',
             'Log_Manage_Insights_Events_Page' => 'Logs_Data_Insights_Page',
         );
         foreach ( array(
             'class/class-mainwp-post-base-handler.php',
             'class/class-mainwp-post-handler.php',
             'class/class-mainwp-demo-handle.php',
-            'modules/logs/classes/class-log-admin.php',
             'modules/logs/pages/page-log-manage-insights-events-page.php',
         ) as $file ) {
             $code = '';
@@ -209,7 +182,7 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
      */
     public static function ajax_writers(): array {
         $cases = array();
-        foreach ( array( 'delete', 'compact', 'dismiss', 'dismiss_all', 'import_demo', 'delete_demo' ) as $writer ) {
+        foreach ( array( 'dismiss', 'dismiss_all', 'import_demo', 'delete_demo' ) as $writer ) {
             $cases[ $writer . ' allowed' ]   = array( $writer, true, true );
             $cases[ $writer . ' refused' ]   = array( $writer, false, true );
             $cases[ $writer . ' non-admin' ] = array( $writer, true, false );
@@ -256,17 +229,6 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
             $action   = 'dismiss' === $writer ? 'mainwp_insight_events_dismiss_actions' : 'mainwp_insight_events_dismiss_all';
             $callback = array( $page, 'dismiss' === $writer ? 'ajax_sites_changes_dismiss_selected' : 'ajax_sites_changes_dismiss_all' );
             $post     = array( 'log_id' => '901' );
-        } else {
-            $page          = ( new \ReflectionClass( Logs_Data_Log_Admin::class ) )->newInstanceWithoutConstructor();
-            $db            = new Logs_Data_Compact_DB( Log_Manager::instance()->db->driver );
-            $page->manager = (object) array( 'db' => $db );
-            $action        = 'delete' === $writer ? 'mainwp_module_log_delete_records' : 'mainwp_module_log_compact_records';
-            $callback      = array( $page, 'delete' === $writer ? 'ajax_delete_records' : 'ajax_compact_records' );
-            $post          = array(
-                'startdate' => '2026-01-01',
-                'enddate'   => '2026-12-31',
-                'year'      => '2026',
-            );
         }
         if ( ! $admin ) {
             wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
@@ -295,7 +257,7 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
             }
         );
         $response = $this->capture( $callback );
-        $observed = isset( $db ) ? $db->ranges : $queries;
+        $observed = $queries;
         if ( ! $allowed || ! $admin ) {
             $this->assertSame( $before, $this->snapshot(), 'Refusal changed options or rows, including mainwp_ajaxposts.' );
             $this->assertSame( array(), $observed, 'Refusal reached a log read or writer.' );
@@ -317,11 +279,6 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
             } else {
                 $this->assertNull( MainWP_DB::instance()->get_website_by_id( $site ) );
             }
-        } else {
-            // Existing compact SQL compares second ranges with microsecond rows.
-            $this->assertNotEmpty( $observed, 'The permitted request must reach the real log SQL.' );
-            $this->assertSame( $before['logs'], $this->table_snapshot() );
-            $this->assertSame( array( 'result' => 'SUCCESS' ), json_decode( $response, true ) );
         }
     }
 
@@ -553,7 +510,7 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
         }
     }
 
-    /** Isolate archive SQL and the wpdb table aliases used by compact SQL. */
+    /** Isolate archive SQL and log table aliases. */
     private function network_tables(): void {
         global $wpdb;
         $prefix = $wpdb->prefix . 'logs_data_rights_';

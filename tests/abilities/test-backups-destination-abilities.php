@@ -398,7 +398,7 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 				'name'     => 'Out-of-scope destination task',
 				'type'     => 'full',
 				'schedule' => 'daily',
-				'site_ids' => array( $this->create_test_site() ),
+				'site_ids' => array( $this->create_test_site( array( 'version' => '6.4' ) ) ),
 			),
 			'ability'
 		);
@@ -927,7 +927,7 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 				'name'     => 'Destination task',
 				'type'     => 'full',
 				'schedule' => 'daily',
-				'site_ids' => array( $this->create_test_site() ),
+				'site_ids' => array( $this->create_test_site( array( 'version' => '6.4' ) ) ),
 			),
 			'ability'
 		);

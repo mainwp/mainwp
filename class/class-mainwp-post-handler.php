@@ -165,7 +165,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         // Page:: mainwp-setup.
         $this->add_action( 'mainwp_clients_add_multi_client', array( &$this, 'ajax_clients_add_multi_client' ) );
         $this->add_action( 'mainwp_increase_connection_security', array( &$this, 'ajax_increase_connection_security' ) );
-        $this->add_action( 'mainwp_qsw_ui_mode_detected', array( &$this, 'ajax_ui_mode_detected' ) );
 
         $this->add_action( 'mainwp_changes_logs_get_item_changes', array( &$this, 'ajax_get_item_changes_logs' ) );
     }
@@ -804,6 +803,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             MainWP_Client::exit_json( $ret );
         }
         if ( MainWP_System_Utility::is_team_control_staff() && MainWP_Backup_Settings::is_backup_option( 'mainwp_' . $name ) ) {
+            $ret           = array( 'success' => false );
+            $ret['result'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+            $ret['error']  = $ret['result'];
+            MainWP_Client::exit_json( $ret );
+        }
+        if ( in_array( strtolower( $name ), array( 'rest_api_keys', 'rest_api_consumer_key', 'rest_api_consumer_secret' ), true ) && ! MainWP_Rest_Api_Page::can_manage_legacy_api_keys() ) {
             $ret           = array( 'success' => false );
             $ret['result'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
             $ret['error']  = $ret['result'];
@@ -2177,27 +2182,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         delete_option( 'mainwp_not_start_encrypt_keys' );
         wp_die( wp_json_encode( array( 'success' => 1 ) ) );
     }
-
-    /**
-     * Method ajax_ui_mode_detected
-     */
-    public function ajax_ui_mode_detected() {
-        $this->check_security( 'mainwp_qsw_ui_mode_detected' );
-
-        $detected_ui = isset( $_POST['ui_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['ui_mode'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-        $current_user_theme = get_user_option( 'mainwp_selected_theme' );
-        if ( empty( $current_user_theme ) ) {
-            if ( 'dark' === $detected_ui ) {
-                MainWP_Utility::update_user_option( 'mainwp_selected_theme', 'default-dark' );
-            } else {
-                MainWP_Utility::update_user_option( 'mainwp_selected_theme', 'default' );
-            }
-        }
-
-        wp_die( wp_json_encode( array( 'success' => 1 ) ) );
-    }
-
 
 
     /**

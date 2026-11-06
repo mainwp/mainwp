@@ -695,6 +695,20 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $scope ) ) {
             return $scope;
         }
+        $saved_sites = $task ? array_map( 'intval', explode( ',', (string) $task->sites ) ) : array();
+        foreach ( array_diff( $values['site_ids'], $saved_sites ) as $site_id ) {
+            $site = MainWP_DB::instance()->get_website_by_id( $site_id );
+            if ( $site && MainWP_Backup_Monitor::child_version_requires_task_spine_update( $site ) ) {
+                return new \WP_Error(
+                    MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED,
+                    MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ),
+                    array(
+                        'status'  => 409,
+                        'site_id' => (int) $site_id,
+                    )
+                );
+            }
+        }
         // Both current scopes must be reachable before saving a partial edit.
         $scope_error = $task ? MainWP_Manage_Backups_Handler::authorize_task_update_scope( implode( ',', MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) ), '', implode( ',', $values['site_ids'] ), implode( ',', $values['group_ids'] ) ) : '';
         if ( '' !== $scope_error ) {

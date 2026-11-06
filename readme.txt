@@ -156,6 +156,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 = 6.4.2-rc.2 - 11-5-2026 =
 
+* Added: Reconnect all accessible disconnected sites from the Connection Status widget, with per-site results.
 * Added: Optional delays to spread scheduled Built-In Backups task starts over a configurable time window.
 * Added: Optional Manage Sites column showing abandoned plugin and theme counts.
 * Added: Support for disabling site screenshot previews across the Dashboard.
@@ -651,7 +652,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Fixed: Prevented dismissed site changes from reappearing in the "Sites Changes" table after updating to version 5.5.
 * Fixed: An issue with the accordion element icon not rotating when the element is expanded or collapsed.
 * Fixed: In multiple places there was "Are you sure." so it was fixed to "Are you sure?" in confirmation popups.
-* Added: Password policy management to set and enforce password expiration rules. [(Request by Julia)](https://voice.mainwp.com/p/force-enforce-report-2fa)
+* Added: Password policy management to set password-change reminders for users on child sites. [(Request by Julia)](https://voice.mainwp.com/p/force-enforce-report-2fa)
 * Added: Cost import functionality for easier cost entry management.
 * Added: "Jump to WP Admin" quick link in site dropdown menu.
 * Added: Monitoring data retention settings with configurable duration options (30, 90, 180, 365 days, or keep forever).

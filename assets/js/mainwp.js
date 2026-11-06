@@ -4677,9 +4677,6 @@ let mainwp_sites_changes_actions_bulk_action = function (act) {
         let selector = '#mainwp-module-log-records-body-table tr';
         mainwpVars.bulkInstallTotal = jQuery(selector).find('input[type="checkbox"]:checked').length;
         jQuery(selector).addClass('queue');
-        if (jQuery(selector).length) {
-            jQuery('#mainwp_sites_changes_bulk_dismiss_selected_btn').addClass('disabled');
-        }
         mainwp_sites_changes_actions_dismiss_start_next(selector);
     } else if (act === 'dismiss-all') {
         jQuery('#mainwp_sites_changes_bulk_dismiss_all_btn').addClass('disabled');

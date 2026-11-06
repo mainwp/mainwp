@@ -784,8 +784,20 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @return string
      */
     public function get_context_title( $title, $context, $connector ) {
-        if ( in_array( $connector, array( 'posts', 'users' ), true ) ) {
-            return $title;
+        $formats = array();
+        if ( 'posts' === $connector ) {
+            $formats = array(
+                esc_html_x( 'Post: %1$s', '1: Post title', 'mainwp' ),
+                esc_html_x( 'Post: %1$s (%2$s)', '1: Post title 2: singular name', 'mainwp' ),
+            );
+        } elseif ( 'users' === $connector ) {
+            $formats = array( esc_html_x( 'User: %1$s', '1: User display name', 'mainwp' ) );
+        }
+        foreach ( $formats as $format ) {
+            $prefix = explode( '%1$s', $format )[0];
+            if ( '' !== $prefix && str_starts_with( $title, $prefix ) ) {
+                return $title;
+            }
         }
 
         $context_title = '';

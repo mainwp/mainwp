@@ -640,7 +640,14 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $args['where'] = 'wp.userid = ' . get_current_user_id();
         }
         $args = apply_filters( 'mainwp_connection_status_widget_get_sites_query_params', $args );
-        unset( $args['offset'], $args['rowcount'] );
+        unset(
+            $args['offset'],
+            $args['rowcount'],
+            $args['limit'],
+            $args['page'],
+            $args['per_page'],
+            $args['limit_sites']
+        );
         $results = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $args ) );
         $sites   = array();
         while ( $results && $site = MainWP_DB::fetch_object( $results ) ) {

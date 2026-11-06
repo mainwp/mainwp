@@ -63,15 +63,18 @@ class Test_Connection_Status_Reconnect_All extends WP_Ajax_UnitTestCase {
 		parent::tear_down();
 	}
 
-	/** Pagination must not truncate the reconnect queue. */
-	public function test_complete_queue_and_widget_render() {
+	/**
+	 * Pagination must not truncate the reconnect queue.
+	 *
+	 * @dataProvider reconnect_pagination_forms
+	 * @param array $pagination_args Filter-supplied pagination arguments.
+	 */
+	public function test_complete_queue_and_widget_render( array $pagination_args ) {
 		$widget             = \MainWP\Dashboard\MainWP_Connection_Status::instance();
 		$_REQUEST['start']  = 25;
 		$_REQUEST['length'] = 25;
-		$pagination         = static function ( $args ) {
-			$args['offset']   = 25;
-			$args['rowcount'] = 25;
-			return $args;
+		$pagination         = static function ( $args ) use ( $pagination_args ) {
+			return array_merge( $args, $pagination_args );
 		};
 		add_filter( 'mainwp_connection_status_widget_get_sites_query_params', $pagination );
 		try {
@@ -89,6 +92,30 @@ class Test_Connection_Status_Reconnect_All extends WP_Ajax_UnitTestCase {
 		$html = ob_get_clean();
 		$this->assertStringContainsString( 'id="mainwp-connection-status-reconnect-all"', $html );
 		$this->assertStringContainsString( 'role="status" aria-live="polite"', $html );
+	}
+
+	/**
+	 * Pagination forms supported by the shared site query builder.
+	 *
+	 * @return array Named query parameter sets.
+	 */
+	public static function reconnect_pagination_forms() {
+		return array(
+			'offset and rowcount' => array(
+				array(
+					'offset'   => 25,
+					'rowcount' => 25,
+				),
+			),
+			'limit'               => array( array( 'limit' => 25 ) ),
+			'page and per_page'   => array(
+				array(
+					'page'     => 1,
+					'per_page' => 25,
+				),
+			),
+			'limit_sites'         => array( array( 'limit_sites' => 25 ) ),
+		);
 	}
 
 	/** The Team Control site-access filter constrains every queued ID. */

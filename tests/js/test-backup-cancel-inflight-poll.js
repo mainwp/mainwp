@@ -22,7 +22,7 @@ function harness() {
     let nextTimer = 0;
     const context = {
         currentSite: 7, ajaxurl: '/ajax', nonces: {}, siteDisconnected: false,
-        currentJob: 0, rollbackRequestPending: false, canRestore: true,
+        currentJob: 0, restoreGeneration: 0, restorePollInFlight: false, restorePolling: false, pollTimer: 0, canRestore: true, restoreSites: {}, restoreDialogOpen: true,
         backupMonitorResult: null, backupMonitorDismissed: false, updateBackupMonitor() {}, backupFailureSummaries: {},
         mainwp_confirm( message, callback ) { callback(); },
         statusLabels: { pending: 'Queued' }, restoreCancelLabels: { cancelRollback: 'Cancel Rollback' },
@@ -33,6 +33,7 @@ function harness() {
         snapshotsPlaceholders: {}, setSnapshotsPlaceholder() {}, escAttr: String,
         snapshotsTable: { clear() { return this; }, draw() { return this; }, rows: { add() {} } },
         window: {
+            crypto: require( 'node:crypto' ).webcrypto,
             mainwpBackupProgressSteps() {},
             clearTimeout: id => timers.delete( id ), clearInterval() {}, setInterval: () => 99,
             setTimeout: fn => { timers.set( ++nextTimer, fn ); return nextTimer; },
@@ -48,7 +49,7 @@ function harness() {
             toggleClass( key, value ) { if ( selector.includes(', ') ) selector.split(', ').forEach( part => context.$( part ).toggleClass( key, value ) ); if ( value ) this.classes.add( key ); else this.classes.delete( key ); return this; },
             attr() { return this; }, html() { return this; }, empty() { return this; },
             find( name ) { return context.$( selector + ' ' + name ); }, modal() { return this; },
-            text() { return this; }, progress() { return this; }, removeData() { return this; },
+            data() { return this; }, text() { return this; }, progress() { return this; }, removeData() { return this; },
             trigger( event, args = [] ) { handlers.get( selector )?.call( this, {}, ...args ); return this; },
             prop( key, value ) { if ( value === undefined ) return this.disabled; if ( selector.includes(', ') ) selector.split(', ').forEach( part => context.$( part ).prop( key, value ) ); this.disabled = value; return this; },
             hasClass( key ) { return this.classes.has( key ); },
@@ -63,13 +64,19 @@ function harness() {
         requests.push( request );
         return { fail( fn ) { request.fail = fn; return this; }, always( fn ) { request.always = fn; return this; } };
     };
+    context.$.ajax = options => {
+        const request = {data: options.data, options}; requests.push(request);
+        return {done(fn) { request.success = fn; return this; }, fail(fn) { request.fail = fn; return this; }, always(fn) { request.always = fn; return this; }};
+    };
+    Object.assign(context, {snapshotPollTimer: 0, snapshotPollFailures: 0, scheduleSnapshotPoll() {}});
+    context.window = context.window || {clearTimeout() {}};
     vm.createContext( context );
     context.mainwpBackupCancelMessages = Object.fromEntries( [ ...source.slice( source.indexOf( "'mainwpBackupCancelMessages'" ), source.indexOf( '$native_enabled' ) ).matchAll( /'([a-z_]+)'\s*=> __\( '([^']*)'/g ) ].map( match => [ match[1], match[2] ] ) );
     vm.runInContext( fs.readFileSync( require.resolve( '../../assets/js/mainwp-backup-cancel-result.js' ), 'utf8' ), context );
     context.window.MainWPBackupCancelResult = context.MainWPBackupCancelResult;
     const vars = source.indexOf( 'var backupPollTimer = ' );
     vm.runInContext( source.slice( vars, source.indexOf( 'var currentSiteUrl', vars ) ), context );
-    for ( const name of [ 'stopBackupTimers', 'scheduleBackupPoll', 'showCancelBackup', 'enableSnapshotControls', 'showDisconnected', 'reenableBackupBtn', 'setBackupInProgress', 'setBackupFollowControls', 'resumeBackupFollow', 'pollBackup', 'backupFailureSummary', 'cancelApplies', 'startRollback', 'loadSnapshots' ] ) {
+    for ( const name of [ 'stopBackupTimers', 'scheduleBackupPoll', 'showCancelBackup', 'enableSnapshotControls', 'showDisconnected', 'reenableBackupBtn', 'setBackupInProgress', 'setBackupFollowControls', 'resumeBackupFollow', 'pollBackup', 'backupFailureSummary', 'cancelApplies', 'siteRecord', 'restoreDialogShows', 'adoptRestoreJob', 'stopRestoreFollow', 'showRestoreChecking', 'newAdmissionToken', 'unresolvedAdmission', 'reconcileRestoreAttempt', 'scheduleAdmissionRecheck', 'admissionStatusFailed', 'restoreAttemptUnknown', 'showRestoreInitiateError', 'startRollback', 'loadSnapshots' ] ) {
         const start = source.indexOf( 'function ' + name + '(' );
         if ( start < 0 && name === 'scheduleBackupPoll' ) continue; // Baseline has no scheduling helper.
         vm.runInContext( phpToJs( source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length ) ), context );
@@ -365,10 +372,8 @@ for ( const kind of [ 'refused', 'accepted', 'unanswered', 'transport', 'refused
         else request.success( kind === 'accepted' ? { job_id: 456 } : {} );
         assert.equal( h.context.$( VISIT ).visible, kind === 'refused', 'Only a definite refusal restores prior visibility.' );
         if ( [ 'unanswered', 'transport' ].includes( kind ) ) {
-            h.context.response = { active_restore_job_id: 456 };
-            h.context.$( '#mainwp-restore-modal' ).modal = () => true;
-            const start = source.indexOf( 'if ( response.active_restore_job_id && ! currentJob )' );
-            vm.runInContext( source.slice( start, source.indexOf( 'if ( response.manual_backup_running', start ) ), h.context );
+            assert.equal(h.requests.at(-1).data.action, 'mainwp_restore_admission_status');
+            h.requests.at(-1).success({state: 'admitted', job_id: 456});
             assert.equal( h.context.currentJob, 456 ); assert.equal( h.context.$( VISIT ).visible, false );
         }
         assert.equal( h.timers.size, 0 );

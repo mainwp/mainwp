@@ -340,21 +340,22 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     /**
      * Method render_select_sites()
      *
-     * @param object $websites Object containing child sites info.
-     * @param string $type Selector type.
-     * @param mixed  $selected_websites Selected Child Sites.
-     * @param bool   $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
-     * @param mixed  $edit_site_id Child Site ID to edit.
-     * @param bool   $show_select_all    Whether or not to show select all, Default: true.
-     * @param mixed  $add_edit_client_id Show enable sites for client. Default: false, 0: add new client, 0 <: edit client.
-     * @param bool   $show_select_all_disc    Whether or not to show select all disconnect sites, Default: false.
+     * @param object     $websites Object containing child sites info.
+     * @param string     $type Selector type.
+     * @param mixed      $selected_websites Selected Child Sites.
+     * @param bool       $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
+     * @param mixed      $edit_site_id Child Site ID to edit.
+     * @param bool       $show_select_all    Whether or not to show select all, Default: true.
+     * @param mixed      $add_edit_client_id Show enable sites for client. Default: false, 0: add new client, 0 <: edit client.
+     * @param bool       $show_select_all_disc    Whether or not to show select all disconnect sites, Default: false.
+     * @param array|null $backup_task_saved_sites Saved explicit sites when rendering a backup task.
      *
      * @return void Render Select Sites html.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false, $show_select_all_disc = false ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false, $show_select_all_disc = false, $backup_task_saved_sites = null ) { // phpcs:ignore -- NOSONAR - complex.
         /**
          * Action: mainwp_before_select_sites_list
          *
@@ -422,12 +423,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                         $disconnected = true;
                                         ++$count_disc;
                                     }
+                                    $needs_child_update = null !== $backup_task_saved_sites && MainWP_Backup_Monitor::child_version_requires_task_spine_update( $website );
+                                    if ( $needs_child_update && ! in_array( (int) $website->id, $backup_task_saved_sites, true ) ) {
+                                        $selected = false;
+                                        $disabled = 'disabled="disabled"';
+                                    }
                                     $sel_id_prefix = MainWP_Utility::gen_rand_id( $website->id, true );
                                     ?>
                                     <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo $selected ? 'selected_sites_item_checked' : ''; ?> <?php echo esc_html( $disconnected ? 'warning' : '' ); ?>">
                                     <input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo 'radio' === $type ? 'selected_sites' : 'selected_sites[]'; ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo esc_attr( $sel_id_prefix ); ?>" <?php echo $selected ? 'checked="true"' : ''; ?> />
                                         <label for="selected_sites_<?php echo esc_attr( $sel_id_prefix ); ?>">
                                             <?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
+                                            <?php if ( $needs_child_update ) : ?>
+                                                <span class="ui small basic yellow label"><?php esc_html_e( 'Needs MainWP Child 6.4', 'mainwp' ); ?></span>
+                                            <?php endif; ?>
                                         </label>
                                     </div>
                                     <?php
@@ -468,9 +477,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * Render selected staging sites.
      *
-     * @param mixed  $selected_websites Selected Child Sites.
-     * @param mixed  $edit_site_id Child Site ID to edit.
-     * @param string $type Selector type.
+     * @param mixed      $selected_websites Selected Child Sites.
+     * @param mixed      $edit_site_id Child Site ID to edit.
+     * @param string     $type Selector type.
+     * @param array|null $backup_task_saved_sites Saved explicit sites when rendering a backup task.
      *
      * @return void Render selected staging sites html.
      *
@@ -479,7 +489,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_select_sites_staging( $selected_websites, $edit_site_id, $type = 'checkbox' ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function render_select_sites_staging( $selected_websites, $edit_site_id, $type = 'checkbox', $backup_task_saved_sites = null ) { //phpcs:ignore -- NOSONAR - complex.
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'yes' ) );
 
         static $rendered_count = 0;
@@ -509,12 +519,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 if ( $edit_site_id && $website->id !== $edit_site_id ) {
                                     $disabled = 'disabled="disabled"';
                                 }
+                                $needs_child_update = null !== $backup_task_saved_sites && MainWP_Backup_Monitor::child_version_requires_task_spine_update( $website );
+                                if ( $needs_child_update && ! in_array( (int) $website->id, $backup_task_saved_sites, true ) ) {
+                                    $selected = false;
+                                    $disabled = 'disabled="disabled"';
+                                }
                                 $sel_id_prefix3 = MainWP_Utility::gen_rand_id( $website->id, true );
                                 ?>
                                 <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo $selected ? 'selected_sites_item_checked' : ''; ?>">
                                     <input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo 'radio' === $type ? 'selected_sites' : 'selected_sites[]'; ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo esc_attr( $sel_id_prefix3 ); ?>" <?php echo $selected ? 'checked="true"' : ''; ?> />
                                     <label for="selected_sites_<?php echo esc_attr( $sel_id_prefix3 ); ?>">
                                         <?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
+                                        <?php if ( $needs_child_update ) : ?>
+                                            <span class="ui small basic yellow label"><?php esc_html_e( 'Needs MainWP Child 6.4', 'mainwp' ); ?></span>
+                                        <?php endif; ?>
                                     </label>
                                 </div>
                                 <?php

@@ -416,6 +416,7 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ), 'The scratch database must be dropped.' );
 		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'], 'The sandbox temp dir must be removed.' );
+		$this->assertNull( \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance()->get_live_test_restore_for_site( $this->site_id ) );
 	}
 
 	/** The shared staging driver must mark damage before a sandbox imports bytes. */
@@ -809,7 +810,28 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$driver         = new Testable_TestRestore_Driver();
-		$driver->driver = new TestRestore_Incomplete_Staging_Driver();
+		$driver->driver = new class() extends TestRestore_Incomplete_Staging_Driver {
+			/**
+			 * Observe ownership before the early return.
+			 *
+			 * @var object|null
+			 */
+			public $reservation;
+
+			/**
+			 * Capture the live reader while staging holds it.
+			 *
+			 * @param int   $job_id Staging id.
+			 * @param array $plan Plan.
+			 * @param float $deadline Deadline.
+			 * @return array Staging outcome.
+			 */
+			public function stage_artifacts( int $job_id, array &$plan, float $deadline ): array {
+				$snapshot          = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $plan[0]['snapshot_id'] );
+				$this->reservation = \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance()->get_live_test_restore_for_site( (int) $snapshot->site_id );
+				return parent::stage_artifacts( $job_id, $plan, $deadline );
+			}
+		};
 
 		$result = $driver->verify_snapshot( $snapshot_id );
 
@@ -822,6 +844,9 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 		$this->assertSame( '', (string) $snapshot->test_restore_state, 'A staging budget miss must not record a terminal state on a healthy snapshot.' );
+		$this->assertNotNull( $driver->driver->reservation );
+		$this->assertSame( $snapshot_id, (int) $driver->driver->reservation->snapshot_id );
+		$this->assertNull( \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance()->get_live_test_restore_for_site( $this->site_id ), 'An early return without a result releases the running badge.' );
 	}
 
 	/**

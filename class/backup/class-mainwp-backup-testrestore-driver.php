@@ -136,7 +136,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
         $snapshots       = MainWP_Backup_Snapshots::instance();
         $snapshot        = $snapshots->get_snapshot_by_id( $snapshot_id );
         $restores        = MainWP_Backup_Restore_Job_Store::instance();
-        $reservation     = null !== $snapshot ? $restores->reserve_site( (int) $snapshot->site_id ) : 0;
+        $reservation     = null !== $snapshot ? $restores->reserve_site( (int) $snapshot->site_id, 'test_restore', $snapshot_id ) : 0;
         $staging_id      = self::STAGING_NAMESPACE + $snapshot_id;
         $transfer        = $this->transfer_driver();
         $staging_started = false;

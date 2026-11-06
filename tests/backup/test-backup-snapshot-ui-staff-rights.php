@@ -151,6 +151,8 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 	private static function paths(): array {
 		return array(
 			'mainwp_restore_snapshot_list'          => 'execute_backups',
+			'mainwp_restore_snapshot_activity'      => 'execute_backups',
+			'mainwp_restore_admission_status'       => 'restore_backups',
 			'mainwp_backup_snapshot_delete_preview' => 'delete_backups',
 			'mainwp_backup_snapshot_delete'         => 'delete_backups',
 			'mainwp_backup_snapshot_download_url'   => 'download_backups',
@@ -332,6 +334,8 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 		$this->authenticate( $state );
 		$_POST = array_merge(
 			array(
+				'admission_token'       => bin2hex( random_bytes( 16 ) ),
+				'snapshot_ids'          => array( '987673' ),
 				'site_id'               => (string) $this->site_id,
 				'snapshot_id'           => '987673',
 				'job_id'                => '987674',
@@ -358,6 +362,12 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 	 */
 	private function assert_admitted( string $action, $result ): void {
 		switch ( $action ) {
+			case 'mainwp_restore_admission_status':
+				$this->assertSame( 'not_admitted', $result['state'] );
+				break;
+			case 'mainwp_restore_snapshot_activity':
+				$this->assertSame( array(), $result['missing'] );
+				// Fall through.
 			case 'mainwp_restore_snapshot_list':
 				$this->assertSame( array( 987673 ), array_column( $result['snapshots'], 'id' ) );
 				break;
@@ -699,8 +709,8 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'site_id' => $other ), array( 'id' => 987673 ) );
 		$this->actor();
 		foreach ( array( 'mainwp_backup_snapshot_delete_preview', 'mainwp_backup_snapshot_delete', 'mainwp_restore_initiate', 'mainwp_backup_snapshot_download_url' ) as $action ) {
-			$a = $this->observe( fn() => $this->request( $action ) );
-			$b = $this->observe( fn() => $this->request( $action, 'cookie-nonce', array( 'snapshot_id' => '999999999' ) ) );
+			$a = $this->observe( fn() => $this->request( $action ), 'mainwp_restore_initiate' !== $action );
+			$b = $this->observe( fn() => $this->request( $action, 'cookie-nonce', array( 'snapshot_id' => '999999999' ) ), 'mainwp_restore_initiate' !== $action );
 			$this->assertSame( $a, $b, $action );
 		}
 		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'site_id' => $this->site_id ), array( 'id' => 987673 ) );

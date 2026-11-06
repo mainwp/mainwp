@@ -154,7 +154,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	 * @param mixed  $value Invalid value.
 	 */
 	public function test_invalid_input_leaves_tasks_unchanged( string $transport, string $field, $value ): void {
-		$site   = $this->create_test_site();
+		$site   = $this->create_test_site( array( 'version' => '6.4' ) );
 		$fields = $this->fields( $site );
 		$db     = MainWP_DB_Backup::instance();
 		$task   = $db->add_backup_task( get_current_user_id(), 'Original', 'daily', 'full', '', (string) $site, '', '', '', 0, 0, 0, 0, 0, 'site', 0, 0, 150, 0 );
@@ -200,7 +200,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	 */
 	public function test_template_task_is_hidden_and_unchanged( string $transport, string $action ): void {
 		$db   = MainWP_DB_Backup::instance();
-		$site = $this->create_test_site();
+		$site = $this->create_test_site( array( 'version' => '6.4' ) );
 		$task = $db->add_backup_task( get_current_user_id(), 'Hidden task', 'daily', 'full', '', (string) $site, '', '', '', 1, 0, 0, 0, 0, 'site', 0, 0, 150, 0 );
 		$this->assertNotFalse( $task );
 		$id   = (int) $task->id;
@@ -252,8 +252,8 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	 * Deduplication cannot change the authorized selection after the scope check.
 	 */
 	public function test_duplicate_ids_authorize_and_store_the_same_selection(): void {
-		$first  = $this->create_test_site();
-		$second = $this->create_test_site();
+		$first  = $this->create_test_site( array( 'version' => '6.4' ) );
+		$second = $this->create_test_site( array( 'version' => '6.4' ) );
 		$seen   = array();
 		$filter = static function ( $allowed, $type, $id ) use ( &$seen ) {
 			if ( 'site' === $type ) {
@@ -278,7 +278,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	 * Partial edits keep omitted values and schedule changes clear inactive columns.
 	 */
 	public function test_partial_updates_and_all_schedule_transitions(): void {
-		$site = $this->create_test_site();
+		$site = $this->create_test_site( array( 'version' => '6.4' ) );
 		foreach ( array( 'daily', 'weekly', 'monthly', 'interval' ) as $from ) {
 			foreach ( array( 'daily', 'weekly', 'monthly', 'interval' ) as $to ) {
 				$fields = array_merge(
@@ -320,7 +320,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	 * Schedule input rules distinguish omitted fields from explicitly inapplicable ones.
 	 */
 	public function test_schedule_fields_and_normalized_output(): void {
-		$site = $this->create_test_site();
+		$site = $this->create_test_site( array( 'version' => '6.4' ) );
 		foreach ( array( 'daily', 'weekly', 'monthly', 'interval' ) as $schedule ) {
 			foreach ( array( false, true ) as $timed ) {
 				if ( 'interval' === $schedule && $timed ) {
@@ -379,7 +379,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	 * The service must classify a disabled engine before invoking the legacy runner.
 	 */
 	public function test_run_task_disabled_error_code(): void {
-		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site() ), 'ability' );
+		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) ), 'ability' );
 		$this->assertIsArray( $created );
 		update_option( 'mainwp_enableNativeBackups', 0 );
 		$error = MainWP_Backup_Operations::run_task( $created['task_id'], 'ability' );
@@ -391,7 +391,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 
 	/** A paused task refusal must not claim that another run is active. */
 	public function test_run_task_paused_refusal_has_stable_code(): void {
-		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site() ), 'ability' );
+		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) ), 'ability' );
 		$this->assertIsArray( $created );
 		MainWP_DB_Backup::instance()->update_backup_task_with_values( $created['task_id'], array( 'paused' => 1 ) );
 		$error = MainWP_Backup_Operations::run_task( $created['task_id'], 'ability' );
@@ -412,7 +412,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 				'settings' => array(),
 			)
 		);
-		$posted                              = $this->posted( $this->fields( $this->create_test_site() ) );
+		$posted                              = $this->posted( $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) ) );
 		$posted['destinations']              = array( (string) $destination );
 		$posted['remove_local_after_upload'] = '1';
 		try {
@@ -439,7 +439,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	public function test_ajax_create_accepts_older_form_limits(): void {
 		$db     = MainWP_DB_Backup::instance();
 		$before = $db->get_backup_tasks();
-		$posted = $this->posted( $this->fields( $this->create_test_site() ) );
+		$posted = $this->posted( $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) ) );
 
 		$posted['retention_count']                = '2000';
 		$posted['maximumFileDescriptors']         = '250000';
@@ -456,7 +456,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 
 	/** Reposting an older task's policy must not prevent a name edit. */
 	public function test_ajax_edit_preserves_older_form_retention(): void {
-		$fields  = $this->fields( $this->create_test_site() );
+		$fields  = $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) );
 		$created = MainWP_Backup_Operations::create_task( $fields, 'ability' );
 		$this->assertIsArray( $created );
 		$id = $created['task_id'];
@@ -474,7 +474,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 
 	/** Form compatibility must not relax machine write ceilings. */
 	public function test_ability_create_refuses_older_form_limits(): void {
-		$fields = $this->fields( $this->create_test_site() );
+		$fields = $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) );
 		$db     = MainWP_DB_Backup::instance();
 		$before = $db->get_backup_tasks();
 		foreach ( array(
@@ -492,7 +492,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	 * Machine task runs cannot create a browser click's baseline transient.
 	 */
 	public function test_ability_run_has_no_ui_click_state(): void {
-		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site() ), 'ability' );
+		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) ), 'ability' );
 		$this->assertIsArray( $created );
 		$clicks  = array();
 		$capture = static function ( $key ) use ( &$clicks ) {
@@ -515,7 +515,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	 * Input ceilings cannot invalidate an omitted value the older form already stored.
 	 */
 	public function test_partial_update_preserves_older_retention_values(): void {
-		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site() ), 'ability' );
+		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) ), 'ability' );
 		$this->assertIsArray( $created );
 		$id = $created['task_id'];
 		MainWP_DB_Backup::instance()->update_backup_task_with_values( $id, array( 'retention_count' => 2000 ) );
@@ -574,7 +574,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	 * @param string|null $refused Expected refused field, or null when accepted.
 	 */
 	public function test_ceiling_matrix( string $context, array $input, array $stored, ?string $refused ): void {
-		$fields = $this->fields( $this->create_test_site() );
+		$fields = $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) );
 		$task   = null;
 		if ( $stored ) {
 			$created = MainWP_Backup_Operations::create_task( $fields, 'ability' );
@@ -596,7 +596,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	/** The form saves a long multibyte name as it always did. */
 	public function test_ajax_create_accepts_multibyte_name(): void {
 		$name     = str_repeat( "\u{5907}", 86 );
-		$posted   = $this->posted( array_merge( $this->fields( $this->create_test_site() ), array( 'name' => $name ) ) );
+		$posted   = $this->posted( array_merge( $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) ), array( 'name' => $name ) ) );
 		$response = $this->ajax( 'mainwp_addbackup', $posted );
 		$this->assertSame( array( 'result' => 'Task created successfully.' ), $response );
 		$tasks = MainWP_DB_Backup::instance()->get_backup_tasks();
@@ -612,7 +612,7 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 				'settings' => array(),
 			)
 		);
-		$fields                    = $this->fields( $this->create_test_site() );
+		$fields                    = $this->fields( $this->create_test_site( array( 'version' => '6.4' ) ) );
 		$fields['destination_ids'] = array( $destination );
 		$fields['retention']       = array( 'remove_local_after_upload' => true );
 		$created                   = MainWP_Backup_Operations::create_task( $fields, 'ability' );

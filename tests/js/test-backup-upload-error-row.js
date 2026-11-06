@@ -29,6 +29,10 @@ function render( uploads ) {
     } );
     vm.createContext( context );
     vm.runInContext( slice( 'function escAttr( text ) {', '\n            }' ), context );
+    for (const name of ['uploadProgressText', 'uploadDetails']) {
+        const code = slice('function ' + name + '(', '\n            }').replace(/<\?php[\s\S]*?\?>/g, '%1$s of %2$s');
+        vm.runInContext(code, context);
+    }
     vm.runInContext( slice( "$( '#mainwp-restore-snapshots-table' ).on( 'click', '.mainwp-snapshot-uploads-toggle'", '\n            } );' ), context );
     handler.call( rowNode, { preventDefault() {} } );
     return content;

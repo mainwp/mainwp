@@ -19,6 +19,46 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 
 	use Backup_Cancel_Transport_Guard;
 
+	/** Long-lived readers stay visible; a missing connection lock clears the signal immediately. */
+	public function test_test_restore_liveness_uses_connection_lock() {
+		global $wpdb;
+		$id = $this->store->reserve_site( 8801, 'test_restore', 42 );
+		try {
+			$this->assertNull( $this->store->get_live_test_restore_for_site( 8801 ) );
+			$this->assertTrue( $this->store->renew_reservation( $id ) );
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+				array(
+					'created'      => time() - 1200,
+					'updated'      => time() - 1200,
+					'locked_until' => time() - 1,
+				),
+				array( 'id' => $id )
+			);
+			$live = $this->store->get_live_test_restore_for_site( 8801 );
+			$this->assertNotNull( $live, 'A live worker past 600 seconds must remain visible.' );
+			$this->assertSame( 42, (int) $live->snapshot_id );
+			$this->assertSame( 'test_restore', $live->checkpoint['holder'] );
+			$method = new \ReflectionMethod( $this->store, 'reservation_lock_name' );
+			$method->setAccessible( true );
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $method->invoke( $this->store, $id ) ) );
+			$this->assertNull( $this->store->get_live_test_restore_for_site( 8801 ), 'A dead worker has no live badge even before TTL cleanup.' );
+		} finally {
+			$this->store->release_reservation( $id );
+		}
+	}
+
+	/** Other readers must not be presented as an automatic test restore. */
+	public function test_anonymous_reader_is_not_a_test_restore() {
+		$id = $this->store->reserve_site( 8801 );
+		try {
+			$this->assertTrue( $this->store->renew_reservation( $id ) );
+			$this->assertNull( $this->store->get_live_test_restore_for_site( 8801 ) );
+		} finally {
+			$this->store->release_reservation( $id );
+		}
+	}
+
 	/**
 	 * Child evidence and terminal status must survive a retry of the same CAS.
 	 *

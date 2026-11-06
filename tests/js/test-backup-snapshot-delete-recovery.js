@@ -15,7 +15,7 @@ function harness() {
         snapshotDeleteTarget: 17, snapshotDeleteRequest: 0, snapshotsTable: null,
         deleteLabels: { failed: 'The delete request failed. Reload the page and try again.' },
         nonces: {}, ajaxurl: 'ajax', backupPollRetries: 0, backupFollowGen: 0, backupFollowStops: 0, backupClickEpoch: {}, backupCancelledEpoch: {}, backupPendingKickoffs: {}, backupCancelPending: {}, backupCancelSeq: 0, backupPendingStarts: {},
-        stopBackupTimers() {}, setBackupStatus() {}, showCancelBackup() {}, renderBackupStatus() {},
+        stopBackupTimers() {}, stopRestoreFollow() {}, setBackupStatus() {}, showCancelBackup() {}, renderBackupStatus() {},
         setBackupInProgress() {}, setSnapshotDeleteBusy() {}, cancelApplies() { return false; },
         backupSinceTs: 0, backupProgressCache: null, backupStartTime: null,
         Date, window: { mainwpBackupProgressSteps() {}, clearTimeout() {}, setTimeout() { return 1; }, setInterval() { return 1; } },

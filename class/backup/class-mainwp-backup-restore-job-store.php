@@ -163,12 +163,14 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * The slot is the same unique active_site_id that create_job() claims,
      * so a reservation and an active restore exclude each other.
      *
-     * @param int $site_id Child site id.
+     * @param int    $site_id     Child site id.
+     * @param string $holder      Reservation owner.
+     * @param int    $snapshot_id Snapshot being read.
      *
      * @return int Reservation id, or 0 when an active restore or another
      *             reservation holds the site.
      */
-    public function reserve_site( int $site_id ): int {
+    public function reserve_site( int $site_id, string $holder = '', int $snapshot_id = 0 ): int {
         $this->clear_lapsed_reservations( $site_id );
         $now          = time();
         $statuses     = self::active_statuses();
@@ -178,8 +180,8 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         try {
             $result = $this->wpdb->query(
                 $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted array.
-                    'INSERT INTO ' . $this->table() . ' ( site_id, active_site_id, snapshot_id, status, checkpoint, locked_until, created, updated ) SELECT %d, %d, 0, %s, %s, %d, %d, %d FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM ' . $this->table() . " WHERE site_id = %d AND status IN ( {$placeholders} ) LIMIT 1 )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
-                    array_merge( array( $site_id, $site_id, self::STATUS_RESERVED, '{}', $now + self::RESERVATION_SECONDS, $now, $now, $site_id ), $statuses )
+                    'INSERT INTO ' . $this->table() . ' ( site_id, active_site_id, snapshot_id, status, checkpoint, locked_until, created, updated ) SELECT %d, %d, %d, %s, %s, %d, %d, %d FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM ' . $this->table() . " WHERE site_id = %d AND status IN ( {$placeholders} ) LIMIT 1 )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
+                    array_merge( array( $site_id, $site_id, $snapshot_id, self::STATUS_RESERVED, wp_json_encode( array( 'holder' => $holder ) ), $now + self::RESERVATION_SECONDS, $now, $now, $site_id ), $statuses )
                 )
             );
         } finally {
@@ -285,6 +287,20 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
+     * Identify a test restore by its live connection lock, regardless of age.
+     *
+     * @param int $site_id Child site id.
+     * @return object|null Live test restore reservation.
+     */
+    public function get_live_test_restore_for_site( int $site_id ): ?object {
+        $row = $this->wpdb->get_row(
+            $this->wpdb->prepare( 'SELECT * FROM ' . $this->table() . ' WHERE site_id = %d AND status = %s AND IS_USED_LOCK(CONCAT(%s, id)) IS NOT NULL LIMIT 1', $site_id, self::STATUS_RESERVED, substr( $this->reservation_lock_name( 0 ), 0, -1 ) )
+        );
+        $row = $this->decode_row( $row );
+        return null !== $row && 'test_restore' === ( $row->checkpoint['holder'] ?? '' ) ? $row : null;
+    }
+
+    /**
      * Drop reservations whose holder outlived its hold, so a crashed
      * request cannot keep the site's slot.
      *
@@ -329,6 +345,142 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             )
         );
         return $this->decode_row( $row );
+    }
+
+    /**
+     * Keep token identities unchanged before SQL or lock-name construction.
+     *
+     * @param mixed $token Browser attempt token.
+     * @return bool
+     */
+    public static function valid_admission_token( $token ): bool {
+        return is_string( $token ) && 1 === preg_match( '/^[a-f0-9]{32}$/D', $token );
+    }
+
+    /**
+     * Namespace request locks separately from snapshot readers.
+     *
+     * @param string $token Validated attempt token.
+     * @return string
+     */
+    public static function admission_lock_name( string $token ): string {
+        return 'mwp-admit-' . md5( DB_NAME . ':' . $token );
+    }
+
+    /**
+     * Hold liveness until the handler has computed its reply.
+     *
+     * @param string $token Validated attempt token.
+     * @return bool
+     */
+    public function lock_admission( string $token ): bool {
+        return '1' === (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', self::admission_lock_name( $token ) ) );
+    }
+
+    /**
+     * Release before wp_send_json exits the request.
+     *
+     * @param string $token Validated attempt token.
+     * @return void
+     */
+    public function release_admission( string $token ): void {
+        $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', self::admission_lock_name( $token ) ) );
+    }
+
+    /**
+     * Claim or burn once without populating WordPress option caches.
+     *
+     * @param string $token Validated attempt token.
+     * @param int    $site_id Owning site.
+     * @param string $kind Restore or rollback.
+     * @param string $state Claimed or burned.
+     * @return bool Whether this request inserted the record.
+     * @throws \RuntimeException When persistence cannot establish admission ownership.
+     */
+    public function claim_admission( string $token, int $site_id, string $kind, string $state = 'claimed' ): bool {
+        $deleted = $this->wpdb->query(
+            $this->wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s AND CAST(SUBSTRING_INDEX(option_value, ':', 1) AS UNSIGNED) < %d", $this->wpdb->options, $this->wpdb->esc_like( 'mainwp_restore_admission_' ) . '%', time() - DAY_IN_SECONDS )
+        );
+        if ( false === $deleted ) {
+            throw new \RuntimeException( 'Restore admission cleanup failed.' );
+        }
+        $inserted = $this->wpdb->query(
+            $this->wpdb->prepare( 'INSERT IGNORE INTO %i (option_name, option_value, autoload) VALUES (%s, %s, %s)', $this->wpdb->options, 'mainwp_restore_admission_' . $token, time() . ':' . $state . ':' . $site_id . ':' . get_current_user_id() . ':' . $kind, 'no' )
+        );
+        if ( false === $inserted ) {
+            throw new \RuntimeException( 'Restore admission record could not be saved.' );
+        }
+        return 1 === (int) $this->wpdb->rows_affected;
+    }
+
+    /**
+     * Read ownership from SQL even with a persistent object cache.
+     *
+     * @param string $token Validated attempt token.
+     * @return array Empty when absent.
+     * @throws \RuntimeException When the ownership read fails.
+     */
+    public function get_admission_record( string $token ): array {
+        $value = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $this->wpdb->options, 'mainwp_restore_admission_' . $token ) );
+        if ( '' !== $this->wpdb->last_error ) {
+            throw new \RuntimeException( 'Restore admission record could not be read.' );
+        }
+        return null === $value ? array() : explode( ':', $value );
+    }
+
+    /**
+     * Reservations do not prove that a restore was admitted.
+     *
+     * @param int    $site_id Owning site.
+     * @param string $token Validated attempt token.
+     * @return object|null
+     * @throws \RuntimeException When a failed read cannot exclude admission.
+     */
+    public function get_job_by_admission_token( int $site_id, string $token ): ?object {
+        $row = $this->wpdb->get_row(
+            $this->wpdb->prepare( 'SELECT * FROM ' . $this->table() . ' WHERE site_id = %d AND status <> %s AND checkpoint LIKE %s LIMIT 1', $site_id, self::STATUS_RESERVED, '%' . $this->wpdb->esc_like( '"admission_token":"' . $token . '"' ) . '%' )
+        );
+        if ( '' !== $this->wpdb->last_error ) {
+            throw new \RuntimeException( 'Restore admission job could not be read.' );
+        }
+        return $this->decode_row( $row );
+    }
+
+    /**
+     * Burn queued requests before deciding a free marker means refusal.
+     *
+     * @param int    $site_id Authorized site.
+     * @param string $token Validated attempt token.
+     * @return array
+     * @throws \RuntimeException When liveness cannot be read.
+     */
+    public function admission_status( int $site_id, string $token ): array {
+        $job = $this->get_job_by_admission_token( $site_id, $token );
+        if ( null === $job && $this->claim_admission( $token, $site_id, 'restore', 'burned' ) ) {
+            return array( 'state' => 'not_admitted' );
+        }
+        $record = $this->get_admission_record( $token );
+        if ( (int) ( $record[2] ?? 0 ) !== $site_id || (int) ( $record[3] ?? 0 ) !== get_current_user_id() ) {
+            return array( 'error' => __( 'Restore attempt not found.', 'mainwp' ) );
+        }
+        if ( null !== $job ) {
+            return array(
+                'state'  => 'admitted',
+                'job_id' => (int) $job->id,
+            );
+        }
+        $owner = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT IS_USED_LOCK(%s)', self::admission_lock_name( $token ) ) );
+        if ( '' !== $this->wpdb->last_error ) {
+            throw new \RuntimeException( 'Restore admission marker could not be read.' );
+        }
+        if ( null !== $owner ) {
+            return array( 'state' => 'pending' );
+        }
+        $job = $this->get_job_by_admission_token( $site_id, $token );
+        return null !== $job ? array(
+            'state'  => 'admitted',
+            'job_id' => (int) $job->id,
+        ) : array( 'state' => 'not_admitted' );
     }
 
     /**

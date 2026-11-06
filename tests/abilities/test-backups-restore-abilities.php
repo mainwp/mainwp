@@ -464,6 +464,10 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @return array
 	 */
 	private function ajax( $handler, $input ) {
+		if ( in_array( $handler, array( 'mainwp_restore_initiate', 'mainwp_restore_rollback' ), true ) ) {
+			// The page sends a fresh token per click, and the server refuses a reused one.
+			$input += array( 'admission_token' => bin2hex( random_bytes( 16 ) ) );
+		}
 		$_POST    = $input + array( 'security' => wp_create_nonce( $handler ) );
 		$_REQUEST = $_POST;
 		$die      = static function () {

@@ -111,6 +111,8 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 			'mainwp_restore_cancel'                 => 'restore_backups',
 			'mainwp_restore_progress'               => 'execute_backups',
 			'mainwp_restore_snapshot_list'          => 'execute_backups',
+			'mainwp_restore_snapshot_activity'      => 'execute_backups',
+			'mainwp_restore_admission_status'       => 'restore_backups',
 			'mainwp_backup_snapshot_delete_preview' => 'execute_backups',
 			'mainwp_backup_snapshot_delete'         => 'execute_backups',
 			'mainwp_snapshots_cleanup'              => 'execute_backups',

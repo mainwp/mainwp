@@ -30,8 +30,19 @@
                 "complete": 0,
                 "failed": 1,
                 "pending": 0
-            }
+            },
+            "upload_progress": [
+                {
+                    "bytes_done": 0,
+                    "bytes_total": 1024,
+                    "state": "failed",
+                    "destination": "Destination #987676 (removed)",
+                    "updated": 1700000000,
+                    "next_retry_at": 0
+                }
+            ]
         }
     ],
-    "lane": "idle"
+    "lane": "idle",
+    "server_time": 0
 }

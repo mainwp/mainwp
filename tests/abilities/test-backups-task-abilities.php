@@ -47,7 +47,7 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->set_current_user_as_admin();
 		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		update_option( 'mainwp_enableNativeBackups', 1 );
-		$this->site_id = $this->create_test_site();
+		$this->site_id = $this->create_test_site( array( 'version' => '6.4' ) );
 		$task          = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'Test backup action', 'daily', 'full', '', (string) $this->site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertIsObject( $task );
 		$this->task_id     = (int) $task->id;

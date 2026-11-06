@@ -122,6 +122,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'enable_suspended_clients'   => $enableSuspendedClients,
             'selected_clients'           => $selected_clients,
             'add_edit_client_id'         => $add_edit_client_id,
+            'backup_task_saved_sites'    => $params['backup_task_saved_sites'] ?? null,
         );
         ?>
         <div id="mainwp-select-sites" class="mainwp_select_sites_wrapper"<?php echo $keep_tab_selection ? ' data-keep-tab-selection="1"' : ''; ?>>
@@ -253,17 +254,15 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 </div>
             </div>
         </div>
-        <?php
-        ?>
         <div class="ui tab <?php echo 'site' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-sites">
         <?php
-            MainWP_UI::render_select_sites( $websites, $type, $selected_sites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id, $show_selectall_disc );
+            MainWP_UI::render_select_sites( $websites, $type, $selected_sites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id, $show_selectall_disc, $params['backup_task_saved_sites'] ?? null );
         ?>
         </div>
         <?php if ( $staging_enabled ) { ?>
             <div class="ui tab <?php echo 'staging' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>">
                 <?php
-                    MainWP_UI::render_select_sites_staging( $selected_sites, $edit_site_id, $type );
+                    MainWP_UI::render_select_sites_staging( $selected_sites, $edit_site_id, $type, $params['backup_task_saved_sites'] ?? null );
                 ?>
             </div>
             <?php

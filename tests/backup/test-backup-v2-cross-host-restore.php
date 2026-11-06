@@ -600,6 +600,7 @@ class MainWP_Backup_V2_Cross_Host_Restore_Test extends MainWP_Abilities_Test_Cas
 		$previous_request = $_REQUEST;
 		$_POST            = array_merge(
 			array(
+				'admission_token'     => bin2hex( random_bytes( 16 ) ),
 				'site_id'             => $this->source_id,
 				'snapshot_id'         => $snapshot_id,
 				'confirm_destructive' => '1',
@@ -712,7 +713,9 @@ class MainWP_Backup_V2_Cross_Host_Restore_Test extends MainWP_Abilities_Test_Cas
 		foreach ( array( false, true ) as $enabled ) {
 			$this->enable( $enabled );
 			foreach ( array( array(), array( 'target_site_id' => $this->source_id ), array( 'target_site_id' => (string) $this->source_id ) ) as $extra ) {
-				$password = static fn() => 'fixture-restore';
+				$extra['admission_token']    = bin2hex( random_bytes( 16 ) );
+				$expected['admission_token'] = $extra['admission_token'];
+				$password                    = static fn() => 'fixture-restore';
 				add_filter( 'random_password', $password );
 				try {
 					$raw = $this->restore_ajax( $id, $extra );

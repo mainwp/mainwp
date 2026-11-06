@@ -265,6 +265,21 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Backup file on child site created successfully!', esc_html__( 'Backup file on child site created successfully!', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Backup completed.', esc_html__( 'Backup completed.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Starting the backup task...', esc_html__( 'Starting the backup task...', 'mainwp' ) );
+        /* translators: %d: upload percentage. */
+        mainwp_add_translation( $mainwpTranslations, 'Uploading backups to storage: %d%', esc_html__( 'Uploading backups to storage: %d%', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Backup done, uploading to storage', esc_html__( 'Backup done, uploading to storage', 'mainwp' ) );
+        /* translators: 1: destination, 2: uploaded size, 3: total size. */
+        mainwp_add_translation( $mainwpTranslations, 'Uploading to %1$s: %2$s of %3$s', esc_html__( 'Uploading to %1$s: %2$s of %3$s', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Remaining uploads continue in the background. Check the Snapshots page for their state.', esc_html__( 'Remaining uploads continue in the background. Check the Snapshots page for their state.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Waiting for the upload to start', esc_html__( 'Waiting for the upload to start', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Verifying the upload', esc_html__( 'Verifying the upload', 'mainwp' ) );
+        /* translators: %s: retry time. */
+        mainwp_add_translation( $mainwpTranslations, 'Upload interrupted, retrying at %s', esc_html__( 'Upload interrupted, retrying at %s', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Upload failed', esc_html__( 'Upload failed', 'mainwp' ) );
+        /* translators: %s: destination. */
+        mainwp_add_translation( $mainwpTranslations, 'Uploaded to %s', esc_html__( 'Uploaded to %s', 'mainwp' ) );
+        /* translators: %d: seconds since the last activity. */
+        mainwp_add_translation( $mainwpTranslations, 'Last activity %d seconds ago', esc_html__( 'Last activity %d seconds ago', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Running task', esc_html__( 'Running task', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Backup task completed', esc_html__( 'Backup task completed', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Creating backup file.', esc_html__( 'Creating backup file.', 'mainwp' ) );

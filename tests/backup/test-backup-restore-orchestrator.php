@@ -305,6 +305,33 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 	use Backup_Private_Root_Fixture;
 
+	/** The Woo preflight bounds its request and removes the filter after either outcome. */
+	public function test_woo_preflight_timeout_clamp_is_removed() {
+		$site = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		foreach ( array( false, true ) as $throws ) {
+			$observed = array();
+			$observe  = static function ( $pre, $website, $what ) use ( &$observed, $throws ) {
+				if ( 'restore_preflight' === $what ) {
+					$observed[] = apply_filters( 'mainwp_fetch_url_site_timeout', 72000, $what );
+					$observed[] = apply_filters( 'mainwp_fetch_url_site_timeout', 10, $what );
+					$observed[] = apply_filters( 'mainwp_fetch_url_site_timeout', 72000, 'ordinary_request' );
+					if ( $throws ) {
+						throw new \Error( 'Preflight unavailable' );
+					}
+				}
+				return $pre;
+			};
+			add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 3 );
+			try {
+				$this->orchestrator->woo_preserve_refusal( $site, null );
+				$this->assertSame( array( 30, 10, 72000 ), $observed );
+				$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000, 'restore_preflight' ) );
+			} finally {
+				remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
+			}
+		}
+	}
+
 	/**
 	 * Test site id.
 	 *
@@ -10503,6 +10530,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @return array|null Decoded response.
 	 */
 	private function invoke_ajax_handler( $method ) {
+		if ( in_array( $method, array( 'mainwp_restore_initiate', 'mainwp_restore_rollback' ), true ) ) {
+			$_POST['admission_token'] = bin2hex( random_bytes( 16 ) );
+		}
 		$throw = static function () {
 			return static function () {
 				throw new \RuntimeException( 'wp_die' );
@@ -10521,6 +10551,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$raw = ob_get_clean();
 			remove_filter( 'wp_die_ajax_handler', $throw );
 			remove_filter( 'wp_doing_ajax', '__return_true' );
+			unset( $_POST['admission_token'] );
 		}
 
 		return json_decode( $raw, true );
@@ -10741,15 +10772,23 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertCount( 2, $uploads, 'Delete jobs must not appear as uploads.' );
 		$this->assertSame(
 			array(
-				'destination_id' => $dest_a,
-				'name'           => 'Archive & storage',
-				'provider'       => 'local',
-				'status'         => 'pending',
-				'updated'        => (int) $store->get_job( (int) $jobs[0]->id )->updated,
-				'last_error'     => '',
-				'error_code'     => '',
-				'error_message'  => '',
-				'error_detail'   => '',
+				'destination_id'  => $dest_a,
+				'name'            => 'Archive & storage',
+				'provider'        => 'local',
+				'status'          => 'pending',
+				'updated'         => (int) $store->get_job( (int) $jobs[0]->id )->updated,
+				'upload_progress' => array(
+					'bytes_done'    => 0,
+					'bytes_total'   => 23,
+					'state'         => 'waiting',
+					'destination'   => 'Archive & storage',
+					'updated'       => (int) $store->get_job( (int) $jobs[0]->id )->updated,
+					'next_retry_at' => 0,
+				),
+				'last_error'      => '',
+				'error_code'      => '',
+				'error_message'   => '',
+				'error_detail'    => '',
 			),
 			$uploads[0]
 		);

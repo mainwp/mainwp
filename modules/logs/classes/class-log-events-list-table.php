@@ -264,7 +264,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      *
      * @param object $item         Record data.
      * @param string $column_name  Column name.
-     * @param array  $site_opts  Site options.
      *
      * @return string $out Output.
      */
@@ -534,7 +533,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             } elseif ( in_array( $act, array( 'opened', 'logged-in', 'logged-out', 'unspammed' ), true ) ) {
                 $color = 'blue';
             } else {
-                $color = 'grey'; // fallback / unknown event
+                $color = 'grey'; // Fallback / unknown event.
             }
 
             /* Compatibility aliases */
@@ -785,6 +784,22 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @return string
      */
     public function get_context_title( $title, $context, $connector ) {
+        $formats = array();
+        if ( 'posts' === $connector ) {
+            $formats = array(
+                esc_html_x( 'Post: %1$s', '1: Post title', 'mainwp' ),
+                esc_html_x( 'Post: %1$s (%2$s)', '1: Post title 2: singular name', 'mainwp' ),
+            );
+        } elseif ( 'users' === $connector ) {
+            $formats = array( esc_html_x( 'User: %1$s', '1: User display name', 'mainwp' ) );
+        }
+        foreach ( $formats as $format ) {
+            $prefix = explode( '%1$s', $format )[0];
+            if ( '' !== $prefix && str_starts_with( $title, $prefix ) ) {
+                return $title;
+            }
+        }
+
         $context_title = '';
 
         if ( in_array( $context, array( 'plugin', 'theme' ) ) ) {
@@ -1050,13 +1065,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             <?php
         }
         if ( 'widget-overview' !== $this->table_id_prefix ) {
-        ?>
+            ?>
         <div id="mainwp-loading-sites">
             <div class="ui active page dimmer">
                 <div class="ui double text loader"><?php esc_html_e( 'Loading...', 'mainwp' ); ?></div>
             </div>
         </div>
-        <?php
+            <?php
         }
         $table_features = array(
             'searching'     => 'true',

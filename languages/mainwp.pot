@@ -14814,14 +14814,6 @@ msgstr ""
 msgid "Once daily"
 msgstr ""
 
-#: modules/logs/classes/class-log-admin.php:202
-msgid "Invalid Start date or end date. Please try again."
-msgstr ""
-
-#: modules/logs/classes/class-log-admin.php:220
-msgid "Invalid selected year. Please try again."
-msgstr ""
-
 #: modules/logs/classes/class-log-admin.php:290
 #, php-format
 msgid ""
@@ -15043,9 +15035,8 @@ msgstr ""
 
 #: modules/logs/classes/class-log-settings.php:291
 msgid ""
-"Automatically move older logs to the archive after a specified period of "
-"time. This helps keep your active logs organized while maintaining a "
-"searchable history."
+"Automatically archive older entries after a specified period. Archived entries "
+"no longer appear in Network Activity or Insights. Delete them on the Tools page."
 msgstr ""
 
 #: modules/logs/classes/class-log-settings.php:300
@@ -16214,10 +16205,6 @@ msgstr ""
 msgid ""
 "Start by configuring your %1$sNetwork Activity Settings%2$s to begin "
 "collecting data."
-msgstr ""
-
-#: modules/logs/pages/page-log-insights-page.php:1101
-msgid "Recent Activity Log"
 msgstr ""
 
 #: modules/logs/pages/page-log-insights-page.php:1102
@@ -21587,11 +21574,19 @@ msgid "Delete archived Network Activity data"
 msgstr ""
 
 #: pages/page-mainwp-settings.php:2216
-msgid "Delete archived sNetwork Activity data."
+msgid "Delete archived Network Activity data."
 msgstr ""
 
 #: pages/page-mainwp-settings.php:2217
 msgid "Delete Archived Network Activity Data"
+msgstr ""
+
+#: modules/logs/includes/default-logs.php:1013
+msgid "Recurring task (cron job) rescheduled"
+msgstr ""
+
+#: modules/logs/pages/page-log-insights-page.php:1179
+msgid "Select widgets that you want to hide in the MainWP Insights page."
 msgstr ""
 
 #: pages/page-mainwp-settings.php:2221

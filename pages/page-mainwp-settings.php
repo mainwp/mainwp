@@ -2468,7 +2468,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                             </div>
                                             <div class="ui grid field">
                                                 <label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to set a new pair of OpenSSL Keys', 'mainwp' ); ?></label>
-                                                <div class="ten wide column" id="mainwp-renew-connections-tool" data-content="<?php esc_attr_e( 'This will function renew connection and reconnect site right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                                                <div class="ten wide column" id="mainwp-renew-connections-tool" data-content="<?php esc_attr_e( 'This function will renew the connection and reconnect the site right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
                                                         <a href="javascript:void(0)" onclick="mainwp_tool_renew_connections_show(); return false;" class="ui button green basic"><?php esc_html_e( 'Reset OpenSSL Key Pair', 'mainwp' ); ?></a>
                                                 </div>
                                             </div>
@@ -2488,7 +2488,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
-                        <div class="ten wide column" id="mainwp-disconnect-sites-tool" data-content="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                        <div class="ten wide column" id="mainwp-disconnect-sites-tool" data-content="<?php esc_attr_e( 'This function will break the connection and leave the MainWP Child plugin active, which makes your sites vulnerable. Use only if you intend to reconnect the site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
                             <a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Sites', 'mainwp' ); ?></a>
                     </div>
                     </div>

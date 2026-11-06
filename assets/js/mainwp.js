@@ -1446,7 +1446,7 @@ let dashboard_update_next_int = function (websiteId, data, errors, action) {
 
 let mainwp_tool_disconnect_sites = function () {
 
-    mainwp_confirm('Are you sure that you want to disconnect your sites? This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable.', function () {
+    mainwp_confirm('Are you sure that you want to disconnect your sites? This function will break the connection and leave the MainWP Child plugin active, which makes your sites vulnerable.', function () {
         let allWebsiteIds = jQuery('.dashboard_wp_id[error-status=0]').map(function (indx, el) {
             return jQuery(el).val();
         });

@@ -1189,6 +1189,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                     <a class="item" href="admin.php?page=UserBulkAdd"><?php esc_html_e( 'Add New User', 'mainwp' ); ?></a>
                                     <a class="item" href="admin.php?page=BulkImportUsers"><?php esc_html_e( 'Import Users', 'mainwp' ); ?></a>
                                     <a class="item" href="admin.php?page=UpdateAdminPasswords"><?php esc_html_e( 'Admin Passwords', 'mainwp' ); ?></a>
+                                    <?php if ( ! self::is_disable_menu_item( 3, 'PasswordPolicy' ) ) { ?>
+                                    <a class="item" href="admin.php?page=PasswordPolicy"><?php esc_html_e( 'Password Policy', 'mainwp' ); ?></a>
+                                    <?php } ?>
                                 </div>
                             </div>
                             <div class="item">

@@ -1714,7 +1714,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 <?php if ( 'inactive' === $status ) : ?>
                     <option data-value="activate" value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
                 <?php else : ?>
-                    <option data-value="activate" disabled value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?><br/><span class="ui small text"><?php esc_html_e( 'To deactivate, view Active themes.', 'mainwp' ); ?></span></option>
+                    <option data-value="activate" disabled value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?><br/><span class="ui small text"><?php esc_html_e( 'To activate, view Inactive themes.', 'mainwp' ); ?></span></option>
                 <?php endif; ?>
                 <?php endif; ?>
                 <?php if ( 'inactive' === $status ) : ?>

@@ -385,8 +385,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                     }
                 }
 
-                if ( empty( $out ) ) {
-                    $out = $user->get_agent_label( $user->get_agent() );
+                $agent_label = $user->get_agent_label( $user->get_agent() );
+                if ( ! empty( $agent_label ) ) {
+                    $out = empty( $out ) ? $agent_label : $out . ' ' . $agent_label;
                 }
                 $escaped = true;
                 break;

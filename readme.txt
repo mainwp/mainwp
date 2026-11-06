@@ -156,6 +156,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 = 6.4.2-rc.2 - 11-5-2026 =
 
+* Added: Reconnect all accessible disconnected sites from the Connection Status widget, with per-site results.
 * Added: Optional delays to spread scheduled Built-In Backups task starts over a configurable time window.
 * Added: Optional Manage Sites column showing abandoned plugin and theme counts.
 * Added: Support for disabling site screenshot previews across the Dashboard.

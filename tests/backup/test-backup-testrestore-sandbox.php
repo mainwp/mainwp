@@ -750,11 +750,12 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		return array( array( './' ), array( '.' ), array( '' ) );
 	}
 
+	/** Supported question-mark members retain their names and binary contents. */
 	public function test_tar_literal_question_mark_preserves_names_and_bytes() {
 		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
 		$sandbox->bring_up();
 		$members = array( 'wp-content/uploads/test?x', 'ordinary', 'hash#name', '日本語', 'literal%3F', 'dir?/nested' );
-		$bytes = '';
+		$bytes   = '';
 		foreach ( $members as $name ) {
 			$bytes .= $this->raw_tar_member( $name, "bytes\0" . $name );
 		}
@@ -765,9 +766,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			foreach ( $members as $name ) {
 				$this->assertSame( "bytes\0" . $name, file_get_contents( $sandbox->temp_dir() . $name ) );
 			}
-			$sql = '<?php exit(); ?>SELECT 1;';
+			$sql      = '<?php exit(); ?>SELECT 1;';
 			$sql_path = $this->raw_tar( $this->raw_tar_member( 'db?/dump.sql.php', $sql ) );
-			$size = new \ReflectionMethod( $sandbox, 'archive_member_size_tar' );
+			$size     = new \ReflectionMethod( $sandbox, 'archive_member_size_tar' );
 			$size->setAccessible( true );
 			$this->assertSame( strlen( $sql ), $size->invoke( $sandbox, $sql_path ) );
 			$read = new \ReflectionMethod( $sandbox, 'read_member_from_tar' );
@@ -778,6 +779,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		}
 	}
 
+	/** Mixed member spellings cannot bypass the raw payload lookup guard. */
 	public function test_tar_question_mark_does_not_bypass_raw_payload_name_agreement() {
 		$bytes = $this->raw_tar_member( 'first.txt', 'first' ) . $this->raw_tar_member( 'a\\b', 'XY' ) . $this->raw_tar_member( 'c?d', 'question' );
 		$this->assert_tar_name_refusal( $this->raw_tar( $bytes ), 'could not be read' );

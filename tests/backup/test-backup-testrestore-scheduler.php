@@ -356,12 +356,16 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 		$this->assertCount( 1, $scheduler->verified, 'An unavailable snapshot must not be re-selected next tick.' );
 	}
 
+	/** An unavailable-result save failure must not interrupt the scheduler. */
 	public function test_unavailable_save_failure_does_not_abort_scheduler_tick() {
-		$now = time();
-		$id = $this->insert_snapshot( $this->create_test_site(), $now - 100 );
-		$scheduler = new Testable_TestRestore_Scheduler();
-		$scheduler->verify_result = array( 'state' => 'fail', 'error_code' => MainWP_Backup_TestRestore_Driver::ERR_UNRESOLVABLE );
-		$filter = 'pre_update_option_mainwp_testrestore_result_' . $id;
+		$now                      = time();
+		$id                       = $this->insert_snapshot( $this->create_test_site(), $now - 100 );
+		$scheduler                = new Testable_TestRestore_Scheduler();
+		$scheduler->verify_result = array(
+			'state'      => 'fail',
+			'error_code' => MainWP_Backup_TestRestore_Driver::ERR_UNRESOLVABLE,
+		);
+		$filter                   = 'pre_update_option_mainwp_testrestore_result_' . $id;
 		add_filter( $filter, '__return_false' );
 		try {
 			$scheduler->process_pending_jobs( 120, $now );

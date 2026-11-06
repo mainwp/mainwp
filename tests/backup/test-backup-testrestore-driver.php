@@ -898,14 +898,23 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The sandbox is fully torn down on both a passing and a failing run: no
-	 * scratch database and no temp dir linger either way.
+	 * Save failures preserve the driver's verdict and leave recorded state unchanged.
 	 *
 	 * @return void
 	 */
 	public function test_save_failure_does_not_escape_the_driver_or_change_the_verdict() {
-		$dump = $this->write_db_dump( 'save-fail.sql.gz', $this->sentinel_sql() );
-		$id = $this->record( 'db', array( array( 'file' => 'save-fail.sql.gz', 'size' => filesize( $dump ), 'role' => 'db', 'path' => $dump ) ) );
+		$dump   = $this->write_db_dump( 'save-fail.sql.gz', $this->sentinel_sql() );
+		$id     = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'save-fail.sql.gz',
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
 		$filter = 'pre_update_option_mainwp_testrestore_result_' . $id;
 		add_filter( $filter, '__return_false' );
 		try {
@@ -917,6 +926,7 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	/** Scratch databases and directories are removed after passing and failing runs. */
 	public function test_sandbox_torn_down_on_pass_and_fail() {
 		// Pass run.
 		$dump_ok = $this->write_db_dump( 'ok.sql.gz', $this->sentinel_sql() );

@@ -2592,7 +2592,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     @curl_multi_remove_handle( $mh, $info['handle'] );
                     curl_close( $info['handle'] );
                 }
-                usleep( 10000 );
+                // Ready restore uploads can advance immediately; sleeping here throttles every send buffer.
+                if ( 'restore_artifact_chunk' !== $what || $rc <= 0 ) {
+                    usleep( 10000 );
+                }
             } while ( $running > 0 );
 
             if ( static::is_valid_curl_handle( $mh ) ) {

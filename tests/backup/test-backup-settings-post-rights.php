@@ -471,6 +471,74 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Passwords created through Users must work at login and in Backup Settings.
+	 *
+	 * @dataProvider form_account_passwords
+	 * @param string $password Account password.
+	 * @param string $attempt Submitted password, or empty for a missing field.
+	 * @param bool   $accepted Whether the submission should succeed.
+	 */
+	public function test_first_passphrase_matches_wordpress_form_login( string $password, string $attempt, bool $accepted ): void {
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		$enc = MainWP_Backup_Encryption::instance();
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
+		delete_option( MainWP_Backup_Encryption::ENABLED_OPTION );
+		$_POST   = wp_slash(
+			array(
+				'user_login' => 'backup-form-admin',
+				'email'      => 'backup-form-admin@example.org',
+				'role'       => 'administrator',
+				'pass1'      => $password,
+				'pass2'      => $password,
+			)
+		);
+		$user_id = edit_user();
+		$this->assertNotWPError( $user_id );
+		$_POST = wp_slash(
+			array(
+				'log' => 'backup-form-admin',
+				'pwd' => $password,
+			)
+		);
+		$user  = wp_signon();
+		$this->assertNotWPError( $user );
+		$this->assertSame( $user_id, $user->ID );
+		wp_set_current_user( $user_id );
+		$passphrase = wp_generate_password( 52, false );
+		$_POST      = array(
+			'submit'                                    => '1',
+			'wp_nonce'                                  => wp_create_nonce( 'BackupSettings' ),
+			'mainwp_options_enableBackupEncryption'     => '1',
+			'mainwp_options_backupEncryptionPassphrase' => wp_slash( $passphrase ),
+		);
+		if ( '' !== $attempt ) {
+			$_POST['mainwp_options_backupEncryptionAccountPassword'] = wp_slash( $attempt );
+		}
+		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+		$this->assertSame( $accepted ? '' : 'account_password', MainWP_Backup_Settings::recovery_passphrase_rejection() );
+		$this->assertSame( $accepted, (bool) get_option( MainWP_Backup_Encryption::ENABLED_OPTION ) );
+		if ( $accepted ) {
+			$this->assertNotEmpty( $enc->get_recovery_blob()['wrapped_kek'] );
+			$this->assertSame( $enc->load_kek(), $enc->recover_kek( $passphrase, $enc->get_recovery_blob() ) );
+		} else {
+			$this->assertSame( array(), $enc->get_recovery_blob() );
+			$this->assertSame( '', MainWP_Keys_Manager::instance()->get_key_val( $enc->kek_filename() ) );
+		}
+	}
+
+	/** Account creation and subsequent Settings submissions. */
+	public static function form_account_passwords(): array {
+		return array(
+			'apostrophe'       => array( "WordPress'form-proof", "WordPress'form-proof", true ),
+			'plain'            => array( 'WordPress-form-proof', 'WordPress-form-proof', true ),
+			'double quote'     => array( 'WordPress"form-proof', 'WordPress"form-proof', true ),
+			'wrong apostrophe' => array( "WordPress'form-proof", "Incorrect'form-proof", false ),
+			'missing'          => array( "WordPress'form-proof", '', false ),
+		);
+	}
+
+	/**
 	 * The generic writer cannot bypass recovery passphrase proof through collated names.
 	 *
 	 * @dataProvider recovery_option_names

@@ -854,9 +854,19 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function ajax_mainwp_help_modal_content_update() {
         $this->secure_request( 'mainwp_help_modal_content_update' );
-        MainWP_Utility::update_option( 'mainwp_enable_guided_tours', ( int)$_POST['enable_tour'] ); //phpcs:ignore -- NOSONAR verify.
-        MainWP_Utility::update_option( 'mainwp_enable_guided_video', (int)$_POST['enable_video'] ); //phpcs:ignore -- NOSONAR verify.
-        MainWP_Utility::update_option( 'mainwp_enable_guided_chatbase', (int)$_POST['enable_chatbase'] ); //phpcs:ignore -- NOSONAR verify.
+        // Nonce verified by secure_request().
+        // phpcs:disable WordPress.Security.NonceVerification
+        $settings = array(
+            'mainwp_enable_guided_tours'    => intval( wp_unslash( $_POST['enable_tour'] ?? 0 ) ),
+            'mainwp_enable_guided_video'    => intval( wp_unslash( $_POST['enable_video'] ?? 0 ) ),
+            'mainwp_enable_guided_chatbase' => intval( wp_unslash( $_POST['enable_chatbase'] ?? 0 ) ),
+        );
+        // phpcs:enable WordPress.Security.NonceVerification
+        foreach ( $settings as $option_name => $option_value ) {
+            if ( ! MainWP_Utility::update_option( $option_name, $option_value ) && (int) get_option( $option_name, -1 ) !== $option_value ) {
+                wp_die( esc_html__( 'Settings could not be saved. Please try again.', 'mainwp' ), '', array( 'response' => 500 ) );
+            }
+        }
         die( 'ok' );
     }
 

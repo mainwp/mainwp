@@ -1,0 +1,60 @@
+<?php
+/** Support modal render contract without a WordPress database. */
+namespace MainWP\Dashboard;
+
+define( 'ABSPATH', __DIR__ . '/' );
+
+class MainWP_Utility {
+    public static function get_siteview_mode() {
+        return false;
+    }
+}
+
+function get_option( $key, $default = false ) {
+    return $GLOBALS['support_modal_options'][ $key ] ?? $default;
+}
+function esc_html__( $text, $domain ) {
+    return htmlspecialchars( $text, ENT_QUOTES );
+}
+function esc_html_e( $text, $domain ) {
+    echo esc_html__( $text, $domain );
+}
+function esc_attr_e( $text, $domain ) {
+    echo esc_html__( $text, $domain );
+}
+function esc_js( $text ) {
+    return addslashes( $text );
+}
+function sanitize_text_field( $text ) {
+    return strip_tags( $text );
+}
+function wp_unslash( $text ) {
+    return stripslashes( $text );
+}
+
+require_once getenv( 'MAINWP_UI_SOURCE' ) ?: dirname( __DIR__, 2 ) . '/class/class-mainwp-ui.php';
+
+class SupportModalTest extends \PHPUnit\Framework\TestCase {
+    public function test_support_controls_show_state_and_explicit_save(): void {
+        foreach ( array( 0, 1 ) as $enabled ) {
+            $GLOBALS['support_modal_options'] = array_fill_keys( array( 'mainwp_enable_guided_tours', 'mainwp_enable_guided_chatbase', 'mainwp_enable_guided_video' ), $enabled );
+            $_GET = array( 'page' => 'mainwp_tab' );
+            ob_start();
+            MainWP_UI::render_help_modal();
+            $html = ob_get_clean();
+            $dom = new \DOMDocument();
+            @$dom->loadHTML( $html );
+            $xpath = new \DOMXPath( $dom );
+            foreach ( array( 'tours', 'chatbase', 'video' ) as $feature ) {
+                $labels = $xpath->query( '//label[@for="mainwp-help-' . $feature . '-option"]' );
+                $this->assertSame( 1, $labels->length, $feature );
+                $this->assertSame( $enabled ? 'Enabled' : 'Disabled', $labels->item( 0 )->textContent );
+            }
+            $this->assertStringContainsString( 'Save Support Settings', $html );
+            $this->assertStringContainsString( 'Save and Reload', $html );
+            $this->assertSame( 1, $xpath->query( '//a[@id="mainwp-start-chat-card"][@href="#"]' )->length );
+            $this->assertStringContainsString( 'Open Support Assistant', $html );
+            $this->assertSame( 1, $xpath->query( '//a[@id="mainwp-start-chat-card"][@aria-disabled="' . ( $enabled ? 'false' : 'true' ) . '"]' )->length );
+        }
+    }
+}

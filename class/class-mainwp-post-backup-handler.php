@@ -99,6 +99,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( MainWP_Backup_Operations::current_user_can_delete() ) {
                 $this->add_action( 'mainwp_backup_snapshot_delete_preview', array( &$this, 'mainwp_backup_snapshot_delete_preview' ) );
                 $this->add_action( 'mainwp_backup_snapshot_delete', array( &$this, 'mainwp_backup_snapshot_delete' ) );
+                $this->add_action( 'mainwp_restore_safety_delete', array( &$this, 'mainwp_restore_safety_delete' ) );
                 $this->add_action( 'mainwp_snapshots_cleanup', array( &$this, 'mainwp_snapshots_cleanup' ) );
             }
             $this->add_action( 'mainwp_backup_snapshot_download_url', array( &$this, 'mainwp_backup_snapshot_download_url' ) );
@@ -580,7 +581,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_restore_progress' );
         $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $job = MainWP_Backup_Operations::authorize_restore_job( $job_id, false, 'ui' );
+        $job    = MainWP_Backup_Operations::authorize_restore_job( $job_id, false, 'ui' );
         if ( is_wp_error( $job ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
             return;
@@ -632,6 +633,29 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
         wp_send_json( array( 'result' => 'stopped' === $outcome ? 'stopped' : ( 'cancel_pending' === $outcome ? 'pending' : 'ok' ) ) );
+    }
+
+    /**
+     * Remove a restore safety backup after explicit confirmation in the UI.
+     */
+    public function mainwp_restore_safety_delete() {
+        $this->secure_request( 'mainwp_restore_safety_delete' );
+        if ( ! MainWP_Backup_Operations::current_user_can_delete() ) {
+            wp_send_json( array( 'error' => esc_html__( 'You cannot delete backups.', 'mainwp' ) ) );
+            return;
+        }
+        $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $job    = MainWP_Backup_Operations::authorize_restore_job( $job_id, false, 'ui' );
+        if ( is_wp_error( $job ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
+            return;
+        }
+        try {
+            $removed = MainWP_Backup_Restore_Orchestrator::instance()->delete_safety_backup( $job );
+            wp_send_json( $removed ? array( 'result' => 'ok' ) : array( 'error' => esc_html__( 'The site did not confirm deletion. Refresh and try again.', 'mainwp' ) ) );
+        } catch ( MainWP_Exception $e ) {
+            wp_send_json( array( 'error' => static::plain_text( $e->getMessage() ) ) );
+        }
     }
 
     /**

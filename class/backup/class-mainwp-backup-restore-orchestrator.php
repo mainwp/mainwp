@@ -545,6 +545,42 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Delete a finished restore's safety backup while holding the site's slot.
+     *
+     * @param object $job Restore job whose backup should be removed.
+     * @return bool Whether the Child confirmed removal.
+     */
+    public function delete_safety_backup( object $job ): bool {
+        if ( ! MainWP_Install::backup_restore_job_checkpoint_rev_ready() ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RESTORE_SCHEMA_REPAIR_PENDING );
+        }
+        $website = $this->website( $job );
+        if ( self::site_is_disconnected( $website ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED );
+        }
+        $this->assert_no_open_site_backup( (int) $job->site_id );
+        $store       = MainWP_Backup_Restore_Job_Store::instance();
+        $reservation = $this->reserve_site_for( (int) $job->site_id, esc_html__( 'A restore is already running for this site. Wait for it to finish before deleting the safety backup.', 'mainwp' ) );
+        try {
+            $source = $store->get_job( (int) $job->id );
+            if ( null === $source || (int) $source->site_id !== (int) $job->site_id ) {
+                throw new MainWP_Exception( esc_html__( 'Restore job not found.', 'mainwp' ) );
+            }
+            $this->assert_rollback_status( $source );
+            // A failed rollback may still need its source for recovery.
+            if ( ! empty( $source->checkpoint['is_rollback'] ) || $this->rollback_started_for( $source ) || empty( $source->pre_snapshot_task_id ) || empty( $source->checkpoint['pre_snapshot_artifacts'] ) ) {
+                throw new MainWP_Exception( esc_html__( 'This safety backup is unavailable or is being used by a rollback.', 'mainwp' ) );
+            }
+            if ( ! empty( $source->checkpoint['pre_snapshot_pruned'] ) ) {
+                return true;
+            }
+            return true === $this->prune_safety_backup( $website, (int) $source->id, (string) $source->pre_snapshot_task_id, (array) $source->checkpoint, null );
+        } finally {
+            $store->release_reservation( $reservation );
+        }
+    }
+
+    /**
      * Refuse a rollback of a restore that has not finished.
      *
      * @param object $job Restore job.

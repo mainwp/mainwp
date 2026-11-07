@@ -2989,6 +2989,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( null !== $held_job && ! $this->lease_still_held( $held_job ) ) {
             return null;
         }
+        // Foreground deletion must not inherit the hours-long Child timeout.
+        $prune_timeout = static function ( $seconds, $what = '' ) {
+            return 'backup_task_prune' === $what ? min( (int) $seconds, 60 ) : $seconds;
+        };
+        add_filter( 'mainwp_fetch_url_site_timeout', $prune_timeout, PHP_INT_MAX, 2 );
         try {
             $answer = MainWP_Connect::fetch_url_authed(
                 $website,
@@ -3006,6 +3011,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $checkpoint['pre_snapshot_pruning'] = true;
             $store->save_checkpoint( $job_id, $checkpoint );
             return null;
+        } finally {
+            remove_filter( 'mainwp_fetch_url_site_timeout', $prune_timeout, PHP_INT_MAX );
         }
 
         $removed = MainWP_Backup_Executor::child_prune_confirmed( $answer );

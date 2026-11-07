@@ -24,6 +24,44 @@ use MainWP\Dashboard\MainWP_Exception;
 class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 
 	/**
+	 * Record each interrupted transfer and its resumed response.
+	 *
+	 * @return void
+	 */
+	public function test_attempt_diagnostics_include_partial_then_resume() {
+		$file     = $this->temp_download_path();
+		$attempts = array();
+		$record   = static function ( $payload, $duration, $context ) use ( &$attempts ) {
+			if ( 'download' === $context['op'] ) {
+				$attempts[] = $payload;
+			}
+		};
+		add_action( 'mainwp_backup_diag_poll', $record, 10, 3 );
+		try {
+			try {
+				MainWP_Connect::download_to_file( static::fixture_url( '/partial?size=4096&send=1024&token=private-test-token' ), $file, 4096 );
+				$this->fail( 'Expected cURL 18.' );
+			} catch ( MainWP_Exception $error ) {
+				$this->assertStringContainsString( 'cURL error 18', $error->get_message_extra() );
+			}
+			MainWP_Connect::download_to_file( static::fixture_url( '/206?size=4096' ), $file, 4096 );
+		} finally {
+			remove_action( 'mainwp_backup_diag_poll', $record, 10 );
+		}
+		$this->assertCount( 2, $attempts );
+		$this->assertSame( array( 200, 206 ), array_column( $attempts, 'http_status' ) );
+		$this->assertSame( array( null, 1024 ), array_column( $attempts, 'content_range_start' ) );
+		$this->assertSame( array( 0, 1024 ), array_column( $attempts, 'requested_offset' ) );
+		$this->assertSame( array( 1024, 3072 ), array_column( $attempts, 'received_bytes' ) );
+		$this->assertSame( array( 1024, 3072 ), array_column( $attempts, 'written_bytes' ) );
+		$this->assertSame( array( null, null ), array_column( $attempts, 'requested_range_end' ) );
+		$this->assertGreaterThan( 0.0, $attempts[0]['duration_s'] );
+		$this->assertSame( array( '', 'identity' ), array_column( $attempts, 'content_encoding' ) );
+		$this->assertStringNotContainsString( 'private-test-token', json_encode( $attempts ) );
+		$this->assertSame( static::fixture_content( 4096 ), file_get_contents( $file ) );
+	}
+
+	/**
 	 * A compromised Child that streams twice its declared size is cut off near
 	 * that size, and nothing is left behind as a completed artifact.
 	 *

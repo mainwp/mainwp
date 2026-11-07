@@ -23,6 +23,28 @@ use MainWP\Dashboard\MainWP_Backup_Storage_S3;
 class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 
 	/**
+	 * Empty PUTs carry a length even when the HTTP transport omits it.
+	 */
+	public function test_empty_put_has_explicit_zero_length() {
+		$provider = $this->make_provider( array( $this->response( 200 ) ) );
+		$this->assertTrue( $provider->put_object( 'files/tombstones.list', '' ) );
+		$args = $this->requests[0]['args'];
+		$this->assertSame( '', $args['body'] );
+		$this->assertSame( '0', $args['headers']['Content-Length'] ?? null );
+	}
+
+	/**
+	 * Nonempty PUTs retain their existing body and transport length handling.
+	 */
+	public function test_nonempty_put_keeps_transport_length_handling() {
+		$provider = $this->make_provider( array( $this->response( 200 ) ) );
+		$this->assertTrue( $provider->put_object( 'files/data.bin', 'payload' ) );
+		$args = $this->requests[0]['args'];
+		$this->assertSame( 'payload', $args['body'] );
+		$this->assertArrayNotHasKey( 'Content-Length', $args['headers'] );
+	}
+
+	/**
 	 * Requests captured by the injected transport.
 	 *
 	 * @var array

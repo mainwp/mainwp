@@ -103,6 +103,11 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
     public function put_object( string $key, string $body, string $content_type = 'application/octet-stream' ): bool {
         $headers = array( 'Content-Type' => $content_type );
 
+        // WP HTTP transports can omit the length for an empty PUT.
+        if ( '' === $body ) {
+            $headers['Content-Length'] = '0';
+        }
+
         // Optional bucket-side encryption, opt-in per destination and off by
         // default so S3-compatible endpoints that reject the header (MinIO in
         // its default mode, GCS over the S3 API) are never sent it. The header

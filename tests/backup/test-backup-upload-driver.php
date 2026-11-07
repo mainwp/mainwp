@@ -35,6 +35,54 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * Whole artifacts require matching remote sizes after PUT, including zero.
+	 *
+	 * @dataProvider whole_artifact_sizes
+	 * @param string $body Artifact bytes.
+	 * @param mixed  $head Remote verification result.
+	 * @param bool   $valid Whether verification should succeed.
+	 */
+	public function test_whole_artifact_verifies_remote_size( $body, $head, $valid ) {
+		$path = wp_tempnam( 'tombstones.list' );
+		file_put_contents( $path, $body );
+		$provider = $this->createMock( \MainWP\Dashboard\MainWP_Backup_Storage_Provider::class );
+		$provider->expects( $this->exactly( 2 ) )->method( 'head_object' )
+			->with( 'snapshot/files/tombstones.list' )->willReturnOnConsecutiveCalls( false, $head );
+		$provider->expects( $this->once() )->method( 'put_object' )
+			->with( 'snapshot/files/tombstones.list', $body )->willReturn( true );
+		if ( ! $valid ) {
+			$this->expectException( \RuntimeException::class );
+			$this->expectExceptionMessage( 'Upload verification failed' );
+		}
+		try {
+			$method   = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'upload_whole_artifact' );
+			$artifact = array(
+				'file' => 'tombstones.list',
+				'path' => $path,
+			);
+			$method->invoke( MainWP_Backup_Upload_Driver::instance(), $artifact, 'snapshot/', $provider, array( 'encrypt' => false ) );
+		} finally {
+			unlink( $path );
+		}
+	}
+
+	/**
+	 * Matching, missing and incorrect sizes for empty and nonempty artifacts.
+	 *
+	 * @return array
+	 */
+	public function whole_artifact_sizes() {
+		$cases = array();
+		foreach ( array( '', 'payload' ) as $body ) {
+			$cases[] = array( $body, array( 'size' => strlen( $body ) ), true );
+			$cases[] = array( $body, array( 'size' => strlen( $body ) + 1 ), false );
+			$cases[] = array( $body, array( 'size' => null ), false );
+			$cases[] = array( $body, false, false );
+		}
+		return $cases;
+	}
+
+	/**
 	 * Both remote layouts survive a display-name change.
 	 *
 	 * @dataProvider remote_folder_layouts

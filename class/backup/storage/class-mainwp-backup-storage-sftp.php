@@ -71,7 +71,7 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
     /**
      * Connection factory: fn(): object (a logged-in SFTP connection).
      *
-     * @var callable
+     * @var callable|null
      */
     private $connection_factory;
 
@@ -90,6 +90,32 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
     private $base_path;
 
     /**
+     * Unique directories awaiting best-effort cleanup after object deletion.
+     *
+     * @var array<string,bool>
+     */
+    private $delete_directories = array();
+
+    /**
+     * Clean up once per directory when the deletion batch releases the provider.
+     */
+    public function __destruct() {
+        $directories = array_keys( $this->delete_directories );
+        usort( $directories, static function ( $a, $b ) {
+            return substr_count( $b, '/' ) <=> substr_count( $a, '/' );
+        } );
+        foreach ( $directories as $directory ) {
+            try {
+                // Never recurse: other snapshots and in-flight uploads survive.
+                $this->connection->rmdir( $directory );
+            } catch ( \Throwable $e ) {
+                // Directory cleanup must not turn confirmed object deletes into failures.
+                break;
+            }
+        }
+    }
+
+    /**
      * Constructor.
      *
      * @param array         $settings           Provider settings: host, port, username, password, private_key, base_path.
@@ -98,7 +124,8 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
     public function __construct( array $settings, $connection_factory = null ) {
         $this->settings           = $settings;
         $this->base_path          = isset( $settings['base_path'] ) ? rtrim( (string) $settings['base_path'], '/' ) : '';
-        $this->connection_factory = is_callable( $connection_factory ) ? $connection_factory : array( $this, 'default_connection' );
+        // Avoid a self-reference so releasing the provider runs deferred cleanup immediately.
+        $this->connection_factory = is_callable( $connection_factory ) ? $connection_factory : null;
     }
 
     /**
@@ -476,15 +503,13 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
             throw new \RuntimeException( esc_html( 'Storage request DELETE ' . $key . ' failed.' ), 0 );
         }
 
-        // Keep the shared site folder, matching the Local provider. Use
-        // non-recursive rmdir so other snapshots and in-flight uploads survive.
+        // Defer cleanup until this batch ends, rather than sending a failing
+        // rmdir for every chunk. Keep the shared site folder.
         $segments = explode( '/', str_replace( '\\', '/', $key ) );
         $stop     = $this->base_path . '/' . $segments[0];
         $dir      = substr( $path, 0, (int) strrpos( $path, '/' ) );
         while ( $dir !== $this->base_path && $dir !== $stop ) {
-            if ( ! $sftp->rmdir( $dir ) ) {
-                break; // Non-empty or unavailable directories must not fail the object delete.
-            }
+            $this->delete_directories[ $dir ] = true;
             $dir = substr( $dir, 0, (int) strrpos( $dir, '/' ) );
         }
 
@@ -570,7 +595,7 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
         }
 
         try {
-            $this->connection = call_user_func( $this->connection_factory );
+            $this->connection = null !== $this->connection_factory ? call_user_func( $this->connection_factory ) : $this->default_connection();
         } catch ( \RuntimeException $e ) {
             throw $e;
         } catch ( \Throwable $e ) {

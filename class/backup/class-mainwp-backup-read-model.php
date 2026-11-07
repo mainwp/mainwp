@@ -585,7 +585,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 continue;
             }
             $has_rollback_source           = MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $completed_job );
-            $safety_deletion_unconfirmed   = ! empty( $completed_job->checkpoint['pre_snapshot_pruning'] ) && empty( $completed_job->checkpoint['pre_snapshot_pruned'] );
+            $safety_deletion_unconfirmed   = self::safety_deletion_unconfirmed( $completed_job->checkpoint );
             if ( $has_rollback_source || $safety_deletion_unconfirmed ) {
                 $failed_jobs[] = $completed_job;
             }
@@ -611,7 +611,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'error_code'      => (string) ( $failed_job->checkpoint['last_error_code'] ?? '' ),
                 'has_rollback'    => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $failed_job ),
                 'is_rollback'     => ! empty( $failed_job->checkpoint['is_rollback'] ),
-                'safety_deletion_unconfirmed' => ! empty( $failed_job->checkpoint['pre_snapshot_pruning'] ) && empty( $failed_job->checkpoint['pre_snapshot_pruned'] ),
+                'safety_deletion_unconfirmed' => self::safety_deletion_unconfirmed( (array) $failed_job->checkpoint ),
                 'restore_outcome' => null === $report ? null : array(
                     'valid'    => $report['valid'],
                     'files'    => $report['files'],
@@ -624,6 +624,16 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'failed_restore_jobs'   => $failed_rows,
         );
     }
+    /**
+     * Whether safety-backup removal was started but remains unconfirmed.
+     *
+     * @param array $checkpoint Decoded restore checkpoint.
+     * @return bool
+     */
+    private static function safety_deletion_unconfirmed( array $checkpoint ): bool {
+        return ! empty( $checkpoint['pre_snapshot_pruning'] ) && empty( $checkpoint['pre_snapshot_pruned'] );
+    }
+
     /**
      * A count the Child reports is stored as sent, so anything that is not an exact whole, non-negative number that fits an int reads as unknown.
      *

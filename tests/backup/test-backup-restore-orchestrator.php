@@ -8418,6 +8418,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				'error_code'   => 'mainwp_restore_disk_full',
 				'has_rollback' => false,
 				'is_rollback'  => false,
+				'safety_deletion_unconfirmed' => false,
 			),
 			$row
 		);
@@ -8431,7 +8432,27 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$row = MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id )['failed_restore_jobs'][0];
 		$this->assertArrayHasKey( 'restore_outcome', $row );
 		$this->assertNull( $row['restore_outcome'] );
-		$this->assertSame( array( 'job_id', 'snapshot_id', 'status', 'date_label', 'last_error', 'error_code', 'has_rollback', 'is_rollback', 'restore_outcome' ), array_keys( $row ) );
+		$this->assertSame( array( 'job_id', 'snapshot_id', 'status', 'date_label', 'last_error', 'error_code', 'has_rollback', 'is_rollback', 'safety_deletion_unconfirmed', 'restore_outcome' ), array_keys( $row ) );
+	}
+
+	/**
+	 * A persisted uncertain deletion survives reload without enabling rollback.
+	 */
+	public function test_restore_history_includes_unconfirmed_completed_deletion() {
+		$checkpoint = array(
+			'pre_snapshot_artifacts' => array( array( 'role' => 'full', 'file' => 'safety.zip', 'size' => 100 ) ),
+			'pre_snapshot_pruning'   => true,
+		);
+		$job = $this->make_job( $checkpoint, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED );
+		$rows = MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id )['failed_restore_jobs'];
+		$this->assertCount( 1, $rows );
+		$this->assertSame( (int) $job->id, $rows[0]['job_id'] );
+		$this->assertTrue( $rows[0]['safety_deletion_unconfirmed'] );
+		$this->assertFalse( $rows[0]['has_rollback'] );
+
+		$checkpoint['pre_snapshot_pruned'] = true;
+		MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
+		$this->assertSame( array(), MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id )['failed_restore_jobs'] );
 	}
 
 	/**

@@ -581,7 +581,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
         foreach ( is_array( $completed_jobs ) ? $completed_jobs : array() as $completed_job ) {
             $completed_job->checkpoint = json_decode( $completed_job->checkpoint, true );
-            if ( is_array( $completed_job->checkpoint ) && MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $completed_job ) ) {
+            if ( is_array( $completed_job->checkpoint ) && ( MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $completed_job ) || ( ! empty( $completed_job->checkpoint['pre_snapshot_pruning'] ) && empty( $completed_job->checkpoint['pre_snapshot_pruned'] ) ) ) ) {
                 $failed_jobs[] = $completed_job;
             }
         }
@@ -606,6 +606,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'error_code'      => (string) ( $failed_job->checkpoint['last_error_code'] ?? '' ),
                 'has_rollback'    => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $failed_job ),
                 'is_rollback'     => ! empty( $failed_job->checkpoint['is_rollback'] ),
+                'safety_deletion_unconfirmed' => ! empty( $failed_job->checkpoint['pre_snapshot_pruning'] ) && empty( $failed_job->checkpoint['pre_snapshot_pruned'] ),
                 'restore_outcome' => null === $report ? null : array(
                     'valid'    => $report['valid'],
                     'files'    => $report['files'],

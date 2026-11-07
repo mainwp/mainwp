@@ -472,12 +472,20 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
         $path = $this->resolve( $key );
         $sftp = $this->connection();
 
-        if ( ! $sftp->file_exists( $path ) ) {
-            return true;
+        if ( $sftp->file_exists( $path ) && ! $sftp->delete( $path, false ) ) {
+            throw new \RuntimeException( esc_html( 'Storage request DELETE ' . $key . ' failed.' ), 0 );
         }
 
-        if ( ! $sftp->delete( $path, false ) ) {
-            throw new \RuntimeException( esc_html( 'Storage request DELETE ' . $key . ' failed.' ), 0 );
+        // Keep the shared site folder, matching the Local provider. Use
+        // non-recursive rmdir so other snapshots and in-flight uploads survive.
+        $segments = explode( '/', str_replace( '\\', '/', $key ) );
+        $stop     = $this->base_path . '/' . $segments[0];
+        $dir      = substr( $path, 0, (int) strrpos( $path, '/' ) );
+        while ( $dir !== $this->base_path && $dir !== $stop ) {
+            if ( ! $sftp->rmdir( $dir ) ) {
+                break; // Non-empty or unavailable directories must not fail the object delete.
+            }
+            $dir = substr( $dir, 0, (int) strrpos( $dir, '/' ) );
         }
 
         return true;

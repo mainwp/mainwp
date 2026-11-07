@@ -452,6 +452,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 initiate: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_initiate' ) ); ?>',
                 progress: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_progress' ) ); ?>',
                 cancel:   '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_cancel' ) ); ?>',
+                safetyDelete: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_safety_delete' ) ); ?>',
                 rollback: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_rollback' ) ); ?>',
                 nativeBackupInitiate: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_initiate' ) ); ?>',
                 nativeBackupProgress: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_progress' ) ); ?>',
@@ -1184,9 +1185,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         var jobLabels = job.is_rollback ? rollbackStatusLabels : statusLabels;
                         var jobMessage = ( job.error_code && restoreOutcomeMessages[ job.error_code ] ) || job.last_error;
                         if ( 'completed' === job.status && ! jobMessage ) {
-                            jobMessage = safetyNoteText;
+                            jobMessage = job.has_rollback && ! job.is_rollback ? safetyNoteText : '<?php echo esc_js( __( 'Restore completed. No safety backup is available for rollback.', 'mainwp' ) ); ?>';
                         }
-                        var showRollback = job.has_rollback && canRestore;
+                        if ( job.safety_deletion_unconfirmed ) {
+                            jobMessage = '<?php echo esc_js( __( 'Safety backup deletion is unconfirmed. Retry deletion to confirm removal.', 'mainwp' ) ); ?>';
+                        }
+                        var showRollback = job.has_rollback && ! job.safety_deletion_unconfirmed && canRestore;
                         var sentence = restoreOutcomeSentence( job, showRollback && ! job.is_rollback );
                         var $details = $( '<td></td>' ).text( jobMessage );
                         if ( sentence ) {
@@ -1200,6 +1204,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                                 .attr( 'data-job-id', job.job_id )
                                 .prop( 'disabled', !! response.active_restore_job_id || siteDisconnected )
                                 .text( job.is_rollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack )
+                                .appendTo( $action );
+                        }
+                        if ( ( job.has_rollback || job.safety_deletion_unconfirmed ) && ! job.is_rollback && canDelete ) {
+                            $( '<button type="button" class="ui mini basic red button mainwp-delete-safety-backup"></button>' )
+                                .attr( 'data-job-id', job.job_id )
+                                .prop( 'disabled', !! response.active_restore_job_id || siteDisconnected )
+                                .text( '<?php echo esc_js( __( 'Delete safety backup', 'mainwp' ) ); ?>' )
                                 .appendTo( $action );
                         }
                         $( '<tr></tr>' ).append(
@@ -1876,6 +1887,24 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             $( '#mainwp-restore-rollback-btn' ).on( 'click', function () {
                 startRollback( currentJob );
+            } );
+
+            $( '#mainwp-restore-failed-jobs' ).on( 'click', '.mainwp-delete-safety-backup', function () {
+                if ( ! window.confirm( '<?php echo esc_js( __( 'Delete this safety backup from the site? You will no longer be able to roll back this restore. This cannot be undone.', 'mainwp' ) ); ?>' ) ) {
+                    return;
+                }
+                var $button = $( this );
+                var $actions = $button.closest( 'td' ).find( 'button' ).prop( 'disabled', true );
+                $.post( ajaxurl, { action: 'mainwp_restore_safety_delete', security: nonces.safetyDelete, job_id: $button.attr( 'data-job-id' ) }, function ( response ) {
+                    if ( ! response || response.result !== 'ok' ) {
+                        window.alert( response && response.error ? response.error : '<?php echo esc_js( __( 'Deletion could not be confirmed. Refresh and try again.', 'mainwp' ) ); ?>' );
+                    }
+                }, 'json' ).fail( function () {
+                    window.alert( '<?php echo esc_js( __( 'Deletion could not be confirmed. Refresh and try again.', 'mainwp' ) ); ?>' );
+                } ).always( function () {
+                    $actions.prop( 'disabled', false );
+                    loadSnapshots( currentSite );
+                } );
             } );
 
             $( '#mainwp-restore-failed-jobs' ).on( 'click', '.mainwp-restore-failed-job', function () {

@@ -12,15 +12,16 @@ function phpToJs( code ) {
 	} );
 }
 
-function harness( jobs, canRestore = true ) {
+function harness( jobs, canRestore = true, canDelete = false ) {
 	const elements = new Map();
 	const tags = new Set( [
+		'<button type="button" class="ui mini basic red button mainwp-delete-safety-backup"></button>',
 		'<td class="collapsing"></td>', '<td></td>', '<tr></tr>', '<div></div>',
 		'<span class="ui small basic label"></span>',
 		'<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>'
 	] );
 	const context = {
-		canRestore, currentSite: 1, currentJob: 0, backupPollTimer: null, backupFollowGen: 0, backupFollowStops: 0, backupPendingKickoffs: {}, backupCancelledEpoch: {}, backupPendingStarts: {}, siteDisconnected: false,
+		snapshotListRequest: 0, canRestore, canDelete, currentSite: 1, currentJob: 0, backupPollTimer: null, backupFollowGen: 0, backupFollowStops: 0, backupPendingKickoffs: {}, backupCancelledEpoch: {}, backupPendingStarts: {}, siteDisconnected: false,
 		ajaxurl: '/admin-ajax.php', nonces: { list: 'list-nonce' }, snapshotsPlaceholders: {},
 		statusLabels: { failed_permanent: 'Failed', cancelled: 'Cancelled', completed: 'Completed' },
 		rollbackStatusLabels: { failed_permanent: 'Rollback failed' },
@@ -38,6 +39,8 @@ function harness( jobs, canRestore = true ) {
 		const state = { tag: selector, text: '', children: [], attrs: {}, props: {}, visible: false };
 		const element = {
 			state,
+            removeData() { return this; },
+            data() { return this; },
 			text( value ) { assert.equal( typeof value, 'string' ); state.text = value; state.children = []; return this; },
 			empty() { state.text = ''; state.children = []; return this; },
 			append( ...children ) {
@@ -198,4 +201,24 @@ test( 'red: untrusted history errors and reports use text nodes and known senten
 		assert.deepEqual( detail.children[0].children, [] );
 		assert.ok( ! detail.children[0].text.includes( unsafe ) );
 	}
+} );
+
+test( 'safety deletion requires delete rights and excludes rollback recovery sources', () => {
+    const jobs = [ job( { has_rollback: true } ), job( { has_rollback: true, is_rollback: true } ), job() ];
+    const allowed = harness( jobs, true, true );
+    assert.equal( allowed.actions[0][1].text, 'Delete safety backup' );
+    assert.equal( allowed.actions[0][1].attrs['data-job-id'], 12 );
+    assert.equal( allowed.actions[1].length, 1 );
+    assert.equal( allowed.actions[2].length, 0 );
+    assert.equal( harness( jobs, true, false ).actions[0].length, 1 );
+} );
+
+test( 'unconfirmed deletion survives refresh with a deletion retry and no rollback', () => {
+    const jobs = [ job( { status: 'completed', has_rollback: false, safety_deletion_unconfirmed: true } ) ];
+    const h = harness( jobs, true, true );
+    assert.match( h.details[0].text, /deletion is unconfirmed/ );
+    assert.equal( h.actions[0].length, 1 );
+    assert.equal( h.actions[0][0].text, 'Delete safety backup' );
+    assert.equal( harness( jobs, true, false ).actions[0].length, 0 );
+    assert.equal( harness( jobs, false, true ).actions[0].length, 1 );
 } );

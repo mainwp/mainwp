@@ -545,6 +545,46 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Delete a finished restore's safety backup while holding the site's slot.
+     *
+     * @param object $job Restore job whose backup should be removed.
+     * @return bool Whether the Child confirmed removal.
+     */
+    public function delete_safety_backup( object $job ): bool {
+        if ( ! MainWP_Install::backup_restore_job_checkpoint_rev_ready() ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RESTORE_SCHEMA_REPAIR_PENDING );
+        }
+        $website = $this->website( $job );
+        if ( self::site_is_disconnected( $website ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED );
+        }
+        $this->assert_no_open_site_backup( (int) $job->site_id );
+        $store       = MainWP_Backup_Restore_Job_Store::instance();
+        $reservation = $this->reserve_site_for( (int) $job->site_id, esc_html__( 'A restore is already running for this site. Wait for it to finish before deleting the safety backup.', 'mainwp' ) );
+        try {
+            $source = $store->get_job( (int) $job->id );
+            if ( null === $source || (int) $source->site_id !== (int) $job->site_id ) {
+                throw new MainWP_Exception( esc_html__( 'Restore job not found.', 'mainwp' ) );
+            }
+            $this->assert_rollback_status( $source );
+            // A failed rollback may still need its source for recovery.
+            if ( ! empty( $source->checkpoint['is_rollback'] ) || $this->rollback_started_for( $source ) || empty( $source->pre_snapshot_task_id ) || empty( $source->checkpoint['pre_snapshot_artifacts'] ) ) {
+                throw new MainWP_Exception( esc_html__( 'This safety backup is unavailable or is being used by a rollback.', 'mainwp' ) );
+            }
+            if ( ! empty( $source->checkpoint['pre_snapshot_pruned'] ) ) {
+                return true;
+            }
+            $removed = $this->prune_safety_backup( $website, (int) $source->id, (string) $source->pre_snapshot_task_id, (array) $source->checkpoint, null );
+            if ( null === $removed ) {
+                throw new MainWP_Exception( esc_html__( 'Communication with the site failed. Safety backup deletion is unconfirmed. Refresh and try again.', 'mainwp' ) );
+            }
+            return true === $removed;
+        } finally {
+            $store->release_reservation( $reservation );
+        }
+    }
+
+    /**
      * Refuse a rollback of a restore that has not finished.
      *
      * @param object $job Restore job.
@@ -2922,9 +2962,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *
      * The job is marked as pruning before the request, so a confirmed
      * removal whose record cannot be written still stops the job offering
-     * Roll Back from the deleted files. An unconfirmed answer clears the
-     * mark again; if even that write fails, Roll Back stays off, which is
-     * the safe side.
+     * Roll Back from the deleted files. An unconfirmed answer keeps the
+     * mark so deletion can be retried without making uncertain files
+     * available for rollback, even when subsequent checkpoint writes fail.
      *
      * @param object      $website    Website object.
      * @param int         $job_id     Restore job that took the safety backup.
@@ -2949,6 +2989,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( null !== $held_job && ! $this->lease_still_held( $held_job ) ) {
             return null;
         }
+        // Foreground deletion must not inherit the hours-long Child timeout.
+        $prune_timeout = static function ( $seconds, $what = '' ) {
+            return 'backup_task_prune' === $what ? min( (int) $seconds, 60 ) : $seconds;
+        };
+        add_filter( 'mainwp_fetch_url_site_timeout', $prune_timeout, PHP_INT_MAX, 2 );
         try {
             $answer = MainWP_Connect::fetch_url_authed(
                 $website,
@@ -2962,13 +3007,19 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 false
             );
         } catch ( \Throwable $e ) {
+            do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: communication with the site failed while deleting its safety backup; deletion is unconfirmed.', $job_id ), (int) $website->id, 0 );
+            $checkpoint['pre_snapshot_pruning'] = true;
             $store->save_checkpoint( $job_id, $checkpoint );
             return null;
+        } finally {
+            remove_filter( 'mainwp_fetch_url_site_timeout', $prune_timeout, PHP_INT_MAX );
         }
 
         $removed = MainWP_Backup_Executor::child_prune_confirmed( $answer );
         if ( $removed ) {
             $checkpoint['pre_snapshot_pruned'] = true;
+        } else {
+            $checkpoint['pre_snapshot_pruning'] = true;
         }
         if ( ! $store->save_checkpoint( $job_id, $checkpoint ) ) {
             $store->save_checkpoint( $job_id, $checkpoint );

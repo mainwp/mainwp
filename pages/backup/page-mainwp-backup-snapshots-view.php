@@ -1187,7 +1187,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         if ( 'completed' === job.status && ! jobMessage ) {
                             jobMessage = job.has_rollback && ! job.is_rollback ? safetyNoteText : '<?php echo esc_js( __( 'Restore completed. No safety backup is available for rollback.', 'mainwp' ) ); ?>';
                         }
-                        var showRollback = job.has_rollback && canRestore;
+                        if ( job.safety_deletion_unconfirmed ) {
+                            jobMessage = '<?php echo esc_js( __( 'Safety backup deletion is unconfirmed. Retry deletion to confirm removal.', 'mainwp' ) ); ?>';
+                        }
+                        var showRollback = job.has_rollback && ! job.safety_deletion_unconfirmed && canRestore;
                         var sentence = restoreOutcomeSentence( job, showRollback && ! job.is_rollback );
                         var $details = $( '<td></td>' ).text( jobMessage );
                         if ( sentence ) {
@@ -1203,7 +1206,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                                 .text( job.is_rollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack )
                                 .appendTo( $action );
                         }
-                        if ( job.has_rollback && ! job.is_rollback && canDelete ) {
+                        if ( ( job.has_rollback || job.safety_deletion_unconfirmed ) && ! job.is_rollback && canDelete ) {
                             $( '<button type="button" class="ui mini basic red button mainwp-delete-safety-backup"></button>' )
                                 .attr( 'data-job-id', job.job_id )
                                 .prop( 'disabled', !! response.active_restore_job_id || siteDisconnected )

@@ -212,3 +212,13 @@ test( 'safety deletion requires delete rights and excludes rollback recovery sou
     assert.equal( allowed.actions[2].length, 0 );
     assert.equal( harness( jobs, true, false ).actions[0].length, 1 );
 } );
+
+test( 'unconfirmed deletion survives refresh with a deletion retry and no rollback', () => {
+    const jobs = [ job( { status: 'completed', has_rollback: false, safety_deletion_unconfirmed: true } ) ];
+    const h = harness( jobs, true, true );
+    assert.match( h.details[0].text, /deletion is unconfirmed/ );
+    assert.equal( h.actions[0].length, 1 );
+    assert.equal( h.actions[0][0].text, 'Delete safety backup' );
+    assert.equal( harness( jobs, true, false ).actions[0].length, 0 );
+    assert.equal( harness( jobs, false, true ).actions[0].length, 1 );
+} );

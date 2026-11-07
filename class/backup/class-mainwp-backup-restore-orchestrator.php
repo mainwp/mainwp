@@ -574,7 +574,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( ! empty( $source->checkpoint['pre_snapshot_pruned'] ) ) {
                 return true;
             }
-            return true === $this->prune_safety_backup( $website, (int) $source->id, (string) $source->pre_snapshot_task_id, (array) $source->checkpoint, null );
+            $removed = $this->prune_safety_backup( $website, (int) $source->id, (string) $source->pre_snapshot_task_id, (array) $source->checkpoint, null );
+            if ( null === $removed ) {
+                throw new MainWP_Exception( esc_html__( 'Communication with the site failed. Safety backup deletion is unconfirmed. Refresh and try again.', 'mainwp' ) );
+            }
+            return true === $removed;
         } finally {
             $store->release_reservation( $reservation );
         }
@@ -2958,9 +2962,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *
      * The job is marked as pruning before the request, so a confirmed
      * removal whose record cannot be written still stops the job offering
-     * Roll Back from the deleted files. An unconfirmed answer clears the
-     * mark again; if even that write fails, Roll Back stays off, which is
-     * the safe side.
+     * Roll Back from the deleted files. An unconfirmed answer keeps the
+     * mark so deletion can be retried without making uncertain files
+     * available for rollback, even when subsequent checkpoint writes fail.
      *
      * @param object      $website    Website object.
      * @param int         $job_id     Restore job that took the safety backup.
@@ -2998,6 +3002,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 false
             );
         } catch ( \Throwable $e ) {
+            do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: communication with the site failed while deleting its safety backup; deletion is unconfirmed.', $job_id ), (int) $website->id, 0 );
+            $checkpoint['pre_snapshot_pruning'] = true;
             $store->save_checkpoint( $job_id, $checkpoint );
             return null;
         }
@@ -3005,6 +3011,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $removed = MainWP_Backup_Executor::child_prune_confirmed( $answer );
         if ( $removed ) {
             $checkpoint['pre_snapshot_pruned'] = true;
+        } else {
+            $checkpoint['pre_snapshot_pruning'] = true;
         }
         if ( ! $store->save_checkpoint( $job_id, $checkpoint ) ) {
             $store->save_checkpoint( $job_id, $checkpoint );

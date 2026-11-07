@@ -101,8 +101,8 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
      */
     public function __destruct() {
         $directories = array_keys( $this->delete_directories );
-        usort( $directories, static function ( $a, $b ) {
-            return substr_count( $b, '/' ) <=> substr_count( $a, '/' );
+        usort( $directories, static function ( $first_directory, $second_directory ) {
+            return substr_count( $second_directory, '/' ) <=> substr_count( $first_directory, '/' );
         } );
         foreach ( $directories as $directory ) {
             try {

@@ -2608,20 +2608,19 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
         // end staging filter.
 
-        $_where = $where_staging;
-        // To fix bug run from cron job.
-        if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-            return $_where;
-        }
-
-        // To fix bug run from wp cli.
-        if ( defined( 'WP_CLI' ) && WP_CLI ) {
-            return $_where;
-        }
-
-        // Run from Rest Api.
-        if ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) {
-            return $_where;
+        $_where       = $where_staging;
+        $rest_context = defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING;
+        $maintenance  = ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI );
+        if ( $rest_context || $maintenance ) {
+            $user_id = get_current_user_id();
+            // Legacy v1 keys authenticate without an owner; cron and CLI also run userless.
+            $legacy_rest = $rest_context && defined( 'MAINWP_REST_API' ) && MAINWP_REST_API;
+            if ( 0 === $user_id && ( ! $rest_context || $legacy_rest ) ) {
+                return $_where;
+            }
+            if ( $user_id <= 0 || ! get_userdata( $user_id ) ) {
+                return $_where . ' AND 0 ';
+            }
         }
 
         /**
@@ -2638,14 +2637,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( is_array( $allowed_sites ) && ! empty( $allowed_sites ) ) {
-            // valid group ids.
-            $allowed_sites = array_filter(
-                $allowed_sites,
-                function ( $e ) {
-                    return is_numeric( $e ) ? true : false;
-                }
-            );
-            $_where       .= ' AND ' . $site_table_alias . '.id IN (' . implode( ',', $allowed_sites ) . ') ';
+            $allowed_sites = array_filter( array_map( 'intval', array_filter( $allowed_sites, 'is_numeric' ) ), static fn( $id ) => $id > 0 );
+            $_where       .= empty( $allowed_sites ) ? ' AND 0 ' : ' AND ' . $site_table_alias . '.id IN (' . implode( ',', $allowed_sites ) . ') ';
         } else {
             $_where .= ' AND 0 ';
         }

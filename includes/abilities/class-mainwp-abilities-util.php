@@ -301,10 +301,9 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * Check that the current user has unrestricted access to all sites.
      *
      * The mainwp_currentuserallowedaccesssites filter is applied directly here
-     * rather than through MainWP_DB::get_sql_where_allow_access_sites(), which
-     * skips the filter while DOING_CRON, WP_CLI, or MAINWP_REST_API_DOING is
-     * defined. Going through that wrapper would turn this guard into a no-op on
-     * the REST and MCP surfaces it exists to cover.
+     * rather than through MainWP_DB::get_sql_where_allow_access_sites(), so
+     * this guard evaluates grants independently of the DB query's staging
+     * and userless maintenance exceptions.
      *
      * @param mixed $_input The ability input (unused but required by callback signature).
      * @return true|\WP_Error True when unrestricted, WP_Error otherwise.
@@ -336,10 +335,9 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * Get normalized site grants configured by Team Control.
      *
      * Applies the mainwp_currentuserallowedaccesssites filter directly,
-     * not through MainWP_DB::get_sql_where_allow_access_sites(), which
-     * skips the filter entirely while DOING_CRON, WP_CLI, or
-     * MAINWP_REST_API_DOING is defined. Every scoping check below builds on
-     * the effective scope so REST/MCP surfaces stay covered.
+     * not through MainWP_DB::get_sql_where_allow_access_sites(), so the
+     * configured grants remain independent of staging and userless
+     * maintenance exceptions. Every scoping check below builds on this scope.
      *
      * @return string|int[] 'all' when unrestricted, otherwise a (possibly
      *                      empty) unique int list. Unexpected filter shapes

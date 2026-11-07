@@ -513,6 +513,217 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Terminal writers persist ownership before deleted-site cleanup can select the row.
+	 *
+	 * @dataProvider deleted_site_terminal_statuses
+	 * @param string $status Snapshot lifecycle status.
+	 */
+	public function test_terminal_writer_paths_reach_deleted_site_purge( string $status ): void {
+		list( $id, $dir ) = $this->make_snapshot_with_dir(
+			array(
+				'archives'      => '[]',
+				'manifest_path' => '',
+				'status'        => 'running',
+			)
+		);
+		file_put_contents( $dir . '/files.list', 'manifest' );
+		$paths     = array(
+			'archives'      => array(
+				array(
+					'path' => $dir . '/artifact.tar',
+					'file' => 'artifact.tar',
+					'role' => 'full',
+				),
+			),
+			'manifest_path' => $dir . '/files.list',
+		);
+		$snapshots = MainWP_Backup_Snapshots::instance();
+		$this->assertTrue( $snapshots->set_status( $id, $status, $paths ) );
+		$row = $snapshots->get_snapshot_by_id( $id );
+		$this->assertSame( $paths['archives'], $row->archives );
+		$this->assertSame( $paths['manifest_path'], $row->manifest_path );
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		$preview  = $executor->purge_snapshots_for_task( $this->task_id, true, false, true, 0.0, true );
+		$this->assertSame( array( $id ), $preview['remaining_ids'] );
+		$this->assertSame( $status, $snapshots->get_snapshot_by_id( $id )->status );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertFileExists( $dir . '/files.list' );
+		$result = $executor->purge_snapshots_for_task( $this->task_id, true, false, true );
+		$this->assertSame( array( $id ), $result['deleted_ids'] );
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertDirectoryDoesNotExist( $dir );
+		$this->assertSame( 'pruned', $snapshots->get_snapshot_by_id( $id )->status );
+	}
+
+	/**
+	 * Missing ownership cannot turn a running row into a purge candidate.
+	 *
+	 * @dataProvider deleted_site_terminal_statuses
+	 * @param string $status Snapshot lifecycle status.
+	 */
+	public function test_terminal_writer_rejects_missing_paths( string $status ): void {
+		list( $id ) = $this->make_snapshot_with_dir(
+			array(
+				'archives'      => '[]',
+				'manifest_path' => '',
+				'status'        => 'running',
+			)
+		);
+		$snapshots  = MainWP_Backup_Snapshots::instance();
+		$this->assertFalse( $snapshots->set_status( $id, $status ) );
+		$this->assertSame( 'running', $snapshots->get_snapshot_by_id( $id )->status );
+	}
+
+	/**
+	 * A failed database write preserves both lifecycle and artifact ownership.
+	 *
+	 * @dataProvider deleted_site_terminal_statuses
+	 * @param string $status Snapshot lifecycle status.
+	 */
+	public function test_terminal_writer_database_failure_is_atomic( string $status ): void {
+		global $wpdb;
+
+		list( $id, $dir ) = $this->make_snapshot_with_dir(
+			array(
+				'archives'      => '[]',
+				'manifest_path' => '',
+				'status'        => 'running',
+			)
+		);
+		$table            = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$hit              = false;
+		$fail             = static function ( $sql ) use ( $table, &$hit ) {
+			if ( str_starts_with( $sql, "UPDATE `$table`" ) ) {
+				$hit = true;
+				return 'INVALID SNAPSHOT UPDATE';
+			}
+			return $sql;
+		};
+		$old              = $wpdb->suppress_errors( true );
+		add_filter( 'query', $fail );
+		try {
+			$this->assertFalse(
+				MainWP_Backup_Snapshots::instance()->set_status(
+					$id,
+					$status,
+					array(
+						'archives'      => array( array( 'path' => $dir . '/artifact.tar' ) ),
+						'manifest_path' => $dir . '/files.list',
+					)
+				)
+			);
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $old );
+		}
+		$this->assertTrue( $hit, 'The status write must reach the injected database failure.' );
+		$row = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$this->assertSame( 'running', $row->status );
+		$this->assertSame( array(), $row->archives );
+		$this->assertSame( '', $row->manifest_path );
+	}
+
+	/**
+	 * Existing recorded ownership remains usable by two-argument callers.
+	 *
+	 * @dataProvider deleted_site_terminal_statuses
+	 * @param string $status Snapshot lifecycle status.
+	 */
+	public function test_terminal_writer_reuses_stored_paths( string $status ): void {
+		list( $id ) = $this->make_snapshot_with_dir( array( 'status' => 'running' ) );
+		$snapshots  = MainWP_Backup_Snapshots::instance();
+		$before     = $snapshots->get_snapshot_by_id( $id );
+		$this->assertTrue( $snapshots->set_status( $id, $status ) );
+		$after = $snapshots->get_snapshot_by_id( $id );
+		$this->assertSame( $before->archives, $after->archives );
+		$this->assertSame( $before->manifest_path, $after->manifest_path );
+	}
+
+	/**
+	 * Archive ownership also covers runs that never downloaded a manifest.
+	 *
+	 * @dataProvider deleted_site_terminal_statuses
+	 * @param string $status Snapshot lifecycle status.
+	 */
+	public function test_terminal_writer_without_manifest_reaches_purge( string $status ): void {
+		list( $id, $dir ) = $this->make_snapshot_with_dir(
+			array(
+				'manifest_path' => '',
+				'status'        => 'running',
+			)
+		);
+		$this->assertTrue( MainWP_Backup_Snapshots::instance()->set_status( $id, $status ) );
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true, false, true );
+		$this->assertSame( array( $id ), $result['deleted_ids'] );
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertDirectoryDoesNotExist( $dir );
+	}
+
+	/**
+	 * Each supplied archive must record its own path.
+	 *
+	 * @dataProvider deleted_site_terminal_statuses
+	 * @param string $status Snapshot lifecycle status.
+	 */
+	public function test_terminal_writer_validates_every_archive( string $status ): void {
+		list( $id, $dir ) = $this->make_snapshot_with_dir( array( 'status' => 'running' ) );
+		foreach ( array( 'invalid', array(), array( 'path' => ' ' ), array( 'path' => 123 ) ) as $invalid ) {
+			$this->assertFalse( MainWP_Backup_Snapshots::instance()->set_status( $id, $status, array( 'archives' => array( array( 'path' => $dir . '/artifact.tar' ), $invalid ) ) ) );
+			$this->assertSame( 'running', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		}
+	}
+
+	/**
+	 * Callers can supply either ownership field and reuse the other.
+	 *
+	 * @dataProvider deleted_site_terminal_statuses
+	 * @param string $status Snapshot lifecycle status.
+	 */
+	public function test_terminal_writer_reuses_omitted_fields( string $status ): void {
+		list( $id, $dir ) = $this->make_snapshot_with_dir( array( 'status' => 'running' ) );
+		$snapshots        = MainWP_Backup_Snapshots::instance();
+		$archives         = array(
+			array(
+				'path' => $dir . '/artifact.tar',
+				'role' => 'db',
+			),
+		);
+		$this->assertTrue( $snapshots->set_status( $id, $status, array( 'archives' => $archives ) ) );
+		$this->assertSame( $dir . '/files.list', $snapshots->get_snapshot_by_id( $id )->manifest_path );
+		$this->assertTrue( $snapshots->set_status( $id, $status, array( 'manifest_path' => '' ) ) );
+		$this->assertSame( $archives, $snapshots->get_snapshot_by_id( $id )->archives );
+		$this->assertSame( '', $snapshots->get_snapshot_by_id( $id )->manifest_path );
+	}
+
+	/** Reusing ownership must not overwrite a concurrent artifact-damage marker. */
+	public function test_terminal_writer_preserves_concurrent_archive_metadata(): void {
+		global $wpdb;
+
+		list( $id ) = $this->make_snapshot_with_dir( array( 'status' => 'running' ) );
+		$table      = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$hit        = false;
+		$race       = null;
+		$race       = static function ( $sql ) use ( $table, $id, &$race, &$hit ) {
+			if ( str_starts_with( $sql, "UPDATE `$table`" ) ) {
+				remove_filter( 'query', $race );
+				$hit = true;
+				MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( $id, 'artifact.tar', 'test-damage' );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$this->assertTrue( MainWP_Backup_Snapshots::instance()->set_status( $id, 'partial' ) );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$this->assertTrue( $hit );
+		$row = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$this->assertSame( 'partial', $row->status );
+		$this->assertSame( 'test-damage', $row->archives[0]['damaged']['code'] );
+	}
+
+	/**
 	 * Deleted-site cleanup uses the existing tombstone and remote-delete lifecycle.
 	 *
 	 * @dataProvider deleted_site_terminal_statuses

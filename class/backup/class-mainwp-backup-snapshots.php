@@ -695,15 +695,48 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
      *
      * @param int    $snapshot_id Snapshot id.
      * @param string $status      New status, e.g. 'pruned'.
+     * @param array  $artifacts   Archive descriptors and manifest_path for failed/partial; omitted fields reuse stored ownership.
      *
      * @return bool False when the status write fails.
      */
-    public function set_status( int $snapshot_id, string $status ): bool {
+    public function set_status( int $snapshot_id, string $status, array $artifacts = array() ): bool {
+        $data   = array( 'status' => $status );
+        $format = array( '%s' );
+        if ( in_array( $status, array( 'failed', 'partial' ), true ) ) {
+            $snapshot = $this->get_snapshot_by_id( $snapshot_id );
+            if ( null === $snapshot ) {
+                return false;
+            }
+            $archives = array_key_exists( 'archives', $artifacts ) ? $artifacts['archives'] : $snapshot->archives;
+            $manifest = array_key_exists( 'manifest_path', $artifacts ) ? $artifacts['manifest_path'] : $snapshot->manifest_path;
+            if ( ! is_array( $archives ) || empty( $archives ) || ! is_string( $manifest ) ) {
+                return false;
+            }
+            foreach ( $archives as $archive ) {
+                if ( ! is_array( $archive ) || ! isset( $archive['path'] ) || ! is_string( $archive['path'] ) || '' === trim( $archive['path'] ) ) {
+                    return false;
+                }
+            }
+            // Ownership supplied by the writer becomes durable with terminal status.
+            // Leave reused columns untouched so concurrent metadata updates survive.
+            if ( array_key_exists( 'archives', $artifacts ) ) {
+                $encoded = wp_json_encode( $archives );
+                if ( false === $encoded ) {
+                    return false;
+                }
+                $data['archives'] = $encoded;
+                $format[]         = '%s';
+            }
+            if ( array_key_exists( 'manifest_path', $artifacts ) ) {
+                $data['manifest_path'] = $manifest;
+                $format[]              = '%s';
+            }
+        }
         return false !== $this->wpdb->update(
             $this->table_name( 'wp_backup_snapshot' ),
-            array( 'status' => $status ),
+            $data,
             array( 'id' => $snapshot_id ),
-            array( '%s' ),
+            $format,
             array( '%d' )
         );
     }

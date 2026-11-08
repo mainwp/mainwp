@@ -1,0 +1,15 @@
+{
+  "resultType": "input_required",
+  "inputRequests": {
+    "mainwp-approval-{{approval_id}}": {
+      "method": "elicitation/create",
+      "params": {
+        "mode": "url",
+        "elicitationId": "mainwp-approval-{{approval_id}}",
+        "url": "{{approval_url}}",
+        "message": "Open this link to approve or deny the action in your MainWP Dashboard. After you decide, call the tool again with the same arguments."
+      }
+    }
+  },
+  "requestState": "{{request_state}}"
+}

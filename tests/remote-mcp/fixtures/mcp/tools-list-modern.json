@@ -1,0 +1,11 @@
+{
+    "ttlMs": 300000,
+    "cacheScope": "private",
+    "resultType": "complete",
+    "_meta": {
+        "io.modelcontextprotocol/serverInfo": {
+            "name": "mainwp-dashboard",
+            "version": "VERSION"
+        }
+    }
+}

@@ -60,7 +60,34 @@ class MainWP_MCP {
     }
 
     /**
-     * Render the MainWP MCP landing page.
+     * The "Connect directly" view, which the remote MCP module offers through a filter.
+     *
+     * @return array|null `render` callable, `preferred` and `apps`, or null where the module
+     *                    doesn't load (a multisite).
+     */
+    public static function direct_view() {
+        /**
+         * Filter: mainwp_mcp_direct_view
+         *
+         * Offers the "Connect directly" view of the MainWP MCP page.
+         *
+         * @param array|null $view `render` (callable that prints the view and runs its own capability
+         *                         and nonce checks), `preferred` (bool, make it the default view)
+         *                         and `apps` (names of the apps it works with).
+         */
+        $view = apply_filters( 'mainwp_mcp_direct_view', null );
+        if ( ! is_array( $view ) || ! isset( $view['render'] ) || ! is_callable( $view['render'] ) ) {
+            return null;
+        }
+        return array(
+            'render'    => $view['render'],
+            'preferred' => ! empty( $view['preferred'] ),
+            'apps'      => isset( $view['apps'] ) && is_array( $view['apps'] ) ? array_values( array_filter( $view['apps'], 'is_string' ) ) : array(),
+        );
+    }
+
+    /**
+     * Render the MainWP MCP page: the "Connect directly" view or the local server wizard.
      *
      * @return void
      */
@@ -80,6 +107,98 @@ class MainWP_MCP {
             update_option( 'mainwp_onboarding_mcp_visited', 1 );
         }
 
+        $direct = static::direct_view();
+        $tab    = isset( $_GET['tab'] ) && is_string( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation is read-only.
+        if ( null === $direct ) {
+            $tab = 'local';
+        } elseif ( ! in_array( $tab, array( 'direct', 'local' ), true ) ) {
+            $tab = $direct['preferred'] ? 'direct' : 'local';
+        }
+
+        MainWP_UI::render_top_header( array( 'title' => esc_html__( 'MainWP MCP', 'mainwp' ) ) );
+        if ( null !== $direct ) {
+            static::render_navigation( $tab );
+        }
+        ?>
+        <div id="mainwp-mcp-page" class="ui padded segment">
+            <?php
+            if ( 'direct' === $tab ) {
+                static::render_direct( $direct );
+            } else {
+                static::render_local( null !== $direct );
+            }
+            ?>
+        </div>
+        <?php
+        // The shared header opens the page container, as on the Tags page.
+        echo '</div>';
+    }
+
+    /**
+     * Render the tabs for the two ways to connect.
+     *
+     * @param string $active Active tab.
+     *
+     * @return void
+     */
+    private static function render_navigation( $active ) {
+        ?>
+        <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-mcp-tabular-menu">
+            <a class="item <?php echo esc_attr( 'direct' === $active ? 'active' : '' ); ?>" data-tab="direct" href="<?php echo esc_url( 'admin.php?page=mainwp-mcp&tab=direct' ); ?>">
+                <i class="plug icon"></i>
+                <?php esc_html_e( 'Connect directly', 'mainwp' ); ?>
+            </a>
+            <a class="item <?php echo esc_attr( 'local' === $active ? 'active' : '' ); ?>" data-tab="local" href="<?php echo esc_url( 'admin.php?page=mainwp-mcp&tab=local' ); ?>">
+                <i class="laptop icon"></i>
+                <?php esc_html_e( 'Run the local server', 'mainwp' ); ?>
+            </a>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render the "Connect directly" view: what it needs, then the module's panel.
+     *
+     * @param array $direct The view from direct_view().
+     *
+     * @return void
+     */
+    private static function render_direct( $direct ) {
+        ?>
+        <h2 class="ui header">
+            <?php esc_html_e( 'Connect your AI app directly', 'mainwp' ); ?>
+            <span class="sub header">
+                <?php
+                if ( $direct['apps'] ) {
+                    printf(
+                        /* translators: %s: list of AI app names. */
+                        esc_html__( 'Nothing to install. Your Dashboard must be reachable over public HTTPS. Works with %s.', 'mainwp' ),
+                        esc_html( wp_sprintf_l( '%l', $direct['apps'] ) )
+                    );
+                } else {
+                    esc_html_e( 'Nothing to install. Your Dashboard must be reachable over public HTTPS.', 'mainwp' );
+                }
+                ?>
+                <a href="https://docs.mainwp.com/mcp-server/remote/overview" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Read the setup guide.', 'mainwp' ); ?></a>
+            </span>
+        </h2>
+        <p>
+            <?php esc_html_e( 'Is your Dashboard private, or does your AI tool only run local MCP servers?', 'mainwp' ); ?>
+            <a href="<?php echo esc_url( 'admin.php?page=mainwp-mcp&tab=local' ); ?>"><?php esc_html_e( 'Run the local server instead.', 'mainwp' ); ?></a>
+        </p>
+        <div class="ui section divider"></div>
+        <?php
+        call_user_func( $direct['render'] );
+    }
+
+    /**
+     * Render the local server setup wizard.
+     *
+     * @param bool $can_connect_directly Whether the "Connect directly" view exists here.
+     *
+     * @return void
+     */
+    private static function render_local( $can_connect_directly ) {
         $current_user  = wp_get_current_user();
         $dashboard_url = untrailingslashit( home_url( '/' ) );
         $config        = array(
@@ -97,16 +216,26 @@ class MainWP_MCP {
         );
         $config_json   = (string) wp_json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 
-        MainWP_UI::render_top_header( array( 'title' => esc_html__( 'MainWP MCP', 'mainwp' ) ) );
         ?>
-        <div id="mainwp-mcp-page" class="ui padded segment">
             <h2 class="ui header">
-                <?php esc_html_e( 'Manage MainWP with your AI assistant', 'mainwp' ); ?>
+                <?php
+                if ( $can_connect_directly ) {
+                    esc_html_e( 'Run the local server on your computer', 'mainwp' );
+                } else {
+                    esc_html_e( 'Manage MainWP with your AI assistant', 'mainwp' );
+                }
+                ?>
                 <span class="sub header">
-                    <?php esc_html_e( 'Connect Claude, Cursor, OpenAI Codex, VS Code Copilot, and other MCP-compatible tools to this Dashboard.', 'mainwp' ); ?>
+                    <?php esc_html_e( 'Needs Node.js 20.19 or later and an Application Password. Works with private Dashboards and any MCP-compatible tool, including Claude, Cursor, OpenAI Codex, and VS Code Copilot.', 'mainwp' ); ?>
                     <a href="https://github.com/mainwp/mainwp-mcp" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View MainWP MCP on GitHub.', 'mainwp' ); ?></a>
                 </span>
             </h2>
+            <?php if ( $can_connect_directly ) : ?>
+                <p>
+                    <?php esc_html_e( 'Dashboard reachable over public HTTPS?', 'mainwp' ); ?>
+                    <a href="<?php echo esc_url( 'admin.php?page=mainwp-mcp&tab=direct' ); ?>"><?php esc_html_e( 'Connect directly instead, with nothing to install.', 'mainwp' ); ?></a>
+                </p>
+            <?php endif; ?>
 
             <div class="ui section divider mainwp-mcp-section-divider"></div>
 
@@ -218,9 +347,6 @@ class MainWP_MCP {
                     </div>
                 </div>
             </div>
-        </div>
         <?php
-        // The shared header opens the page container, as on the Tags page.
-        echo '</div>';
     }
 }

@@ -113,11 +113,14 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 	}
 
 	private function render_mcp(): string {
+		// An HTTPS test site that meets the connector requirements would otherwise open the direct tab.
+		$_GET['tab'] = 'local';
 		ob_start();
 		try {
 			MainWP_MCP::render();
 		} finally {
 			$html = ob_get_clean();
+			unset( $_GET['tab'] );
 		}
 		return $html;
 	}
@@ -181,7 +184,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 
 		$mcp = (string) strstr( $this->render_mcp(), '<div id="mainwp-mcp-page"' );
 		$this->assertStringContainsString( 'id="mainwp-mcp-page" class="ui padded segment"', $mcp );
-		foreach ( array( 'Manage MainWP with your AI assistant', 'Credentials', 'Connect', 'Test', 'Finish', 'Create Application Password', 'List all my sites', 'You are ready to use MainWP MCP', 'What you can do', 'Built-in safeguards' ) as $copy ) {
+		foreach ( array( 'Needs Node.js 20.19 or later and an Application Password.', 'Credentials', 'Connect', 'Test', 'Finish', 'Create Application Password', 'List all my sites', 'You are ready to use MainWP MCP', 'What you can do', 'Built-in safeguards' ) as $copy ) {
 			$this->assertStringContainsString( $copy, $mcp );
 		}
 		$this->assertStringNotContainsString( 'Get connected in four steps', $mcp );

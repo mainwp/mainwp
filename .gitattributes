@@ -19,3 +19,4 @@ phpdoc.dist.xml export-ignore
 * text=auto eol=lf
 *.{cmd,[cC][mM][dD]} text eol=crlf
 *.{bat,[bB][aA][tT]} text eol=crlf
+modules/remote-mcp/known-clients/*.json -text

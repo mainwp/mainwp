@@ -1,0 +1,10 @@
+{
+  "client_id": "https://zed.dev/oauth/client-metadata.json",
+  "client_name": "Zed",
+  "client_uri": "https://zed.dev",
+  "redirect_uris": ["http://127.0.0.1/callback"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "logo_uri": "https://cdn.zed.dev/images/logo-dark.png"
+}

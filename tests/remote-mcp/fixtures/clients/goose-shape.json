@@ -1,0 +1,1 @@
+{"client_id":"https://goose-docs.ai/oauth/client-metadata.json","client_name":"Goose","redirect_uris":["http://127.0.0.1/oauth_callback"],"grant_types":["authorization_code","refresh_token"],"response_types":["code"],"token_endpoint_auth_method":"none"}

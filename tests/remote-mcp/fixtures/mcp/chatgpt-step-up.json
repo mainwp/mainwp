@@ -1,0 +1,14 @@
+{
+    "content": [
+        {
+            "type": "text",
+            "text": "This connection can only view. Reconnect and allow changes."
+        }
+    ],
+    "isError": true,
+    "_meta": {
+        "mcp/www_authenticate": [
+            "Bearer resource_metadata=\"https://dash.example.org/wp-json/mainwp-remote/v1/oauth-protected-resource\", scope=\"mainwp:read mainwp:write\", error=\"insufficient_scope\", error_description=\"This connection can only view. Reconnect and allow changes.\""
+        ]
+    }
+}

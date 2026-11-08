@@ -1,0 +1,113 @@
+/* Remote MCP approval page. Loaded alone: no theme, admin or extension styles reach this page. */
+body {
+	margin: 0;
+	background: #f4f5f7;
+	color: #1d2327;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	font-size: 15px;
+	line-height: 1.5;
+}
+
+.mainwp-approval {
+	box-sizing: border-box;
+	max-width: 640px;
+	margin: 40px auto;
+	padding: 28px 32px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+}
+
+.mainwp-approval h1 {
+	margin: 0 0 16px;
+	font-size: 22px;
+}
+
+.mainwp-approval h2 {
+	margin: 20px 0 8px;
+	font-size: 18px;
+}
+
+.mainwp-approval h3 {
+	margin: 20px 0 8px;
+	font-size: 15px;
+}
+
+.mainwp-approval-app {
+	color: #50575e;
+}
+
+.mainwp-approval-caution,
+.mainwp-approval-warning {
+	padding: 10px 12px;
+	background: #fcf9e8;
+	border-left: 4px solid #dba617;
+}
+
+.mainwp-approval-notice {
+	padding: 10px 12px;
+	background: #f0f6fc;
+	border-left: 4px solid #72aee6;
+}
+
+.mainwp-approval-arguments {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 6px 16px;
+	margin: 12px 0;
+}
+
+.mainwp-approval-arguments dt {
+	font-weight: 600;
+}
+
+.mainwp-approval-arguments dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.mainwp-approval-sites {
+	margin: 0;
+	padding-left: 20px;
+	overflow-wrap: anywhere;
+}
+
+.mainwp-approval-preview {
+	max-height: 320px;
+	overflow: auto;
+	padding: 10px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	font-size: 12px;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.mainwp-approval-actions {
+	display: flex;
+	gap: 12px;
+	margin-top: 24px;
+}
+
+.mainwp-approval button {
+	padding: 8px 18px;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #f6f7f7;
+	font-size: 15px;
+	cursor: pointer;
+}
+
+/* The page loads only this stylesheet, so nothing else supplies a focus ring. */
+.mainwp-approval button:focus-visible {
+	outline: 2px solid #1d2327;
+	outline-offset: 2px;
+}
+
+/* Darker than the brand green so white text meets WCAG AA (about 5.6:1). */
+.mainwp-approval .mainwp-approval-approve,
+.mainwp-approval .mainwp-approval-run {
+	background: #4d7300;
+	border-color: #3c5a00;
+	color: #fff;
+}

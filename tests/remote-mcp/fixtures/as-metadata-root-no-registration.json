@@ -1,0 +1,27 @@
+{
+  "issuer": "https://dash.example.com",
+  "authorization_endpoint": "https://dash.example.com/mainwp-oauth/authorize",
+  "token_endpoint": "https://dash.example.com/wp-json/mainwp-remote/v1/oauth/token",
+  "response_types_supported": [
+    "code"
+  ],
+  "grant_types_supported": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "code_challenge_methods_supported": [
+    "S256"
+  ],
+  "token_endpoint_auth_methods_supported": [
+    "none",
+    "client_secret_basic",
+    "client_secret_post"
+  ],
+  "client_id_metadata_document_supported": true,
+  "authorization_response_iss_parameter_supported": true,
+  "scopes_supported": [
+    "mainwp:read",
+    "mainwp:write",
+    "offline_access"
+  ]
+}

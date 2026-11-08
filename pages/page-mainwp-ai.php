@@ -93,7 +93,13 @@ class MainWP_AI {
                             <a href="https://docs.mainwp.com/mcp-server/quickstart" target="_blank"><i class="book icon"></i> <?php esc_html_e( 'Documentation', 'mainwp' ); ?></a>
                         </div>
                         <div class="description">
-                            <?php esc_html_e( 'Connect Claude, Cursor, OpenAI Codex, VS Code Copilot, and other MCP-compatible AI tools to your Dashboard.', 'mainwp' ); ?>
+                            <?php
+                            if ( null !== MainWP_MCP::direct_view() ) {
+                                esc_html_e( 'Connect AI apps to your Dashboard directly, with nothing to install, or run the local MCP server for private Dashboards and any MCP-compatible tool.', 'mainwp' );
+                            } else {
+                                esc_html_e( 'Connect Claude, Cursor, OpenAI Codex, VS Code Copilot, and other MCP-compatible AI tools to your Dashboard.', 'mainwp' );
+                            }
+                            ?>
                         </div>
                     </div>
                     <div class="extra content">

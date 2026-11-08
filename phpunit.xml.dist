@@ -17,6 +17,7 @@
         <testsuite name="MainWP Dashboard Test Suite">
             <directory suffix=".php">tests</directory>
             <exclude>tests/abilities</exclude>
+            <exclude>tests/remote-mcp</exclude>
             <exclude>tests/backup</exclude>
             <!-- Live real-server suite: runs only via phpunit.integration.xml.dist, never in the offline default run. -->
             <exclude>tests/integration</exclude>
@@ -55,6 +56,12 @@
                  from the capability-denial tests. -->
             <exclude>tests/backup/test-backup-settings-controller.php</exclude>
             <file>tests/backup/test-backup-settings-controller.php</file>
+        </testsuite>
+        <testsuite name="Remote MCP">
+            <directory suffix=".php">tests/remote-mcp</directory>
+            <exclude>tests/remote-mcp/class-remote-mcp-test-support.php</exclude>
+            <exclude>tests/remote-mcp/class-oauth-authorize-test-support.php</exclude>
+            <exclude>tests/remote-mcp/fixtures</exclude>
         </testsuite>
         <!-- Authenticating a REST API key defines MAINWP_REST_API_DOING for the rest of the
              process, which turns off site scoping and userless rights in every later test,

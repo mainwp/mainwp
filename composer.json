@@ -39,11 +39,13 @@
             "@test:dashboard",
             "@test:abilities",
             "@test:backup",
+            "@test:remote-mcp",
             "@test:rest-key-auth"
         ],
         "test:dashboard": "phpunit --testsuite=\"MainWP Dashboard Test Suite\"",
         "test:abilities": "phpunit --testsuite=Abilities",
         "test:backup": "phpunit --testsuite=Backup",
+        "test:remote-mcp": "phpunit --testsuite=\"Remote MCP\"",
         "test:rest-key-auth": "phpunit --testsuite=\"REST Key Authentication\""
     },
     "scripts-descriptions": {

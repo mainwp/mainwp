@@ -174,6 +174,10 @@ if ( file_exists( MAINWP_PLUGIN_DIR . 'modules/system-monitor/bootstrap.php' ) )
     );
 }
 
+if ( file_exists( MAINWP_PLUGIN_DIR . 'modules/remote-mcp/bootstrap.php' ) ) {
+    require_once MAINWP_PLUGIN_DIR . 'modules/remote-mcp/bootstrap.php'; // NOSONAR - WP compatible.
+}
+
 // Detect if secupress_scanner is running.
 $mainwp_is_secupress_scanning = false;
 if ( ! empty( $_GET ) && isset( $_GET['test'] ) && isset( $_GET['action'] ) && 'secupress_scanner' === $_GET['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended

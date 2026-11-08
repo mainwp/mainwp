@@ -1,0 +1,28 @@
+{
+    "jsonrpc": "2.0",
+    "id": 7,
+    "result": {
+        "supportedVersions": [
+            "2026-07-28",
+            "2025-11-25"
+        ],
+        "capabilities": {
+            "tools": {
+                "listChanged": false
+            },
+            "prompts": {
+                "listChanged": false
+            }
+        },
+        "instructions": "(remote-server-instructions.txt)",
+        "ttlMs": 300000,
+        "cacheScope": "private",
+        "resultType": "complete",
+        "_meta": {
+            "io.modelcontextprotocol/serverInfo": {
+                "name": "mainwp-dashboard",
+                "version": "VERSION"
+            }
+        }
+    }
+}

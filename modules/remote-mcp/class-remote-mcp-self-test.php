@@ -110,7 +110,7 @@ class Remote_MCP_Self_Test implements Enable_Check {
      *
      * @var string
      */
-    const BRIDGE_URL = 'https://ai-bridge.fly.dev';
+    const BRIDGE_URL = 'https://ai-bridge.mainwp.com';
 
     /**
      * The external checks, in the contract's order.

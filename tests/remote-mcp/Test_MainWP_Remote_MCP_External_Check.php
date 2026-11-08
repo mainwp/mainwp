@@ -125,7 +125,7 @@ class Test_MainWP_Remote_MCP_External_Check extends \WP_UnitTestCase {
 		// One request, to the checker, carrying the canonical home and nothing else.
 		$this->assertCount( 1, $this->requests );
 		list( $url, $args ) = $this->requests[0];
-		$this->assertSame( 'https://ai-bridge.fly.dev/reachability/check', $url );
+		$this->assertSame( 'https://ai-bridge.mainwp.com/reachability/check', $url );
 		$this->assertSame( 'POST', $args['method'] );
 		$this->assertSame(
 			array(

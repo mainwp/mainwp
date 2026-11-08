@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * The client_id, redirect, PKCE, scope, resource and state rules of an authorization request.
  * Everything works on the raw strings the client sent: no WordPress URL sanitizer, no parsing
- * before a byte comparison, nothing fetched.
+ * before a byte comparison. Client documents are fetched only after request syntax passes.
  */
 final class OAuth_Request_Validator {
 
@@ -73,7 +73,7 @@ final class OAuth_Request_Validator {
     }
 
     /**
-     * Parameter multiplicity, the known client, then syntax. Every failure here is shown
+     * Syntax precedes client lookup so malformed requests cannot trigger a fetch. Failures appear
      * on our own page, because nothing about the client has been verified yet.
      *
      * @param Remote_MCP_Request $request Authorization request.
@@ -93,12 +93,6 @@ final class OAuth_Request_Validator {
         if ( null === $client_id ) {
             return array( 'error' => 'unsupported_client' );
         }
-        $client = $this->clients->lookup( $client_id );
-        if ( ! self::accepts( $client, $client_id ) ) {
-            // Anyone can send this before logging in, so it is counted, not logged.
-            Remote_MCP_Settings::bump_counter( 'unknown_client' );
-            return array( 'error' => null === $client && 0 === strpos( $client_id, 'mwplc_' ) ? 'registration_ended' : 'unsupported_client' );
-        }
         if ( ! self::redirect_syntax_ok( $values['redirect_uri'] ) ) {
             return array( 'error' => 'invalid_redirect_uri' );
         }
@@ -113,6 +107,12 @@ final class OAuth_Request_Validator {
         }
         if ( ! $this->is_canonical_resource( $parsed['multi']['resource'][0] ) ) {
             return array( 'error' => 'invalid_target' );
+        }
+        $client = $this->clients->lookup( $client_id, true );
+        if ( ! self::accepts( $client, $client_id ) ) {
+            // Anyone can send this before logging in, so it is counted, not logged.
+            Remote_MCP_Settings::bump_counter( 'unknown_client' );
+            return array( 'error' => null === $client && 0 === strpos( $client_id, 'mwplc_' ) ? 'registration_ended' : 'unsupported_client' );
         }
         return array(
             'client' => $client,

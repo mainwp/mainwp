@@ -198,7 +198,7 @@ final class OAuth_Authorize_Endpoint implements Route_Handler {
 
         // A plugin update or an administrator can remove a client, switch it off or change its
         // redirects while consent is open. Checked for Deny too: access_denied is a redirect.
-        $client = $this->clients()->lookup( (string) $row['client_id'] );
+        $client = $this->clients()->lookup( (string) $row['client_id'], true );
         if ( ! OAuth_Request_Validator::accepts( $client, (string) $row['client_id'] ) || ! $validator->redirect_allowed( $client, (string) $row['redirect_uri'] ) ) {
             $store->fail_request( (int) $row['id'] );
             return $this->page->error( 'client_unavailable' );

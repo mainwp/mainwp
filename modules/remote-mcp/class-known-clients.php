@@ -12,14 +12,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * The single lookup over every client kind: bundled CIMD documents, static
+ * The single lookup over every client kind: bundled and fetched CIMD documents, static
  * pre-registered ids, registered loopback apps, admin-added web apps and the internal `token`
  * kind for connection tokens. Implemented by `OAuth_Known_Clients`.
  *
  * A client descriptor is an array:
  * - `client_id` (string), `kind` (`bundled`, `static`, `registered`, `webapp` or `token`)
- * - `label` (string, the registry label shown as the app's identity) and `client_name` (string or
- *   null, the app's own name, never the headline)
+ * - `fetched` (bool, true only for fetched CIMD clients, whose kind is `bundled`)
+ * - `label` (string, the registry label or client_id host shown as the app's identity)
+ *   and `client_name` (string or null, the app's own name)
  * - `redirect_rule` (`exact`, `loopback_any_port`, `cursor_exact`, `gemini_pattern` or
  *   `registered_loopback`) and `redirect_uris` (strings)
  * - `token_endpoint_auth_methods` (strings, from `none`, `client_secret_basic`, `client_secret_post`)
@@ -34,9 +35,10 @@ interface Known_Clients {
      * Descriptor for an exact client_id, compared byte for byte.
      *
      * @param string $client_id Presented client_id.
+     * @param bool   $fetch     Whether authorize may fetch an uncached document.
      * @return array|null Descriptor, or null for an unknown or switched-off client.
      */
-    public function lookup( string $client_id ): ?array;
+    public function lookup( string $client_id, bool $fetch = false ): ?array;
 
     /**
      * Whether a presented redirect URI matches the client under its redirect rule, compared on

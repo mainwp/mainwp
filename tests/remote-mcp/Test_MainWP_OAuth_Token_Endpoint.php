@@ -63,9 +63,10 @@ if ( interface_exists( Known_Clients::class ) ) {
 		 * Descriptor for an exact id.
 		 *
 		 * @param string $client_id Client id.
+		 * @param bool   $fetch     Whether authorize may fetch an uncached document.
 		 * @return array|null
 		 */
-		public function lookup( string $client_id ): ?array {
+		public function lookup( string $client_id, bool $fetch = false ): ?array {
 			if ( in_array( $client_id, $this->removed, true ) ) {
 				return null;
 			}

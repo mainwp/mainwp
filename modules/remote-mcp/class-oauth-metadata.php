@@ -64,8 +64,8 @@ final class OAuth_Metadata {
             'grant_types_supported'                 => array( 'authorization_code', 'refresh_token' ),
             'code_challenge_methods_supported'      => array( 'S256' ),
             'token_endpoint_auth_methods_supported' => self::TOKEN_AUTH_METHODS,
-            // Tells the bundled clients to present their document URL as client_id; the URL is
-            // resolved from the copy shipped with the plugin, never fetched.
+            // Clients present their document URL as client_id. Bundled copies stay local;
+            // other documents may be fetched at authorize when registration is enabled.
             'client_id_metadata_document_supported' => true,
             'authorization_response_iss_parameter_supported' => true,
             'scopes_supported'                      => OAuth_Store::SCOPES,

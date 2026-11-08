@@ -13,6 +13,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\Remote_MCP\OAuth_Client_Document;
 use MainWP\Dashboard\Remote_MCP\OAuth_Known_Clients;
+use MainWP\Dashboard\Remote_MCP\Remote_MCP_Settings;
 
 require_once __DIR__ . '/fixtures/client-registration-test-support.php';
 
@@ -67,16 +68,21 @@ class Test_MainWP_OAuth_Known_Clients extends \WP_UnitTestCase {
 		$this->assertSame( array( 'Claude', 'Claude Code', 'ChatGPT', 'VS Code', 'Codex CLI', 'Zed', 'Goose' ), $labels );
 		$this->assertSame( array( 'mainwp-cursor', 'mainwp-gemini-cli' ), array_keys( OAuth_Known_Clients::STATIC_CLIENTS ) );
 
-		// The fixture-backed lookup resolves every bundled id, and no other https id.
+		// Registry clients keep their identity; other HTTPS ids get an uncached descriptor.
 		$clients = $this->fixture_clients();
 		foreach ( array_keys( self::BUNDLED ) as $client_id ) {
 			$this->assertSame( 'bundled', $clients->lookup( $client_id )['kind'] ?? null, $client_id );
 		}
-		$this->assertNull( $clients->lookup( 'https://cursor.com/oauth/client-metadata.json' ) );
-		$this->assertNull( $clients->lookup( 'https://evil.example.com/oauth/client.json' ) );
+		foreach ( array( 'https://cursor.com/oauth/client-metadata.json', 'https://evil.example.com/oauth/client.json' ) as $id ) {
+			$entry = $clients->lookup( $id );
+			$this->assertTrue( $entry['fetched'] );
+			$this->assertSame( array(), $entry['redirect_uris'] );
+			$this->assertNull( $entry['client_name'] );
+		}
 	}
 
 	public function test_client_id_lookup_is_byte_exact() {
+		Remote_MCP_Settings::set_registration_enabled( false );
 		$clients = $this->fixture_clients();
 		foreach ( array_keys( self::BUNDLED ) as $client_id ) {
 			$this->assertSame( $client_id, $clients->lookup( $client_id )['client_id'], $client_id );
@@ -257,8 +263,11 @@ class Test_MainWP_OAuth_Known_Clients extends \WP_UnitTestCase {
 		$this->assertSame( array(), $this->outbound );
 	}
 
-	public function test_module_has_no_outbound_calls_outside_self_test() {
-		$forbidden = '/^(wp_remote_\w+|wp_safe_remote_\w+|curl_\w+|fsockopen|pfsockopen|stream_socket_client|dns_get_record|gethostbyname\w*|gethostbynamel)$/i';
+	/**
+	 * A new outbound call needs coverage of its network boundary.
+	 */
+	public function test_module_outbound_calls_are_limited_to_self_test_and_client_document_fetch() {
+		$forbidden = '/^(wp_(?:safe_)?remote_(?:get|post|head|request)|curl_\w+|fsockopen|pfsockopen|stream_socket_client|dns_get_record|gethostbyname\w*|gethostbynamel)$/i';
 		$dir       = MAINWP_PLUGIN_DIR . 'modules/remote-mcp/';
 		$files     = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ) );
 		$checked   = 0;
@@ -283,12 +292,12 @@ class Test_MainWP_OAuth_Known_Clients extends \WP_UnitTestCase {
 					++$next;
 				}
 				if ( isset( $tokens[ $next ] ) && '(' === $tokens[ $next ] ) {
-					$found[] = $file->getFilename() . ':' . $token[2] . ' ' . $name;
+					$found[] = $file->getFilename() . ' ' . $name;
 				}
 			}
 		}
 		$this->assertGreaterThan( 30, $checked );
-		$this->assertSame( array(), $found );
+		$this->assertSame( array( 'class-oauth-known-clients.php wp_safe_remote_get' ), $found );
 	}
 
 	public function test_goose_bundled_document_matches_registry_hash() {

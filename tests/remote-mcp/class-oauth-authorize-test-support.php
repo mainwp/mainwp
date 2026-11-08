@@ -144,9 +144,10 @@ if ( class_exists( Remote_MCP_Test_Store::class ) ) {
 		 * Descriptor for an exact id.
 		 *
 		 * @param string $client_id Client id.
+		 * @param bool   $fetch     Whether authorize may fetch an uncached document.
 		 * @return array|null
 		 */
-		public function lookup( string $client_id ): ?array {
+		public function lookup( string $client_id, bool $fetch = false ): ?array {
 			$this->lookups[] = $client_id;
 			foreach ( $this->clients as $id => $descriptor ) {
 				if ( (string) $id === $client_id ) {

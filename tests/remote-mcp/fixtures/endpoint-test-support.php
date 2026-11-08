@@ -77,7 +77,7 @@ if ( class_exists( Remote_MCP_Services::class ) && ! class_exists( Remote_MCP_En
 			);
 		}
 
-		public function lookup( string $client_id ): ?array {
+		public function lookup( string $client_id, bool $fetch = false ): ?array {
 			return $this->clients[ $client_id ] ?? null;
 		}
 

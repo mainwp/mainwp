@@ -144,7 +144,7 @@ if ( class_exists( Remote_MCP_Services::class ) && ! class_exists( Remote_MCP_Pa
 		 */
 		public $validate_calls = array();
 
-		public function lookup( string $client_id ): ?array {
+		public function lookup( string $client_id, bool $fetch = false ): ?array {
 			return $this->entries[ $client_id ] ?? null;
 		}
 

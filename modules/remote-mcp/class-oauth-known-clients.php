@@ -12,9 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * The single client lookup over the bundled CIMD documents, the static clients,
- * registered apps, admin-added web apps and the internal connection-token kind. It makes no
- * outbound request: bundled documents ship with the plugin, the rest are code or rows.
+ * Client lookup across bundled and fetched CIMD documents, static clients, registered apps,
+ * admin-added web apps and connection tokens. Only authorize may fetch an uncached document,
+ * so token and MCP requests work even when the document server is unavailable.
  */
 class OAuth_Known_Clients implements Known_Clients {
 
@@ -136,8 +136,8 @@ class OAuth_Known_Clients implements Known_Clients {
     private $services;
 
     /**
-     * Bundled documents checked in this request, by client_id: the validation result, or a
-     * failure reason string.
+     * Documents checked in this request, by client_id: the validation result, or a failure
+     * reason string. Redirect rechecks must see the same document as the initial lookup.
      *
      * @var array
      */
@@ -156,9 +156,10 @@ class OAuth_Known_Clients implements Known_Clients {
      * Descriptor for an exact client_id, compared byte for byte.
      *
      * @param string $client_id Presented client_id.
+     * @param bool   $fetch     Whether authorize may fetch an uncached document.
      * @return array|null Null for an unknown, invalid or switched-off client.
      */
-    public function lookup( string $client_id ): ?array {
+    public function lookup( string $client_id, bool $fetch = false ): ?array {
         if ( OAuth_Store::CONNECTION_TOKEN_CLIENT_ID === $client_id ) {
             return $this->descriptor( $client_id, 'token', self::TOKEN_LABEL, null, 'exact', array(), array() );
         }
@@ -174,7 +175,7 @@ class OAuth_Known_Clients implements Known_Clients {
             return $this->descriptor( $client_id, 'static', $static['label'], null, $static['redirect_rule'], $static['redirect_uris'], array( 'none' ) );
         }
         if ( ! preg_match( '/^(mwplc|mwpwa)_[A-Za-z0-9_-]{43}\z/', $client_id, $prefix ) ) {
-            return null;
+            return $this->fetched( $client_id, $fetch );
         }
         $store = $this->services->store();
         $row   = $store ? $store->get_client( $client_id ) : null;
@@ -191,6 +192,104 @@ class OAuth_Known_Clients implements Known_Clients {
             return null;
         }
         return $this->descriptor( $client_id, 'webapp', $name, $name, 'exact', $uris, array( 'client_secret_basic', 'client_secret_post' ) );
+    }
+
+    /**
+     * Fetched clients retain the bundled kind because existing grants store HTTPS ids that way.
+     *
+     * @param string $client_id Client id.
+     * @param bool   $fetch     Whether authorize may fetch.
+     * @return array|null
+     */
+    private function fetched( string $client_id, bool $fetch ): ?array {
+        if ( ! Remote_MCP_Settings::registration_enabled() || ! self::document_url_ok( $client_id ) ) {
+            return null;
+        }
+        $key    = 'mainwp_remote_mcp_cimd_' . md5( $client_id );
+        $loaded = $this->loaded[ $client_id ] ?? get_transient( $key );
+        if ( false === $loaded && $fetch ) {
+            $loaded = $this->fetch_document( $client_id );
+            if ( is_array( $loaded ) ) {
+                set_transient( $key, $loaded, HOUR_IN_SECONDS );
+            }
+        }
+        if ( false !== $loaded ) {
+            $this->loaded[ $client_id ] = $loaded;
+            if ( ! is_array( $loaded ) ) {
+                return null;
+            }
+        }
+        $uris = is_array( $loaded ) ? $loaded['redirect_uris'] : array();
+        $rule = 'exact';
+        foreach ( $uris as $uri ) {
+            if ( null !== self::loopback_parts( $uri ) ) {
+                $rule = 'loopback_any_port';
+            }
+        }
+        $client            = $this->descriptor( $client_id, 'bundled', (string) wp_parse_url( $client_id, PHP_URL_HOST ), is_array( $loaded ) ? $loaded['client_name'] : null, $rule, $uris, array( 'none' ) );
+        $client['fetched'] = true;
+        return $client;
+    }
+
+    /**
+     * The storage limit applies before HTTP because every OAuth row must hold the same id.
+     *
+     * @param string $client_id Client id.
+     * @return bool
+     */
+    private static function document_url_ok( string $client_id ): bool {
+        if ( strlen( $client_id ) > 512 || 0 !== strpos( $client_id, 'https://' ) || preg_match( '/[\\\\\x00-\x20\x7f]/', $client_id ) ) {
+            return false;
+        }
+        $parts = wp_parse_url( $client_id );
+        return is_array( $parts )
+            && ! empty( $parts['host'] )
+            && ! empty( $parts['path'] )
+            && ! isset( $parts['user'] )
+            && ! isset( $parts['pass'] )
+            && ! isset( $parts['fragment'] )
+            && ( ! isset( $parts['port'] ) || 443 === $parts['port'] )
+            && ! preg_match( '#(?:^|/)\.{1,2}(?:/|$)#', rawurldecode( $parts['path'] ) );
+    }
+
+    /**
+     * Core's safe HTTP client rejects private destinations. Redirects stay disabled because a
+     * document must come from its client_id URL, without a second destination to trust.
+     *
+     * @param string $client_id Client id.
+     * @return array|string Validated document or a failure marker for this request only.
+     */
+    private function fetch_document( string $client_id ) {
+        $remote  = isset( $_SERVER['REMOTE_ADDR'] ) ? (string) wp_unslash( $_SERVER['REMOTE_ADDR'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- hashed for the limiter, never output or used as a URL.
+        $mapped  = apply_filters( 'mainwp_remote_mcp_client_ip', $remote );
+        $ip      = is_string( $mapped ) && false !== filter_var( $mapped, FILTER_VALIDATE_IP ) ? $mapped : $remote;
+        $limiter = new OAuth_Registration_Rate_Limiter( 'mainwp_remote_mcp_cimdrl_' );
+        if ( 0 !== $limiter->retry_after( $ip ) ) {
+            return 'fetch_failed';
+        }
+        $limiter->record( $ip );
+        $response = wp_safe_remote_get(
+            $client_id,
+            array(
+                'redirection'         => 0,
+                'timeout'             => 5,
+                'limit_response_size' => 16385,
+                'headers'             => array( 'Accept' => 'application/json' ),
+            )
+        );
+        if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+            return 'fetch_failed';
+        }
+        // A repeated Content-Type header comes back as an array; a document has one type.
+        $header = wp_remote_retrieve_header( $response, 'content-type' );
+        $type   = is_string( $header ) ? trim( explode( ';', $header, 2 )[0] ) : '';
+        $body   = wp_remote_retrieve_body( $response );
+        // WordPress truncates at the response limit without an error, so request one extra byte.
+        if ( ! preg_match( '/^application\/(?:json|[!#$%&\'*+.^_`|~0-9a-z-]+\+json)$/i', $type ) || strlen( $body ) > 16384 ) {
+            return 'fetch_failed';
+        }
+        $checked = OAuth_Client_Document::validate( $body, $client_id );
+        return $checked['ok'] ? $checked : 'fetch_failed';
     }
 
     /**

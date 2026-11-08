@@ -56,7 +56,7 @@ final class Remote_MCP_Stubs {
                 return self::hooks();
             case Known_Clients::class:
                 return new class() implements Known_Clients {
-                    public function lookup( string $client_id ): ?array {
+                    public function lookup( string $client_id, bool $fetch = false ): ?array {
                         return null;
                     }
                     public function redirect_allowed( array $client, string $redirect_uri ): bool {

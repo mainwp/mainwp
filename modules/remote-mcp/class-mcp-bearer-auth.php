@@ -278,8 +278,9 @@ class MCP_Bearer_Auth {
         if ( (string) $result['resource'] !== (string) $this->services->urls()->mcp_url() ) {
             return 'wrong_resource';
         }
-        // A plugin update that drops a bundled client, a deleted app or a switched-off client
-        // ends its grants here. The kind must match too, so a connection-token grant
+        // A deleted app or a switched-off client ends its grants here. An https client the plugin
+        // stops bundling keeps working as a fetched client while registration is on, and ends
+        // here once registration is off. The kind must match too, so a connection-token grant
         // can't borrow an OAuth client's entry or the reverse.
         $client = $this->services->get( 'known_clients' )->lookup( (string) $result['client_id'] );
         if ( ! is_array( $client ) || ( $client['kind'] ?? null ) !== $result['client_kind'] ) {

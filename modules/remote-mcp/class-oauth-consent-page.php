@@ -17,8 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Renders the consent screen and the authorization error page as standalone templates with the
  * module's own stylesheet: no theme and no wp_head() on a page that issues codes.
  *
- * The app's identity always comes from our registry label or from what a full administrator
- * typed, never from a client document, so a vendor document change can't rename the app here.
+ * The headline uses a registry label, the client_id host or an administrator-supplied name,
+ * so a fetched document cannot claim a trusted app's identity.
  */
 final class OAuth_Consent_Page {
 
@@ -103,7 +103,7 @@ final class OAuth_Consent_Page {
         $messages = self::error_messages();
         $message  = $messages[ $code ] ?? $messages['invalid_request'];
         $detail   = '';
-        if ( 'redirect_mismatch' === $code && is_array( $client ) && 'bundled' === ( $client['kind'] ?? '' ) && '' !== (string) ( $client['label'] ?? '' ) ) {
+        if ( 'redirect_mismatch' === $code && is_array( $client ) && 'bundled' === ( $client['kind'] ?? '' ) && empty( $client['fetched'] ) && '' !== (string) ( $client['label'] ?? '' ) ) {
             // A vendor that moved its callbacks lands here until a release ships its new document.
             $detail = sprintf(
                 /* translators: %s: app name */
@@ -165,6 +165,13 @@ final class OAuth_Consent_Page {
         switch ( $client['kind'] ?? '' ) {
             case 'bundled':
                 $host = self::host( (string) $client['client_id'] );
+                if ( ! empty( $client['fetched'] ) ) {
+                    return sprintf(
+                        /* translators: %s: host of the app's client metadata URL */
+                        esc_html__( 'An app at %s (not checked by MainWP)', 'mainwp' ),
+                        '<strong>' . esc_html( $host ) . '</strong>'
+                    );
+                }
                 return '' === $label ? esc_html( $host ) : esc_html( $label ) . ' (' . esc_html( $host ) . ')';
             case 'registered':
                 if ( '' === $name ) {

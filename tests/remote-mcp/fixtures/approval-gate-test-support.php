@@ -267,7 +267,7 @@ if ( interface_exists( Tier_Registry::class ) ) {
 	class Gate_Test_Known_Clients_Double implements Known_Clients {
 		public $clients = array();
 
-		public function lookup( string $client_id ): ?array {
+		public function lookup( string $client_id, bool $fetch = false ): ?array {
 			return $this->clients[ $client_id ] ?? null;
 		}
 

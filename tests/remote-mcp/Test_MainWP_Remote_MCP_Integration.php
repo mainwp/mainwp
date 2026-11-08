@@ -1329,13 +1329,17 @@ class Test_MainWP_Remote_MCP_Integration extends \WP_UnitTestCase {
 		$this->assertFalse( wp_next_scheduled( MCP_Job_Cron::HOOK, array( $job ) ) );
 	}
 
-	public function test_authorization_makes_no_outbound_request_for_known_or_unknown_client() {
+	/**
+	 * Disabling registration must keep bundled consent working without fetching unknown apps.
+	 */
+	public function test_authorization_stays_offline_for_bundled_and_registration_disabled_clients() {
+		Remote_MCP_Settings::set_registration_enabled( false );
 		$calls = 0;
 		add_filter(
 			'pre_http_request',
 			static function () use ( &$calls ) {
 				++$calls;
-				return new \WP_Error( 'unexpected_outbound', 'Authorization must use the local registry.' );
+				return new \WP_Error( 'unexpected_outbound', 'This authorization must not fetch.' );
 			}
 		);
 		$response = $this->authorize_request();
@@ -1359,7 +1363,7 @@ class Test_MainWP_Remote_MCP_Integration extends \WP_UnitTestCase {
 		$this->assertSame( 400, $refused->status() );
 		$this->assertNull( $refused->header( 'Location' ) );
 		$this->assertSame( 'failed', $this->store->find_request( $request['request_key'] )['status'], 'unknown client consent fails closed' );
-		$this->assertSame( 0, $calls, 'known and unknown authorization and consent make zero pre_http_request calls' );
+		$this->assertSame( 0, $calls, 'bundled and registration-disabled authorization and consent stay offline' );
 	}
 
 

@@ -29,6 +29,22 @@ class OAuth_Registration_Rate_Limiter {
     const LOG_INTERVAL = HOUR_IN_SECONDS;
 
     /**
+     * Separate registration and document-fetch budgets for the same address.
+     *
+     * @var string
+     */
+    private $prefix;
+
+    /**
+     * Constructor.
+     *
+     * @param string $prefix Transient prefix.
+     */
+    public function __construct( string $prefix = 'mainwp_remote_mcp_reg_' ) {
+        $this->prefix = $prefix;
+    }
+
+    /**
      * Seconds until this address may register again.
      *
      * @param string $ip Client address.
@@ -93,7 +109,7 @@ class OAuth_Registration_Rate_Limiter {
      * @return string
      */
     private function key( string $ip ): string {
-        return 'mainwp_remote_mcp_reg_' . substr( hash( 'sha256', $ip ), 0, 32 );
+        return $this->prefix . substr( hash( 'sha256', $ip ), 0, 32 );
     }
 
     /**

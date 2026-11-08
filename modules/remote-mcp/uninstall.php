@@ -90,7 +90,7 @@ function uninstall() {
         delete_option( $option );
     }
     // Include orphaned timeout rows left by interrupted transient cleanup.
-    foreach ( array( 'mainwp_remote_mcp_reg_', 'mainwp_rmcp_rl_', 'mainwp_remote_mcp_kc_', 'mainwp_remote_mcp_probe_' ) as $prefix ) {
+    foreach ( array( 'mainwp_remote_mcp_cimd_', 'mainwp_remote_mcp_cimdrl_', 'mainwp_remote_mcp_reg_', 'mainwp_rmcp_rl_', 'mainwp_remote_mcp_kc_', 'mainwp_remote_mcp_probe_' ) as $prefix ) {
         $transients = $wpdb->get_col( $wpdb->prepare( 'SELECT option_name FROM %i WHERE option_name LIKE %s OR option_name LIKE %s', $wpdb->options, $wpdb->esc_like( '_transient_' . $prefix ) . '%', $wpdb->esc_like( '_transient_timeout_' . $prefix ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- discover module-owned transients and orphaned timeouts for cache-aware deletion.
         foreach ( $transients as $option ) {
             if ( 0 === strpos( $option, '_transient_timeout_' ) ) {

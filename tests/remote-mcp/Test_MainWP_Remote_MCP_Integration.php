@@ -1047,7 +1047,7 @@ class Test_MainWP_Remote_MCP_Integration extends \WP_UnitTestCase {
 	public function test_panel_directions_name_the_mcp_page() {
 		$context = $this->context( 'standard', 'mainwp:read' );
 		$result  = $this->services->get( 'tool_executor' )->call_tool( $context, 'add_tag_v1', array( 'name' => 'Step up' ) );
-		$this->assertStringContainsString( 'in AI > MainWP MCP > Connect directly.', $result['content'][0]['text'], 'connection-token step-up location' );
+		$this->assertStringContainsString( 'in AI > MainWP MCP > Connect an app.', $result['content'][0]['text'], 'connection-token step-up location' );
 
 		$minted = $this->store->mint_connection_token( $this->user_id, 'mainwp:read', 'standard', 'Expired', time() + DAY_IN_SECONDS );
 		$this->assertSame( OAuth_Store::OK, $minted['outcome'] );
@@ -1058,7 +1058,7 @@ class Test_MainWP_Remote_MCP_Integration extends \WP_UnitTestCase {
 		$auth = ( new MCP_Bearer_Auth( $this->services ) )->authenticate( new Remote_MCP_Request( 'route_mcp', 'POST', '', '', $server ) );
 		$this->assertFalse( $auth['ok'] );
 		$this->assertSame( 401, $auth['response']->status() );
-		$this->assertStringContainsString( 'in AI > MainWP MCP > Connect directly.', $auth['response']->header( 'WWW-Authenticate' ), 'expired-token location' );
+		$this->assertStringContainsString( 'in AI > MainWP MCP > Connect an app.', $auth['response']->header( 'WWW-Authenticate' ), 'expired-token location' );
 
 		wp_set_current_user( $this->user_id );
 		$minted = $this->store->mint_connection_token( $this->user_id, 'mainwp:read', 'standard', 'Expiring', time() + 6 * DAY_IN_SECONDS );
@@ -1076,7 +1076,7 @@ class Test_MainWP_Remote_MCP_Integration extends \WP_UnitTestCase {
 		$notices = new Remote_MCP_Notices( $this->services );
 		$this->assertGreaterThanOrEqual( 1, $notices->send_expiry_reminders() );
 		foreach ( $mail as $message ) {
-			$this->assertStringContainsString( 'in AI > MainWP MCP > Connect directly:', $message['message'], 'reminder-email location' );
+			$this->assertStringContainsString( 'in AI > MainWP MCP > Connect an app:', $message['message'], 'reminder-email location' );
 		}
 
 		$server                 = $_SERVER;
@@ -1086,7 +1086,7 @@ class Test_MainWP_Remote_MCP_Integration extends \WP_UnitTestCase {
 			new Remote_MCP_Request( 'route_register', 'POST', '', '{"redirect_uris":["https://hosted.example.org/callback"]}', $server )
 		);
 		$this->assertSame( 400, $response->status() );
-		$this->assertStringContainsString( 'in AI > MainWP MCP > Connect directly.', json_decode( $response->body(), true )['error_description'], 'registration-error location' );
+		$this->assertStringContainsString( 'in AI > MainWP MCP > Connect an app.', json_decode( $response->body(), true )['error_description'], 'registration-error location' );
 	}
 
 	public function test_webapp_redirect_error_explains_query_and_fragment_restrictions() {
@@ -1141,7 +1141,10 @@ class Test_MainWP_Remote_MCP_Integration extends \WP_UnitTestCase {
 			$this->assertSame( 1, preg_match( '#<h1 class="mainwp-oauth-headline">(.*?)</h1>#s', $response->body(), $match ) );
 			$headline = html_entity_decode( wp_strip_all_tags( $match[1] ), ENT_QUOTES );
 			$this->assertStringNotContainsString( 'on your computer', $headline, 'Cursor consent must describe local and cloud callbacks accurately' );
-			$this->assertSame( "Cursor, or another program using Cursor's settings", $headline );
+			$this->assertSame( 'Cursor wants to connect', $headline );
+			$text = html_entity_decode( $response->body(), ENT_QUOTES );
+			$this->assertStringContainsString( "Or another program using Cursor's settings.", $text );
+			$this->assertStringNotContainsString( 'on this computer', $text, 'Cursor may call back to its cloud' );
 		}
 	}
 

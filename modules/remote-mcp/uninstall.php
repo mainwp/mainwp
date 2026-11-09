@@ -79,6 +79,7 @@ function uninstall() {
     delete_option( 'mainwp_remote_mcp_bound_home' );
     delete_option( 'mainwp_remote_mcp_home_changed' );
     delete_option( 'mainwp_remote_mcp_notice_state' );
+    delete_metadata( 'user', 0, 'mainwp_remote_mcp_notices_seen', '', true );
     delete_option( 'mainwp_remote_mcp_competing_rules' );
     delete_option( 'mainwp_remote_mcp_registration_enabled' );
     delete_option( 'mainwp_remote_mcp_static_clients' );

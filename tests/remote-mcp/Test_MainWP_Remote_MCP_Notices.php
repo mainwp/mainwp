@@ -84,7 +84,7 @@ class Test_MainWP_Remote_MCP_Notices extends \WP_UnitTestCase {
 
 		// Full administrators see it in the panel.
 		$html = $this->admin()->render();
-		$this->assertStringContainsString( 'New connection', $html );
+		$this->assertStringContainsString( 'Claude connected ', $html );
 		$this->assertStringContainsString( '198.51.100.7', $html );
 
 		// An action for a grant that doesn't exist sends nothing.
@@ -160,7 +160,7 @@ class Test_MainWP_Remote_MCP_Notices extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( '<script>alert(2)', $html );
 		$this->assertStringContainsString( '&lt;img src=x onerror=alert(1)&gt;', $html );
 		$this->assertStringContainsString( '&lt;script&gt;alert(2)&lt;/script&gt;', $html );
-		$this->assertStringContainsString( 'name not checked', $html );
+		$this->assertStringContainsString( 'name from the app', $html );
 
 		add_filter(
 			'wp_mail_content_type',
@@ -189,6 +189,154 @@ class Test_MainWP_Remote_MCP_Notices extends \WP_UnitTestCase {
 		$this->assertSame( 'New AI app connected to MainWP: ' . $name, $mail['subject'] );
 		$this->assertStringContainsString( $name, $mail['body'] );
 		$this->assertStringNotContainsString( '&quot;', $mail['body'] );
+	}
+
+	/**
+	 * Store panel notices, newest first.
+	 *
+	 * @param array $notices Notices.
+	 */
+	private function seed( array $notices ): void {
+		update_option( Remote_MCP_Notices::OPTION_STATE, array( 'notices' => $notices ), false );
+	}
+
+	/**
+	 * One stored notice.
+	 *
+	 * @param string $app      App name.
+	 * @param int    $at       When.
+	 * @param string $why      Event type.
+	 * @param int    $grant_id Grant, 0 for a web app event.
+	 * @return array
+	 */
+	private function event( string $app, int $at, string $why = 'new', int $grant_id = 0 ): array {
+		return array(
+			'grant_id' => $grant_id,
+			'user_id'  => $this->user_id,
+			'app'      => $app,
+			'why'      => $why,
+			'ip'       => '0' === (string) $grant_id ? '' : '198.51.100.7',
+			'at'       => $at,
+		);
+	}
+
+	/**
+	 * The rendered notice message, or '' when there is none.
+	 *
+	 * @return string
+	 */
+	private function notice_message(): string {
+		$html = $this->admin()->render();
+		return 1 === preg_match( '#<div class="ui blue message" id="mainwp-rmcp-notices">.*?<a href="\#connections">Review</a>\s*</div>#s', $html, $match ) ? $match[0] : '';
+	}
+
+	/**
+	 * Post dismiss_notices as the current user.
+	 *
+	 * @param mixed       $upto  Posted value.
+	 * @param string|null $nonce Nonce, or null for a valid one.
+	 * @return array
+	 */
+	private function dismiss( $upto, ?string $nonce = null ): array {
+		return $this->post( 'dismiss_notices', '', array( 'upto' => (string) $upto ), $nonce );
+	}
+
+	public function test_recent_excludes_events_at_or_before_the_marker() {
+		$now = time();
+		$this->seed( array( $this->event( 'Newest', $now - 10 ), $this->event( 'Middle', $now - 20 ), $this->event( 'Oldest', $now - 30 ) ) );
+		$this->assertSame( array( 'Newest', 'Middle', 'Oldest' ), array_column( $this->notices->recent(), 'app' ) );
+		$this->assertSame( array( 'Newest' ), array_column( $this->notices->recent( $now - 20 ), 'app' ), 'an event at the marker is seen' );
+		$this->assertSame( array(), $this->notices->recent( $now - 10 ) );
+		$this->seed( array( $this->event( 'Expired', $now - Remote_MCP_Notices::NOTICE_TTL - 1 ) ) );
+		$this->assertSame( array(), $this->notices->recent(), 'the week limit still applies' );
+	}
+
+	public function test_every_event_type_renders_when_newer_than_the_marker() {
+		$live    = (int) $this->connect_write( $this->user_id )['grant_id'];
+		$revoked = (int) $this->connect_write( $this->user_id )['grant_id'];
+		$this->assertTrue( $this->store->revoke_grant( $revoked, 'user' ) );
+		$now = time();
+		$this->seed(
+			array(
+				$this->event( 'Zapier', $now - 10, 'client_secret_reissued' ),
+				$this->event( 'Zapier', $now - 20, 'client_deleted' ),
+				$this->event( 'Zapier', $now - 30, 'client_changed' ),
+				$this->event( 'Zapier', $now - 40, 'client_added' ),
+				$this->event( 'Connection token "Billing bot"', $now - 50, 'token', $live ),
+				$this->event( 'Loosened app', $now - 60, 'loosened', $live ),
+				$this->event( 'Revoked app', $now - 70, 'new', $revoked ),
+				$this->event( 'Seen app', $now - 80, 'new', $live ),
+			)
+		);
+		update_user_meta( $this->user_id, Remote_MCP_Notices::SEEN_META, $now - 80 );
+
+		$message = $this->notice_message();
+		$this->assertStringContainsString( '7 changes since you last checked', $message );
+		$this->assertStringNotContainsString( 'Seen app', $message, 'acknowledged events stay hidden' );
+		$this->assertSame( 5, substr_count( $message, '<li>' ), 'five lines' );
+		$this->assertStringContainsString( 'And 2 more in the activity log.', $message );
+		foreach ( array( 'Web app secret reissued: Zapier, ', 'Web app deleted: Zapier, ', 'Web app switched on or off: Zapier, ', 'Web app added: Zapier, ', 'Connection token &quot;Billing bot&quot; created ' ) as $line ) {
+			$this->assertStringContainsString( $line, $message );
+		}
+
+		// Without the newer web app events, the three connection events fit without a count.
+		$this->seed(
+			array(
+				$this->event( 'Connection token "Billing bot"', $now - 50, 'token', $live ),
+				$this->event( 'Loosened app', $now - 60, 'loosened', $live ),
+				$this->event( 'Revoked app', $now - 70, 'new', $revoked ),
+				$this->event( 'Seen app', $now - 80, 'new', $live ),
+			)
+		);
+		$message = $this->notice_message();
+		$this->assertSame( 3, preg_match_all( '#<li>(.*?)</li>#s', $message, $items ) );
+		$this->assertStringContainsString( 'Connection token &quot;Billing bot&quot; created ', $items[1][0] );
+		$this->assertStringContainsString( ' from 198.51.100.7.', $items[1][0] );
+		$this->assertStringContainsString( 'Loosened app now asks you less often (policy changed ', $items[1][1] );
+		$this->assertStringContainsString( 'Revoked app connected ', $items[1][2] );
+		$this->assertStringContainsString( '. (no longer connected)', $items[1][2], 'a revoked connection stays in the message, marked' );
+		$this->assertStringNotContainsString( '(no longer connected)', $items[1][0] );
+		$this->assertStringNotContainsString( 'more in the activity log', $message );
+		$this->assertStringContainsString( '3 changes since you last checked', $message );
+	}
+
+	public function test_dismiss_stores_the_newest_shown_event_and_only_moves_forward() {
+		$now = time();
+		$this->seed( array( $this->event( 'Shown app', $now - 30 ) ) );
+		$this->assertStringContainsString( 'Shown app', $this->notice_message() );
+
+		$this->assertSame( 'bad_nonce', $this->dismiss( $now - 30, 'not-a-nonce' )['code'] );
+		$this->assertSame( '', get_user_meta( $this->user_id, Remote_MCP_Notices::SEEN_META, true ), 'a bad nonce stores nothing' );
+
+		$this->assertTrue( $this->dismiss( $now - 30 )['ok'] );
+		$this->assertSame( $now - 30, (int) get_user_meta( $this->user_id, Remote_MCP_Notices::SEEN_META, true ) );
+		$this->assertSame( '', $this->notice_message() );
+
+		$this->assertTrue( $this->dismiss( $now - 3600 )['ok'] );
+		$this->assertSame( $now - 30, (int) get_user_meta( $this->user_id, Remote_MCP_Notices::SEEN_META, true ), 'never backward' );
+		$this->assertTrue( $this->dismiss( 'abc' )['ok'] );
+		$this->assertSame( $now - 30, (int) get_user_meta( $this->user_id, Remote_MCP_Notices::SEEN_META, true ), 'not a number' );
+		$this->assertTrue( $this->dismiss( $now + WEEK_IN_SECONDS )['ok'] );
+		$this->assertLessThanOrEqual( time(), (int) get_user_meta( $this->user_id, Remote_MCP_Notices::SEEN_META, true ), 'a future time can\'t hide events to come' );
+
+		// An event recorded after the page loaded stays unacknowledged by a dismissal from that page.
+		delete_user_meta( $this->user_id, Remote_MCP_Notices::SEEN_META );
+		$this->seed( array( $this->event( 'Arrived later', $now - 5 ), $this->event( 'Shown app', $now - 30 ) ) );
+		$this->assertTrue( $this->dismiss( $now - 30 )['ok'] );
+		$message = $this->notice_message();
+		$this->assertStringContainsString( 'Arrived later', $message );
+		$this->assertStringNotContainsString( 'Shown app', $message );
+	}
+
+	public function test_one_administrators_dismissal_leaves_anothers_message() {
+		$other = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$this->seed( array( $this->event( 'Claude', time() - 30 ) ) );
+		$this->assertTrue( $this->dismiss( time() - 30 )['ok'] );
+		$this->assertSame( '', $this->notice_message() );
+
+		wp_set_current_user( $other );
+		$this->assertStringContainsString( 'Claude connected ', $this->notice_message() );
+		$this->assertSame( '', get_user_meta( $other, Remote_MCP_Notices::SEEN_META, true ) );
 	}
 
 	public function test_plain_mail_strips_newlines_from_app_names() {

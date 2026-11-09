@@ -38,6 +38,15 @@ final class Remote_MCP_Notices {
     const NOTICE_TTL   = WEEK_IN_SECONDS;
 
     /**
+     * User meta holding the time of the newest notice the user dismissed. The Dashboard's shared
+     * dismissal option is not used: "restore info messages" clears it, and generic readers treat
+     * any entry there as hidden.
+     *
+     * @var string
+     */
+    const SEEN_META = 'mainwp_remote_mcp_notices_seen';
+
+    /**
      * A connection token's owner hears about its expiry this long before.
      *
      * @var int
@@ -191,7 +200,7 @@ final class Remote_MCP_Notices {
                     /* translators: 1: token name, 2: expiry date. */
                     sprintf( __( 'The connection token %1$s expires on %2$s. Apps using it will stop working then.', 'mainwp' ), $label, wp_date( 'Y-m-d', $expires ) ),
                     '',
-                    __( 'Create a new one in AI > MainWP MCP > Connect directly:', 'mainwp' ),
+                    __( 'Create a new one in AI > MainWP MCP > Connect an app:', 'mainwp' ),
                     Remote_MCP_Admin::panel_url(),
                 )
             );
@@ -239,10 +248,11 @@ final class Remote_MCP_Notices {
     /**
      * Recent notices for the panel, newest first.
      *
+     * @param int $since Only notices after this time, the user's dismissal marker.
      * @return array
      */
-    public function recent(): array {
-        $cutoff = time() - self::NOTICE_TTL;
+    public function recent( int $since = 0 ): array {
+        $cutoff = max( time() - self::NOTICE_TTL, $since );
         return array_values(
             array_filter(
                 $this->state()['notices'],
@@ -251,6 +261,30 @@ final class Remote_MCP_Notices {
                 }
             )
         );
+    }
+
+    /**
+     * Mark notices up to a time as seen by one user. The marker only moves forward, and never past
+     * now, so a dismissal can't hide events that haven't happened yet.
+     *
+     * @param int $user_id User.
+     * @param int $upto    Time of the newest notice the user's page showed.
+     */
+    public static function mark_seen( int $user_id, int $upto ): void {
+        $upto = min( $upto, time() );
+        if ( $upto > (int) get_user_meta( $user_id, self::SEEN_META, true ) ) {
+            update_user_meta( $user_id, self::SEEN_META, $upto );
+        }
+    }
+
+    /**
+     * One user's dismissal marker.
+     *
+     * @param int $user_id User.
+     * @return int
+     */
+    public static function seen_by( int $user_id ): int {
+        return (int) get_user_meta( $user_id, self::SEEN_META, true );
     }
 
     /**

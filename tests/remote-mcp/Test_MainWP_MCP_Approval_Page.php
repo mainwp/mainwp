@@ -238,6 +238,7 @@ class Test_MainWP_MCP_Approval_Page extends \WP_UnitTestCase {
 		$this->assertSame( array(), $this->executor->calls, 'a GET never runs anything' );
 		$run = $this->form_nonce( $this->get( $a ), 'run' );
 		$this->assertNotNull( $run, 'Run it here instead appears after Approve' );
+		$this->assertStringContainsString( '<dl class="mainwp-approval-arguments">', $this->get( $a )->body(), 'the details stay while Run it here is offered' );
 		$this->post( $a, 'run', $run );
 		$this->assertCount( 1, $this->executor->calls );
 
@@ -422,7 +423,7 @@ class Test_MainWP_MCP_Approval_Page extends \WP_UnitTestCase {
 		$this->assertSame( 'approved', $this->store->get_approval( $id )['status'] );
 		$after = $this->get( $id );
 		$this->assertNull( $this->form_nonce( $after, 'run' ), 'no Run it here instead' );
-		$this->assertStringContainsString( 'runs when your AI app tries again', $after->body() );
+		$this->assertStringContainsString( 'so it checks them again when ', $after->body() );
 		$this->post( $id, 'run', $this->nonce_for( $id, 'run' ) );
 		$this->assertSame( array(), $this->ran( $name ) );
 		$this->assertSame( 'approved', $this->store->get_approval( $id )['status'] );
@@ -453,7 +454,7 @@ class Test_MainWP_MCP_Approval_Page extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'SNIPPET-', $body );
 		$this->assertStringNotContainsString( 'snippet-evil', $body );
 		$this->assertStringNotContainsString( '<script', $body );
-		$this->assertStringContainsString( 'modules/remote-mcp/assets/approval.css', $body, 'only the module\'s own stylesheet' );
+		$this->assertStringContainsString( 'modules/remote-mcp/assets/remote-mcp-pages.css', $body, 'only the module\'s own stylesheet' );
 		$this->assertSame( 1, preg_match_all( '/<link /', $body ) );
 	}
 
@@ -474,5 +475,47 @@ class Test_MainWP_MCP_Approval_Page extends \WP_UnitTestCase {
 		$this->assertSame( 302, $post->status() );
 		$this->assertSame( 'pending', $this->store->get_approval( $id )['status'] );
 		$this->assertSame( array(), $this->executor->calls );
+	}
+
+	public function test_approval_page_informs_then_cautions_and_drops_the_caution_after_a_decision() {
+		$id = $this->pending( array( 'args' => array( 'site_ids' => array( 3 ) ) ) );
+		$this->login( $this->user_id );
+		$user = get_userdata( $this->user_id );
+		$page = $this->get( $id )->body();
+
+		$this->assertStringContainsString( '<title>Approve an action from Claude</title>', preg_replace( '#<title>\s*(.*?)\s*</title>#s', '<title>$1</title>', $page ) );
+		$this->assertStringContainsString( '<h1>Claude wants to run an action</h1>', $page );
+		$this->assertMatchesRegularExpression( '#<p class="mainwp-oauth-eyebrow">\s*MainWP Dashboard · dash\.example\.org\s*</p>#u', $page );
+		$this->assertMatchesRegularExpression( '#Connected on [^<]+ as ' . preg_quote( esc_html( $user->display_name ), '#' ) . '\.#', $page );
+		$this->assertStringContainsString( '<dl class="mainwp-approval-arguments">', $page, 'the arguments while it waits' );
+		$this->assertMatchesRegularExpression( '#<p class="mainwp-approval-caution">\s*Only approve if you just asked Claude to do this\.\s*</p>\s*<div class="mainwp-approval-actions">#', $page, 'the caution sits right above the buttons' );
+		$this->assertLessThan( strpos( $page, 'mainwp-approval-caution' ), strpos( $page, 'mainwp-approval-arguments' ), 'facts before the caution' );
+
+		$denied = $this->post( $id, 'deny', (string) $this->form_nonce( $this->get( $id ), 'deny' ) )->body();
+		$this->assertSame( 1, substr_count( $denied, 'Denied. Nothing was changed.' ), 'the outcome once' );
+		$this->assertStringNotContainsString( 'mainwp-approval-caution', $denied );
+		$this->assertStringNotContainsString( 'mainwp-approval-arguments', $denied );
+		$this->assertStringNotContainsString( 'has been used or has expired', $denied, 'no second status line under the notice' );
+		$this->assertStringNotContainsString( 'name="decision"', $denied );
+		$this->assertStringContainsString( '<h1>Claude wants to run an action</h1>', $denied, 'the app line and action stay' );
+		$this->assertStringContainsString( 'Back to your Dashboard', $denied );
+		$this->assertStringContainsString( 'This approval has been used or has expired. Ask Claude to start again if you still want this.', $this->get( $id )->body(), 'a later visit says why nothing is offered' );
+
+		$approved = $this->pending( array( 'args' => array( 'site_ids' => array( 4 ) ) ) );
+		$after    = $this->post( $approved, 'approve', (string) $this->form_nonce( $this->get( $approved ), 'approve' ) )->body();
+		$this->assertSame( 1, substr_count( $after, 'Go back to Claude and ask it to try again.' ), 'the approved outcome once' );
+		$this->assertStringNotContainsString( 'mainwp-approval-caution', $after );
+		$this->assertStringContainsString( 'You approved this. Go back to Claude and ask it to try again.', $this->get( $approved )->body() );
+	}
+
+	public function test_approval_page_preview_is_collapsed() {
+		$id = $this->pending();
+		$this->login( $this->user_id );
+		$row                = $this->store->get_approval( $id );
+		$summary            = json_decode( (string) $row['summary'], true );
+		$summary['preview'] = array( 'changes' => 2 );
+		global $wpdb;
+		$wpdb->update( \MainWP\Dashboard\Remote_MCP\Remote_MCP_Install::table( 'approvals' ), array( 'summary' => wp_json_encode( $summary ) ), array( 'id' => $id ) );
+		$this->assertMatchesRegularExpression( '#<details class="mainwp-approval-details">\s*<summary>Preview</summary>\s*<pre class="mainwp-approval-preview">#', $this->get( $id )->body() );
 	}
 }

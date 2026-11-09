@@ -378,4 +378,91 @@ trait Remote_MCP_Panel_Fixtures {
 	protected function ids( array $rows ): array {
 		return array_map( 'intval', array_column( $rows, 'id' ) );
 	}
+
+	/**
+	 * Every panel action form in rendered HTML, parsed the way a browser would submit it.
+	 *
+	 * @param string $html Panel HTML.
+	 * @return array Each with `url` (the form's action), `fields` (name => submitted value) and
+	 *               `options` (select name => option values).
+	 */
+	protected function panel_forms( string $html ): array {
+		$dom      = new \DOMDocument();
+		$previous = libxml_use_internal_errors( true );
+		$dom->loadHTML( '<?xml encoding="utf-8"?><html><body>' . $html . '</body></html>' );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
+		$xpath = new \DOMXPath( $dom );
+		$forms = array();
+		foreach ( $dom->getElementsByTagName( 'form' ) as $form ) {
+			$fields  = array();
+			$options = array();
+			foreach ( $xpath->query( './/input|.//select|.//textarea', $form ) as $control ) {
+				$name = $control->getAttribute( 'name' );
+				if ( '' === $name ) {
+					continue;
+				}
+				if ( 'select' === $control->nodeName ) {
+					$options[ $name ] = array();
+					$fields[ $name ]  = '';
+					foreach ( $xpath->query( './/option', $control ) as $index => $option ) {
+						$options[ $name ][] = $option->getAttribute( 'value' );
+						if ( 0 === $index || $option->hasAttribute( 'selected' ) ) {
+							$fields[ $name ] = $option->getAttribute( 'value' );
+						}
+					}
+				} elseif ( 'textarea' === $control->nodeName ) {
+					$fields[ $name ] = $control->textContent;
+				} elseif ( 'checkbox' !== $control->getAttribute( 'type' ) || $control->hasAttribute( 'checked' ) ) {
+					$fields[ $name ] = $control->getAttribute( 'value' );
+				}
+			}
+			if ( isset( $fields['mainwp_remote_mcp_action'] ) ) {
+				$forms[] = array(
+					'url'     => $form->getAttribute( 'action' ),
+					'fields'  => $fields,
+					'options' => $options,
+				);
+			}
+		}
+		return $forms;
+	}
+
+	/**
+	 * Parsed forms of one action.
+	 *
+	 * @param array  $forms  From panel_forms().
+	 * @param string $action Action.
+	 * @return array
+	 */
+	protected function forms_of( array $forms, string $action ): array {
+		return array_values(
+			array_filter(
+				$forms,
+				function ( $form ) use ( $action ) {
+					return $action === $form['fields']['mainwp_remote_mcp_action'];
+				}
+			)
+		);
+	}
+
+	/**
+	 * The part of the panel from one section's anchor to the next one's.
+	 *
+	 * @param string $html Panel HTML.
+	 * @param string $id   Section anchor.
+	 * @return string
+	 */
+	protected function panel_section( string $html, string $id ): string {
+		$start = strpos( $html, 'id="' . $id . '"' );
+		$this->assertNotFalse( $start, 'section ' . $id . ' renders' );
+		$end = strlen( $html );
+		foreach ( array( 'connect', 'connections', 'approvals', 'tokens', 'apps', 'tools', 'checks' ) as $next ) {
+			$at = strpos( $html, 'id="' . $next . '"', $start + 1 );
+			if ( false !== $at && $at < $end ) {
+				$end = $at;
+			}
+		}
+		return substr( $html, $start, $end - $start );
+	}
 }

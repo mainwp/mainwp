@@ -33,7 +33,7 @@ class MCP_Bearer_Auth {
      *
      * @var string
      */
-    const CONNECT_EXPIRED = 'This MainWP connection token has expired. Create a new one in AI > MainWP MCP > Connect directly.';
+    const CONNECT_EXPIRED = 'This MainWP connection token has expired. Create a new one in AI > MainWP MCP > Connect an app.';
 
     /**
      * Services.

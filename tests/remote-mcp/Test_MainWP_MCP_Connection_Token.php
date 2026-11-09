@@ -81,7 +81,7 @@ class Test_MainWP_MCP_Connection_Token extends \WP_UnitTestCase {
 		$response = $this->legacy( 'ping', array(), $minted['token'] );
 		$this->assertSame( 401, $response->status() );
 		$this->assertSame(
-			'Bearer resource_metadata="https://dash.example.org/wp-json/mainwp-remote/v1/oauth-protected-resource", scope="mainwp:read mainwp:write", error="invalid_token", error_description="This MainWP connection token has expired. Create a new one in AI > MainWP MCP > Connect directly."',
+			'Bearer resource_metadata="https://dash.example.org/wp-json/mainwp-remote/v1/oauth-protected-resource", scope="mainwp:read mainwp:write", error="invalid_token", error_description="This MainWP connection token has expired. Create a new one in AI > MainWP MCP > Connect an app."',
 			$response->header( 'WWW-Authenticate' )
 		);
 

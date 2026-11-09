@@ -27,7 +27,7 @@ final class Remote_MCP_Fallback_Panel {
     }
 
     /**
-     * Offer the panel as the MainWP MCP page's "Connect directly" view. The connector can't run
+     * Offer the panel as the MainWP MCP page's "Connect an app" view. The connector can't run
      * here, so the local server stays the default view.
      *
      * @param mixed $view View an earlier callback offered.

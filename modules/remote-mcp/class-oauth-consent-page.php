@@ -18,7 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * module's own stylesheet: no theme and no wp_head() on a page that issues codes.
  *
  * The headline uses a registry label, the client_id host or an administrator-supplied name,
- * so a fetched document cannot claim a trusted app's identity.
+ * so a fetched document cannot claim a trusted app's identity. Registered apps are the exception:
+ * their own name is the headline, always said to be the app's own.
  */
 final class OAuth_Consent_Page {
 
@@ -63,30 +64,28 @@ final class OAuth_Consent_Page {
         $user   = wp_get_current_user();
         $write  = in_array( OAuth_Store::SCOPE_WRITE, OAuth_Store::scope_tokens( $args['scope'] ), true );
         $access = $this->access_text();
+        $who    = $this->identity( $client, $args['redirect_uri'] );
+        $app    = '' === $who['name'] ? __( 'the app', 'mainwp' ) : $who['name'];
 
         $view = array(
-            'title'         => __( 'Connect an AI app', 'mainwp' ),
-            'stylesheet'    => plugins_url( 'assets/consent.css', __FILE__ ),
-            'headline_html' => $this->headline_html( $client, $args['redirect_uri'] ),
-            'client_name'   => $this->document_name( $client ),
-            'redirect_host' => self::host( $args['redirect_uri'] ),
-            'loopback_only' => OAuth_Request_Validator::loopback_only( $client ),
-            'signed_in'     => sprintf(
-                /* translators: 1: display name, 2: user login, 3: role */
-                __( 'Signed in as %1$s (%2$s), %3$s', 'mainwp' ),
-                $user->display_name,
-                $user->user_login,
-                self::role_name( $user )
-            ),
-            'logout_url'    => wp_logout_url( $args['return_url'] ),
-            'site_limit'    => $this->site_limit_text(),
-            'action'        => (string) $this->services->urls()->authorization_endpoint(),
-            'request_key'   => $args['request_key'],
-            'nonce'         => wp_create_nonce( OAuth_Authorize_Endpoint::NONCE_ACTION . $args['request_key'] ),
-            'write'         => $write,
-            'view_text'     => $access['view'],
-            'change_text'   => $access['change'],
-            'policies'      => $write ? $this->policy_options() : array(),
+            /* translators: %s: app name */
+            'title'          => '' === $who['name'] ? __( 'Connect an AI app to MainWP', 'mainwp' ) : sprintf( __( 'Connect %s to MainWP', 'mainwp' ), $who['name'] ),
+            'stylesheet'     => self::stylesheet_url(),
+            'site'           => self::site_host(),
+            'headline_html'  => $who['headline'],
+            'secondary_html' => $who['secondary'],
+            'signed_in'      => self::signed_in( $user ),
+            'logout_url'     => wp_logout_url( $args['return_url'] ),
+            'site_limit'     => $this->site_limit_text(),
+            'action'         => (string) $this->services->urls()->authorization_endpoint(),
+            'request_key'    => $args['request_key'],
+            'nonce'          => wp_create_nonce( OAuth_Authorize_Endpoint::NONCE_ACTION . $args['request_key'] ),
+            'write'          => $write,
+            'view_text'      => $access['view'],
+            'change_text'    => $access['change'],
+            'policies'       => $write ? $this->policy_options() : array(),
+            /* translators: %s: app name, or "the app" */
+            'caution'        => sprintf( __( 'Only approve if you started this yourself, just now, in %s. If you didn\'t, choose Deny.', 'mainwp' ), $app ),
         );
         return $this->respond( 200, 'consent', $view );
     }
@@ -112,11 +111,13 @@ final class OAuth_Consent_Page {
             );
         }
         $view = array(
-            'title'      => $message[0],
-            'stylesheet' => plugins_url( 'assets/consent.css', __FILE__ ),
-            'code'       => isset( $messages[ $code ] ) ? $code : 'invalid_request',
-            'message'    => $message[1],
-            'detail'     => $detail,
+            'title'         => $message[0],
+            'stylesheet'    => self::stylesheet_url(),
+            'site'          => self::site_host(),
+            'code'          => isset( $messages[ $code ] ) ? $code : 'invalid_request',
+            'message'       => $message[1],
+            'detail'        => $detail,
+            'dashboard_url' => admin_url(),
         );
         return $this->respond( 400, 'error', $view );
     }
@@ -135,12 +136,12 @@ final class OAuth_Consent_Page {
             'unsupported_response_type' => array( __( 'This connection request isn\'t valid', 'mainwp' ), __( 'The app asked for a kind of sign-in MainWP doesn\'t offer.', 'mainwp' ) ),
             'invalid_code_challenge'    => array( __( 'This connection request isn\'t valid', 'mainwp' ), __( 'The app didn\'t send the security check MainWP needs. Start the connection again from your AI app.', 'mainwp' ) ),
             'invalid_state'             => array( __( 'This connection request isn\'t valid', 'mainwp' ), __( 'The app sent more data than MainWP accepts. Start the connection again from your AI app.', 'mainwp' ) ),
-            'invalid_target'            => array( __( 'This connection request isn\'t valid', 'mainwp' ), __( 'The app asked to connect to a different address than this Dashboard\'s MCP address. Check the address you added to the app.', 'mainwp' ) ),
-            'unsupported_client'        => array( __( 'MainWP doesn\'t support this app yet', 'mainwp' ), __( 'This app isn\'t one the Dashboard knows, or its switch under AI > MainWP MCP > Connect directly is off. Ask an administrator to check, or use a connection token.', 'mainwp' ) ),
-            'registration_ended'        => array( __( 'This app needs to be added again', 'mainwp' ), __( 'This app\'s registration with your Dashboard has ended. Remove MainWP from the app and add it again.', 'mainwp' ) ),
+            'invalid_target'            => array( __( 'This connection request isn\'t valid', 'mainwp' ), __( 'The app is trying to reach a different address than this Dashboard\'s MCP address. Check the address you pasted into the app.', 'mainwp' ) ),
+            'unsupported_client'        => array( __( 'This app can\'t connect', 'mainwp' ), __( 'Your Dashboard doesn\'t know this app, or an administrator turned it off. An administrator can allow it under AI > MainWP MCP > Connect an app > Advanced > Which apps may connect: turn on the app\'s own switch, or Let other apps connect for apps that aren\'t listed. You can also connect it with a connection token from that page.', 'mainwp' ) ),
+            'registration_ended'        => array( __( 'This app needs to be set up again', 'mainwp' ), __( 'The app\'s link to your Dashboard has expired. Remove MainWP from the app and add it again.', 'mainwp' ) ),
             'redirect_mismatch'         => array( __( 'This app can\'t connect right now', 'mainwp' ), __( 'The app asked to send you back to an address MainWP doesn\'t know for it, so nothing was sent.', 'mainwp' ) ),
             'insufficient_rights'       => array( __( 'You can\'t connect apps', 'mainwp' ), __( 'Only Dashboard administrators can connect AI apps.', 'mainwp' ) ),
-            'https_required'            => array( __( 'HTTPS required', 'mainwp' ), __( 'This page only works over HTTPS.', 'mainwp' ) ),
+            'https_required'            => array( __( 'Secure connection required', 'mainwp' ), __( 'This page only works over https://.', 'mainwp' ) ),
             'login_required'            => array( __( 'Sign in first', 'mainwp' ), __( 'You\'re not signed in to your Dashboard. Sign in, then start the connection again from your AI app.', 'mainwp' ) ),
             'request_unavailable'       => array( __( 'This request has ended', 'mainwp' ), __( 'This request has expired or was already answered.', 'mainwp' ) . ' ' . $again ),
             'invalid_nonce'             => array( __( 'This page has expired', 'mainwp' ), __( 'This page has expired.', 'mainwp' ) . ' ' . $again ),
@@ -153,84 +154,156 @@ final class OAuth_Consent_Page {
     }
 
     /**
-     * The headline: who is asking, by client kind.
+     * Who is asking, by client kind: the headline, one secondary line with what MainWP knows about
+     * the app and where the user goes back to, and a plain name for the title and the caution.
+     * A name the app gave itself is never the headline's only identity for a bundled or fetched
+     * client, so a document can't claim a trusted app's name.
      *
      * @param array  $client       Descriptor.
      * @param string $redirect_uri Redirect URI of the request.
-     * @return string Escaped HTML.
+     * @return array `name` (plain, '' when MainWP has no name it can vouch for), `headline` and
+     *               `secondary` (escaped HTML).
      */
-    private function headline_html( array $client, string $redirect_uri ): string {
+    private function identity( array $client, string $redirect_uri ): array {
         $label = (string) ( $client['label'] ?? '' );
         $name  = is_string( $client['client_name'] ?? null ) ? trim( $client['client_name'] ) : '';
+        $back  = $this->return_sentence( $client, $redirect_uri );
+        /* translators: %s: app name */
+        $wants = esc_html__( '%s wants to connect', 'mainwp' );
         switch ( $client['kind'] ?? '' ) {
             case 'bundled':
-                $host = self::host( (string) $client['client_id'] );
+                $host  = '<strong>' . esc_html( self::host( (string) $client['client_id'] ) ) . '</strong>';
+                $calls = '<bdi>' . esc_html( mb_substr( $name, 0, self::CLIENT_NAME_DISPLAY ) ) . '</bdi>';
                 if ( ! empty( $client['fetched'] ) ) {
-                    return sprintf(
-                        /* translators: %s: host of the app's client metadata URL */
-                        esc_html__( 'An app at %s (not checked by MainWP)', 'mainwp' ),
-                        '<strong>' . esc_html( $host ) . '</strong>'
+                    $where = '' === $name
+                        /* translators: %s: host of the app's details */
+                        ? sprintf( esc_html__( 'It\'s at %s.', 'mainwp' ), $host )
+                        /* translators: 1: host of the app's details, 2: name the app gave itself */
+                        : sprintf( esc_html__( 'It\'s at %1$s and calls itself "%2$s".', 'mainwp' ), $host, $calls );
+                    return array(
+                        'name'      => '',
+                        'headline'  => esc_html__( 'An app MainWP doesn\'t know wants to connect', 'mainwp' ),
+                        'secondary' => $where . ' ' . esc_html__( 'MainWP hasn\'t checked this app.', 'mainwp' ) . ' ' . $back,
                     );
                 }
-                return '' === $label ? esc_html( $host ) : esc_html( $label ) . ' (' . esc_html( $host ) . ')';
+                $shown = '' === $label ? self::host( (string) $client['client_id'] ) : $label;
+                /* translators: %s: host of the app's details */
+                $from = sprintf( esc_html__( 'From %s.', 'mainwp' ), $host );
+                if ( '' !== $name && $name !== $label ) {
+                    /* translators: %s: name the app gave itself */
+                    $from .= ' ' . sprintf( esc_html__( 'It calls itself "%s".', 'mainwp' ), $calls );
+                }
+                return array(
+                    'name'      => $shown,
+                    'headline'  => sprintf( $wants, esc_html( $shown ) ),
+                    'secondary' => $from . ' ' . $back,
+                );
             case 'registered':
                 if ( '' === $name ) {
-                    return esc_html__( 'An app on this computer', 'mainwp' );
+                    return array(
+                        'name'      => '',
+                        'headline'  => esc_html__( 'An app on this computer wants to connect', 'mainwp' ),
+                        'secondary' => esc_html__( 'MainWP hasn\'t checked this app.', 'mainwp' ) . ' ' . $back,
+                    );
                 }
-                return sprintf(
-                    /* translators: %s: name the app gave itself */
-                    esc_html__( '%s (name not checked by MainWP), an app on this computer', 'mainwp' ),
-                    '<strong><bdi>' . esc_html( $name ) . '</bdi></strong>'
+                return array(
+                    'name'      => $name,
+                    'headline'  => sprintf( $wants, '<strong><bdi>' . esc_html( $name ) . '</bdi></strong>' ),
+                    'secondary' => esc_html__( 'An app on this computer. The name is the app\'s own; MainWP hasn\'t checked it.', 'mainwp' ) . ' ' . $back,
                 );
             case 'webapp':
-                return $this->webapp_headline( $client, $name, $redirect_uri );
+                return array(
+                    'name'      => $name,
+                    'headline'  => sprintf( $wants, '<strong>' . esc_html( $name ) . '</strong>' ),
+                    'secondary' => $this->webapp_added( $client ) . ' ' . $back,
+                );
+            case 'static':
+                $short = Remote_MCP_Admin::STATIC_CLIENTS[ (string) $client['client_id'] ] ?? $label;
+                return array(
+                    'name'      => $short,
+                    'headline'  => sprintf( $wants, esc_html( $short ) ),
+                    /* translators: %s: app name */
+                    'secondary' => sprintf( esc_html__( 'Or another program using %s\'s settings.', 'mainwp' ), esc_html( $short ) ) . ' ' . $back,
+                );
         }
-        return esc_html( $label );
-    }
-
-    /**
-     * Web app headline: the name and the administrator who vouched for its address.
-     *
-     * @param array  $client       Descriptor.
-     * @param string $name         App name a full administrator typed.
-     * @param string $redirect_uri Redirect URI of the request.
-     * @return string Escaped HTML.
-     */
-    private function webapp_headline( array $client, string $name, string $redirect_uri ): string {
-        $store = $this->services->store();
-        $row   = null === $store ? null : $store->get_client( (string) $client['client_id'] );
-        $admin = is_array( $row ) && ! empty( $row['created_by'] ) ? get_userdata( (int) $row['created_by'] ) : false;
-        $host  = '<strong>' . esc_html( self::host( $redirect_uri ) ) . '</strong>';
-        if ( ! $admin || empty( $row['created_at'] ) ) {
-            return sprintf(
-                /* translators: 1: app name, 2: host the user returns to */
-                esc_html__( '%1$s, added by a Dashboard administrator. You\'ll return to %2$s.', 'mainwp' ),
-                '<strong>' . esc_html( $name ) . '</strong>',
-                $host
-            );
-        }
-        return sprintf(
-            /* translators: 1: app name, 2: administrator's display name, 3: date added, 4: host the user returns to */
-            esc_html__( '%1$s, added by %2$s on %3$s. You\'ll return to %4$s.', 'mainwp' ),
-            '<strong>' . esc_html( $name ) . '</strong>',
-            esc_html( $admin->display_name ),
-            esc_html( (string) wp_date( (string) get_option( 'date_format' ), (int) $row['created_at'] ) ),
-            $host
+        return array(
+            'name'      => $label,
+            'headline'  => sprintf( $wants, esc_html( $label ) ),
+            'secondary' => $back,
         );
     }
 
     /**
-     * A bundled client's own name, shown only as secondary text. Static clients have none, and a
-     * registered or web app's name is already in the headline.
+     * Where the user goes after deciding. An app that can only call back to this computer is
+     * named as such; any other app is named by the host of this request's redirect.
+     *
+     * @param array  $client       Descriptor.
+     * @param string $redirect_uri Redirect URI of the request.
+     * @return string Escaped HTML.
+     */
+    private function return_sentence( array $client, string $redirect_uri ): string {
+        if ( OAuth_Request_Validator::loopback_only( $client ) ) {
+            return 'registered' === ( $client['kind'] ?? '' )
+                ? esc_html__( 'You\'ll go back to it after you decide.', 'mainwp' )
+                : esc_html__( 'You\'ll go back to the app on this computer after you decide.', 'mainwp' );
+        }
+        $host = self::host( $redirect_uri );
+        /* translators: %s: host the user returns to */
+        return '' === $host ? '' : sprintf( esc_html__( 'You\'ll go back to %s after you decide.', 'mainwp' ), '<strong>' . esc_html( $host ) . '</strong>' );
+    }
+
+    /**
+     * Who added a web app and when: the administrator vouched for its return address.
      *
      * @param array $client Descriptor.
+     * @return string Escaped HTML.
+     */
+    private function webapp_added( array $client ): string {
+        $store = $this->services->store();
+        $row   = null === $store ? null : $store->get_client( (string) $client['client_id'] );
+        $admin = is_array( $row ) && ! empty( $row['created_by'] ) ? get_userdata( (int) $row['created_by'] ) : false;
+        if ( ! $admin || empty( $row['created_at'] ) ) {
+            return esc_html__( 'Added to this Dashboard by an administrator.', 'mainwp' );
+        }
+        return sprintf(
+            /* translators: 1: administrator's display name, 2: date added */
+            esc_html__( 'Added to this Dashboard by %1$s on %2$s.', 'mainwp' ),
+            esc_html( $admin->display_name ),
+            esc_html( (string) wp_date( (string) get_option( 'date_format' ), (int) $row['created_at'] ) )
+        );
+    }
+
+    /**
+     * The signed-in line; the login is left out when it is the display name.
+     *
+     * @param \WP_User $user User.
      * @return string
      */
-    private function document_name( array $client ): string {
-        if ( 'bundled' !== ( $client['kind'] ?? '' ) || ! is_string( $client['client_name'] ?? null ) ) {
-            return '';
+    private static function signed_in( \WP_User $user ): string {
+        if ( $user->display_name === $user->user_login ) {
+            /* translators: 1: display name, 2: role */
+            return sprintf( __( 'Signed in as %1$s, %2$s', 'mainwp' ), $user->display_name, self::role_name( $user ) );
         }
-        return mb_substr( trim( $client['client_name'] ), 0, self::CLIENT_NAME_DISPLAY );
+        /* translators: 1: display name, 2: user login, 3: role */
+        return sprintf( __( 'Signed in as %1$s (%2$s), %3$s', 'mainwp' ), $user->display_name, $user->user_login, self::role_name( $user ) );
+    }
+
+    /**
+     * The stylesheet the consent, error and approval pages share.
+     *
+     * @return string
+     */
+    public static function stylesheet_url(): string {
+        return plugins_url( 'assets/remote-mcp-pages.css', __FILE__ );
+    }
+
+    /**
+     * This Dashboard's host, for the line that says whose Dashboard a page belongs to.
+     *
+     * @return string
+     */
+    public static function site_host(): string {
+        return self::host( home_url() );
     }
 
     /**
@@ -255,15 +328,21 @@ final class OAuth_Consent_Page {
         }
         $view_list = self::category_list( array_keys( $view ) );
         $view_text = '' === $view_list
-            ? __( 'See your Dashboard\'s sites and their data', 'mainwp' )
+            ? __( 'See your Dashboard\'s sites and their data. Change nothing.', 'mainwp' )
             /* translators: %s: list of categories */
-            : sprintf( __( 'See %s', 'mainwp' ), $view_list );
+            : sprintf( __( 'See your %s data. Change nothing.', 'mainwp' ), $view_list );
+        // Each category is named once: writable ones under "see and change", the rest under "see".
         $change_list = self::category_list( array_keys( $change ) );
-        $change_text = '' === $change_list
-            /* translators: %s: what the app can see */
-            ? sprintf( __( '%s, and make the changes your approval policy allows; risky changes still need your approval', 'mainwp' ), $view_text )
-            /* translators: 1: what the app can see, 2: list of categories it can change */
-            : sprintf( __( '%1$s, and make the changes your approval policy allows to %2$s; risky changes still need your approval', 'mainwp' ), $view_text, $change_list );
+        $read_list   = self::category_list( array_keys( array_diff_key( $view, $change ) ) );
+        if ( '' === $change_list ) {
+            $change_text = __( 'See and change your Dashboard\'s sites and their data. When it has to ask you first is set below.', 'mainwp' );
+        } elseif ( '' === $read_list ) {
+            /* translators: %s: list of categories */
+            $change_text = sprintf( __( 'See and change your %s data. When it has to ask you first is set below.', 'mainwp' ), $change_list );
+        } else {
+            /* translators: 1: categories the app can change, 2: categories it can only see */
+            $change_text = sprintf( __( 'See and change your %1$s data, and see your %2$s data. When it has to ask you first is set below.', 'mainwp' ), $change_list, $read_list );
+        }
         return array(
             'view'   => $view_text,
             'change' => $change_text,
@@ -310,7 +389,7 @@ final class OAuth_Consent_Page {
      * @param string $slug Category slug.
      * @return string
      */
-    private static function category_label( string $slug ): string {
+    public static function category_label( string $slug ): string {
         if ( function_exists( 'wp_has_ability_category' ) && did_action( 'init' ) && wp_has_ability_category( $slug ) ) {
             $category = wp_get_ability_category( $slug );
             if ( $category ) {
@@ -328,11 +407,12 @@ final class OAuth_Consent_Page {
      */
     private function policy_options(): array {
         $options = array(
-            OAuth_Store::POLICY_STANDARD => array( __( 'Standard', 'mainwp' ), __( 'Risky changes need your confirmation in the app or your approval on this Dashboard.', 'mainwp' ) ),
-            OAuth_Store::POLICY_STRICT   => array( __( 'Strict', 'mainwp' ), __( 'Every change needs your approval on this Dashboard.', 'mainwp' ) ),
+            OAuth_Store::POLICY_STANDARD => array( __( 'Standard', 'mainwp' ), __( 'Ordinary changes run right away. Some are confirmed with you in the app, and the riskiest wait for your approval on this Dashboard.', 'mainwp' ) ),
+            OAuth_Store::POLICY_STRICT   => array( __( 'Strict', 'mainwp' ), __( 'Every change waits for your approval on this Dashboard.', 'mainwp' ) ),
         );
         if ( Remote_MCP_Team_Control::user_has_no_limits( get_current_user_id() ) ) {
-            $options[ OAuth_Store::POLICY_HANDS_OFF ] = array( __( 'Hands-off', 'mainwp' ), __( 'Changes that would need your approval on this Dashboard only need a confirmation in the app. MainWP can no longer check that a person approved them, and instructions hidden in site content could lead the app to make them.', 'mainwp' ) );
+            // The exceptions are MCP_Tool_Catalog::HANDS_OFF_FLOOR, which keeps them at Dashboard approval.
+            $options[ OAuth_Store::POLICY_HANDS_OFF ] = array( __( 'Hands-off', 'mainwp' ), __( 'Changes that would wait for your approval on this Dashboard are confirmed with you in the chat instead. Adding sites, restoring or deleting backups or backup tasks, changing backup retention, changing a site\'s URL or SSL settings, and replacing the custom dashboard snippet still wait for your approval here. MainWP can\'t tell whether a person approved in the chat, and instructions hidden in a site\'s content could get the app to make changes.', 'mainwp' ) );
         }
         return $options;
     }

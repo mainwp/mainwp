@@ -194,7 +194,7 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 		ob_start();
 		call_user_func( $view['render'] );
 		$out = (string) ob_get_clean();
-		$this->assertStringContainsString( 'You need the manage_options capability to manage AI apps.', $out );
+		$this->assertStringContainsString( 'Only administrators can manage AI apps.', $out );
 		$this->assertStringNotContainsString( 'mainwp_remote_mcp_action', $out );
 
 		$this->submit( 'toggle', 'on' );
@@ -265,24 +265,24 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 	}
 
 	public function test_local_view_header_matches_whether_a_direct_view_exists() {
-		$requirements = 'Needs Node.js 20.19 or later and an Application Password. Works with private Dashboards and any MCP-compatible tool, including Claude, Cursor, OpenAI Codex, and VS Code Copilot.';
+		$requirements = 'Needs Node.js 20.19 or later and an Application Password. Works with a private Dashboard and with any app that runs local MCP servers, including Claude, Cursor, Codex and VS Code.';
 
 		$html = $this->render_mcp( 'local' );
-		$this->assertStringContainsString( 'Run the local server on your computer', $html );
+		$this->assertStringContainsString( 'Run the MainWP MCP server on your computer', $html );
 		$this->assertStringNotContainsString( 'Manage MainWP with your AI assistant', $html );
 		$this->assertStringContainsString( $requirements, $html );
 		$this->assertStringContainsString( 'View MainWP MCP on GitHub.', $html );
-		$this->assertStringContainsString( 'Dashboard reachable over public HTTPS?', $html );
-		$this->assertStringContainsString( 'Connect directly instead, with nothing to install.', $html );
+		$this->assertStringContainsString( 'Dashboard reachable from the internet?', $html );
+		$this->assertStringContainsString( 'The Connect an app tab needs nothing installed.', $html );
 		$this->assertStringNotContainsString( 'The local server runs on your computer', $html );
 
 		add_filter( 'mainwp_mcp_direct_view', '__return_null', 30 );
 		$html = $this->render_mcp( null );
 		remove_filter( 'mainwp_mcp_direct_view', '__return_null', 30 );
 		$this->assertStringContainsString( 'Manage MainWP with your AI assistant', $html );
-		$this->assertStringNotContainsString( 'Run the local server on your computer', $html );
+		$this->assertStringNotContainsString( 'Run the MainWP MCP server on your computer', $html );
 		$this->assertStringContainsString( $requirements, $html );
-		$this->assertStringNotContainsString( 'Dashboard reachable over public HTTPS?', $html, 'no link to a view that isn\'t there' );
+		$this->assertStringNotContainsString( 'Dashboard reachable from the internet?', $html, 'no link to a view that isn\'t there' );
 	}
 
 	/**
@@ -317,8 +317,8 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 		$grant = $this->connect_write( $this->user_id );
 		$this->seed_notices( array( $this->notice( (int) $grant['grant_id'], 'Loosened app', 'loosened' ) ) );
 		$html = $this->panel->render();
-		$this->assertStringContainsString( 'Approval policy loosened: Loosened app, on ', $html );
-		$this->assertStringNotContainsString( 'New connection: Loosened app', $html );
+		$this->assertStringContainsString( 'Loosened app now asks you less often (policy changed ', $html );
+		$this->assertStringNotContainsString( 'Loosened app connected', $html );
 	}
 
 	public function test_new_connection_notices_render_as_one_message_with_a_list() {
@@ -336,10 +336,10 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 		$this->assertSame( 1, substr_count( $html, 'class="ui blue message"' ), 'one message for every notice' );
 		$this->assertSame( 1, substr_count( $html, '<ul class="list">' ) );
 		$this->assertSame( 3, substr_count( $html, '<li>' ) );
-		$this->assertSame( 1, substr_count( $html, 'Review connections' ) );
-		$this->assertMatchesRegularExpression( '#</ul>\s*<a href="\#connections">Review connections</a>\s*</div>#', $html, 'one link, after the list' );
-		$this->assertStringContainsString( 'Web app added: Zapier, on ', $html );
-		$this->assertStringContainsString( 'New connection: Second app on ', $html );
+		$this->assertSame( 1, substr_count( $html, '>Review</a>' ) );
+		$this->assertMatchesRegularExpression( '#</ul>\s*<a href="\#connections">Review</a>\s*</div>#', $html, 'one link, after the list' );
+		$this->assertStringContainsString( 'Web app added: Zapier, ', $html );
+		$this->assertStringContainsString( 'Second app connected ', $html );
 		$this->assertStringContainsString( 'id="connections"', $html, 'the link has a target' );
 
 		$this->seed_notices( array() );
@@ -368,10 +368,10 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 	}
 
 	public function test_disconnect_buttons_and_hands_off_note_need_a_connection() {
-		$hands_off = 'Hands-off lets the app make changes';
+		$hands_off = 'Hands-off: changes that would wait for your approval here are confirmed in the chat instead';
 
 		$html = $this->panel->render();
-		$this->assertStringContainsString( 'No AI app is connected.', $html );
+		$this->assertStringContainsString( 'No AI app is connected yet.', $html );
 		$this->assertStringNotContainsString( 'value="disconnect_mine"', $html );
 		$this->assertStringNotContainsString( 'value="disconnect_all"', $html );
 		$this->assertStringNotContainsString( $hands_off, $html );
@@ -381,6 +381,20 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'value="disconnect_mine"', $html );
 		$this->assertStringContainsString( 'value="disconnect_all"', $html );
 		$this->assertStringContainsString( $hands_off, $html );
+	}
+
+	public function test_panel_script_loads_only_with_the_panel() {
+		wp_dequeue_script( 'mainwp-remote-mcp-admin-panel' );
+		$this->render_mcp( 'local' );
+		$this->assertFalse( wp_script_is( 'mainwp-remote-mcp-admin-panel', 'enqueued' ), 'not on the local tab' );
+
+		$this->render_mcp( 'direct' );
+		$this->assertTrue( wp_script_is( 'mainwp-remote-mcp-admin-panel', 'enqueued' ) );
+		$script = wp_scripts()->registered['mainwp-remote-mcp-admin-panel'];
+		$this->assertStringEndsWith( 'modules/remote-mcp/assets/admin-panel.js', $script->src );
+		$this->assertSame( array( 'jquery' ), $script->deps );
+		$this->assertFileExists( dirname( __DIR__, 2 ) . '/modules/remote-mcp/assets/admin-panel.js' );
+		wp_dequeue_script( 'mainwp-remote-mcp-admin-panel' );
 	}
 
 	public function test_token_form_selects_use_the_dropdown_class() {

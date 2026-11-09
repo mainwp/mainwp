@@ -198,7 +198,7 @@ class Test_MainWP_MCP_Step_Up extends \WP_UnitTestCase {
 		$this->assertNull( $response->header( 'WWW-Authenticate' ), 'no OAuth challenge for a pasted token' );
 		$result = $this->json( $response )['result'];
 		$this->assertTrue( $result['isError'] );
-		$this->assertSame( 'This token can only view. Create a token with changes allowed in AI > MainWP MCP > Connect directly.', $result['content'][0]['text'] );
+		$this->assertSame( 'This token can only view. Create a token with changes allowed in AI > MainWP MCP > Connect an app.', $result['content'][0]['text'] );
 		$this->assertSame( array(), $this->gate->checks );
 
 		// A registered app that can't step up gets the plain reconnect text.

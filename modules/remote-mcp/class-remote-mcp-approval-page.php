@@ -87,18 +87,18 @@ class Remote_MCP_Approval_Page implements Route_Handler {
             return new Remote_MCP_Response( 404, self::headers( 'text/plain; charset=utf-8' ), 'Not found' );
         }
         if ( ! is_ssl() ) {
-            return $this->message( 400, 'This page needs a secure (https) connection.' );
+            return $this->message( 400, __( 'This page only works over https://.', 'mainwp' ) );
         }
         $query = $request->query_params( array( 'approval' ) );
         $id    = self::positive_int( $query['values']['approval'] );
         if ( null !== $query['duplicate'] || null === $id ) {
-            return $this->message( 400, 'This approval link is not valid.' );
+            return $this->message( 400, __( 'This approval link isn\'t valid.', 'mainwp' ) );
         }
         $post = null;
         if ( 'POST' === $request->method() ) {
             $post = $request->body_params( array( 'approval', 'decision', '_wpnonce' ) );
             if ( null !== $post['duplicate'] || ( null !== $post['values']['approval'] && self::positive_int( $post['values']['approval'] ) !== $id ) ) {
-                return $this->message( 400, 'This approval link is not valid.' );
+                return $this->message( 400, __( 'This approval link isn\'t valid.', 'mainwp' ) );
             }
         }
 
@@ -111,11 +111,11 @@ class Remote_MCP_Approval_Page implements Route_Handler {
 
         $gate = $this->services->get( 'approval_gate' );
         if ( ! $gate instanceof MCP_Approval_Gate ) {
-            return $this->message( 503, 'Approvals are not available on this Dashboard right now.' );
+            return $this->message( 503, __( 'Approvals aren\'t available on this Dashboard right now.', 'mainwp' ) );
         }
         $view = $gate->page_view( $id, $user_id );
         if ( empty( $view['ok'] ) ) {
-            return $this->message( 403, 'This approval isn\'t available to you.' );
+            return $this->message( 403, __( 'This approval belongs to another user, or no longer exists.', 'mainwp' ) );
         }
 
         $notice = null;
@@ -123,9 +123,9 @@ class Remote_MCP_Approval_Page implements Route_Handler {
             $decision = (string) $post['values']['decision'];
             $nonce    = (string) $post['values']['_wpnonce'];
             if ( ! in_array( $decision, self::DECISIONS, true ) || ! wp_verify_nonce( $nonce, self::nonce_action( $id, $decision ) ) ) {
-                return $this->message( 403, 'This form has expired. Reload the page and try again.' );
+                return $this->message( 403, __( 'This form has expired. Reload the page and try again.', 'mainwp' ) );
             }
-            $notice = self::notice( $gate->page_decide( $id, $user_id, $decision ) );
+            $notice = self::notice( $gate->page_decide( $id, $user_id, $decision ), (string) $view['app_label'] );
             $view   = $gate->page_view( $id, $user_id );
         }
         return $this->render( $view, $notice, $id );
@@ -144,7 +144,8 @@ class Remote_MCP_Approval_Page implements Route_Handler {
             'view'       => $view,
             'notice'     => $notice,
             'action_url' => $this->services->urls()->approval_url( $id ),
-            'css_url'    => plugins_url( 'assets/approval.css', __FILE__ ),
+            'css_url'    => OAuth_Consent_Page::stylesheet_url(),
+            'site'       => OAuth_Consent_Page::site_host(),
             'nonces'     => array(),
         );
         foreach ( self::DECISIONS as $decision ) {
@@ -167,7 +168,8 @@ class Remote_MCP_Approval_Page implements Route_Handler {
             'view'       => null,
             'notice'     => $message,
             'action_url' => '',
-            'css_url'    => plugins_url( 'assets/approval.css', __FILE__ ),
+            'css_url'    => OAuth_Consent_Page::stylesheet_url(),
+            'site'       => OAuth_Consent_Page::site_host(),
             'nonces'     => array(),
         );
         ob_start();
@@ -196,21 +198,25 @@ class Remote_MCP_Approval_Page implements Route_Handler {
     /**
      * What to tell the user after a decision.
      *
-     * @param array $outcome page_decide() result.
+     * @param array  $outcome page_decide() result.
+     * @param string $app     App label, or '' for "your AI app".
      * @return string
      */
-    private static function notice( array $outcome ): string {
+    private static function notice( array $outcome, string $app = '' ): string {
+        $app = '' === $app ? __( 'your AI app', 'mainwp' ) : $app;
         switch ( $outcome['outcome'] ) {
             case 'approved':
-                return 'Approved. Go back to your AI app and ask it to try again.';
+                /* translators: %s: app name */
+                return sprintf( __( 'Approved. Go back to %s and ask it to try again.', 'mainwp' ), $app );
             case 'denied':
-                return 'Denied. Nothing was changed.';
+                return __( 'Denied. Nothing was changed.', 'mainwp' );
             case 'ran':
-                return 'Done. The action ran from the Dashboard.';
+                return __( 'Done. The action ran from the Dashboard.', 'mainwp' );
             case 'job_started':
-                return 'Started. The action runs in the background.';
+                return __( 'Started. The action runs in the background.', 'mainwp' );
             case 'stale':
-                return 'The sites or changes are no longer what you approved, so nothing ran. Ask your AI app to start again.';
+                /* translators: %s: app name */
+                return sprintf( __( 'The sites or changes are no longer what you approved, so nothing ran. Ask %s to start again.', 'mainwp' ), $app );
         }
         // A failed preview can carry the ability's own reason.
         if ( isset( $outcome['text'] ) ) {
@@ -218,13 +224,13 @@ class Remote_MCP_Approval_Page implements Route_Handler {
         }
         $reason = $outcome['reason'] ?? null;
         if ( 'activity_log_off' === $reason ) {
-            return 'Nothing ran: remote AI connections need the activity log turned on.';
+            return __( 'Nothing ran. Remote AI connections need the activity log: turn on Enable Network Activity logging under MainWP Settings > Network Activity Settings.', 'mainwp' );
         }
         // The backup refusals tell the user where to do the action instead.
         if ( in_array( $reason, array( 'backup_task_groups', 'backup_task_domains', 'backup_task_update', 'backup_preview_capped' ), true ) ) {
-            return 'Nothing ran. ' . MCP_Approval_Gate::refusal_text( $reason );
+            return __( 'Nothing ran.', 'mainwp' ) . ' ' . MCP_Approval_Gate::refusal_text( $reason );
         }
-        return 'Nothing ran. This approval can no longer be used this way.';
+        return __( 'Nothing ran. This approval can no longer be used this way.', 'mainwp' );
     }
 
     /**

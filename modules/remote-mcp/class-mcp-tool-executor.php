@@ -25,7 +25,7 @@ class MCP_Tool_Executor implements Tool_Executor {
      *
      * @var string
      */
-    const TOKEN_STEP_UP = 'This token can only view. Create a token with changes allowed in AI > MainWP MCP > Connect directly.';
+    const TOKEN_STEP_UP = 'This token can only view. Create a token with changes allowed in AI > MainWP MCP > Connect an app.';
 
     /**
      * Step-up text for clients that can't re-authorize on a challenge.

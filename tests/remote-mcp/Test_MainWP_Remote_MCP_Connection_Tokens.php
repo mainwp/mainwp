@@ -77,7 +77,7 @@ class Test_MainWP_Remote_MCP_Connection_Tokens extends \WP_UnitTestCase {
 	public function test_connection_token_cap_message_counts_from_live_grant_cap() {
 		// Translated, the count can only come from the placeholder the code fills.
 		$translate = function ( $translation, $text ) {
-			return 'You already have %d connection tokens. Revoke one first.' === $text ? 'Token limit: %d.' : $translation;
+			return 'You already have %d tokens, the most one user can hold. Revoke one first.' === $text ? 'Token limit: %d.' : $translation;
 		};
 		add_filter( 'gettext', $translate, 10, 2 );
 		for ( $i = 1; $i <= OAuth_Store::LIVE_GRANT_CAP; $i++ ) {

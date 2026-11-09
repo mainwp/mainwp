@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * The remote connector's panel, shown as the "Connect directly" view of the MainWP MCP page, and
+ * The remote connector's panel, shown as the "Connect an app" view of the MainWP MCP page, and
  * its actions.
  *
  * Every action is a POST with a nonce bound to the action and its target, and needs
@@ -72,6 +72,7 @@ class Remote_MCP_Admin implements Hook_Provider {
         'self_test'            => 'admin',
         'external_check'       => 'admin',
         'dismiss_home_changed' => 'admin',
+        'dismiss_notices'      => 'admin',
     );
 
     /**
@@ -145,7 +146,7 @@ class Remote_MCP_Admin implements Hook_Provider {
     }
 
     /**
-     * Offer the panel as the MainWP MCP page's "Connect directly" view.
+     * Offer the panel as the MainWP MCP page's "Connect an app" view.
      *
      * @param mixed $view View an earlier callback offered.
      * @return mixed `render`, `preferred` and `apps`, or $view unchanged on a multisite.
@@ -187,9 +188,12 @@ class Remote_MCP_Admin implements Hook_Provider {
      */
     public function render_page(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            echo '<div class="ui message">' . esc_html__( 'You need the manage_options capability to manage AI apps.', 'mainwp' ) . '</div>';
+            echo '<div class="ui message">' . esc_html__( 'Only administrators can manage AI apps.', 'mainwp' ) . '</div>';
             return;
         }
+        // The page enqueues its own scripts before it knows which tab renders, so the panel adds
+        // its script here, to the footer.
+        wp_enqueue_script( 'mainwp-remote-mcp-admin-panel', plugins_url( 'assets/admin-panel.js', __FILE__ ), array( 'jquery' ), MAINWP_VERSION, true );
         $result = array();
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- handle_post() verifies the per-action nonce first.
         if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['mainwp_remote_mcp_action'] ) ) {
@@ -218,7 +222,7 @@ class Remote_MCP_Admin implements Hook_Provider {
             return self::fail( 'forbidden', $action );
         }
         if ( 'full' === self::ACTIONS[ $action ] && ! Remote_MCP_Team_Control::user_has_no_limits( get_current_user_id() ) ) {
-            return self::fail( 'forbidden', $action, __( 'Only administrators without Team Control limits can do this.', 'mainwp' ) );
+            return self::fail( 'forbidden', $action, __( 'Only administrators without Team Control limits can change this.', 'mainwp' ) );
         }
         $requirements = $this->requirements();
         if ( ! $requirements['ok'] ) {
@@ -226,13 +230,13 @@ class Remote_MCP_Admin implements Hook_Provider {
         }
         $store_actions = array( 'revoke', 'disconnect_mine', 'disconnect_all', 'narrow_scope', 'set_policy', 'mint_token', 'webapp_add', 'webapp_delete', 'webapp_reissue', 'webapp_switch', 'registration_remove' );
         if ( in_array( $action, $store_actions, true ) && ! Remote_MCP_Install::is_installed() ) {
-            return self::fail( 'not_installed', $action, __( 'Turn on remote AI connections before managing connections or apps.', 'mainwp' ) );
+            return self::fail( 'not_installed', $action, __( 'Turn on remote AI connections first.', 'mainwp' ) );
         }
         // Ending connections works whenever the tables exist, even while the home can't serve MCP;
         // anything that issues or loosens access still needs a servable home.
         $store = in_array( $action, self::REVOKE_ACTIONS, true ) ? $this->services->installed_store() : $this->services->store();
         if ( in_array( $action, $store_actions, true ) && ! $store ) {
-            return self::fail( 'insecure_home', $action, __( 'Use an HTTPS site address before managing connections or apps.', 'mainwp' ) );
+            return self::fail( 'insecure_home', $action, __( 'Your site address has to start with https:// first.', 'mainwp' ) );
         }
         $method = 'action_' . $action;
         $result = $this->$method( $target, $post );
@@ -254,7 +258,7 @@ class Remote_MCP_Admin implements Hook_Provider {
             }
             $reasons = $remote->enable();
             if ( $reasons ) {
-                return self::fail( 'blocked', 'toggle', __( 'Remote AI connections can\'t be turned on yet. Fix the checks below first.', 'mainwp' ), array( 'reasons' => $reasons ) );
+                return self::fail( 'blocked', 'toggle', __( 'Can\'t turn on yet. Fix the failed checks below first.', 'mainwp' ), array( 'reasons' => $reasons ) );
             }
             return self::ok( __( 'Remote AI connections are on.', 'mainwp' ) );
         }
@@ -287,7 +291,7 @@ class Remote_MCP_Admin implements Hook_Provider {
             return self::fail( 'failed', 'revoke' );
         }
         $this->audit( 'grant_revoked', $grant, array( 'reason' => 'manual' ) );
-        return self::ok( __( 'The connection was revoked. The app is signed out on its next request.', 'mainwp' ) );
+        return self::ok( __( 'Revoked. The app is signed out the next time it tries.', 'mainwp' ) );
     }
 
     /**
@@ -308,7 +312,7 @@ class Remote_MCP_Admin implements Hook_Provider {
                 'outcome' => 'ok',
             )
         );
-        return self::ok( __( 'All your AI app connections have ended.', 'mainwp' ) );
+        return self::ok( __( 'All your connections have ended.', 'mainwp' ) );
     }
 
     /**
@@ -334,7 +338,7 @@ class Remote_MCP_Admin implements Hook_Provider {
                 'outcome' => 'ok',
             )
         );
-        return self::ok( __( 'Every AI app connection on this Dashboard has ended.', 'mainwp' ) );
+        return self::ok( __( 'Every connection on this Dashboard has ended.', 'mainwp' ) );
     }
 
     /**
@@ -365,7 +369,7 @@ class Remote_MCP_Admin implements Hook_Provider {
                 'scope_after'  => $after,
             )
         );
-        return self::ok( __( 'This connection is now view only. Its next request uses the new access.', 'mainwp' ) );
+        return self::ok( __( 'This connection is now view only, starting with its next request.', 'mainwp' ) );
     }
 
     /**
@@ -402,7 +406,7 @@ class Remote_MCP_Admin implements Hook_Provider {
         if ( ( self::POLICY_RANK[ $policy ] ?? 0 ) > ( self::POLICY_RANK[ $before ] ?? 0 ) ) {
             $this->notices()->send_new_connection_notice( (int) $grant['id'], 'loosened' );
         }
-        return self::ok( __( 'The approval policy changed. Approvals waiting under the old policy no longer apply.', 'mainwp' ) );
+        return self::ok( __( 'Policy changed. Anything that was waiting under the old policy has been cancelled.', 'mainwp' ) );
     }
 
     /**
@@ -421,7 +425,7 @@ class Remote_MCP_Admin implements Hook_Provider {
         $policy = $post['policy'] ?? '';
         $expiry = $post['expiry'] ?? '';
         if ( '' === $label || mb_strlen( $label ) > 64 || ! in_array( $access, array( 'read', 'write' ), true ) || ! in_array( $policy, OAuth_Store::POLICIES, true ) || ! in_array( $expiry, self::TOKEN_DAYS, true ) ) {
-            return self::fail( 'invalid', 'mint_token', __( 'Give the token a name of up to 64 characters, and pick its access, approval policy and expiry.', 'mainwp' ) );
+            return self::fail( 'invalid', 'mint_token', __( 'Name the token (up to 64 characters) and pick its access, approval policy and expiry.', 'mainwp' ) );
         }
         if ( OAuth_Store::POLICY_HANDS_OFF === $policy && ! Remote_MCP_Team_Control::user_has_no_limits( $me ) ) {
             return self::fail( 'hands_off_not_allowed', 'mint_token', __( 'Hands-off is only for users without Team Control limits.', 'mainwp' ) );
@@ -429,8 +433,7 @@ class Remote_MCP_Admin implements Hook_Provider {
         if ( ! $store ) {
             return self::fail( 'insecure_home', 'mint_token' );
         }
-        /* translators: %d: most connection tokens one user can have. */
-        $revoke_first = sprintf( __( 'You already have %d connection tokens. Revoke one first.', 'mainwp' ), OAuth_Store::LIVE_GRANT_CAP );
+        $revoke_first = self::token_cap_message();
         if ( count( $store->connection_tokens_for_user( $me ) ) >= OAuth_Store::LIVE_GRANT_CAP ) {
             return self::fail( 'cap_reached', 'mint_token', $revoke_first );
         }
@@ -483,7 +486,7 @@ class Remote_MCP_Admin implements Hook_Provider {
             }
         }
         if ( '' === $name || mb_strlen( $name ) > 64 || count( $uris ) < 1 || count( $uris ) > 3 ) {
-            return self::fail( 'invalid', 'webapp_add', __( 'Give the app a name of up to 64 characters and one to three redirect URIs.', 'mainwp' ) );
+            return self::fail( 'invalid', 'webapp_add', __( 'Give the app a name of up to 64 characters and one to three return addresses.', 'mainwp' ) );
         }
         // The same rule authorize applies, so an app this form accepts is one that can connect.
         $clients = $this->services->get( 'known_clients' );
@@ -492,7 +495,7 @@ class Remote_MCP_Admin implements Hook_Provider {
             $valid = $clients->validate_redirect( 'webapp', $uri ) && $valid;
         }
         if ( ! $valid ) {
-            return self::fail( 'invalid_redirect', 'webapp_add', __( 'Each redirect URI must be an exact https:// address with no query strings, fragments, wildcards, @, %, backslashes or spaces.', 'mainwp' ) );
+            return self::fail( 'invalid_redirect', 'webapp_add', __( 'Each return address must be an exact https:// address: no query strings (?), fragments (#), wildcards (*), @, %, backslashes or spaces.', 'mainwp' ) );
         }
         $store   = $this->services->store();
         $created = $store ? $store->create_client(
@@ -510,7 +513,7 @@ class Remote_MCP_Admin implements Hook_Provider {
         $this->audit_client( 'client_added', 'webapp' );
         $this->notices()->record_client_event( 'client_added', $name );
         return self::ok(
-            __( 'Copy the client secret now. It isn\'t shown again.', 'mainwp' ),
+            __( 'Copy the secret now. It isn\'t shown again.', 'mainwp' ),
             array(
                 'client_id'    => (string) $created['client_id'],
                 'secret'       => (string) $created['client_secret'],
@@ -604,7 +607,8 @@ class Remote_MCP_Admin implements Hook_Provider {
     }
 
     /**
-     * The "Let apps on your own computer connect" switch.
+     * The "Let other apps connect" switch: apps that register themselves, and apps that publish
+     * their details at an https:// address.
      *
      * @param string $target Unused.
      * @param array  $post   Fields: `value`.
@@ -718,6 +722,21 @@ class Remote_MCP_Admin implements Hook_Provider {
     }
 
     /**
+     * Hide the notices the user's page showed. `upto` is the newest of them, not the click time,
+     * so an event recorded after the page loaded still shows on the next visit.
+     *
+     * @param string $target Unused.
+     * @param array  $post   Fields: `upto`.
+     * @return array
+     */
+    private function action_dismiss_notices( string $target, array $post ): array {
+        unset( $target );
+        $upto = isset( $post['upto'] ) && is_string( $post['upto'] ) ? absint( $post['upto'] ) : 0;
+        Remote_MCP_Notices::mark_seen( get_current_user_id(), $upto );
+        return self::ok( '' );
+    }
+
+    /**
      * Render the panel.
      *
      * @param array $result Result of the action just run, shown once.
@@ -767,7 +786,7 @@ class Remote_MCP_Admin implements Hook_Provider {
             'connections'         => array(),
             'pending'             => array(),
             'help'                => $this->no_request_help(),
-            'notices'             => $full ? $this->notices()->recent() : array(),
+            'notices'             => $full ? $this->notices()->recent( Remote_MCP_Notices::seen_by( $me ) ) : array(),
             'tools'               => $this->tool_lists(),
             'registration'        => Remote_MCP_Settings::registration_enabled(),
             'unaudited'           => Remote_MCP_Settings::unaudited_extension_tools_enabled(),
@@ -805,22 +824,82 @@ class Remote_MCP_Admin implements Hook_Provider {
                     'last_ip'    => (string) $grant['last_ip'],
                     'failure'    => (string) $grant['last_failure'],
                     'failure_at' => (int) $grant['last_failure_at'],
-                );
+                ) + $this->connection_name( $store, $grant );
             }
             foreach ( $store->pending_approvals_for_user( $me ) as $approval ) {
-                $view['pending'][] = array(
-                    'id'         => (int) $approval['id'],
-                    'url'        => $urls->approval_url( (int) $approval['id'] ),
-                    'summary'    => (string) $approval['summary'],
-                    'ability'    => (string) $approval['ability'],
-                    'expires_at' => (int) $approval['expires_at'],
-                );
+                $view['pending'][] = $this->pending_line( $store, $approval );
             }
             $view['token_count'] = count( $store->connection_tokens_for_user( $me ) );
             $view['registered']  = $store->clients_by_kind( 'registered' );
             $view['webapps']     = $full ? $store->clients_by_kind( 'webapp' ) : array();
         }
         return $view;
+    }
+
+    /**
+     * A connection's name for the table and the chip that qualifies it: `self_named` for a
+     * registered app's own name, `unchecked` for an app MainWP doesn't know. app_label() keeps the
+     * long form for the email and the notices, which have no chips.
+     *
+     * @param OAuth_Store $store Store.
+     * @param array       $grant Grant row.
+     * @return array `name` and `chip`.
+     */
+    private function connection_name( OAuth_Store $store, array $grant ): array {
+        $kind = (string) $grant['client_kind'];
+        if ( 'registered' === $kind ) {
+            $client = $store->get_client( (string) $grant['client_id'] );
+            $name   = $client ? trim( (string) $client['client_name'] ) : '';
+            return array(
+                'name' => '' === $name ? __( 'An app on this computer', 'mainwp' ) : $name,
+                'chip' => '' === $name ? '' : 'self_named',
+            );
+        }
+        // A fetched app keeps the bundled kind, so the registry is what tells them apart.
+        $unknown = 'bundled' === $kind && ! isset( OAuth_Known_Clients::REGISTRY[ (string) $grant['client_id'] ] );
+        return array(
+            'name' => self::app_label( $this->services, $grant ),
+            'chip' => $unknown ? 'unchecked' : '',
+        );
+    }
+
+    /**
+     * One pending approval as the panel says it. The summary column holds the gate's JSON, which
+     * the panel never shows as it is.
+     *
+     * @param OAuth_Store $store    Store.
+     * @param array       $approval Row with OAuth_Store::APPROVAL_LIST_COLUMNS.
+     * @return array `id`, `url`, `action`, `site`, `site_count`, `app` and `created_at`.
+     */
+    private function pending_line( OAuth_Store $store, array $approval ): array {
+        $summary = json_decode( (string) $approval['summary'], true );
+        $ability = is_string( $approval['ability'] ) ? $approval['ability'] : '';
+        $action  = __( 'An action', 'mainwp' );
+        $site    = '';
+        $count   = 0;
+        if ( is_array( $summary ) ) {
+            $registered = '' !== $ability && function_exists( 'wp_has_ability' ) && wp_has_ability( $ability ) ? wp_get_ability( $ability ) : null;
+            if ( $registered ) {
+                $action = (string) $registered->get_label();
+            } elseif ( '' !== $ability ) {
+                $action = $ability;
+            }
+            $first = $summary['sites'][0] ?? null;
+            if ( is_array( $first ) && isset( $first['name'] ) && is_string( $first['name'] ) && '' !== $first['name'] ) {
+                $site  = $first['name'];
+                $count = max( 1, isset( $summary['site_count'] ) ? (int) $summary['site_count'] : 1 );
+            }
+        }
+        $grant = $store->get_grant( (int) $approval['grant_id'] );
+        return array(
+            'id'         => (int) $approval['id'],
+            'url'        => $this->services->urls()->approval_url( (int) $approval['id'] ),
+            'action'     => $action,
+            'site'       => $site,
+            'site_count' => $count,
+            'app'        => $grant ? self::app_label( $this->services, $grant ) : __( 'An AI app', 'mainwp' ),
+            'created_at' => (int) $approval['created_at'],
+        );
     }
 
     /**
@@ -865,7 +944,8 @@ class Remote_MCP_Admin implements Hook_Provider {
      * Catalog rows grouped for the panel: switchable tools by category, the "Not reviewed by
      * MainWP" section, and the two not-available lists. Only the catalog decides.
      *
-     * @return array `available` (category => rows), `not_reviewed`, `not_available_yet`, `not_available`.
+     * @return array `available` (category => rows), `not_reviewed`, `not_available_yet`, `not_available`;
+     *               each row gains a `label`.
      */
     public function tool_lists(): array {
         $lists = array(
@@ -875,6 +955,7 @@ class Remote_MCP_Admin implements Hook_Provider {
             'not_available'     => array(),
         );
         foreach ( $this->catalog_rows() as $row ) {
+            $row['label'] = self::tool_label( $row );
             if ( 'available' === $row['availability'] ) {
                 $lists['available'][ $row['category'] ][] = $row;
             } elseif ( isset( $lists[ $row['availability'] ] ) ) {
@@ -887,6 +968,24 @@ class Remote_MCP_Admin implements Hook_Provider {
         }
         $lists['available'] = $ordered;
         return $lists;
+    }
+
+    /**
+     * A tool's name for people: its ability's label, or the tool name made readable. The module's
+     * own job-status tool has no ability.
+     *
+     * @param array $row Catalog row.
+     * @return string
+     */
+    private static function tool_label( array $row ): string {
+        $ability = $row['ability'] ?? null;
+        if ( is_string( $ability ) && '' !== $ability && function_exists( 'wp_has_ability' ) && wp_has_ability( $ability ) ) {
+            $label = (string) wp_get_ability( $ability )->get_label();
+            if ( '' !== $label ) {
+                return $label;
+            }
+        }
+        return ucfirst( str_replace( '_', ' ', (string) preg_replace( '/_v[0-9]+$/', '', $row['tool_name'] ) ) );
     }
 
     /**
@@ -954,6 +1053,16 @@ class Remote_MCP_Admin implements Hook_Provider {
                 return __( 'Hands-off', 'mainwp' );
         }
         return __( 'Standard', 'mainwp' );
+    }
+
+    /**
+     * The refusal when a user already holds as many connection tokens as they may.
+     *
+     * @return string
+     */
+    public static function token_cap_message(): string {
+        /* translators: %d: most connection tokens one user can have. */
+        return sprintf( __( 'You already have %d tokens, the most one user can hold. Revoke one first.', 'mainwp' ), OAuth_Store::LIVE_GRANT_CAP );
     }
 
     /**
@@ -1059,10 +1168,13 @@ class Remote_MCP_Admin implements Hook_Provider {
     }
 
     /**
-     * App configurations for the panel and the one-time token result.
+     * App configurations for the panel and the one-time token result. `copy` says what step one
+     * hands over: the bare `address`, a `command`, or `settings` to paste; `where` says where it
+     * goes in that app. Apps whose block carries a connection token get the token steps instead;
+     * their optional `where` replaces the generic last step.
      *
      * @param string $token Token, or the placeholder used before minting.
-     * @return array App label => connect and optional token snippets.
+     * @return array App label => `connect`, `copy`, `where` and an optional `token` snippet.
      */
     private function app_snippets( string $token = 'mwpct_...' ): array {
         $mcp         = (string) $this->services->urls()->mcp_url();
@@ -1080,17 +1192,62 @@ class Remote_MCP_Admin implements Hook_Provider {
         $roo         = $server( array( 'type' => 'streamable-http' ) + $with_token );
         $local_token = $server( $with_token );
         $fiveire     = "Name: MainWP\nTransport: Streamable HTTP\nURL: " . $mcp . "\n" . $header;
-        $msty        = "Name: MainWP\nType: Streamable HTTP\nURL: " . $mcp . "\n" . $header;
+        $msty        = "Name: MainWP\nType: HTTP\nURL: " . $mcp . "\n" . $header;
+        $continue    = "mcpServers:\n  - name: MainWP\n    type: streamable-http\n    url: " . $mcp;
+        $connector   = function ( string $app ): string {
+            /* translators: %s: app name. */
+            return sprintf( __( 'In %s, add a custom connector and paste the address. Sign in with your Dashboard account when asked.', 'mainwp' ), $app );
+        };
+        $sign_in     = function ( string $where, string $app ): string {
+            /* translators: 1: where the settings go, 2: app name. */
+            return sprintf( __( 'Add this to %1$s, then sign in with your Dashboard account when %2$s asks.', 'mainwp' ), $where, $app );
+        };
         return array(
-            'Claude'         => array( 'connect' => $hosted ),
-            'Claude Desktop' => array( 'connect' => $hosted ),
-            'Claude Code'    => array( 'connect' => 'claude mcp add --transport http mainwp ' . self::shell_quote( $mcp ) ),
-            'ChatGPT'        => array( 'connect' => $hosted ),
-            'VS Code'        => array( 'connect' => $json( array( 'servers' => array( 'mainwp' => array( 'type' => 'http' ) + $http ) ) ) ),
-            'Codex CLI'      => array( 'connect' => "[mcp_servers.mainwp]\nurl = " . wp_json_encode( $mcp, JSON_UNESCAPED_SLASHES ) ),
-            'Zed'            => array( 'connect' => $json( array( 'context_servers' => array( 'mainwp' => $http ) ) ) ),
-            'Goose'          => array( 'connect' => "extensions:\n  mainwp:\n    name: MainWP\n    type: streamable_http\n    enabled: true\n    uri: " . $mcp ),
-            'Cursor'         => array( 'connect' => $server( $http + array( 'auth' => array( 'CLIENT_ID' => 'mainwp-cursor' ) ) ) ),
+            'Claude'         => array(
+                'connect' => $hosted,
+                'copy'    => 'address',
+                'where'   => $connector( 'Claude' ),
+            ),
+            'Claude Desktop' => array(
+                'connect' => $hosted,
+                'copy'    => 'address',
+                'where'   => $connector( 'Claude Desktop' ),
+            ),
+            'Claude Code'    => array(
+                'connect' => 'claude mcp add --transport http mainwp ' . self::shell_quote( $mcp ),
+                'copy'    => 'command',
+                'where'   => __( 'Run this in a terminal, then run /mcp in Claude Code and sign in with your Dashboard account.', 'mainwp' ),
+            ),
+            'ChatGPT'        => array(
+                'connect' => $hosted,
+                'copy'    => 'address',
+                'where'   => __( 'In ChatGPT on the web, add a custom MCP server and paste the address. Sign in with your Dashboard account when asked.', 'mainwp' ),
+            ),
+            'VS Code'        => array(
+                'connect' => $json( array( 'servers' => array( 'mainwp' => array( 'type' => 'http' ) + $http ) ) ),
+                'copy'    => 'settings',
+                'where'   => $sign_in( '.vscode/mcp.json', 'VS Code' ),
+            ),
+            'Codex CLI'      => array(
+                'connect' => "[mcp_servers.mainwp]\nurl = " . wp_json_encode( $mcp, JSON_UNESCAPED_SLASHES ),
+                'copy'    => 'settings',
+                'where'   => __( 'Add this to ~/.codex/config.toml, then run codex mcp login mainwp and sign in with your Dashboard account.', 'mainwp' ),
+            ),
+            'Zed'            => array(
+                'connect' => $json( array( 'context_servers' => array( 'mainwp' => $http ) ) ),
+                'copy'    => 'settings',
+                'where'   => $sign_in( __( 'Zed\'s settings.json', 'mainwp' ), 'Zed' ),
+            ),
+            'Goose'          => array(
+                'connect' => "extensions:\n  mainwp:\n    name: MainWP\n    type: streamable_http\n    enabled: true\n    uri: " . $mcp,
+                'copy'    => 'settings',
+                'where'   => $sign_in( '~/.config/goose/config.yaml', 'Goose' ),
+            ),
+            'Cursor'         => array(
+                'connect' => $server( $http + array( 'auth' => array( 'CLIENT_ID' => 'mainwp-cursor' ) ) ),
+                'copy'    => 'settings',
+                'where'   => $sign_in( '~/.cursor/mcp.json', 'Cursor' ),
+            ),
             'Gemini CLI'     => array(
                 'connect' => $server(
                     array(
@@ -1101,48 +1258,86 @@ class Remote_MCP_Admin implements Hook_Provider {
                         ),
                     )
                 ),
+                'copy'    => 'settings',
+                'where'   => __( 'Add this to ~/.gemini/settings.json, then run /mcp auth mainwp in Gemini CLI and sign in with your Dashboard account.', 'mainwp' ),
             ),
-            'Qwen Code'      => array( 'connect' => $server( array( 'httpUrl' => $mcp ) ) ),
-            'Cline'          => array( 'connect' => $server( array( 'type' => 'streamableHttp' ) + $http ) ),
+            'Qwen Code'      => array(
+                'connect' => $server( array( 'httpUrl' => $mcp ) ),
+                'copy'    => 'settings',
+                'where'   => $sign_in( '~/.qwen/settings.json', 'Qwen Code' ),
+            ),
+            'Cline'          => array(
+                'connect' => $server( array( 'type' => 'streamableHttp' ) + $http ),
+                'copy'    => 'settings',
+                'where'   => $sign_in( __( 'Cline\'s MCP settings', 'mainwp' ), 'Cline' ),
+            ),
             'Jan'            => array(
-                'connect' => $server( $http ),
+                'connect' => "Name: MainWP\nTransport: HTTP\nURL: " . $mcp,
                 'token'   => $local_token,
+                'copy'    => 'settings',
+                'where'   => __( 'In Jan, add an MCP server with these settings, then choose Sign in and use your Dashboard account.', 'mainwp' ),
             ),
-            'Continue'       => array( 'connect' => "mcpServers:\n  - name: MainWP\n    type: streamable-http\n    url: " . $mcp ),
-            'Cherry Studio'  => array( 'connect' => "Name: MainWP\nType: Streamable HTTP\nURL: " . $mcp . "\nAuthentication: OAuth" ),
-            'mcp-remote'     => array( 'connect' => 'npx -y mcp-remote ' . self::shell_quote( $mcp ) ),
+            'Continue'       => array(
+                'connect' => $continue,
+                'token'   => $continue . "\n    requestOptions:\n      headers:\n        Authorization: Bearer " . $token,
+                'copy'    => 'settings',
+                'where'   => __( 'Add this to Continue\'s config.yaml, then sign in with your Dashboard account if Continue asks.', 'mainwp' ),
+            ),
+            'Cherry Studio'  => array(
+                'connect' => "Name: MainWP\nType: Streamable HTTP\nURL: " . $mcp . "\nAuthentication: OAuth",
+                'copy'    => 'settings',
+                'where'   => __( 'In Cherry Studio, add an MCP server with these settings. Sign in with your Dashboard account when it asks.', 'mainwp' ),
+            ),
+            'mcp-remote'     => array(
+                'connect' => 'npx -y mcp-remote ' . self::shell_quote( $mcp ),
+                'copy'    => 'command',
+                'where'   => __( 'Use this command as the MCP server in an app that only runs local servers. It opens your browser so you can sign in with your Dashboard account.', 'mainwp' ),
+            ),
             'LM Studio'      => array(
                 'connect' => $server( $http ),
                 'token'   => $local_token,
+                'copy'    => 'settings',
+                'where'   => $sign_in( __( 'LM Studio\'s mcp.json', 'mainwp' ), 'LM Studio' ),
             ),
-            'Open WebUI'     => array( 'connect' => "Name: MainWP\nType: MCP (Streamable HTTP)\nURL: " . $mcp . "\nAuthentication: OAuth\nClient ID: <client ID from Add a web app>\nClient secret: <secret shown when adding the web app>" ),
+            'Open WebUI'     => array(
+                'connect' => "Name: MainWP\nType: MCP (Streamable HTTP)\nURL: " . $mcp . "\nAuthentication: OAuth 2.1 (Static)\nClient ID: <client ID from Add a web app>\nClient secret: <secret shown when adding the web app>",
+                'copy'    => 'settings',
+                'where'   => __( 'Add Open WebUI under Web apps you added first, for its client ID and secret. Then, as an Open WebUI admin, add an MCP tool server with these settings and sign in with your Dashboard account when it asks.', 'mainwp' ),
+            ),
             'AnythingLLM'    => array(
                 'connect' => $anything,
                 'token'   => $anything,
+                'copy'    => 'settings',
+                'where'   => __( 'Add it to anythingllm_mcp_servers.json in AnythingLLM\'s storage/plugins folder, then reload the MCP servers.', 'mainwp' ),
             ),
             '5ire'           => array(
                 'connect' => $fiveire,
                 'token'   => $fiveire,
+                'copy'    => 'settings',
             ),
             'Msty'           => array(
                 'connect' => $msty,
                 'token'   => $msty,
+                'copy'    => 'settings',
+                'where'   => __( 'In Msty, go to Toolbox > Tools > Add New Tool, choose HTTP, and enter these settings.', 'mainwp' ),
             ),
             'Roo Code'       => array(
                 'connect' => $roo,
                 'token'   => $roo,
+                'copy'    => 'settings',
             ),
         );
     }
 
     /**
-     * Config snippets for a new connection token, shown only with the mint result.
+     * Per-app config snippets for a new connection token, shown only with the mint result. The bare
+     * header line is rendered beside them from the token itself.
      *
      * @param string $token Token.
      * @return array Label => snippet.
      */
     private function token_snippets( string $token ): array {
-        $snippets = array( __( 'Header', 'mainwp' ) => 'Authorization: Bearer ' . $token );
+        $snippets = array();
         foreach ( $this->app_snippets( $token ) as $label => $app ) {
             if ( isset( $app['token'] ) ) {
                 $snippets[ $label ] = $app['token'];

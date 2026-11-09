@@ -245,7 +245,7 @@ class OAuth_Registration_Endpoint implements Route_Handler {
      */
     private function error( int $status, string $error, array $headers = array() ): Remote_MCP_Response {
         $descriptions = array(
-            'invalid_redirect_uri'    => 'Only apps on this computer can register here, with a loopback redirect such as http://127.0.0.1/callback. A web app needs a Dashboard admin to add it in AI > MainWP MCP > Connect directly.',
+            'invalid_redirect_uri'    => 'Only apps on this computer can register here, with a loopback redirect such as http://127.0.0.1/callback. A web app needs a Dashboard admin to add it in AI > MainWP MCP > Connect an app.',
             'invalid_client_metadata' => 'The registration request is not valid.',
             'too_many_requests'       => 'Too many registrations right now. Try again later.',
             'server_error'            => 'The registration could not be saved.',

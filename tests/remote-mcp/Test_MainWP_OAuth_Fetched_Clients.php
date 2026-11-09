@@ -299,7 +299,8 @@ class Test_MainWP_OAuth_Fetched_Clients extends OAuth_Authorize_Test_Case {
 		$name              = '<script>alert("x")</script>' . str_repeat( 'n', 100 );
 		$this->http_answer = $this->json_response( $this->document( self::CLIENT_ID, $name ) );
 		$consent           = $this->consent();
-		$this->assertStringContainsString( 'An app at <strong>app.example.org</strong> (not checked by MainWP)', $consent['body'] );
+		$this->assertStringContainsString( 'An app MainWP doesn&#039;t know wants to connect</h1>', $consent['body'] );
+		$this->assertStringContainsString( 'It&#039;s at <strong>app.example.org</strong> and calls itself', $consent['body'] );
 		$this->assertStringContainsString( esc_html( mb_substr( $name, 0, 80 ) ), $consent['body'] );
 		$this->assertStringNotContainsString( '<script>', $consent['body'] );
 		$this->assertStringNotContainsString( esc_html( mb_substr( $name, 0, 81 ) ), $consent['body'] );

@@ -344,10 +344,21 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 
 		$this->assertStringContainsString( 'Claude Code', $text );
 		$this->assertStringContainsString( 'claude.ai', $text, 'client_id host' );
-		$this->assertStringContainsString( '127.0.0.1', $text, 'redirect host' );
+		$this->assertStringContainsString( "You'll go back to the app on this computer after you decide.", $text, 'a loopback return is named in words' );
 		$this->assertStringContainsString( 'Signed in as Grace Hopper (' . $user->user_login . '), Administrator', $text );
 		$this->assertStringContainsString( 'Not you? Log out', $text );
-		$this->assertStringContainsString( 'Only approve if you just started this in your own app.', $text );
+		$this->assertStringContainsString( "Only approve if you started this yourself, just now, in Claude Code. If you didn't, choose Deny.", $text );
+
+		// The login is left out when it repeats the display name.
+		wp_update_user(
+			array(
+				'ID'           => $this->user_id,
+				'display_name' => $user->user_login,
+			)
+		);
+		wp_set_current_user( 0 );
+		wp_set_current_user( $this->user_id );
+		$this->assertStringContainsString( 'Signed in as ' . $user->user_login . ', Administrator', $this->text( $this->consent()['body'] ) );
 	}
 
 	public function test_client_name_never_rendered_as_identity() {
@@ -355,7 +366,11 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 		$body = $this->consent()['body'];
 		$this->assertStringNotContainsString( 'MainWP Official Support', $this->headline( $body ) );
 		$this->assertStringContainsString( 'Claude Code', $this->headline( $body ) );
-		$this->assertStringContainsString( 'The app calls itself', $this->text( $body ), 'shown only as secondary text' );
+		$this->assertStringContainsString( 'It calls itself "MainWP Official Support".', $this->text( $body ), 'shown only as secondary text' );
+
+		// A name that matches the label adds nothing.
+		$this->clients->clients[ self::CLIENT_ID ]['client_name'] = 'Claude Code';
+		$this->assertStringNotContainsString( 'calls itself', $this->text( $this->consent()['body'] ) );
 
 		// A document name over 80 characters is cut for display.
 		$this->clients->clients[ self::CLIENT_ID ]['client_name'] = str_repeat( 'N', 120 );
@@ -375,7 +390,7 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 	}
 
 	public function test_loopback_only_client_shows_warning() {
-		$warning = 'The approval goes to a program on your own computer';
+		$warning = "You'll go back to the app on this computer after you decide.";
 		$this->assertStringContainsString( $warning, $this->text( $this->consent()['body'] ), 'Claude Code: loopback only' );
 		$this->assertStringContainsString(
 			$warning,
@@ -532,7 +547,8 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 				'redirect_uri' => 'http://localhost:8787/callback',
 			)
 		)['body'];
-		$this->assertSame( "Cursor, or another program using Cursor's settings", $this->headline( $body ) );
+		$this->assertSame( 'Cursor wants to connect', $this->headline( $body ) );
+		$this->assertStringContainsString( "Or another program using Cursor's settings. You'll go back to localhost after you decide.", $this->text( $body ) );
 
 		$body = $this->consent(
 			array(
@@ -540,7 +556,8 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 				'redirect_uri' => 'http://localhost:7777/oauth/callback',
 			)
 		)['body'];
-		$this->assertSame( "Gemini CLI, or another program on your computer using Gemini CLI's settings", $this->headline( $body ) );
+		$this->assertSame( 'Gemini CLI wants to connect', $this->headline( $body ) );
+		$this->assertStringContainsString( "Or another program using Gemini CLI's settings. You'll go back to the app on this computer after you decide.", $this->text( $body ) );
 	}
 
 	public function test_registered_client_consent_label_marks_name_unchecked() {
@@ -557,9 +574,10 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 				'redirect_uri' => 'http://127.0.0.1:4567/cb',
 			)
 		);
-		$this->assertSame( 'Desk Helper (name not checked by MainWP), an app on this computer', $this->headline( $consent['body'] ) );
-		$this->assertStringContainsString( '<bdi>Desk Helper</bdi>', $consent['body'], 'a right-to-left name can\'t reorder the warning after it' );
-		$this->assertStringContainsString( 'Only approve if you just started this in your own app.', $this->text( $consent['body'] ) );
+		$this->assertSame( 'Desk Helper wants to connect', $this->headline( $consent['body'] ) );
+		$this->assertStringContainsString( '<bdi>Desk Helper</bdi>', $consent['body'], 'a right-to-left name can\'t reorder the words after it' );
+		$this->assertStringContainsString( "An app on this computer. The name is the app's own; MainWP hasn't checked it.", $this->text( $consent['body'] ) );
+		$this->assertStringContainsString( "Only approve if you started this yourself, just now, in Desk Helper. If you didn't, choose Deny.", $this->text( $consent['body'] ) );
 
 		// The first consent marks the registration consented, so it is kept.
 		$this->assertNull( $this->store->get_client( $client_id )['first_consented_at'] );
@@ -573,7 +591,8 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 				'redirect_uri' => 'http://127.0.0.1/cb',
 			)
 		)['body'];
-		$this->assertSame( 'An app on this computer', $this->headline( $body ) );
+		$this->assertSame( 'An app on this computer wants to connect', $this->headline( $body ) );
+		$this->assertStringContainsString( "MainWP hasn't checked this app.", $this->text( $body ) );
 	}
 
 	public function test_webapp_consent_label_names_admin_and_redirect_host() {
@@ -599,7 +618,8 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 		)['body'];
 
 		$date = wp_date( get_option( 'date_format' ), $this->clock->now );
-		$this->assertSame( "Team Chat, added by Ada Admin on {$date}. You'll return to chat.example.net.", $this->headline( $body ) );
+		$this->assertSame( 'Team Chat wants to connect', $this->headline( $body ) );
+		$this->assertStringContainsString( "Added to this Dashboard by Ada Admin on {$date}. You'll go back to chat.example.net after you decide.", $this->text( $body ) );
 	}
 
 	public function test_registered_client_name_with_markup_is_escaped_on_consent() {
@@ -621,7 +641,7 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 		$this->assertStringNotContainsString( '<script>alert', $body );
 		$this->assertStringNotContainsString( '<img src=x', $body );
 		$this->assertStringContainsString( '&lt;script&gt;alert(1)&lt;/script&gt;', $body );
-		$this->assertStringContainsString( $name . ' (name not checked by MainWP)', $this->headline( $body ) );
+		$this->assertStringContainsString( $name . ' wants to connect', $this->headline( $body ) );
 	}
 
 	public function test_consent_decisions_fire_audit_events() {
@@ -665,6 +685,7 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 		$this->assertStringContainsString( 'acme billing', $text, 'changes name the write categories' );
 		$this->assertStringNotContainsString( 'acme secrets', $text, 'unavailable tools grant nothing' );
 		$this->assertStringNotContainsString( 'acme vault', $text );
+		$this->assertMatchesRegularExpression( '/See and change your (?:(?!acme reports)[^.])*data, and see your acme reports data\./', $text, 'a read-only category is never described as changeable' );
 
 		// View-only requests describe the view categories only.
 		$text = $this->text( $this->consent( array( 'scope' => 'mainwp:read' ) )['body'] );
@@ -679,8 +700,137 @@ class Test_MainWP_OAuth_Consent extends OAuth_Authorize_Test_Case {
 			$this->catalog_row( 'sites', 'mainwp-sites', 'read' ),
 			$this->catalog_row( 'alpha', 'acme-alpha', 'read' ),
 		);
-		$text = $this->text( $this->consent()['body'] );
-		$this->assertMatchesRegularExpression( '/See Sites, Updates, acme alpha(?:,? and|,) matomo/', $text );
+		$text                = $this->text( $this->consent()['body'] );
+		$this->assertMatchesRegularExpression( '/See your Sites, Updates, acme alpha(?:,? and|,) matomo data\. Change nothing\./', $text );
 	}
 
+	/**
+	 * Consent text for one kind of app, by the client and redirect the request names.
+	 *
+	 * @return array Kind => [ client_id, redirect_uri, headline, facts the page must say ].
+	 */
+	private function kinds(): array {
+		$this->clients->add(
+			array(
+				'client_id'     => 'https://app.example.org/mcp-client.json',
+				'fetched'       => true,
+				'client_name'   => 'Helper App',
+				'redirect_uris' => array( 'http://127.0.0.1/cb' ),
+			)
+		);
+		$admin    = self::factory()->user->create(
+			array(
+				'role'         => 'administrator',
+				'display_name' => 'Ada Admin',
+			)
+		);
+		$webapp   = $this->stored_client(
+			'webapp',
+			array(
+				'client_name'   => 'Team Chat',
+				'redirect_uris' => array( self::WEBAPP_CB ),
+				'created_by'    => $admin,
+			)
+		);
+		$register = $this->stored_client(
+			'registered',
+			array(
+				'client_name'   => 'Desk Helper',
+				'redirect_uris' => array( 'http://127.0.0.1/cb' ),
+			)
+		);
+		return array(
+			'bundled hosted'   => array( self::CLAUDE_AI, self::CLAUDE_AI_CB, 'Claude wants to connect', array( 'From claude.ai.', "You'll go back to claude.ai after you decide.", 'in Claude.' ) ),
+			'bundled loopback' => array( self::CLIENT_ID, self::REDIRECT, 'Claude Code wants to connect', array( 'From claude.ai.', "You'll go back to the app on this computer after you decide.", 'in Claude Code.' ) ),
+			'registered'       => array( $register, 'http://127.0.0.1:4567/cb', 'Desk Helper wants to connect', array( "An app on this computer. The name is the app's own; MainWP hasn't checked it.", "You'll go back to it after you decide.", 'in Desk Helper.' ) ),
+			'web app'          => array( $webapp, self::WEBAPP_CB, 'Team Chat wants to connect', array( 'Added to this Dashboard by Ada Admin on ', "You'll go back to chat.example.net after you decide.", 'in Team Chat.' ) ),
+			'static'           => array( self::CURSOR, 'https://www.cursor.com/agents/mcp/oauth/callback', 'Cursor wants to connect', array( "Or another program using Cursor's settings.", "You'll go back to www.cursor.com after you decide.", 'in Cursor.' ) ),
+			'fetched'          => array( 'https://app.example.org/mcp-client.json', 'http://127.0.0.1:4567/cb', "An app MainWP doesn't know wants to connect", array( 'It\'s at app.example.org and calls itself "Helper App". MainWP hasn\'t checked this app.', "You'll go back to the app on this computer after you decide.", 'in the app.' ) ),
+		);
+	}
+
+	public function test_every_kind_of_app_gets_every_protective_fact() {
+		$access   = array(
+			'View and make changes See and change your Sites and Updates data. When it has to ask you first is set below.',
+			'View only See your Sites and Updates data. Change nothing.',
+		);
+		$policies = array(
+			'Standard Ordinary changes run right away. Some are confirmed with you in the app, and the riskiest wait for your approval on this Dashboard.',
+			'Strict Every change waits for your approval on this Dashboard.',
+			"MainWP can't tell whether a person approved in the chat, and instructions hidden in a site's content could get the app to make changes.",
+		);
+		foreach ( $this->kinds() as $kind => list( $client_id, $redirect, $headline, $facts ) ) {
+			$body = $this->consent(
+				array(
+					'client_id'    => $client_id,
+					'redirect_uri' => $redirect,
+				)
+			)['body'];
+			$text = $this->text( $body );
+			$this->assertSame( $headline, $this->headline( $body ), $kind );
+			$this->assertStringContainsString( 'MainWP Dashboard · dash.example.com', $text, $kind . ': whose Dashboard this is' );
+			foreach ( array_merge( $facts, $access, $policies ) as $fact ) {
+				$this->assertStringContainsString( $fact, $text, $kind );
+			}
+			$this->assertStringContainsString( 'Only approve if you started this yourself, just now, ' . end( $facts ) . " If you didn't, choose Deny.", $text, $kind . ': the caution' );
+			$this->assertSame( 1, substr_count( $body, 'class="mainwp-oauth-warning"' ), $kind . ': one caution' );
+			$this->assertStringNotContainsString( 'class="mainwp-oauth-note"', $body, $kind . ': no second box about where the approval goes' );
+		}
+	}
+
+	public function test_policy_descriptions_match_the_tier_rules() {
+		$body = $this->consent()['body'];
+		$this->assertSame( 1, preg_match( '#<fieldset class="mainwp-oauth-policies">\s*<legend>([^<]*)</legend>(.*?)</fieldset>#s', $body, $fieldset ) );
+		$this->assertSame( 'When should MainWP ask you before the app changes something?', $fieldset[1] );
+		preg_match_all( '#value="([a-z_]+)"[^>]*> <strong>([^<]*)</strong> <span([^>]*)>([^<]*)</span>#', html_entity_decode( $fieldset[2], ENT_QUOTES ), $options, PREG_SET_ORDER );
+		$this->assertSame( array( 'standard', 'strict', 'hands_off' ), array_column( $options, 1 ) );
+		list( $standard, $strict, $hands_off ) = array_column( $options, 4 );
+		$this->assertStringContainsString( 'Ordinary changes run right away', $standard, 'write tier runs directly' );
+		$this->assertStringContainsString( 'the riskiest wait for your approval on this Dashboard', $standard, 'dashboard tier waits' );
+		$this->assertSame( 'Every change waits for your approval on this Dashboard.', $strict );
+		$this->assertStringContainsString( 'confirmed with you in the chat instead', $hands_off );
+		foreach ( array( 'Adding sites', 'restoring or deleting backups', 'changing backup retention', "changing a site's URL or SSL settings", 'replacing the custom dashboard snippet', 'still wait for your approval here' ) as $floor ) {
+			$this->assertStringContainsString( $floor, $hands_off, 'the HANDS_OFF_FLOOR exceptions are named' );
+		}
+		$this->assertStringContainsString( "MainWP can't tell whether a person approved", $hands_off );
+		$this->assertStringContainsString( "instructions hidden in a site's content", $hands_off );
+		$this->assertStringNotContainsString( 'never', $hands_off );
+		$this->assertSame( ' class="mainwp-oauth-hands-off"', $options[2][3], 'Hands-off carries the warning edge' );
+		$this->assertSame( '', $options[0][3] );
+	}
+
+	public function test_caution_sits_after_the_choices_and_right_above_the_buttons() {
+		foreach ( array( 'mainwp:read mainwp:write offline_access', 'mainwp:read offline_access' ) as $scope ) {
+			$body = $this->consent( array( 'scope' => $scope ) )['body'];
+			$this->assertMatchesRegularExpression( '#</(?:fieldset|p)>\s*<p class="mainwp-oauth-warning">[^<]*</p>\s*<div class="mainwp-oauth-actions">\s*<button type="submit" name="decision" value="approve"#', $body, $scope );
+			$this->assertLessThan( strpos( $body, 'mainwp-oauth-warning' ), strpos( $body, 'What the app can do' ) ?: strpos( $body, 'mainwp-oauth-access' ), $scope . ': the facts come first' );
+			$this->assertLessThan( strpos( $body, 'mainwp-oauth-warning' ), (int) strpos( $body, 'mainwp-oauth-user' ) );
+		}
+	}
+
+	public function test_pages_link_the_shared_stylesheet_the_csp_allows() {
+		foreach ( array(
+			'consent' => $this->consent()['response'],
+			'error'   => $this->authorize( array( 'client_id' => 'https://evil.example/client.json' ) ),
+		) as $page => $response ) {
+			$this->assertSame( 1, preg_match_all( '/<link /', $response->body() ), $page );
+			$this->assertSame( 1, preg_match( '#<link rel="\w+" href="([^"]+)">#', $response->body(), $link ), $page );
+			$this->assertStringEndsWith( '/modules/remote-mcp/assets/remote-mcp-pages.css', $link[1], $page );
+			$this->assertFileExists( dirname( __DIR__, 2 ) . '/modules/remote-mcp/assets/remote-mcp-pages.css' );
+			$this->assertStringContainsString( "style-src 'self'", (string) $response->header( 'Content-Security-Policy' ), $page );
+			$this->assertStringNotContainsString( '<style', $response->body(), $page );
+			$this->assertStringNotContainsString( 'style="', $response->body(), $page );
+		}
+	}
+
+	public function test_error_page_names_the_switch_and_links_home() {
+		$response = $this->authorize( array( 'client_id' => 'https://evil.example/client.json' ) );
+		$this->assert_error_page( $response, 'unsupported_client' );
+		$text = $this->text( $response->body() );
+		$this->assertStringContainsString( "This app can't connect", $text );
+		$this->assertStringContainsString( "An administrator can allow it under AI > MainWP MCP > Connect an app > Advanced > Which apps may connect: turn on the app's own switch, or Let other apps connect for apps that aren't listed.", $text );
+		$this->assertStringContainsString( 'connection token', $text );
+		$this->assertStringContainsString( 'MainWP Dashboard · dash.example.com', $text );
+		$this->assertStringContainsString( '<a href="' . esc_url( admin_url() ) . '">Go to your Dashboard</a>', $response->body() );
+	}
 }

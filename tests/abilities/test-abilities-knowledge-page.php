@@ -212,7 +212,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( '<pre id="mainwp-mcp-config"', $mcp );
 		$this->assertSame( 4, substr_count( $mcp, 'class="mainwp-mcp-step-intro"' ) );
 		$this->assertStringContainsString( 'Learn more about Application Passwords.', $mcp );
-		$this->assertStringContainsString( 'Find instructions for your AI tool.', $mcp );
+		$this->assertStringContainsString( 'Instructions for each app.', $mcp );
 		$this->assertStringNotContainsString( 'Credential guide', $mcp );
 		$this->assertStringNotContainsString( 'Your Dashboard stays in control', $mcp );
 		$this->assertStringNotContainsString( 'MainWP MCP lets your AI assistant work with sites', $mcp );

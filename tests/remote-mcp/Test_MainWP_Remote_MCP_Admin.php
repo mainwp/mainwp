@@ -178,9 +178,11 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			foreach ( self::site_wide_actions() as list( $action ) ) {
 				$this->assertStringNotContainsString( 'value="' . $action . '"', $html );
 			}
-			$this->assertStringContainsString( $on ? 'On. AI apps' : 'Off. No AI app', $html );
-			$this->assertMatchesRegularExpression( '/Let apps on your own computer connect<\/td>\s*<td[^>]*>\s*<span class="ui mini basic label">' . ( $on ? 'On' : 'Off' ) . '<\/span>\s*<\/td>/', $html );
-			$this->assertMatchesRegularExpression( '/<code>list_sites_v1<\/code><\/td>\s*<td[^>]*>\s*<span class="ui mini basic label">' . ( $on ? 'On' : 'Off' ) . '<\/span>\s*<\/td>/', $html );
+			$this->assertStringContainsString( $on ? 'Apps you approve can reach this Dashboard' : 'Off. No AI app', $html );
+			$state = ( $on ? ' checked' : '' ) . ' disabled>';
+			$this->assertMatchesRegularExpression( '/Let other apps connect\s*<div>.*?<\/div>\s*<\/td>\s*<td[^>]*><div class="ui toggle checkbox disabled not-auto-init"[^>]*><input type="checkbox" aria-label="Let other apps connect"' . $state . '/s', $html, 'a disabled switch shows the state' );
+			$this->assertMatchesRegularExpression( '/<code>list_sites_v1<\/code><\/small><\/div>\s*<\/td>\s*<td[^>]*><div class="ui toggle checkbox disabled not-auto-init"[^>]*><input type="checkbox" aria-label="[^"]*"' . $state . '/', $html );
+			$this->assertStringContainsString( 'data-tooltip="Only administrators without Team Control limits can change this."', $html );
 			foreach ( array( 'self_test', 'external_check' ) as $action ) {
 				$this->assertStringContainsString( 'value="' . $action . '"', $html );
 			}
@@ -352,10 +354,10 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 		$help = $this->admin()->no_request_help();
 		$this->assertCount( 1, $help, 'only the connection past 10 minutes with no request' );
 		$this->assertSame( $quiet['grant_id'], $help[0]['grant_id'] );
-		$this->assertStringContainsString( esc_html( "Claude hasn't reached this Dashboard yet" ), $html );
+		$this->assertStringContainsString( esc_attr( "Claude was approved but hasn't made a request yet." ), $html );
 		$this->assertStringContainsString( 'cloudflare', strtolower( $help[0]['help_url'] ) );
 		$this->assertStringContainsString( esc_url( $help[0]['help_url'] ), $html );
-		$this->assertSame( 1, substr_count( $html, esc_html( "hasn't reached this Dashboard yet" ) ) );
+		$this->assertSame( 1, substr_count( $html, esc_attr( "hasn't made a request yet" ) ) );
 		$this->assertTrue( $this->lists_grant( $html, $fresh['grant_id'] ) );
 	}
 
@@ -575,9 +577,9 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 
 		$html = $admin->render();
 		$this->assertStringContainsString( 'Not reviewed by MainWP', $html );
-		$this->assertStringContainsString( esc_html( "isn't cancelled when a connection is revoked" ), $html );
+		$this->assertStringContainsString( esc_html( 'Work they have already queued keeps running after you revoke a connection.' ), $html );
 		$this->assertStringContainsString( 'Not available yet', $html );
-		$this->assertStringContainsString( 'Not available to AI apps', $html );
+		$this->assertStringContainsString( 'Never available to AI apps', $html );
 		$this->assertStringContainsString( 'name="target" value="list_sites_v1"', $html );
 		$this->assertStringContainsString( 'name="target" value="acme_rebuild_v1"', $html );
 		$this->assertStringNotContainsString( 'name="target" value="updraft_backup_v1"', $html, 'no switch for an inert tool' );
@@ -612,7 +614,7 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			),
 		);
 		$html = html_entity_decode( $this->admin()->render(), ENT_QUOTES, 'UTF-8' );
-		$this->assertStringContainsString( "These extension tools make changes MainWP hasn't reviewed, so each call needs your approval on the Dashboard, or a confirmation in the chat under Hands-off.", $html );
+		$this->assertStringContainsString( "These add-on tools make changes MainWP hasn't reviewed. Each use waits for your approval here (or a confirmation in the chat under Hands-off).", $html );
 	}
 	public function test_first_use_panel_runs_no_module_table_queries() {
 		delete_option( Remote_MCP_Settings::OPTION_DB_VERSION );
@@ -630,7 +632,7 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			remove_filter( 'query', $count );
 		}
 		$this->assertSame( array(), $queries, 'First-use panel must not query uninstalled module tables.' );
-		$this->assertStringContainsString( 'No app has registered.', $html );
+		$this->assertStringContainsString( 'None yet.', $html );
 		$this->assertStringNotContainsString( 'mwpws_', $html );
 	}
 
@@ -654,12 +656,14 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 	}
 
 	public function test_documented_app_connect_snippet_fields_render() {
+		update_option( Remote_MCP_Settings::OPTION_ENABLED, '1' );
 		$html = html_entity_decode( $this->admin()->render(), ENT_QUOTES, 'UTF-8' );
+		// The hosted apps' settings screens ask only for the address, so they show it alone.
 		$apps = array(
-			'Claude'         => 'URL',
-			'Claude Desktop' => 'URL',
+			'Claude'         => self::RESOURCE . '</pre>',
+			'Claude Desktop' => self::RESOURCE . '</pre>',
 			'Claude Code'    => 'claude mcp add',
-			'ChatGPT'        => 'URL',
+			'ChatGPT'        => self::RESOURCE . '</pre>',
 			'VS Code'        => 'servers',
 			'Codex CLI'      => 'mcp_servers.mainwp',
 			'Zed'            => 'context_servers',
@@ -668,7 +672,7 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			'Gemini CLI'     => 'mainwp-gemini-cli',
 			'Qwen Code'      => 'httpUrl',
 			'Cline'          => 'streamableHttp',
-			'Jan'            => 'url',
+			'Jan'            => 'Transport: HTTP',
 			'Continue'       => 'mcpServers',
 			'Cherry Studio'  => 'URL',
 			'mcp-remote'     => 'npx',
@@ -680,7 +684,7 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			'Roo Code'       => 'streamable-http',
 		);
 		foreach ( $apps as $app => $field ) {
-			$found = preg_match( '#<h4[^>]*>' . preg_quote( $app, '#' ) . '</h4>\s*<pre>(.*?)</pre>#s', $html, $snippet );
+			$found = preg_match( '#<div class="ui segment mainwp-rmcp-app" data-app="' . preg_quote( sanitize_title( $app ), '#' ) . '"[^>]*>.*?<pre id="[^"]+">(.*?</pre>)#s', $html, $snippet );
 			$this->assertSame( 1, $found, $app . ' connect snippet' );
 			$this->assertStringContainsString( self::RESOURCE, $snippet[1], $app . ' MCP URL' );
 			$this->assertStringContainsString( $field, $snippet[1], $app . ' config field' );

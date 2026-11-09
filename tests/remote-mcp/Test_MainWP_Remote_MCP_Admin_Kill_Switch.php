@@ -27,14 +27,14 @@ class Test_MainWP_Remote_MCP_Admin_Kill_Switch extends \WP_UnitTestCase {
 	const VERIFIER  = 'verifier-0123456789-abcdefghijklmnopqrstuvwxyz';
 
 	/**
-	 * The toggle's submit button.
+	 * The toggle's switch.
 	 *
 	 * @param string $html Panel HTML.
 	 * @return string
 	 */
 	private function toggle_button( string $html ): string {
 		$this->assertSame( 1, preg_match( '#<form[^>]*>(?:(?!</form>).)*value="toggle"(?:(?!</form>).)*</form>#s', $html, $form ), 'the toggle form renders' );
-		$this->assertSame( 1, preg_match( '#<button[^>]*>#', $form[0], $button ) );
+		$this->assertSame( 1, preg_match( '#<input type="checkbox"[^>]*>#', $form[0], $button ) );
 		return $button[0];
 	}
 

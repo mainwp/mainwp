@@ -8,6 +8,10 @@
 
 namespace MainWP\Dashboard;
 
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 /**
  * Class MainWP_Credential_Storage
  *

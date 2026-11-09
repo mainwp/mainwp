@@ -268,7 +268,7 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
     /**
      * Detect missing tables.
      *
-     * @param string $table_name Table name.
+     * @param array $tables Table definitions.
      *
      * @return array Missing tables.
      */
@@ -319,7 +319,7 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
     /**
      * Checking other tables.
      *
-     * @param string $table_name Table name.
+     * @param array $tables Table definitions.
      *
      * @return void
      */
@@ -506,7 +506,7 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
 
         if ( is_array( $expected_schemas ) && ! empty( $expected_schemas ) ) {
 
-            $actual_schemas = $wpdb->get_results(
+            $actual_schemas = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Schema inspection requires the live column definitions.
                 "SHOW FULL COLUMNS FROM `{$table_name}`", // phpcs:ignore -- NOSONAR - escaped table name.
                 ARRAY_A
             );
@@ -542,7 +542,7 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
      * Check for incorrect column definitions in an extension table.
      *
      * @param string $table_name       Table name information.
-     * @param array  $schema       Table schema information.
+     * @param array  $columns         Table column definitions.
      * @param array  $actual_cols_schemas Actual columns information.
      *
      * @return array $issues Column definitions  issues.

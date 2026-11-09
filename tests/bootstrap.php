@@ -72,6 +72,21 @@ define( 'MAINWP_TESTING_MODE', true );
 tests_add_filter( 'mainwp_rest_api_v2_enabled', '__return_true', 99 );
 
 /**
+ * Tests load the plugin from the checkout, outside wp-content/plugins, so core
+ * cannot build a URL for the bundled Google AI provider's logo and reports it
+ * with _doing_it_wrong(). Tests that run in a separate process print that
+ * notice and fail on it, so only this notice is silenced.
+ */
+tests_add_filter(
+	'doing_it_wrong_trigger_error',
+	static function ( $trigger, $function_name ) {
+		return '_wp_connectors_resolve_ai_provider_logo_url' === $function_name ? false : $trigger;
+	},
+	10,
+	2
+);
+
+/**
  * Manually load the plugin being tested.
  */
 function _manually_load_plugin() {
@@ -81,6 +96,10 @@ tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
 // Start up the WP testing environment.
 require $_tests_dir . '/includes/bootstrap.php';
+
+// The registry built during the first init stays in place; tests that fire init
+// again would otherwise rebuild it and raise the logo notice inside a test.
+remove_action( 'init', '_wp_connectors_init', 15 );
 
 /**
  * Install MainWP database tables.
@@ -93,6 +112,7 @@ function _mainwp_install_tables() {
 	\MainWP\Dashboard\MainWP_DB_Client::instance();
 	\MainWP\Dashboard\MainWP_DB_Knowledge::instance();
 	\MainWP\Dashboard\MainWP_DB_Site_Actions::instance();
+	\MainWP\Dashboard\MainWP_DB_Assistant::instance();
 
 	// Run the installation (creates all tables via dbDelta).
 	\MainWP\Dashboard\MainWP_Install::instance()->install();
@@ -122,6 +142,8 @@ function _mainwp_purge_stale_rows() {
 _mainwp_purge_stale_rows();
 
 // Load custom test case base classes.
+require_once __DIR__ . '/test-case.php';
 require_once __DIR__ . '/abilities/class-mainwp-abilities-test-case.php';
 require_once __DIR__ . '/backup/class-mainwp-backup-test-case.php';
 require_once __DIR__ . '/fixtures/Site_Fixture.php';
+require_once __DIR__ . '/assistant/class-mainwp-assistant-test-case.php';

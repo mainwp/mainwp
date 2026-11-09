@@ -149,6 +149,10 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'page'     => array( 'type' => 'integer' ),
                 'per_page' => array( 'type' => 'integer' ),
                 'total'    => array( 'type' => 'integer' ),
+                'note'     => array(
+                    'type'        => 'string',
+                    'description' => __( 'Present only when applied filters matched no clients; names the filters so the caller can retry without them.', 'mainwp' ),
+                ),
             ),
         );
     }
@@ -182,9 +186,9 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
         );
 
         if ( 'active' === $input['status'] ) {
-            $args['suspended'] = 0;
+            $args['status'] = 'active';
         } elseif ( 'suspended' === $input['status'] ) {
-            $args['suspended'] = 1;
+            $args['status'] = 'suspended';
         }
 
         if ( ! empty( $input['search'] ) ) {
@@ -228,12 +232,42 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             }
         }
 
-        return array(
+        $result = array(
             'items'    => $items,
             'page'     => (int) $input['page'],
             'per_page' => (int) $input['per_page'],
             'total'    => (int) $total,
         );
+
+        // A filtered empty result is indistinguishable from "no clients
+        // exist" to an AI caller, which then burns tool-loop iterations
+        // probing filter variations. Name the applied filters so it can
+        // retry without.
+        if ( empty( $items ) ) {
+            $filters_applied = array();
+            if ( 'any' !== $input['status'] ) {
+                $filters_applied[] = 'status';
+            }
+            if ( ! empty( $input['search'] ) ) {
+                $filters_applied[] = 'search';
+            }
+            if ( ! empty( $input['include'] ) ) {
+                $filters_applied[] = 'include';
+            }
+            if ( ! empty( $input['exclude'] ) ) {
+                $filters_applied[] = 'exclude';
+            }
+
+            if ( ! empty( $filters_applied ) ) {
+                $result['note'] = sprintf(
+                    /* translators: %s: comma-separated list of filter names */
+                    __( 'No clients matched the applied filters (%s). Omit those filters to list all clients.', 'mainwp' ),
+                    implode( ', ', $filters_applied )
+                );
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -1316,6 +1350,11 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             );
         }
 
+        if ( 1 !== (int) $client->suspended ) {
+            /** This action is documented in class/class-mainwp-post-handler.php */
+            do_action( 'mainwp_client_suspend', $updated_client, true );
+        }
+
         return MainWP_Abilities_Util::format_client_for_output( $updated_client );
     }
 
@@ -1410,6 +1449,11 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 __( 'Client was unsuspended but could not be retrieved.', 'mainwp' ),
                 array( 'status' => 500 )
             );
+        }
+
+        if ( 1 === (int) $client->suspended ) {
+            /** This action is documented in class/class-mainwp-post-handler.php */
+            do_action( 'mainwp_client_suspend', $updated_client, false );
         }
 
         return MainWP_Abilities_Util::format_client_for_output( $updated_client );

@@ -1536,7 +1536,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $cached_icons[ $slug ] = $value;
 
         /**
-         * Filters the cached icons before they are saved.
+         * Filter cached icons before saving.
          *
          * @since 5.4.0.18
          */
@@ -1926,7 +1926,23 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $dest_file = $base_dir . '/' . $file_name;
                     $dest_file = dirname( $dest_file ) . '/' . wp_unique_filename( dirname( $dest_file ), basename( $dest_file ) );
 
-                    if ( $wp_filesystem->put_contents( $dest_file, $wp_filesystem->get_contents( $tmp_file ) ) ) {
+                    $copied = false;
+
+                    if ( ! empty( $wp_filesystem ) ) {
+                        $tmp_contents = $wp_filesystem->get_contents( $tmp_file );
+                        if ( false !== $tmp_contents ) {
+                            $copied = $wp_filesystem->put_contents( $dest_file, $tmp_contents );
+                        }
+                    }
+
+                    if ( ! $copied ) {
+                        $tmp_contents = file_get_contents( $tmp_file );
+                        if ( false !== $tmp_contents ) {
+                            $copied = false !== file_put_contents( $dest_file, $tmp_contents );
+                        }
+                    }
+
+                    if ( $copied ) {
                         if ( file_exists( $dest_file ) ) {
                             list( $width, $height ) = getimagesize( $dest_file );
                         }

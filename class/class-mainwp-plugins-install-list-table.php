@@ -219,14 +219,17 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
      * Override the parent display() so we can provide a different container.
      */
     public function display() {
-        $search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+        $search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification -- Read-only display of the search term, no state change to protect.
         ?>
         <div class="ui two column stackable grid">
             <div class="column left aligned middle aligned">
                 <?php if ( ! empty( $search ) ) : ?>
-                <h3 class="ui header"><?php
-                /* translators: %s: Search term. */
-                echo esc_html( sprintf( __( 'Search results for: %s', 'mainwp' ), $search ) ); ?></h3>
+                <h3 class="ui header">
+                    <?php
+                    /* translators: %s: Search term. */
+                    echo esc_html( sprintf( __( 'Search results for: %s', 'mainwp' ), $search ) );
+                    ?>
+                </h3>
                 <?php endif; ?>
             </div>
             <div class="column right aligned middle aligned">
@@ -245,7 +248,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
                 <?php if ( ! empty( $search ) ) : ?>
                     <?php
                     /* translators: %s: Search term. */
-                    echo esc_html( sprintf( __( 'Search results for: %s', 'mainwp' ), $search ) ); ?>
+                    echo esc_html( sprintf( __( 'Search results for: %s', 'mainwp' ), $search ) );
+                    ?>
                 <?php endif; ?>
             </div>
             <div class="column right aligned middle aligned">
@@ -445,9 +449,12 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
                 <div class="header">
                     <a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php esc_html_e( 'MainWP Child', 'mainwp' ); ?></a>
                 </div>
-                <div class="meta"><cite><?php
+                <div class="meta"><cite>
+                <?php
                 /* translators: %s: Plugin author name. */
-                printf( esc_html__( 'By %s', 'mainwp' ), '<a href="' . esc_url( 'https://profiles.wordpress.org/mainwp/' ) . '">mainwp</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></cite></div>
+                printf( esc_html__( 'By %s', 'mainwp' ), '<a href="' . esc_url( 'https://profiles.wordpress.org/mainwp/' ) . '">mainwp</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput
+                ?>
+                </cite></div>
                 <div class="description">
                     <p><?php esc_html_e( 'MainWP Child connects your WordPress sites to this Dashboard.', 'mainwp' ); ?></p>
                     <p><?php esc_html_e( 'Already managing a site here? Select Install Plugin, choose your sites in the right panel, and click Complete Installation.', 'mainwp' ); ?></p>
@@ -566,7 +573,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
             $author = wp_kses( $plugin['author'], $plugins_allowedtags );
             if ( ! empty( $author ) ) {
                 /* translators: %s: Plugin author name. */
-            $author = ' <cite>' . sprintf( esc_html__( 'By %s', 'mainwp' ), $author ) . '</cite>';
+                $author = ' <cite>' . sprintf( esc_html__( 'By %s', 'mainwp' ), $author ) . '</cite>';
             }
 
             $details_link = self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $plugin['slug'] . '&url=' . ( isset( $plugin['PluginURI'] ) ? rawurlencode( $plugin['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin['name'] ) );
@@ -596,7 +603,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
                 do_action( 'mainwp_install_plugin_card_top' );
                 ?>
                 <div class="content">
-                    <a class="right floated mini ui image open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" alt="<?php echo esc_attr( $plugin['name'] ); ?>" /></a>
+                    <a class="right floated mini ui image open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_url( $plugin_icon_url ); ?>" alt="<?php echo esc_attr( $plugin['name'] ); ?>" /></a>
                     <div class="header">
                         <a class="open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
                     </div>
@@ -618,9 +625,12 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table { // phpcs:ignore
                         );
                         ?>
                         </div>
-                        <div class="twelve wide right aligned column"><span class="ui small text"><?php
+                        <div class="twelve wide right aligned column"><span class="ui small text">
+                        <?php
                         /* translators: %s: Human-readable time difference. */
-                        printf( esc_html__( 'Updated %s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></div>
+                        printf( esc_html__( 'Updated %s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+                        ?>
+                        </span></div>
                     </div>
                 </div>
                 <div class="extra content">

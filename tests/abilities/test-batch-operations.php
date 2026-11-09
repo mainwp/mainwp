@@ -618,6 +618,286 @@ class MainWP_Abilities_Batch_Operations_Test extends MainWP_Abilities_Test_Case 
 	}
 
 	/**
+	 * Test resolve_site matches an exact site name case-insensitively.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_exact_name_match() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site( [
+			'name' => 'Zebra Prod',
+		] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'zebra prod' );
+
+		$this->assertIsObject( $result );
+		$this->assertEquals( $site_id, (int) $result->id );
+	}
+
+	/**
+	 * Test resolve_site matches a partial name when exactly one site matches.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_unique_partial_name_match() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site( [
+			'name' => 'Zebra Prod',
+		] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'zebra' );
+
+		$this->assertIsObject( $result );
+		$this->assertEquals( $site_id, (int) $result->id );
+	}
+
+	/**
+	 * Test resolve_site never guesses between multiple partial matches.
+	 *
+	 * The ambiguous error (not a silent pick) is the safety property for
+	 * disruptive batch abilities that resolve sites by identifier.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_ambiguous_match_returns_error_no_guess() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$west_id = $this->create_test_site( [
+			'name' => 'Zebra West',
+		] );
+		$east_id = $this->create_test_site( [
+			'name' => 'Zebra East',
+		] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'zebra' );
+
+		$this->assertWPError( $result );
+		$this->assertEquals( 'mainwp_site_ambiguous', $result->get_error_code() );
+
+		$data = $result->get_error_data();
+		$this->assertIsArray( $data['candidates'] );
+		$this->assertContains( $west_id, array_map( 'intval', $data['candidates'] ) );
+		$this->assertContains( $east_id, array_map( 'intval', $data['candidates'] ) );
+	}
+
+	/**
+	 * A domain or URL with no matching site URL must not resolve to another
+	 * site whose URL merely contains it: mutating abilities would act on the
+	 * wrong site. An exact name match still resolves.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_missing_domain_does_not_partial_match() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$this->create_test_site( [
+			'name' => 'Shop',
+			'url'  => 'https://shop.resolve-partial.example/',
+		] );
+
+		foreach ( [ 'resolve-partial.example', 'https://resolve-partial.example', 'resolve-partial.example/' ] as $identifier ) {
+			$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( $identifier );
+			$this->assertWPError( $result, $identifier );
+			$this->assertEquals( 'mainwp_site_not_found', $result->get_error_code(), $identifier );
+		}
+
+		$named_id = $this->create_test_site( [
+			'name' => 'resolve-named.example',
+			'url'  => 'https://elsewhere.resolve-named.example/',
+		] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'resolve-named.example' );
+		$this->assertIsObject( $result );
+		$this->assertEquals( $named_id, (int) $result->id );
+	}
+
+	/**
+	 * Test resolve_site still returns mainwp_site_not_found for zero matches.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_still_not_found() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$this->create_test_site( [
+			'name' => 'Zebra Prod',
+		] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'no-such-zzz-qwerty' );
+
+		$this->assertWPError( $result );
+		$this->assertEquals( 'mainwp_site_not_found', $result->get_error_code() );
+	}
+
+	/**
+	 * Restrict the current user to an explicit list of site IDs.
+	 *
+	 * Exercises the real get_sql_where_allow_access_sites() scoping the same
+	 * way MainWP Team Control style restrictions do.
+	 *
+	 * @param array $allowed_ids Site IDs the current user may access.
+	 * @return callable The filter callback, for remove_filter().
+	 */
+	private function restrict_allowed_sites( array $allowed_ids ) {
+		$filter = function () use ( $allowed_ids ) {
+			return array_map( 'intval', $allowed_ids );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $filter );
+		return $filter;
+	}
+
+	/**
+	 * Test resolve_site hides inaccessible sites from partial-name matches.
+	 *
+	 * A restricted user searching a name that only matches an inaccessible
+	 * site gets the same not-found error as for a nonexistent site, with no
+	 * candidate names or IDs leaked.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_inaccessible_partial_match_returns_not_found() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$allowed_id = $this->create_test_site( [ 'name' => 'Alpha Home' ] );
+		$this->create_test_site( [ 'name' => 'Zebra Hidden' ] );
+
+		$filter = $this->restrict_allowed_sites( [ $allowed_id ] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'zebra' );
+
+		remove_filter( 'mainwp_currentuserallowedaccesssites', $filter );
+
+		$this->assertNotNull( $result );
+		$this->assertWPError( $result );
+		$this->assertEquals( 'mainwp_site_not_found', $result->get_error_code() );
+		$this->assertStringNotContainsString( 'Zebra Hidden', $result->get_error_message() );
+		$this->assertArrayNotHasKey( 'candidates', (array) $result->get_error_data() );
+	}
+
+	/**
+	 * Test resolve_site resolves the accessible site when an inaccessible
+	 * site also matches by NAME only.
+	 *
+	 * This is the operator-precedence regression test: if the access scope is
+	 * appended to the LIKE query without parenthesizing the OR, the name-match
+	 * branch bypasses the restriction and this becomes an ambiguous error that
+	 * leaks the hidden site.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_name_only_mixed_access_resolves_accessible() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$west_id = $this->create_test_site( [ 'name' => 'Zebra West' ] );
+		$this->create_test_site( [ 'name' => 'Zebra East' ] );
+
+		$filter = $this->restrict_allowed_sites( [ $west_id ] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'zebra' );
+
+		remove_filter( 'mainwp_currentuserallowedaccesssites', $filter );
+
+		$this->assertNotWPError( $result );
+		$this->assertIsObject( $result );
+		$this->assertEquals( $west_id, (int) $result->id );
+	}
+
+	/**
+	 * Test ambiguous-match candidates only ever list accessible sites.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_ambiguous_candidates_exclude_inaccessible() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$one_id = $this->create_test_site( [ 'name' => 'Zebra One' ] );
+		$two_id = $this->create_test_site( [ 'name' => 'Zebra Two' ] );
+		$hidden = $this->create_test_site( [ 'name' => 'Zebra Hidden Three' ] );
+
+		$filter = $this->restrict_allowed_sites( [ $one_id, $two_id ] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'zebra' );
+
+		remove_filter( 'mainwp_currentuserallowedaccesssites', $filter );
+
+		$this->assertWPError( $result );
+		$this->assertEquals( 'mainwp_site_ambiguous', $result->get_error_code() );
+
+		$data       = $result->get_error_data();
+		$candidates = array_map( 'intval', $data['candidates'] );
+		$this->assertContains( $one_id, $candidates );
+		$this->assertContains( $two_id, $candidates );
+		$this->assertNotContains( $hidden, $candidates );
+		$this->assertStringNotContainsString( 'Zebra Hidden Three', $result->get_error_message() );
+	}
+
+	/**
+	 * Test resolving an inaccessible site's URL returns not-found without
+	 * falling through to the name search.
+	 *
+	 * The decoy is an accessible site whose name contains the searched domain
+	 * string; a fallthrough would silently resolve to it.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_inaccessible_url_returns_not_found_no_fallthrough() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$this->create_test_site(
+			[
+				'name' => 'Hidden Zone',
+				'url'  => 'https://test-hiddenzone.example.com/',
+			]
+		);
+		$decoy_id = $this->create_test_site( [ 'name' => 'Mirror of test-hiddenzone.example.com' ] );
+
+		$filter = $this->restrict_allowed_sites( [ $decoy_id ] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'test-hiddenzone.example.com' );
+
+		remove_filter( 'mainwp_currentuserallowedaccesssites', $filter );
+
+		$this->assertNotNull( $result );
+		$this->assertWPError( $result );
+		$this->assertEquals( 'mainwp_site_not_found', $result->get_error_code() );
+	}
+
+	/**
+	 * Test a single exact-name match on an inaccessible site returns a
+	 * WP_Error, never null.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_single_inaccessible_exact_name_returns_error_not_null() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$this->create_test_site( [ 'name' => 'Zebra Solo' ] );
+		$other_id = $this->create_test_site( [ 'name' => 'Alpha Other' ] );
+
+		$filter = $this->restrict_allowed_sites( [ $other_id ] );
+
+		$result = \MainWP\Dashboard\MainWP_Abilities_Util::resolve_site( 'Zebra Solo' );
+
+		remove_filter( 'mainwp_currentuserallowedaccesssites', $filter );
+
+		$this->assertNotNull( $result );
+		$this->assertWPError( $result );
+		$this->assertEquals( 'mainwp_site_not_found', $result->get_error_code() );
+	}
+
+	/**
 	 * Test that queued response includes status_url.
 	 *
 	 * Dispatch the URL and verify it returns the queued job.

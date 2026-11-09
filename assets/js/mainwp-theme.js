@@ -354,7 +354,6 @@ globalThis.wp = globalThis.wp || {};
                                 }
                             }, response.themes); // use second param as this.
                         } catch {
-                            console.log('Invalid favorites themes data.');
                         }
                     }
                 }

@@ -10,6 +10,22 @@ class MainWP_Utility {
     }
 }
 
+class MainWP_System {
+    public static function is_assistant_enabled() {
+        return (bool) get_option( 'mainwp_enable_guided_chatbase', 0 );
+    }
+}
+
+class MainWP_Assistant {
+    public static function current_user_can_use_assistant() {
+        return true;
+    }
+}
+
+function current_user_can( $capability ) {
+    return true;
+}
+
 function get_option( $key, $default = false ) {
     return $GLOBALS['support_modal_options'][ $key ] ?? $default;
 }
@@ -18,6 +34,9 @@ function esc_html__( $text, $domain ) {
 }
 function esc_html_e( $text, $domain ) {
     echo esc_html__( $text, $domain );
+}
+function esc_attr( $text ) {
+    return htmlspecialchars( (string) $text, ENT_QUOTES );
 }
 function esc_attr_e( $text, $domain ) {
     echo esc_html__( $text, $domain );
@@ -31,6 +50,8 @@ function sanitize_text_field( $text ) {
 function wp_unslash( $text ) {
     return stripslashes( $text );
 }
+
+require_once dirname( __DIR__ ) . '/fixtures/support-modal-globals.inc';
 
 require_once getenv( 'MAINWP_UI_SOURCE' ) ?: dirname( __DIR__, 2 ) . '/class/class-mainwp-ui.php';
 
@@ -52,9 +73,10 @@ class SupportModalTest extends \PHPUnit\Framework\TestCase {
             }
             $this->assertStringContainsString( 'Save Support Settings', $html );
             $this->assertStringContainsString( 'Save and Reload', $html );
-            $this->assertSame( 1, $xpath->query( '//a[@id="mainwp-start-chat-card"][@href="#"]' )->length );
+            // The card opens the Assistant panel, so it is a button that is disabled while the Assistant is off.
+            $this->assertSame( 1, $xpath->query( '//button[@id="mainwp-start-chat-card"]' )->length );
             $this->assertStringContainsString( 'Open Support Assistant', $html );
-            $this->assertSame( 1, $xpath->query( '//a[@id="mainwp-start-chat-card"][@aria-disabled="' . ( $enabled ? 'false' : 'true' ) . '"]' )->length );
+            $this->assertSame( $enabled ? 0 : 1, $xpath->query( '//button[@id="mainwp-start-chat-card"][@aria-disabled="true"]' )->length );
         }
     }
 
@@ -67,10 +89,10 @@ class SupportModalTest extends \PHPUnit\Framework\TestCase {
             $dom = new \DOMDocument();
             @$dom->loadHTML( ob_get_clean() );
             $xpath = new \DOMXPath( $dom );
-            $card  = $xpath->query( '//a[@id="mainwp-start-video-card"]/ancestor::div[contains(concat(" ", @class, " "), " card ")][1]' )->item( 0 );
+            $card  = $xpath->query( '//button[@id="mainwp-start-video-card"]/ancestor::div[contains(concat(" ", @class, " "), " card ")][1]' )->item( 0 );
             $this->assertNotNull( $card, $page );
             $this->assertSame( $has_video ? '' : 'display:none', $card->getAttribute( 'style' ), $page );
-            $this->assertSame( '', $xpath->query( '//a[@id="mainwp-start-video-card"]' )->item( 0 )->getAttribute( 'style' ), $page );
+            $this->assertSame( '', $xpath->query( '//button[@id="mainwp-start-video-card"]' )->item( 0 )->getAttribute( 'style' ), $page );
             // The save handler reads this toggle on every page.
             $this->assertSame( 1, $xpath->query( '//*[@id="mainwp-guided-video-check"]' )->length, $page );
         }

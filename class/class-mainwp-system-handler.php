@@ -504,8 +504,16 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
 
-            $enabled1 = ! isset( $_POST['mainwp-guided-chatbase-option'] ) ? 0 : 1;
-            MainWP_Utility::update_option( 'mainwp_enable_guided_chatbase', $enabled1 );
+            // The Assistant toggle is admin-only (the setter refuses without
+            // manage_options), and its checkbox is disabled for everyone else, so
+            // staff with the settings right still save the rest of this form.
+            if ( current_user_can( 'manage_options' ) ) {
+                $enabled1         = ! isset( $_POST['mainwp-guided-chatbase-option'] ) ? 0 : 1;
+                $assistant_result = MainWP_Assistant_Policies::instance()->set_assistant_enabled( (bool) $enabled1 );
+                if ( is_wp_error( $assistant_result ) || true !== $assistant_result ) {
+                    wp_die( esc_html( is_wp_error( $assistant_result ) ? $assistant_result->get_error_message() : __( 'Failed to update AI Assistant setting.', 'mainwp' ) ) );
+                }
+            }
 
             $enabled2 = ! isset( $_POST['mainwp-guided-video-option'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_enable_guided_video', $enabled2 );

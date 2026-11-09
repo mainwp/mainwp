@@ -46,7 +46,9 @@
         "test:abilities": "phpunit --testsuite=Abilities",
         "test:backup": "phpunit --testsuite=Backup",
         "test:remote-mcp": "phpunit --testsuite=\"Remote MCP\"",
-        "test:rest-key-auth": "phpunit --testsuite=\"REST Key Authentication\""
+        "test:rest-key-auth": "phpunit --testsuite=\"REST Key Authentication\"",
+        "lint": "phpcs --standard=phpcs.xml",
+        "test-js": "node tests/js/test-mode-guards.js && node tests/js/test-batch-scroll.js && node tests/js/test-confirm-flow.js && node tests/js/test-settings-save.js && node tests/js/test-onboarding-wizard.js && node tests/js/test-answer-feedback.js && node tests/js/test-docs-handoff.js && node tests/js/test-copy-response.js && node tests/js/test-ordered-lists.js && node tests/js/test-support-escalation.js && node --test tests/js/command-palette.test.js tests/js/test-assistant-ask.js tests/js/test-cost-tracker-import-error-message.js tests/js/test-budget-notice.js"
     },
     "scripts-descriptions": {
         "test": "Run the four phpunit testsuites as separate processes, the same shape CI uses. A single-process aggregate run (bare vendor/bin/phpunit) lets constants like DOING_CRON defined by one suite leak into another and silently bypass capability-denial tests. Requires WP_TESTS_DIR in the environment."

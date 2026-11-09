@@ -33,7 +33,9 @@ class MainWP_Command_Palette { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'searchError'   => __( 'Search failed. Select to try again.', 'mainwp' ),
                 'syncingAction' => __( 'Syncing…', 'mainwp' ),
                 'searchLabel'   => __( 'Search sites, clients and commands', 'mainwp' ),
-                'supportChat'   => __( 'Open the Support Assistant', 'mainwp' ),
+                /* translators: %s: Question typed in the command palette. */
+                'assistantAsk'  => __( 'Ask the MainWP Assistant: %s', 'mainwp' ),
+                'assistantOpen' => __( 'Open the MainWP Assistant', 'mainwp' ),
                 /* translators: %s: Child Site name. */
                 'actionsFor'    => __( 'Actions for %s', 'mainwp' ),
                 /* translators: 1: Action label, 2: Child Site name. */

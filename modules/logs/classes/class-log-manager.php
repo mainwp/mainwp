@@ -213,6 +213,7 @@ class Log_Manager {
     public function get_internal_connectors() {
         return array(
             'compact',
+            'assistant',
         );
     }
 
@@ -604,9 +605,7 @@ class Log_Manager {
      * </code>
      *
      * @param mixed $input_val Default value.
-     * @param array $params {
-     *     Optional. Log query parameters.
-     * }
+     * @param array $params Optional log query parameters.
      *
      * @return array Results.
      *

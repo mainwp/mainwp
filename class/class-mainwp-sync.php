@@ -861,8 +861,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     /**
      * Method get_telem_sync_info.
      *
-     * @param bool $sync_success Whether the synchronization completed.
-     * @return array Telemetry context.
+     * @param bool $sync_success Whether the site synchronization completed.
+     * @return array Synchronization telemetry data.
      */
     public static function get_telem_sync_info( $sync_success ) {
 

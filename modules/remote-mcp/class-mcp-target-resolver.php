@@ -64,12 +64,12 @@ class MCP_Target_Resolver implements Target_Resolver {
         }
         return self::as_user(
             $context->user_id,
-            function () use ( $type, $arguments ) {
+            function () use ( $type, $ability, $arguments ) {
                 switch ( $type ) {
                     case 'site':
                         return $this->site( $arguments );
                     case 'sites':
-                        return $this->sites( $arguments );
+                        return $this->sites( $arguments, self::requires_listed_sites( $ability ) );
                     case 'client':
                         return $this->client( $arguments );
                     default:
@@ -136,10 +136,14 @@ class MCP_Target_Resolver implements Target_Resolver {
      * `site_ids`, then every site, minus `exclude_ids`. Reading fewer would widen the call, because
      * the adapter pins the resolved ids into `site_ids_or_domains`.
      *
-     * @param array $arguments Arguments.
+     * An ability that refuses an empty list (disconnect-sites, suspend-sites) is refused here too:
+     * expanding it to the fleet and pinning those ids would run the select-all the ability rejects.
+     *
+     * @param array $arguments   Arguments.
+     * @param bool  $listed_only The ability refuses an empty list.
      * @return array|null
      */
-    private function sites( array $arguments ): ?array {
+    private function sites( array $arguments, bool $listed_only = false ): ?array {
         foreach ( array( 'site_ids_or_domains', 'site_ids', 'exclude_ids' ) as $key ) {
             if ( isset( $arguments[ $key ] ) && ! is_array( $arguments[ $key ] ) ) {
                 return null;
@@ -150,6 +154,9 @@ class MCP_Target_Resolver implements Target_Resolver {
             $identifiers = $arguments['site_ids'] ?? array();
         }
         if ( empty( $identifiers ) ) {
+            if ( $listed_only ) {
+                return null;
+            }
             $identifiers = $this->fleet();
         }
         $excluded = array_map( 'absint', $arguments['exclude_ids'] ?? array() );
@@ -164,6 +171,18 @@ class MCP_Target_Resolver implements Target_Resolver {
             }
         }
         return empty( $ids ) ? null : self::targets( $ids, null );
+    }
+
+    /**
+     * Whether an ability's input schema requires at least one entry in `site_ids_or_domains`.
+     *
+     * @param string $ability Ability name.
+     * @return bool
+     */
+    private static function requires_listed_sites( string $ability ): bool {
+        $schema = MCP_Control_Contracts::input_schema( $ability );
+        $list   = $schema['properties']['site_ids_or_domains'] ?? null;
+        return is_array( $list ) && (int) ( $list['minItems'] ?? 0 ) > 0;
     }
 
     /**

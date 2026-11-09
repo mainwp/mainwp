@@ -854,20 +854,48 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function ajax_mainwp_help_modal_content_update() {
         $this->secure_request( 'mainwp_help_modal_content_update' );
-        // Nonce verified by secure_request().
-        // phpcs:disable WordPress.Security.NonceVerification
-        $settings = array(
-            'mainwp_enable_guided_tours'    => intval( wp_unslash( $_POST['enable_tour'] ?? 0 ) ),
-            'mainwp_enable_guided_video'    => intval( wp_unslash( $_POST['enable_video'] ?? 0 ) ),
-            'mainwp_enable_guided_chatbase' => intval( wp_unslash( $_POST['enable_chatbase'] ?? 0 ) ),
-        );
-        // phpcs:enable WordPress.Security.NonceVerification
-        foreach ( $settings as $option_name => $option_value ) {
-            if ( ! MainWP_Utility::update_option( $option_name, $option_value ) && (int) get_option( $option_name, -1 ) !== $option_value ) {
-                wp_die( esc_html__( 'Settings could not be saved. Please try again.', 'mainwp' ), '', array( 'response' => 500 ) );
+        // phpcs:disable WordPress.Security.NonceVerification -- nonce verified in secure_request().
+        if ( isset( $_POST['enable_chatbase'] ) ) {
+            $assistant_enabled = (int) $_POST['enable_chatbase']; //phpcs:ignore -- NOSONAR verify.
+            $assistant_result  = MainWP_Assistant_Policies::instance()->set_assistant_enabled( (bool) $assistant_enabled );
+            if ( is_wp_error( $assistant_result ) || true !== $assistant_result ) {
+                $error_message = is_wp_error( $assistant_result )
+                    ? $assistant_result->get_error_message()
+                    : __( 'Failed to update assistant settings.', 'mainwp' );
+                wp_send_json_error(
+                    array(
+                        'message' => $error_message,
+                    ),
+                    403
+                );
             }
         }
-        die( 'ok' );
+        $settings = array();
+        if ( isset( $_POST['enable_tour'] ) ) {
+            $settings['mainwp_enable_guided_tours'] = intval( wp_unslash( $_POST['enable_tour'] ) );
+        }
+        if ( isset( $_POST['enable_video'] ) ) {
+            $settings['mainwp_enable_guided_video'] = intval( wp_unslash( $_POST['enable_video'] ) );
+        }
+        // phpcs:enable WordPress.Security.NonceVerification
+        foreach ( $settings as $option_name => $option_value ) {
+            // update_option() also returns false when the value is unchanged, so only a stored mismatch is a failed write.
+            if ( ! MainWP_Utility::update_option( $option_name, $option_value ) && (int) get_option( $option_name, -1 ) !== $option_value ) {
+                wp_send_json_error(
+                    array(
+                        'message' => __( 'Settings could not be saved. Please try again.', 'mainwp' ),
+                    ),
+                    500
+                );
+            }
+        }
+        wp_send_json_success(
+            array(
+                'assistant_enabled' => (int) MainWP_System::is_assistant_enabled(),
+                'tour_enabled'      => (int) get_option( 'mainwp_enable_guided_tours', 0 ),
+                'video_enabled'     => (int) get_option( 'mainwp_enable_guided_video', 0 ),
+            )
+        );
     }
 
     /**

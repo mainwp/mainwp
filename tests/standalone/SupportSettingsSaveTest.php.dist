@@ -38,7 +38,8 @@ class SupportSettingsSaveTest extends \PHPUnit\Framework\TestCase {
             'unchanged disabled values' => array( 'unchanged_off', 200 ),
             'tour write failure' => array( 'fail_tours', 500 ),
             'video write failure' => array( 'fail_video', 500 ),
-            'assistant write failure' => array( 'fail_chatbase', 500 ),
+            // The Assistant toggle goes through the Assistant policy, which refuses with 403.
+            'assistant write failure' => array( 'fail_chatbase', 403 ),
         );
     }
 }

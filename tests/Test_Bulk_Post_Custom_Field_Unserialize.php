@@ -133,10 +133,8 @@ class Test_Bulk_Post_Custom_Field_Unserialize extends \WP_UnitTestCase {
 		$this->post_to_child( $post_id );
 
 		$this->assertSame( 0, Bulk_Post_Wakeup_Recorder::$wakeups );
-		$this->assertSame(
-			Bulk_Post_Wakeup_Recorder::class,
-			$this->sent_custom['gadget'][0]['__PHP_Incomplete_Class_Name']
-		);
+		// expand_post_custom() sends the object's public properties without the class name.
+		$this->assertSame( array(), $this->sent_custom['gadget'][0] );
 	}
 
 	/**

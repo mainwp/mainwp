@@ -1915,7 +1915,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Method render_incompatible_active().
      *
      * @param  mixed $compatible_php Compatible php.
-     * @param  mixed $compatible_wp Compatible wp.     *
+     * @param  mixed $compatible_wp Compatible wp.
      * @param  mixed $echo_content Print content or not.
      *
      * @return string Message
@@ -2222,7 +2222,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
                         <div class="ui message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
-                            <div><em data-emoji=":bulb:" class="small"></em>
+                            <div><em data-emoji=":bulb:" class="small"></em> 
                             <?php
                             // translators: 1: Opening anchor tag. 2: Closing anchor tag.
                             printf( esc_html__( 'Tip: Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe.
@@ -2545,7 +2545,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <?php if ( '' === $esc_note ) : ?>
                             <a href="javascript:void(0)" class="mainwp-edit-plugin-note" ><i class="sticky note outline icon"></i></a>
                         <?php else : ?>
-                            <a href="javascript:void(0)" class="mainwp-edit-plugin-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); //phpcs:ignore -- escaped. ?>" data-position="center left" data-inverted=""><i class="sticky green note icon"></i></a>
+                            <a href="javascript:void(0)" class="mainwp-edit-plugin-note" data-tooltip="<?php echo MainWP_Utility::esc_note_attr( $strip_note ); //phpcs:ignore WordPress.Security.EscapeOutput -- escaped by esc_note_attr(). ?>" data-position="center left" data-inverted=""><i class="sticky green note icon"></i></a>
                         <?php endif; ?>
                             <span style="display: none" class="esc-content-note"><?php echo $esc_note; //phpcs:ignore -- escaped. ?></span>
                         </td>

@@ -376,8 +376,8 @@ return array(
         'columns' => array(
             'meta_id'     => 'bigint(20) unsigned NOT NULL AUTO_INCREMENT',
             'meta_log_id' => 'bigint(20) unsigned NOT NULL',
-            'meta_key'    => 'varchar(200) NOT NULL',
-            'meta_value'  => 'mediumtext NOT NULL',
+            'meta_key'    => 'varchar(200) NOT NULL', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- This declares an existing schema column, not a query.
+            'meta_value'  => 'mediumtext NOT NULL', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- This declares an existing schema column, not a query.
         ),
     ),
 );

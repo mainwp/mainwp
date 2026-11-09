@@ -927,7 +927,92 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $site = $db->get_websites_by_url( $url );
 
         if ( $site && ! empty( $site ) ) {
-            return is_array( $site ) ? $site[0] : $site;
+            $match = is_array( $site ) ? $site[0] : $site;
+            // Re-fetch through the access-scoped lookup. An inaccessible site
+            // resolves to the same not-found error as a nonexistent one - no
+            // fallthrough to the name search, which could silently land on a
+            // different site whose name resembles this domain.
+            $site = $db->get_website_by_id( (int) $match->id );
+            if ( $site ) {
+                return $site;
+            }
+            return new \WP_Error(
+                'mainwp_site_not_found',
+                sprintf(
+                    /* translators: %s: domain or URL */
+                    __( 'No site found matching "%s".', 'mainwp' ),
+                    $site_id_or_domain
+                ),
+                array( 'status' => 404 )
+            );
+        }
+
+        // Name fallback: exact (case-insensitive) name first, then a partial
+        // match on name/url. Resolves only a UNIQUE match - multiple matches
+        // return an error naming the candidates rather than guessing, since
+        // this resolver also feeds disruptive batch abilities. The lookup is
+        // scoped to the current user's allowed sites.
+        $matches = $db->get_websites_by_name_or_partial_match( $site_id_or_domain );
+
+        // wpdb returns null when the lookup query itself fails; that is a
+        // database problem, not "no such site".
+        if ( ! is_array( $matches ) ) {
+            return new \WP_Error(
+                'mainwp_db_error',
+                __( 'The site lookup failed due to a database error.', 'mainwp' ),
+                array( 'status' => 500 )
+            );
+        }
+
+        // A domain or URL that matched no site URL must not land on another site
+        // whose URL merely contains it (example.com -> shop.example.com): only a
+        // site named exactly that may stand in for it.
+        $is_address = false !== strpos( $site_id_or_domain, '://' )
+            || 1 === preg_match( '#^[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(/\S*)?$#i', $site_id_or_domain );
+        if ( $is_address ) {
+            $matches = array_values(
+                array_filter(
+                    $matches,
+                    static function ( $candidate ) use ( $site_id_or_domain ) {
+                        return 0 === strcasecmp( (string) $candidate->name, $site_id_or_domain );
+                    }
+                )
+            );
+        }
+
+        $allowed = self::get_scoped_site_ids_or_all();
+        if ( 'all' !== $allowed ) {
+            $matches = array_values(
+                array_filter(
+                    $matches,
+                    static function ( $candidate ) use ( $allowed ) {
+                        return in_array( (int) $candidate->id, $allowed, true );
+                    }
+                )
+            );
+        }
+
+        if ( 1 === count( $matches ) ) {
+            $site = $db->get_website_by_id( (int) $matches[0]->id );
+            if ( $site ) {
+                return $site;
+            }
+        }
+
+        if ( count( $matches ) > 1 ) {
+            return new \WP_Error(
+                'mainwp_site_ambiguous',
+                sprintf(
+                    /* translators: 1: search term, 2: comma-separated candidate site names */
+                    __( 'Multiple sites match "%1$s": %2$s. Use the exact site URL or full name.', 'mainwp' ),
+                    $site_id_or_domain,
+                    implode( ', ', wp_list_pluck( $matches, 'name' ) )
+                ),
+                array(
+                    'status'     => 409,
+                    'candidates' => array_map( 'intval', wp_list_pluck( $matches, 'id' ) ),
+                )
+            );
         }
 
         return new \WP_Error(
@@ -2077,5 +2162,103 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function is_abilities_api_available(): bool {
         return function_exists( 'wp_register_ability' );
+    }
+
+    /**
+     * Resolve the owning user of a batch job, across all three job-type
+     * transients. Used to gate status polling so a user cannot read another
+     * user's job. Returns null when the job is not found or predates owner
+     * stamping (legacy in-flight jobs), in which case the caller should fall
+     * back to the not-found handling rather than blocking.
+     *
+     * @param string $job_id Job identifier.
+     * @return int|null Owner user ID, or null if unknown.
+     */
+    public static function get_batch_job_owner( string $job_id ): ?int {
+        $job_data = self::get_batch_sync_status( $job_id );
+        if ( null === $job_data ) {
+            $job_data = self::get_batch_update_status( $job_id );
+        }
+        if ( null === $job_data ) {
+            $job_data = self::get_batch_operation_status( $job_id );
+        }
+
+        if ( is_array( $job_data ) && isset( $job_data['user_id'] ) ) {
+            return (int) $job_data['user_id'];
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Validate and extract the site_ids_or_domains input for batch abilities.
+     *
+     * A present non-array value is malformed input. The schema layer cannot
+     * reject it because WP core's rest_is_array() coerces scalars during
+     * validation while the callback still receives the original value, so the
+     * type check has to live here. An absent value normalizes to an empty
+     * array, which callers treat as "all applicable sites"; destructive
+     * operations pass $require_non_empty to refuse that implicit select-all.
+     *
+     * @param array $input             Normalized ability input.
+     * @param bool  $require_non_empty Reject an empty identifier list too.
+     *
+     * @return array|\WP_Error Identifier list, or mainwp_invalid_input error.
+     */
+    public static function validate_site_identifiers( array $input, $require_non_empty = false ) {
+        if ( isset( $input['site_ids_or_domains'] ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'site_ids_or_domains must be an array of site IDs or domains.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
+
+        if ( $require_non_empty && empty( $identifiers ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'site_ids_or_domains must list the sites to target; this operation does not support an empty list.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        return $identifiers;
+    }
+
+
+    /**
+     * Resolve a date range from ability input.
+     *
+     * Missing bounds default to a window of $default_days ending now. Inverted
+     * bounds are swapped. Spans longer than $max_days are clamped by moving
+     * 'from' forward.
+     *
+     * @param array $input        Normalized ability input (uses 'date_from' / 'date_to', unix seconds).
+     * @param int   $default_days Window size when no bounds given.
+     * @param int   $max_days     Maximum allowed span in days.
+     * @return array Array with 'from' and 'to' unix timestamps (seconds).
+     */
+    public static function resolve_date_range( array $input, int $default_days = 30, int $max_days = 90 ): array {
+        $to   = ! empty( $input['date_to'] ) ? (int) $input['date_to'] : time();
+        $from = ! empty( $input['date_from'] ) ? (int) $input['date_from'] : $to - $default_days * DAY_IN_SECONDS;
+
+        if ( $from > $to ) {
+            $swap = $from;
+            $from = $to;
+            $to   = $swap;
+        }
+
+        $max_span = $max_days * DAY_IN_SECONDS;
+        if ( ( $to - $from ) > $max_span ) {
+            $from = $to - $max_span;
+        }
+
+        return array(
+            'from' => $from,
+            'to'   => $to,
+        );
     }
 }

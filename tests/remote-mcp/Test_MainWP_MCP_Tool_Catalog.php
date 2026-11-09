@@ -130,7 +130,13 @@ class Test_MainWP_MCP_Tool_Catalog extends \WP_UnitTestCase {
 	private function core_ability_names(): array {
 		$names = array();
 		foreach ( glob( dirname( __DIR__, 2 ) . '/includes/abilities/*.php' ) as $file ) {
-			preg_match_all( "/wp_register_ability\\(\\s*'(mainwp\\/[a-z0-9-]+)'/", (string) file_get_contents( $file ), $found ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local source file.
+			$source = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local source file.
+			// Abilities in other categories (Assistant insights, fleet, monitoring) are not remote MCP tools.
+			preg_match_all( "/'category'\\s*=>\\s*'([a-z-]+)'/", $source, $categories );
+			if ( ! empty( $categories[1] ) && ! array_intersect( $categories[1], MCP_Tool_Catalog::CORE_CATEGORIES ) ) {
+				continue;
+			}
+			preg_match_all( "/wp_register_ability\\(\\s*'(mainwp\\/[a-z0-9-]+)'/", $source, $found );
 			$names = array_merge( $names, $found[1] );
 		}
 		// API Backups picks each name with a ternary, which the pattern above can't read.

@@ -71,9 +71,12 @@ class MainWP_Uptime_Monitoring_Site_Widget {
             die( wp_json_encode( array( 'error' => esc_html__( 'Start and end dates cannot be empty. Please try again.', 'mainwp' ) ) ) );
         }
 
+        $dts_start = sanitize_text_field( wp_unslash( $_POST['dtsstart'] ) );
+        $dts_stop  = sanitize_text_field( wp_unslash( $_POST['dtsstop'] ) );
+
         $params = array(
-            'start' => $_POST['dtsstart'] . ' 00:00:00',
-            'end'   => $_POST['dtsstop'] . ' 23:59:59',
+            'start' => $dts_start . ' 00:00:00',
+            'end'   => $dts_stop . ' 23:59:59',
             'issub' => 0,
         );
 

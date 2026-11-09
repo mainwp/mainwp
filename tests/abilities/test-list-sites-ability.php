@@ -351,6 +351,168 @@ class MainWP_List_Sites_Ability_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Test that list-sites items carry the last sync timestamp.
+	 *
+	 * Aggregate questions like "which site synced most recently" must be
+	 * answerable from one list-sites call; without last_sync the model is
+	 * forced into one get-site call per site and exhausts the tool loop.
+	 *
+	 * @return void
+	 */
+	public function test_list_sites_includes_last_sync() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		global $wpdb;
+
+		$synced_id = $this->create_test_site( [
+			'name' => 'Last Sync Test Site',
+			'url'  => 'https://test-last-sync.example.com/',
+		] );
+		$this->create_test_site_sync( $synced_id );
+		$sync_time = 1751500000;
+		$wpdb->update(
+			$wpdb->prefix . 'mainwp_wp_sync',
+			[ 'dtsSync' => $sync_time ],
+			[ 'wpid' => $synced_id ],
+			[ '%d' ],
+			[ '%d' ]
+		);
+
+		$never_synced_id = $this->create_test_site( [
+			'name' => 'Never Synced Test Site',
+			'url'  => 'https://test-never-sync.example.com/',
+		] );
+
+		$result = $this->execute_ability( 'mainwp/list-sites-v1', [
+			'page'     => 1,
+			'per_page' => 100,
+		] );
+
+		$this->assertNotWPError( $result );
+
+		$by_id = [];
+		foreach ( $result['items'] as $item ) {
+			$this->assertArrayHasKey( 'last_sync', $item, 'Every list item should carry last_sync.' );
+			$by_id[ $item['id'] ] = $item;
+		}
+
+		$this->assertArrayHasKey( $synced_id, $by_id );
+		$this->assertSame( gmdate( 'c', $sync_time ), $by_id[ $synced_id ]['last_sync'] );
+
+		$this->assertArrayHasKey( $never_synced_id, $by_id );
+		$this->assertNull( $by_id[ $never_synced_id ]['last_sync'] );
+	}
+
+	/**
+	 * Test that a filtered empty result tells the model which filters applied.
+	 *
+	 * Models sometimes pass guessed client_id/tag_id filters; without the note
+	 * an empty filtered result is indistinguishable from "no sites exist" and
+	 * the model burns tool-loop iterations probing filter variations.
+	 *
+	 * @return void
+	 */
+	public function test_list_sites_filtered_empty_result_includes_note() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$this->create_test_site( [
+			'name' => 'Note Test Site',
+			'url'  => 'https://test-filter-note.example.com/',
+		] );
+
+		$result = $this->execute_ability( 'mainwp/list-sites-v1', [
+			'page'      => 1,
+			'per_page'  => 10,
+			'client_id' => 999999,
+			'tag_id'    => 999999,
+		] );
+
+		$this->assertNotWPError( $result );
+		$this->assertSame( [], $result['items'] );
+		$this->assertArrayHasKey( 'note', $result, 'Filtered empty result must explain itself to the caller.' );
+		$this->assertStringContainsString( 'client_id', $result['note'] );
+		$this->assertStringContainsString( 'tag_id', $result['note'] );
+
+		// An unfiltered call never carries the note.
+		$unfiltered = $this->execute_ability( 'mainwp/list-sites-v1', [
+			'page'     => 1,
+			'per_page' => 10,
+		] );
+		$this->assertNotWPError( $unfiltered );
+		$this->assertArrayNotHasKey( 'note', $unfiltered );
+	}
+
+	/**
+	 * Test that zero means "no filter" for client_id and tag_id.
+	 *
+	 * Models that habitually fill every parameter need a legal no-filter
+	 * value; with minimum:1 their neutral guess (the minimum) silently
+	 * filtered every site away.
+	 *
+	 * @return void
+	 */
+	public function test_list_sites_zero_filter_values_mean_no_filter() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site( [
+			'name' => 'Zero Filter Site',
+			'url'  => 'https://test-zero-filter.example.com/',
+		] );
+
+		$result = $this->execute_ability( 'mainwp/list-sites-v1', [
+			'page'      => 1,
+			'per_page'  => 100,
+			'client_id' => 0,
+			'tag_id'    => 0,
+		] );
+
+		$this->assertNotWPError( $result );
+		$this->assertArrayNotHasKey( 'note', $result );
+		$this->assertContains( $site_id, wp_list_pluck( $result['items'], 'id' ), 'client_id=0/tag_id=0 must behave as unfiltered.' );
+	}
+
+	/**
+	 * Test that the tag filter narrows the returned items, not just the total.
+	 *
+	 * The fetch query previously received the tag as an unsupported param
+	 * name and silently ignored it, so items came back unfiltered while
+	 * total was filtered.
+	 *
+	 * @return void
+	 */
+	public function test_list_sites_tag_filter_narrows_items() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$tagged_id   = $this->create_test_site( [
+			'name' => 'Tagged List Site',
+			'url'  => 'https://test-list-tagged.example.com/',
+		] );
+		$untagged_id = $this->create_test_site( [
+			'name' => 'Untagged List Site',
+			'url'  => 'https://test-list-untagged.example.com/',
+		] );
+
+		$tag_id = $this->create_test_tag( [ 'name' => 'List Filter Tag' ] );
+		$this->assign_site_to_tag( $tagged_id, $tag_id );
+
+		$result = $this->execute_ability( 'mainwp/list-sites-v1', [
+			'page'     => 1,
+			'per_page' => 100,
+			'tag_id'   => $tag_id,
+		] );
+
+		$this->assertNotWPError( $result );
+		$ids = wp_list_pluck( $result['items'], 'id' );
+		$this->assertContains( $tagged_id, $ids, 'Tag filter must include the tagged site.' );
+		$this->assertNotContains( $untagged_id, $ids, 'Tag filter must exclude untagged sites.' );
+		$this->assertSame( count( $ids ), $result['total'], 'Items and total must agree under a tag filter.' );
+	}
+
+	/**
 	 * Test that list-sites works with empty database.
 	 *
 	 * @return void

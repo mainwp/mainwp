@@ -1233,6 +1233,22 @@ class Test_MainWP_MCP_Call_Plan extends \WP_UnitTestCase {
 		$this->assertSame( array(), $this->resolver->resolve( $context, $ability, $args )['site_ids'], 'authorized empty entities remain allowed' );
 	}
 
+	public function test_sites_resolver_never_expands_an_empty_list_the_ability_refuses() {
+		$this->registry->entries['mainwp/disconnect-sites-v1'] = $this->registry_entry( 'dashboard', 'sites', 'chunked_sites' );
+		$context = $this->context( $this->write_grant() );
+		$ids     = $this->sites( 2 );
+		foreach ( array( 'mainwp/suspend-sites-v1', 'mainwp/disconnect-sites-v1' ) as $ability ) {
+			$this->assertNull( $this->resolver->resolve( $context, $ability, array( 'site_ids_or_domains' => array() ) ), $ability . ': an empty list is not the fleet' );
+			$this->assertNull( $this->resolver->resolve( $context, $ability, array() ), $ability . ': an omitted list is not the fleet' );
+			$this->assertSame( array( $ids[0] ), $this->resolver->resolve( $context, $ability, array( 'site_ids_or_domains' => array( $ids[0] ) ) )['site_ids'], $ability . ': listed sites resolve' );
+		}
+
+		// An ability whose schema still allows an empty list keeps "empty means every site".
+		$fleet = $this->resolver->resolve( $context, 'mainwp/sync-sites-v1', array( 'site_ids_or_domains' => array() ) );
+		$this->assertIsArray( $fleet );
+		$this->assertEmpty( array_diff( $ids, $fleet['site_ids'] ), 'sync-sites expands an empty list to every reachable site' );
+	}
+
 	public function test_entity_action_runs_on_approved_client_after_email_moves() {
 		$this->registry->entries['mainwp/delete-client-v1']['tier'] = 'dashboard';
 		$grant    = $this->write_grant();

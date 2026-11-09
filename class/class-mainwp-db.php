@@ -249,8 +249,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         foreach ( $fields as $name ) {
             $alias = 'owp_' . preg_replace( '/[^a-z0-9_]/i', '_', $name );
 
-            // SELECT.
-            $selects[] = "{$alias}.value AS `" . $this->escape( $name ) . '`';
+            // SELECT. Double any backtick so a field name cannot break out of
+            // the quoted identifier (esc_sql() does not escape backticks).
+            $selects[] = "{$alias}.value AS `" . str_replace( '`', '``', $name ) . '`';
 
             // JOIN.
             $joins[] = "LEFT JOIN {$tbl_wp_options} {$alias}
@@ -700,8 +701,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         foreach ( $fields as $name ) {
             $alias = 'owp_' . preg_replace( '/[^a-z0-9_]/i', '_', $name );
 
-            // SELECT.
-            $selects[] = "{$alias}.value AS `" . $this->escape( $name ) . '`';
+            // SELECT. Double any backtick so a field name cannot break out of
+            // the quoted identifier (esc_sql() does not escape backticks).
+            $selects[] = "{$alias}.value AS `" . str_replace( '`', '``', $name ) . '`';
 
             // JOIN.
             $joins[] = "LEFT JOIN {$tbl_wp_options} {$alias}
@@ -3917,6 +3919,38 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $wp_table = esc_sql( $this->table_name( 'wp' ) );
 
         return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT id, url FROM {$wp_table} WHERE TRIM(TRAILING '/' FROM url) = %s AND id <> %d", $url, intval( $exclude_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+    }
+
+    /**
+     * Find child sites by exact (case-insensitive) name, or partial name/url match.
+     *
+     * Fallback lookup used by MainWP_Abilities_Util::resolve_site() after
+     * numeric-ID and URL resolution both fail. Returns ALL matches - callers
+     * decide how to handle 0 / 1 / 2+ results; this method never guesses.
+     *
+     * Results are scoped to the sites the current user is allowed to access
+     * so match candidates never expose inaccessible site names or IDs.
+     *
+     * @param string $needle Site name or partial identifier to search for.
+     *
+     * @return array Matching site row objects with id, name and url fields.
+     */
+    public function get_websites_by_name_or_partial_match( $needle ) {
+        $wp_table = esc_sql( $this->table_name( 'wp' ) );
+        $where    = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Using prepare() with internal table name and access-scoping fragment.
+        $exact = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT wp.id, wp.name, wp.url FROM {$wp_table} wp WHERE LOWER(wp.name) = LOWER(%s)" . $where, $needle ), OBJECT );
+        if ( ! empty( $exact ) ) {
+            return $exact;
+        }
+
+        $like = '%' . $this->wpdb->esc_like( $needle ) . '%';
+
+        // The OR must stay parenthesized: the access-scoping fragment appends AND
+        // conditions, and AND binds tighter than OR.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Using prepare() with internal table name and access-scoping fragment.
+        return $this->wpdb->get_results( $this->wpdb->prepare( "SELECT wp.id, wp.name, wp.url FROM {$wp_table} wp WHERE (wp.name LIKE %s OR wp.url LIKE %s)" . $where, $like, $like ), OBJECT );
     }
 
     /**

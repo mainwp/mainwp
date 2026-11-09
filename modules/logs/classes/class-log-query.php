@@ -402,7 +402,7 @@ class Log_Query {
         }
 
         // Generate cache key for count query.
-        $cache_key = 'mainwp_logs_count_' . md5( serialize( $args ) . $site_visibility ); // NOSONAR - MD5 used for cache key generation only, not cryptographic purposes.
+        $cache_key = 'mainwp_logs_count_' . md5( serialize( $args ) . $site_visibility ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Filter values are hashed for a cache key and never unserialized.
 
         if ( $count_only ) {
             $cached_count = wp_cache_get( $cache_key, 'mainwp_logs' );

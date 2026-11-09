@@ -17,6 +17,7 @@
         <testsuite name="MainWP Dashboard Test Suite">
             <directory suffix=".php">tests</directory>
             <exclude>tests/abilities</exclude>
+            <exclude>tests/assistant</exclude>
             <exclude>tests/remote-mcp</exclude>
             <exclude>tests/backup</exclude>
             <!-- Live real-server suite: runs only via phpunit.integration.xml.dist, never in the offline default run. -->
@@ -37,6 +38,10 @@
             <exclude>tests/Test_REST_V2_Registration_Fixes.php</exclude>
             <exclude>tests/Test_REST_V2_Site_Operations.php</exclude>
             <exclude>tests/Test_SEC35_REST_Scope_Existence.php</exclude>
+        </testsuite>
+        <testsuite name="Assistant">
+            <directory suffix=".php">tests/assistant</directory>
+            <exclude>tests/assistant/class-mainwp-assistant-test-case.php</exclude>
         </testsuite>
         <testsuite name="Abilities">
             <directory suffix=".php">tests/abilities</directory>

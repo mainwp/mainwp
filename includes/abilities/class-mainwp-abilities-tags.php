@@ -902,6 +902,8 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|WP_Error Created tag object or error.
      */
     public static function execute_add_tag( $input ) {
+        // Creation stays open to scoped callers: a new tag carries a name
+        // and color only, no site data to scope.
         $name  = sanitize_text_field( $input['name'] );
         $color = isset( $input['color'] ) ? sanitize_hex_color( $input['color'] ) : null;
         // sanitize_hex_color() returns empty string for invalid input; normalize to null.

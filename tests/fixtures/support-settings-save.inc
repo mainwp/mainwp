@@ -10,6 +10,9 @@ foreach ( $features as $feature ) {
     $options[ 'mainwp_enable_guided_' . $feature ] = 'unchanged' === $scenario ? '1' : '0';
 }
 $status = 200;
+if ( ! class_exists( '\\WP_Error' ) ) {
+    require __DIR__ . '/support-wp-error.inc';
+}
 $secured = false;
 
 class MainWP_Post_Base_Handler {
@@ -19,6 +22,38 @@ class MainWP_Post_Base_Handler {
         }
         $GLOBALS['secured'] = true;
     }
+}
+class MainWP_Assistant_Policies {
+    public static function instance() {
+        return new self();
+    }
+    public function set_assistant_enabled( $enabled ) {
+        if ( 'fail_chatbase' === $GLOBALS['scenario'] ) {
+            return new \WP_Error( 'mainwp_assistant_toggle_failed', 'save-error' );
+        }
+        update_option( 'mainwp_enable_guided_chatbase', (int) $enabled );
+        return true;
+    }
+}
+class MainWP_System {
+    public static function is_assistant_enabled() {
+        return (bool) get_option( 'mainwp_enable_guided_chatbase', 0 );
+    }
+}
+function is_wp_error( $thing ) {
+    return $thing instanceof \WP_Error;
+}
+function __( $text, $domain ) {
+    return $text;
+}
+function wp_send_json_success( $data ) {
+    echo 'ok';
+    exit;
+}
+function wp_send_json_error( $data, $status ) {
+    $GLOBALS['status'] = $status;
+    echo 'save-error';
+    exit;
 }
 function add_option( $name, $value, $deprecated = '', $autoload = 'yes' ) {
     return false;

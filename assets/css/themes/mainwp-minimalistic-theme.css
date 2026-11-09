@@ -645,3 +645,17 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme #post-status-info {
   background: var(--background-color);
 }
+
+/* MainWP Assistant panel variables (consumed by assets/css/mainwp-assistant-panel.css). */
+:root {
+  --mainwp-accent-color: var(--accent-color);
+  --mainwp-danger-color: var(--red-color);
+  --mainwp-warning-color: var(--yellow-color);
+  --mainwp-info-color: var(--blue-color);
+  --mainwp-primary-text-color: var(--font-color);
+  --mainwp-secondary-text-color: var(--font-light-color);
+  --mainwp-primary-background-color: var(--background-color);
+  --mainwp-secondary-background-color: #f9f9f9;
+  --mainwp-secondary-border-color: var(--border-color);
+  --mainwp-assistant-header-background: var(--background-color-dark);
+}

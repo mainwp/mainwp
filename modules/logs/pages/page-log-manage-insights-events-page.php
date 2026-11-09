@@ -290,13 +290,10 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $filters = array( 'client', 'range', 'group', 'user', 'dtsstart', 'dtsstop', 'source', 'sites', 'events' );
 
         $get_saved = true;
-
-        if ( isset( $_GET['_insights_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_insights_opennonce'] ), 'mainwp-admin-nonce' ) ) { //phpcs:ignore -- NOSONAR -ok.
-            foreach ( $filters as $filter ) {
-                if ( isset( $_REQUEST[ $filter ] ) ) { //phpcs:ignore -- safe.
-                    $get_saved = false;
-                    break;
-                }
+        foreach ( $filters as $filter ) {
+            if ( isset( $_REQUEST[ $filter ] ) ) { //phpcs:ignore -- safe.
+                $get_saved = false;
+                break;
             }
         }
 
@@ -352,7 +349,16 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             $filter_events = isset( $_REQUEST['events'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['events'] ) ) : '';
 
             // phpcs:enable WordPress.Security.NonceVerification
-            $update_filter = true;
+            $nonce = '';
+            if ( isset( $_REQUEST['_insights_opennonce'] ) ) { // phpcs:ignore -- verified below.
+                $nonce = sanitize_key( wp_unslash( $_REQUEST['_insights_opennonce'] ) );
+            } elseif ( isset( $_REQUEST['_wpnonce'] ) ) { // phpcs:ignore -- verified below.
+                $nonce = sanitize_key( wp_unslash( $_REQUEST['_wpnonce'] ) );
+            }
+
+            if ( ! empty( $nonce ) && wp_verify_nonce( $nonce, 'mainwp-admin-nonce' ) ) {
+                $update_filter = true;
+            }
         }
 
         // validate requests.
@@ -620,6 +626,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                     'today'     => esc_html__( 'Today', 'mainwp' ),
                                     'yesterday' => esc_html__( 'Yesterday', 'mainwp' ),
                                     'thisweek'  => esc_html__( 'This week', 'mainwp' ),
+                                    'last30'    => esc_html__( 'Last 30 days', 'mainwp' ),
                                     'thismonth' => esc_html__( 'This month', 'mainwp' ),
                                     'lastmonth' => esc_html__( 'Last month', 'mainwp' ),
                                     'thisyear'  => esc_html__( 'This year', 'mainwp' ),
@@ -809,7 +816,11 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                 'end'   => gmdate( $format, strtotime( '-1 day', $time ) ),
             ),
             'thisweek'  => array(
-                'start' => gmdate( $format, strtotime( 'last monday', $time ) ),
+                'start' => gmdate( $format, strtotime( 'monday this week', $time ) ),
+                'end'   => gmdate( $format, $time ),
+            ),
+            'last30'    => array(
+                'start' => gmdate( $format, strtotime( '-29 days', strtotime( 'today' ) ) ),
                 'end'   => gmdate( $format, $time ),
             ),
             'thismonth' => array(
@@ -829,7 +840,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                 'end'   => gmdate( $format, strtotime( 'last day of December ' . gmdate( 'Y' ) . '-1 year' ) ),
             ),
             'custom'    => array(
-                'start' => gmdate( $format, strtotime( 'last monday', $time ) ),
+                'start' => gmdate( $format, strtotime( 'monday this week', $time ) ),
                 'end'   => gmdate( $format, $time ),
             ),
         );

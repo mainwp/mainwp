@@ -608,5 +608,4 @@ class MainWP_Premium_Update_Registry { // phpcs:ignore Generic.Classes.OpeningBr
         }
         return false;
     }
-
 }

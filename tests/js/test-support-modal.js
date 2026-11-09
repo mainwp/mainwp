@@ -20,6 +20,7 @@ function harness(tours = 0, savedTours = 0) {
             const classes = new Set();
             const attrs = { 'data-saved': String(savedTours), 'data-error': 'Save failed', 'data-pending': 'Unsaved settings' };
             const element = {
+                length: 1,
                 value: '',
                 disabled: false,
                 checkbox() { return selector.includes('tours') ? Boolean(tours) : false; },
@@ -34,16 +35,20 @@ function harness(tours = 0, savedTours = 0) {
                 text(value) { element.value = value; return element; },
                 hide() { return element; },
                 show() { return element; },
-                find() { return element; }
+                find() { return element; },
+                data(name) { return attrs['data-' + name]; },
+                siblings() { return $(selector + ' label'); },
+                closest() { return { length: 0 }; },
+                toggleClass(name, state) { if (state) classes.add(name); else classes.delete(name); return element; }
             };
             elements.set(selector, element);
         }
         return elements.get(selector);
     }
-    $.post = function (url, data, callback) {
+    $.post = function (url, data) {
         requests.push(data);
-        success = callback;
         const request = {
+            done(callback) { success = callback; return request; },
             fail(callback) { failure = callback; return request; },
             always(callback) { complete = callback; return request; }
         };
@@ -56,6 +61,7 @@ function harness(tours = 0, savedTours = 0) {
         setTours(value) { tours = value; },
         save() { vm.runInContext('mainwp_help_modal_content_onclick()', context); },
         respond(value) { success(value); if (complete) complete(); },
+        respondSaved(state) { this.respond({ success: true, data: Object.assign({ assistant_enabled: 0, tour_enabled: tours, video_enabled: 0 }, state) }); },
         fail() { failure(); complete(); }
     };
 }
@@ -64,14 +70,14 @@ test('saving a changed tour setting reloads before offering the tour', () => {
     const h = harness(1, 0);
     h.save();
     assert.equal(h.requests[0].enable_tour, 1);
-    h.respond('ok');
+    h.respondSaved({ tour_enabled: 1 });
     assert.equal(h.reloads.length, 1);
 });
 
 test('saving unchanged tours updates assistant state without reload', () => {
     const h = harness();
     h.save();
-    h.respond('ok');
+    h.respondSaved();
     assert.equal(h.reloads.length, 0);
     assert.equal(h.$('#mainwp-start-chat-card').attr('aria-disabled'), 'true');
     assert.equal(h.$('#mainwp-update-permissions-button').disabled, false);
@@ -81,7 +87,7 @@ test('a checkbox changed during a save keeps the pending message', () => {
     const h = harness();
     h.save();
     h.setTours(1);
-    h.respond('ok');
+    h.respondSaved({ tour_enabled: 0 });
     const message = h.$('#mainwp-support-settings-message');
     assert.equal(message.value, 'Unsaved settings');
     assert.equal(message.hasClass('positive'), false);
@@ -96,7 +102,7 @@ for (const transportFailure of [false, true]) {
         h.save();
         h.save();
         assert.equal(h.requests.length, 1, 'only one request may be in flight');
-        if (transportFailure) h.fail(); else h.respond('-1');
+        if (transportFailure) h.fail(); else h.respond({ success: false, data: {} });
         assert.equal(h.reloads.length, 0);
         assert.equal(h.$('#mainwp-start-chat-card').attr('aria-disabled'), 'true');
         assert.equal(h.$('#mainwp-support-settings-message').value, 'Save failed');
@@ -105,7 +111,8 @@ for (const transportFailure of [false, true]) {
 }
 
 test('starting a tour preserves the support options for reopening', () => {
-    const start = source.slice(source.indexOf('let mainwp_help_modal_start_content_onclick'), source.indexOf("jQuery(document).on('click', '.mainwp-theme-picker"));
+    const startAt = source.indexOf('let mainwp_help_modal_start_content_onclick');
+    const start = source.slice(startAt, source.indexOf('\n}\n', startAt) + 3);
     const hidden = [];
     const tours = [];
     const context = vm.createContext({

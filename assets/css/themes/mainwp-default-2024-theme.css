@@ -956,3 +956,17 @@ body.mainwp-ui.mainwp-custom-theme,
 *::-webkit-scrollbar-button {
   display: none !important;
 }
+
+/* MainWP Assistant panel variables (consumed by assets/css/mainwp-assistant-panel.css). */
+:root {
+  --mainwp-accent-color: var(--green-color);
+  --mainwp-danger-color: var(--red-color);
+  --mainwp-warning-color: var(--yellow-color);
+  --mainwp-info-color: var(--blue-light);
+  --mainwp-primary-text-color: var(--font-color);
+  --mainwp-secondary-text-color: var(--font-color-light);
+  --mainwp-primary-background-color: #ffffff;
+  --mainwp-secondary-background-color: var(--grey-light);
+  --mainwp-secondary-border-color: var(--grey-light-alt);
+  --mainwp-assistant-header-background: #446200;
+}

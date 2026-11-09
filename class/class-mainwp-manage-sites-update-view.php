@@ -354,13 +354,13 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      */
     public static function render_wpcore_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- NOSONAR - complex.
-        $user_can_update_wp    = \mainwp_current_user_can( 'dashboard', 'update_wordpress' );
-        $decodedIgnoredCores   = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
+        $user_can_update_wp  = \mainwp_current_user_can( 'dashboard', 'update_wordpress' );
+        $decodedIgnoredCores = ! empty( $userExtension->ignored_wp_upgrades ) ? json_decode( $userExtension->ignored_wp_upgrades, true ) : array();
         if ( ! is_array( $decodedIgnoredCores ) ) {
             $decodedIgnoredCores = array();
         }
-        $wp_upgrades           = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
-        $ignored_core_upgrades = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
+        $wp_upgrades               = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
+        $ignored_core_upgrades     = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
         $wpcore_update_disabled_by = '';
         $last_version              = '';
         $show_wp_update            = false;

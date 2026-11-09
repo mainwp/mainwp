@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Command_Palette;
 use MainWP\Dashboard\MainWP_Post_Site_Handler;
+use MainWP\Dashboard\MainWP_System;
 
 /** Stop captured AJAX responses without terminating PHPUnit. */
 // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- Test-only response termination beside the fixture using it.
@@ -57,6 +58,28 @@ class Test_Command_Palette extends MainWP_Abilities_Test_Case {
     /** @return array|string Test-specific site grants. */
     public function allowed_sites() {
         return $this->allowed;
+    }
+
+    /** The Assistant label keeps a placeholder for the typed question. */
+    public function test_search_config_includes_assistant_label(): void {
+        $config = MainWP_Command_Palette::get_search_config();
+
+        $this->assertSame( 'Ask the MainWP Assistant: %s', $config['strings']['assistantAsk'] );
+        $this->assertSame( 'Open the MainWP Assistant', $config['strings']['assistantOpen'] );
+    }
+
+    /** The Assistant menu item has no page, so it must not become a Go to command. */
+    public function test_assistant_menu_item_does_not_become_a_page_command(): void {
+        $add_node = new \ReflectionMethod( MainWP_System::class, 'add_command_palette_menu_node' );
+        $add_node->setAccessible( true );
+        $nodes = array();
+
+        $add_node->invokeArgs( MainWP_System::instance(), array( &$nodes, 'Assistant', '#', 'AssistantChatToggle', 'mainwp_tab' ) );
+        $this->assertSame( array(), $nodes );
+
+        $add_node->invokeArgs( MainWP_System::instance(), array( &$nodes, 'Assistant Settings', '', 'AssistantSettings', 'mainwp_tab' ) );
+        $this->assertCount( 1, $nodes );
+        $this->assertStringContainsString( 'page=AssistantSettings', $nodes[0]['url'] );
     }
 
     /** Exact and prefix matches must survive a five-result limit. */

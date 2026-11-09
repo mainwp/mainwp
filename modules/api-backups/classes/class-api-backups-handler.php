@@ -148,12 +148,29 @@ class Api_Backups_Handler {
                     $linode_response = $result;
                     if ( is_object( $linode_response ) ) {
                         // Handle response.
-                        if ( isset( $linode_response->errors ) ) {
-                            $error = new WP_Error( '400', $linode_response->errors['0']->reason, 'Some information' );
+                        if ( isset( $linode_response->errors ) && is_array( $linode_response->errors ) && isset( $linode_response->errors[0]->reason ) ) {
+                            $error = new WP_Error( '400', sanitize_text_field( $linode_response->errors[0]->reason ), array() );
                             static::send_backups_response( false, $error );
+                        } elseif ( isset( $linode_response->errors ) ) {
+                            $raw_errors = wp_json_encode( $linode_response->errors );
+                            if ( false === $raw_errors || null === $raw_errors ) {
+                                $raw_errors = '';
+                            }
+
+                            Api_Backups_Utility::log_debug( 'Linode returned an invalid error payload while creating the backup :: [raw_errors=' . $raw_errors . ']', 2 );
+
+                            $fallback_error = new WP_Error(
+                                '400',
+                                __( 'Linode returned an invalid error payload while creating the backup.', 'mainwp' ),
+                                array(
+                                    'raw_errors' => sanitize_text_field( $raw_errors ),
+                                )
+                            );
+                            static::send_backups_response( false, $fallback_error );
                         } else {
                             static::send_backups_response();
                         }
+                        return;
                     }
                 }
                 static::send_bulk_backups_error( false, esc_html__( 'Error: Linode Backup', 'mainwp' ) );
@@ -161,12 +178,9 @@ class Api_Backups_Handler {
             case 'gridpane':
                 $result = Api_Backups_3rd_Party::gridpane_action_create_backup( $website_id, $return );
                 if ( $die_output ) {
-                    $backup_status = (array) $result;
-                    if ( array_key_exists( 'error', $backup_status ) ) {
-                        $error = new WP_Error( $backup_status['error']->code, $backup_status['error']->message );
-                        if ( is_wp_error( $error ) ) {
-                            static::send_backups_response( false, $error->get_error_message() );
-                        }
+                    $error = Api_Backups_3rd_Party::gridpane_backup_error( $result );
+                    if ( null !== $error ) {
+                        static::send_backups_response( false, $error );
                     }
                     static::send_backups_response();
                     static::send_bulk_backups_error( false, esc_html__( 'Error: GridPane Backup', 'mainwp' ) );

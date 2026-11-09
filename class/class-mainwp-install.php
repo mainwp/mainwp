@@ -193,6 +193,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     public function install() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         // get_site_option is multisite aware!
         $currentVersion = get_site_option( $this->option_db_key );
+        $is_new_install = empty( $currentVersion );
 
         // Seed before the equal-version return so existing installs receive grace once.
         if ( false === get_option( 'mainwp_cron_key_state' ) ) {
@@ -224,6 +225,21 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             // Mark the cohort so a one-time dismissible notice can say the
             // feature exists and where to turn it on.
             MainWP_Utility::update_option( 'mainwp_native_backups_defaulted_off_on_upgrade', 1 );
+        }
+
+        $assistant_sentinel = 'mainwp_assistant_option_not_set';
+        $assistant_enabled  = get_option( MainWP_Assistant_Policies::OPTION_ASSISTANT_ENABLED, $assistant_sentinel );
+        $legacy_enabled     = get_option( 'mainwp_enable_guided_chatbase', $assistant_sentinel );
+
+        if ( $assistant_sentinel === $assistant_enabled ) {
+            if ( $assistant_sentinel !== $legacy_enabled ) {
+                MainWP_Utility::update_option( MainWP_Assistant_Policies::OPTION_ASSISTANT_ENABLED, (bool) $legacy_enabled );
+            } elseif ( $is_new_install ) {
+                MainWP_Utility::update_option( MainWP_Assistant_Policies::OPTION_ASSISTANT_ENABLED, true );
+                MainWP_Utility::update_option( 'mainwp_enable_guided_chatbase', 1 );
+            } else {
+                MainWP_Utility::update_option( MainWP_Assistant_Policies::OPTION_ASSISTANT_ENABLED, false );
+            }
         }
 
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '8.8', '<' ) ) {
@@ -262,6 +278,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_repair_wp_group_primary_key();
             $this->maybe_create_knowledge_table( $currentVersion );
             $this->maybe_repair_knowledge_table();
+            $this->maybe_create_assistant_tables( $currentVersion );
             return;
         }
 
@@ -1129,6 +1146,46 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $suppress = $this->wpdb->suppress_errors();
         foreach ( $sql as $query ) {
             dbDelta( $query );
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        return true;
+    }
+
+    /**
+     * Create any missing Assistant table when the stored DB version already covers it.
+     *
+     * The Assistant tables can arrive without a DB version bump, and dbDelta errors
+     * are suppressed while the version is written anyway, so a Dashboard already on
+     * the current version would otherwise run every chat and spend read against a
+     * missing table. One SHOW TABLES per load covers all three tables, and only the
+     * missing ones are created so an existing table is never altered from here.
+     *
+     * @param string|false $currentVersion Stored DB version.
+     *
+     * @return bool True when a table had to be created.
+     */
+    public function maybe_create_assistant_tables( $currentVersion ) {
+        $expected = array(
+            $this->table_name( 'assistant_conversations' ),
+            $this->table_name( 'assistant_messages' ),
+            $this->table_name( 'assistant_spend' ),
+        );
+        $existing = $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table_name( 'assistant_' ) ) . '%' ) );
+        $missing  = array_diff( $expected, is_array( $existing ) ? $existing : array() );
+        if ( empty( $missing ) ) {
+            return false;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $sql      = MainWP_DB_Assistant::instance()->hook_db_install_tables( array(), $currentVersion, $this->wpdb->get_charset_collate() );
+        $suppress = $this->wpdb->suppress_errors();
+        foreach ( $sql as $query ) {
+            foreach ( $missing as $table ) {
+                if ( 0 === strpos( $query, 'CREATE TABLE ' . $table . ' (' ) ) {
+                    dbDelta( $query );
+                }
+            }
         }
         $this->wpdb->suppress_errors( $suppress );
 

@@ -896,6 +896,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $filter_dtsstop              = '';
         $array_clients_ids           = array();
         $array_groups_ids            = array();
+        $array_users_ids             = array();
         $array_usersfilter_sites_ids = array();
 
         $sources_conds     = '';
@@ -960,6 +961,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'sites_ids'             => $array_sites_ids,
             'events'                => $array_events_list,
         );
+
+        // Forward validated user IDs to Log_Query.
+        if ( ! empty( $array_users_ids ) && is_array( $array_users_ids ) ) {
+            $args['user_ids'] = $array_users_ids;
+        }
 
         if ( isset( $_REQUEST['optimize_table'] ) && 1 === intval( $_REQUEST['optimize_table'] ) ) { //phpcs:ignore --ok.
             $args['optimize']           = 1;

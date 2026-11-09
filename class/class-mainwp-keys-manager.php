@@ -602,8 +602,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @return void
      */
-    public static function migrate_private_filenames( $from_version, $to_version ) {
-        unset( $to_version );
+    public static function migrate_private_filenames( $from_version, $to_version ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- $to_version is the second argument of the mainwp_db_after_update action this is registered on with add_action( ..., 10, 2 ); the migration gates on $from_version alone.
         if ( ! version_compare( $from_version, '9.0.2.0', '<' ) ) {
             return;
         }
@@ -633,10 +632,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $new_path = $key_dir . $new_name;
             if ( file_exists( $new_path ) ) {
                 // New file already present (rare race); legacy is stale, remove it.
-                wp_delete_file( $old_path );
+                @unlink( $old_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions.unlink_unlink -- cleanup of a stale private-key file; wp_delete_file() routes the path through a public filter and WP_Filesystem is not initialised on the upgrade/cron call paths this runs on.
                 continue;
             }
-            @rename( $old_path, $new_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions.rename_rename -- best-effort direct rename inside the keys dir, before WP_Filesystem is initialized; lazy migration in get_key_file() handles failures.
+            @rename( $old_path, $new_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions.rename_rename -- rename() is atomic on a local filesystem, which is what makes this key-file migration safe against a concurrent request; WP_Filesystem::move() guarantees no such atomicity and needs WP_Filesystem() initialised, which is not the case on the upgrade/cron call paths.
         }
     }
 
@@ -659,8 +658,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @return void
      */
-    public static function migrate_sibling_dir_perms( $from_version, $to_version ) {
-        unset( $to_version );
+    public static function migrate_sibling_dir_perms( $from_version, $to_version ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- $to_version is the second argument of the mainwp_db_after_update action this is registered on with add_action( ..., 10, 2 ); the migration gates on $from_version alone.
         if ( ! version_compare( $from_version, '9.0.2.1', '<' ) ) {
             return;
         }
@@ -742,8 +740,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @return void
      */
-    public static function fix_sibling_dir_perms_9023( $from_version, $to_version ) {
-        unset( $to_version );
+    public static function fix_sibling_dir_perms_9023( $from_version, $to_version ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- $to_version is the second argument of the mainwp_db_after_update action this is registered on with add_action( ..., 10, 2 ); the migration gates on $from_version alone.
 
         if ( empty( $from_version ) || version_compare( $from_version, '9.0.2.1', '<' ) || version_compare( $from_version, '9.0.2.3', '>=' ) ) {
             return;

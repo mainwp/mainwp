@@ -648,7 +648,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain/URL.', 'mainwp' ),
+                    'description' => __( 'Site ID, domain/URL, or unique site name.', 'mainwp' ),
                 ),
                 'type'              => array(
                     'type'        => 'string',
@@ -924,6 +924,10 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                         'required'   => array( 'site_id', 'site_url', 'type', 'slug', 'code', 'message' ),
                     ),
                 ),
+                'note'     => array(
+                    'type'        => 'string',
+                    'description' => __( 'Present only when applied filters matched no updates; names the filters so the caller can retry without them.', 'mainwp' ),
+                ),
             ),
             'required'   => array( 'updates', 'summary', 'page', 'per_page', 'total' ),
         );
@@ -1117,6 +1121,10 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                         'required'   => array( 'site_id', 'site_url', 'type', 'slug', 'code', 'message' ),
                     ),
                 ),
+                'note'    => array(
+                    'type'        => 'string',
+                    'description' => __( 'Present only when applied filters matched no ignored updates; names the filters so the caller can retry without them.', 'mainwp' ),
+                ),
             ),
             'required'   => array( 'ignored', 'total' ),
         );
@@ -1168,7 +1176,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
+                    'description' => __( 'Site ID (numeric), domain, or unique site name.', 'mainwp' ),
                 ),
                 'types'             => array(
                     'type'        => 'array',
@@ -1280,7 +1288,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 'site_id_or_domain'  => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
+                    'description' => __( 'Site ID (numeric), domain, or unique site name.', 'mainwp' ),
                 ),
             ),
             'required'             => array( 'site_id_or_domain' ),
@@ -1353,7 +1361,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 'site_id_or_domain'  => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
+                    'description' => __( 'Site ID (numeric), domain, or unique site name.', 'mainwp' ),
                 ),
                 'slugs'              => array(
                     'type'        => 'array',
@@ -1469,7 +1477,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 'site_id_or_domain'  => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
+                    'description' => __( 'Site ID (numeric), domain, or unique site name.', 'mainwp' ),
                 ),
                 'slugs'              => array(
                     'type'        => 'array',
@@ -1585,7 +1593,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 'site_id_or_domain'  => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
+                    'description' => __( 'Site ID (numeric), domain, or unique site name.', 'mainwp' ),
                 ),
                 'slugs'              => array(
                     'type'        => 'array',
@@ -1686,7 +1694,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
+                    'description' => __( 'Site ID (numeric), domain, or unique site name.', 'mainwp' ),
                 ),
                 'action'            => array(
                     'type'        => 'string',
@@ -1711,7 +1719,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
+                    'description' => __( 'Site ID (numeric), domain, or unique site name.', 'mainwp' ),
                 ),
                 'slugs'             => array(
                     'type'        => 'array',
@@ -1741,7 +1749,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
+                    'description' => __( 'Site ID (numeric), domain, or unique site name.', 'mainwp' ),
                 ),
                 'slugs'             => array(
                     'type'        => 'array',
@@ -2331,7 +2339,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $offset      = ( $page - 1 ) * $per_page;
         $paged_items = array_slice( $all_updates, $offset, $per_page );
 
-        return array(
+        $result = array(
             'updates'  => $paged_items,
             'summary'  => $summary,
             'page'     => $page,
@@ -2339,6 +2347,29 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'total'    => $total,
             'errors'   => $errors,
         );
+
+        // A filtered empty result is indistinguishable from "everything is
+        // up to date" to an AI caller. Name the applied filters so it can
+        // retry without.
+        if ( empty( $all_updates ) ) {
+            $filters_applied = array();
+            if ( ! empty( $input['site_ids_or_domains'] ) ) {
+                $filters_applied[] = 'site_ids_or_domains';
+            }
+            if ( ! empty( $input['types'] ) ) {
+                $filters_applied[] = 'types';
+            }
+
+            if ( ! empty( $filters_applied ) ) {
+                $result['note'] = sprintf(
+                    /* translators: %s: comma-separated list of filter names */
+                    __( 'No updates matched the applied filters (%s). Omit those filters to list all available updates.', 'mainwp' ),
+                    implode( ', ', $filters_applied )
+                );
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -2870,11 +2901,34 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
 
-        return array(
+        $result = array(
             'ignored' => $all_ignored,
             'total'   => count( $all_ignored ),
             'errors'  => $errors,
         );
+
+        // A filtered empty result is indistinguishable from "nothing is
+        // ignored" to an AI caller. Name the applied filters so it can
+        // retry without.
+        if ( empty( $all_ignored ) ) {
+            $filters_applied = array();
+            if ( ! empty( $input['site_ids_or_domains'] ) ) {
+                $filters_applied[] = 'site_ids_or_domains';
+            }
+            if ( ! empty( $input['types'] ) ) {
+                $filters_applied[] = 'types';
+            }
+
+            if ( ! empty( $filters_applied ) ) {
+                $result['note'] = sprintf(
+                    /* translators: %s: comma-separated list of filter names */
+                    __( 'No ignored updates matched the applied filters (%s). Omit those filters to list all ignored updates.', 'mainwp' ),
+                    implode( ', ', $filters_applied )
+                );
+            }
+        }
+
+        return $result;
     }
 
     /**

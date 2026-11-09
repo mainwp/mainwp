@@ -1136,3 +1136,38 @@ body.mainwp-ui.mainwp-custom-theme,
   scrollbar-width: thin; /* Options: auto, thin */
   scrollbar-color: #666666 #1c1d1b; /* thumb color, track color */
 }
+
+/* MainWP Assistant panel variables (consumed by assets/css/mainwp-assistant-panel.css). */
+:root {
+  --mainwp-accent-color: var(--accent-color);
+  --mainwp-danger-color: var(--red-color);
+  --mainwp-warning-color: var(--yellow-color);
+  --mainwp-info-color: var(--blue-color);
+  --mainwp-primary-text-color: var(--font-color);
+  --mainwp-secondary-text-color: var(--font-light-color);
+  --mainwp-primary-background-color: var(--background-color-2);
+  --mainwp-secondary-background-color: var(--background-color-3);
+  --mainwp-secondary-border-color: var(--border-color);
+  --mainwp-assistant-header-background: #446200;
+}
+
+/* Assistant status text and icons need a readable foreground on dark surfaces. */
+.mainwp-ui.mainwp-custom-theme .mainwp-assistant-mode-error,
+.mainwp-ui.mainwp-custom-theme .mainwp-assistant-switch-error,
+.mainwp-ui.mainwp-custom-theme #mainwp-messages-delete-message.error,
+.mainwp-ui.mainwp-custom-theme .mainwp-consent-error,
+.mainwp-ui.mainwp-custom-theme #assistant-activity-table .status-failed,
+.mainwp-ui.mainwp-custom-theme #assistant-activity-table .status-confirmed,
+.mainwp-ui.mainwp-custom-theme #assistant-summary-cards .icon.assistant-error,
+.mainwp-ui.mainwp-custom-theme #assistant-summary-cards .icon.assistant-info {
+  color: var(--mainwp-primary-text-color);
+}
+
+.mainwp-ui.mainwp-custom-theme .mainwp-batch-failed i.icon.red {
+  color: var(--mainwp-primary-text-color) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .mainwp-mode-pill.active,
+.mainwp-ui.mainwp-custom-theme .mainwp-mode-pill.active .icon {
+  color: var(--background-color-1);
+}

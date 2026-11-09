@@ -172,8 +172,8 @@ class Log_Install extends MainWP_Install {
         }
 
         if ( ! empty( $currentVersion ) && $is_db_ver_with_archive && version_compare( $currentVersion, '1.0.1.10', '<' ) ) { // NOSONAR - non-ip.
+            // create_archive_tables() adds archived_at itself when it is missing.
             $this->create_archive_tables( $currentVersion, true );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_logs_archive' ) . ' ADD COLUMN archived_at int(11) NOT NULL DEFAULT 0' ); //phpcs:ignore -- ok.
         }
 
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.11', '<' ) ) { // NOSONAR - non-ip.
@@ -243,15 +243,9 @@ class Log_Install extends MainWP_Install {
             }
 
             // Check if duplicates exist.
-            //phpcs:ignore -- ok.
-            $has_duplicates = $wpdb->get_var( "
-                SELECT COUNT(*) FROM (
-                    SELECT 1
-                    FROM {$meta_table}
-                    GROUP BY meta_log_id, meta_key
-                    HAVING COUNT(*) > 1
-                ) dup
-            "
+            $has_duplicates = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Migration housekeeping query.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal table name.
+                "SELECT COUNT(*) FROM ( SELECT 1 FROM {$meta_table} GROUP BY meta_log_id, meta_key HAVING COUNT(*) > 1 ) dup"
             );
 
             if ( $has_duplicates > 0 ) {
@@ -259,36 +253,15 @@ class Log_Install extends MainWP_Install {
                 //phpcs:ignore -- ok.
                 $wpdb->query( "CREATE TABLE IF NOT EXISTS {$meta_table}_dup_backup LIKE {$meta_table}" );
 
-                //phpcs:ignore -- custom query ok.
-                $wpdb->query(
-                    "
-                    INSERT IGNORE INTO {$meta_table}_dup_backup
-                    SELECT *
-                    FROM {$meta_table}
-                    WHERE (meta_log_id, meta_key) IN (
-                        SELECT meta_log_id, meta_key
-                        FROM {$meta_table}
-                        GROUP BY meta_log_id, meta_key
-                        HAVING COUNT(*) > 1
-                    )
-                "
+                $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Migration housekeeping query.
+                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal table name.
+                    "INSERT IGNORE INTO {$meta_table}_dup_backup SELECT * FROM {$meta_table} WHERE (meta_log_id, meta_key) IN ( SELECT meta_log_id, meta_key FROM {$meta_table} GROUP BY meta_log_id, meta_key HAVING COUNT(*) > 1 )"
                 );
 
                 // Delete duplicates, keep newest (MAX meta_id).
-                //phpcs:ignore -- ok.
-                $wpdb->query( "
-                    DELETE t
-                    FROM {$meta_table} t
-                    JOIN (
-                        SELECT meta_log_id, meta_key, MAX(meta_id) AS keep_id
-                        FROM {$meta_table}
-                        GROUP BY meta_log_id, meta_key
-                        HAVING COUNT(*) > 1
-                    ) dup
-                    ON t.meta_log_id = dup.meta_log_id
-                    AND t.meta_key    = dup.meta_key
-                    WHERE t.meta_id <> dup.keep_id
-                "
+                $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Migration housekeeping query.
+                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal table name.
+                    "DELETE t FROM {$meta_table} t JOIN ( SELECT meta_log_id, meta_key, MAX(meta_id) AS keep_id FROM {$meta_table} GROUP BY meta_log_id, meta_key HAVING COUNT(*) > 1 ) dup ON t.meta_log_id = dup.meta_log_id AND t.meta_key = dup.meta_key WHERE t.meta_id <> dup.keep_id"
                 );
             }
         }
@@ -312,16 +285,8 @@ class Log_Install extends MainWP_Install {
                 do {
                     // Update a safe batch.
                     $updated = $this->wpdb->query(
-                        $this->wpdb->prepare( //phpcs:ignore -- esc table name ok.
-                            "
-                            UPDATE {$table}
-                            SET created = created * 1000000
-                            WHERE created < %d
-                            LIMIT %d
-                            ",
-                            10000000000,
-                            $limit
-                        )
+                        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal table name; values bound via prepare().
+                        $this->wpdb->prepare( "UPDATE {$table} SET created = created * 1000000 WHERE created < %d LIMIT %d", 10000000000, $limit )
                     );
                     usleep( 100000 ); // 100ms.
                 } while ( $updated > 0 );
@@ -334,17 +299,9 @@ class Log_Install extends MainWP_Install {
                 $limit = 1000;
                 do {
                     // Update a safe batch.
-                    $updated = $this->wpdb->query( // phpcs:ignore -- esc table name ok.
-                        $this->wpdb->prepare( //phpcs:ignore -- escaped table name ok.
-                            "
-                            UPDATE {$table}
-                            SET created = created * 1000000
-                            WHERE created < %d
-                            LIMIT %d
-                            ",
-                            10000000000,
-                            $limit  //phpcs:ignore -- escaped ok.
-                        )
+                    $updated = $this->wpdb->query(
+                        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal table name; values bound via prepare().
+                        $this->wpdb->prepare( "UPDATE {$table} SET created = created * 1000000 WHERE created < %d LIMIT %d", 10000000000, $limit )
                     );
                     usleep( 100000 ); // 100ms.
                 } while ( $updated > 0 );
@@ -352,12 +309,64 @@ class Log_Install extends MainWP_Install {
         }
 
         $this->update_changes_logs_meta_60( $currentVersion );
+
+        // Retry column migration for sites where CREATE TABLE typo ('created created') prevented
+        // dbDelta from applying the BIGINT type, causing the 1.0.1.40 ALTER to be skipped.
+        // Also fixes zeroed timestamps from records inserted while column was still datetime.
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '1.0.1.51', '<' ) ) { // NOSONAR - non-ip.
+            $tables = array( $this->table_name( 'wp_logs' ) );
+
+            if ( $is_db_ver_with_archive ) {
+                $archive_table  = $this->table_name( 'wp_logs_archive' );
+                $archive_exists = (bool) $this->wpdb->get_var(
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared -- Internal table existence check.
+                    $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $archive_table ) )
+                );
+                if ( $archive_exists ) {
+                    $tables[] = $archive_table;
+                }
+            }
+
+            foreach ( $tables as $table ) {
+                $column_type = $this->wpdb->get_var(
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- Internal schema inspection for migration.
+                    $this->wpdb->prepare( 'SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s', $this->wpdb->dbname, $table, 'created' )
+                );
+
+                if ( 'bigint' !== $column_type ) {
+                    $this->wpdb->query( 'ALTER TABLE ' . $table . ' MODIFY COLUMN created BIGINT(20) UNSIGNED NOT NULL' ); //phpcs:ignore -- ok.
+                }
+
+                // Fix zeroed timestamps: records inserted as microsecond ints into a datetime column
+                // became 0000-00-00, then 0 after ALTER to BIGINT. Assign current time so they appear in queries.
+                // One set-based pass: log_id keeps the values distinct and ordered. A per-row batch
+                // loop here re-selected the same rows forever when its UPDATE persistently failed.
+                $zero_count = (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE created = 0" ); //phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is internal.
+                if ( $zero_count > 0 ) {
+                    $now_us = (int) ( microtime( true ) * 1000000 );
+                    $this->wpdb->query(
+                        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal table name; value bound via prepare().
+                        $this->wpdb->prepare( "UPDATE {$table} SET created = %d + log_id WHERE created = 0", $now_us )
+                    );
+                }
+
+                // Convert any remaining legacy seconds-based timestamps to microseconds.
+                $limit = 1000;
+                do {
+                    $updated = $this->wpdb->query(
+                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal migration update; values bound via prepare().
+                        $this->wpdb->prepare( "UPDATE {$table} SET created = created * 1000000 WHERE created > 0 AND created < %d LIMIT %d", 10000000000, $limit )
+                    );
+                    usleep( 100000 ); // 100ms.
+                } while ( $updated > 0 );
+            }
+        }
     }
 
     /**
      * Method update_changes_logs_meta_60().
      *
-     * @param  mixed $currentVersion
+     * @param  mixed $currentVersion Current db version.
      * @return void
      */
     private function update_changes_logs_meta_60( $currentVersion ) {
@@ -367,15 +376,9 @@ class Log_Install extends MainWP_Install {
             $log_table  = esc_sql( $this->table_name( 'wp_logs' ) );
             $meta_table = esc_sql( $this->table_name( 'wp_logs_meta' ) );
 
-            $meta_items = $this->wpdb->get_results( // phpcs:ignore -- custom escaped query ok.
-                "
-                    SELECT m.meta_log_id, m.meta_value
-                    FROM {$log_table} l
-                    JOIN {$meta_table} m
-                    ON l.log_id = m.meta_log_id
-                    WHERE m.meta_key = 'extra_info'
-                    AND (l.context = 'plugin' OR l.context = 'theme')
-                ",
+            $meta_items = $this->wpdb->get_results(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal escaped table names.
+                "SELECT m.meta_log_id, m.meta_value FROM {$log_table} l JOIN {$meta_table} m ON l.log_id = m.meta_log_id WHERE m.meta_key = 'extra_info' AND (l.context = 'plugin' OR l.context = 'theme')",
                 ARRAY_A
             );
 
@@ -438,14 +441,14 @@ class Log_Install extends MainWP_Install {
 
         $column_archived_at = $this->wpdb->get_results( // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $archive is an internal MainWP table identifier; column name is bound via prepare().
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table identifiers cannot be placeholders; $archive comes from table_name().
-                "SHOW COLUMNS FROM {$archive} LIKE %s",
+                "SHOW COLUMNS FROM {$archive} LIKE %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- The archive identifier comes from the internal table-name helper.
                 'archived_at'
             )
         );
 
         if ( empty( $column_archived_at ) ) {
             $this->wpdb->query( // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $archive is an internal MainWP table identifier; ALTER TABLE has no user input.
-                "ALTER TABLE {$archive} ADD COLUMN archived_at INT(11) NOT NULL DEFAULT 0"
+                "ALTER TABLE {$archive} ADD COLUMN archived_at INT(11) NOT NULL DEFAULT 0" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- The archive identifier comes from the internal table-name helper.
             );
         }
     }

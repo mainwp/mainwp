@@ -140,11 +140,23 @@
 	.mainwp-ui.mainwp_page_ActionLogs .mainwp-content-wrap,
 	.mainwp-ui.mainwp_page_PluginPrivacy .mainwp-content-wrap,
 	.mainwp-ui.mainwp-hidden-second-level-navigation.mainwp-ui-leftmenu .mainwp-content-wrap,
-    .mainwp-ui.mainwp_page_CostTrackerSettings .mainwp-content-wrap {
+	.mainwp-ui.mainwp_page_CostTrackerSettings .mainwp-content-wrap,
+	.mainwp-ui.mainwp_page_AssistantSettings .mainwp-content-wrap {
 		margin-left: 0 !important;
 	}
 
-    .mainwp-main-navigation-menu.ui.menu {
+	.mainwp_page_AssistantSettings #mainwp-page-navigation-wrapper,
+	.mainwp_page_AssistantSettings #mainwp-page-navigation-wrapper .mainwp-page-navigation {
+		display: block !important;
+		width: 100% !important;
+		float: none !important;
+		position: relative !important;
+		top: auto !important;
+		bottom: auto !important;
+		left: auto !important;
+	}
+
+	.mainwp-main-navigation-menu.ui.menu {
 		min-height: 0;
 	}
 

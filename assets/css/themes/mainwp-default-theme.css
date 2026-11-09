@@ -2325,3 +2325,17 @@ body.mainwp-ui.mainwp-custom-theme,
   }
 
 }
+
+/* MainWP Assistant panel variables (consumed by assets/css/mainwp-assistant-panel.css). */
+:root {
+  --mainwp-accent-color: var(--mainwp-green);
+  --mainwp-danger-color: var(--mainwp-red);
+  --mainwp-warning-color: var(--mainwp-yellow);
+  --mainwp-info-color: var(--mainwp-blue);
+  --mainwp-primary-text-color: var(--mainwp-text);
+  --mainwp-secondary-text-color: var(--mainwp-text-secondary);
+  --mainwp-primary-background-color: var(--mainwp-base-background);
+  --mainwp-secondary-background-color: var(--mainwp-base-background-secondary);
+  --mainwp-secondary-border-color: var(--mainwp-border);
+  --mainwp-assistant-header-background: #446200;
+}

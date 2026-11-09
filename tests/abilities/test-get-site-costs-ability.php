@@ -69,6 +69,71 @@ class Test_GetSiteCosts_Ability extends MainWP_Abilities_Test_Case {
     }
 
     /**
+     * A cost attached to the site comes back as a cost object, not as the
+     * producer's id => cost[] map iterated by mistake (M20).
+     *
+     * @return void
+     */
+    public function test_get_site_costs_returns_cost_objects_for_attached_costs() {
+        $this->skip_if_no_abilities_api();
+        $this->skip_if_no_cost_tracker();
+        $this->set_current_user_as_admin();
+
+        global $wpdb;
+        $table  = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance()->get_table_name( 'cost_tracker' );
+        $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ); // phpcs:ignore WordPress.DB -- test fixture guard.
+        if ( $exists !== $table ) {
+            $this->markTestSkipped( "Cost Tracker table {$table} is not present in this environment." );
+        }
+
+        $site_id = $this->create_test_site( [
+            'name' => 'Costed Site',
+            'url'  => 'https://costed-site.example.com/',
+        ] );
+
+        $wpdb->insert( // phpcs:ignore WordPress.DB -- test fixture.
+            $table,
+            [
+                'name'               => 'Site License',
+                'url'                => 'https://vendor.example/',
+                'type'               => 'subscription',
+                'product_type'       => 'plugin',
+                'slug'               => '',
+                'license_type'       => 'single',
+                'cost_status'        => 'active',
+                'payment_method'     => 'manual',
+                'price'              => 49.50,
+                'renewal_type'       => 'yearly',
+                'last_renewal'       => 0,
+                'next_renewal'       => 0,
+                'next_renewal_today' => 0,
+                'last_alert'         => 0,
+                'cost_icon'          => '',
+                'cost_color'         => '',
+                'sites'              => wp_json_encode( [ $site_id ] ),
+                'groups'             => '[]',
+                'clients'            => '[]',
+                'note'               => '',
+            ]
+        );
+        $cost_id = (int) $wpdb->insert_id;
+        wp_cache_delete( 'mainwp_cost_tracker_all', 'mainwp_cost_tracker' );
+
+        $result = $this->execute_ability( 'mainwp/get-site-costs-v1', [
+            'site_id_or_domain' => $site_id,
+        ] );
+
+        $wpdb->delete( $table, [ 'id' => $cost_id ] ); // phpcs:ignore WordPress.DB -- test fixture cleanup.
+        wp_cache_delete( 'mainwp_cost_tracker_all', 'mainwp_cost_tracker' );
+
+        $this->assertNotWPError( $result );
+        $this->assertSame( 1, $result['total'] );
+        $this->assertCount( 1, $result['costs'] );
+        $this->assertSame( $cost_id, (int) $result['costs'][0]['id'], 'The item must be the cost object itself, not a map bucket.' );
+        $this->assertSame( 'Site License', $result['costs'][0]['name'] );
+    }
+
+    /**
      * Test that unauthenticated users are denied.
      *
      * @return void

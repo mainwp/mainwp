@@ -26,6 +26,56 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Private_Root_Fixture;
 
 	/**
+	 * Windows drive roots remain absolute after WordPress normalizes separators.
+	 */
+	public function test_mwp_2264_windows_absolute_paths(): void {
+		$method = new \ReflectionMethod( MainWP_Backup_Private_Root::class, 'refusal_reason' );
+		foreach ( array( 'D:/Lab/private/backups', 'd:/Lab/private/backups/', 'D:\\Lab\\private\\backups', 'D:/Lab/mainwp-private/wp/backups', '//server/share/private/backups', '\\\\server\\share\\private\\backups' ) as $path ) {
+			$this->assertSame( '', $method->invoke( null, $path, false, 'Windows', array( 'E:/wordpress', 'E:/content' ) ), $path );
+		}
+	}
+
+	/**
+	 * Drive-relative and ordinary relative paths remain refused on both platforms.
+	 */
+	public function test_mwp_2264_relative_paths_are_refused(): void {
+		$method = new \ReflectionMethod( MainWP_Backup_Private_Root::class, 'refusal_reason' );
+		foreach ( array( 'Windows', 'Linux' ) as $os ) {
+			foreach ( array( 'D:backups', 'D:', 'backups', './x', '..\\private' ) as $path ) {
+				$this->assertSame( 'expected an absolute path', $method->invoke( null, $path, false, $os ), $os . ': ' . $path );
+			}
+		}
+		$this->assertSame( 'expected an absolute path', $method->invoke( null, 'D:/x', false, 'Linux' ) );
+		$this->assertSame( '', $method->invoke( null, '/srv/private/backups', false, 'Linux' ) );
+	}
+
+	/**
+	 * Accepting a drive root must not bypass traversal or served-directory checks.
+	 */
+	public function test_mwp_2264_windows_refusal_guards(): void {
+		$method = new \ReflectionMethod( MainWP_Backup_Private_Root::class, 'refusal_reason' );
+		foreach ( array( 'D:/site/wp/..', 'D:\\site\\wp\\..\\private' ) as $path ) {
+			$this->assertSame( "expected a path without '..' segments", $method->invoke( null, $path, false, 'Windows' ), $path );
+		}
+		$boundaries = array( 'D:/site/wp', 'D:/site/content' );
+		foreach ( array( 'd:/SITE/WP/backups', 'D:\\SITE\\WP', 'd:/SITE/CONTENT/backups' ) as $path ) {
+			$this->assertSame( 'directory is inside WordPress or its content directory', $method->invoke( null, $path, false, 'Windows', $boundaries ), $path );
+		}
+		$this->assertSame( '', $method->invoke( null, 'D:/site/wp-private/backups', false, 'Windows', $boundaries ) );
+	}
+
+	/**
+	 * A normalized document root still supplies the only exposure-probe mapping.
+	 */
+	public function test_mwp_2264_windows_document_root_mapping(): void {
+		$method = new \ReflectionMethod( MainWP_Backup_Private_Root::class, 'probe_urls' );
+		foreach ( array( 'D:/www/backups', 'd:\\www\\backups' ) as $root ) {
+			$this->assertSame( array( 'https://example.org/backups/' ), $method->invoke( null, array( $root ), 'https://example.org', 'E:/wordpress', 'D:/www', 'Windows' ), $root );
+		}
+		$this->assertSame( array(), $method->invoke( null, array( 'D:/www/backups' ), 'https://example.org', '', 'D:/www', 'Linux' ) );
+	}
+
+	/**
 	 * A failed destination setup identifies which server owns the path.
 	 */
 	public function test_mwp_2130_directory_failure_names_dashboard_destination(): void {

@@ -2824,7 +2824,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                     <i class="times red icon"></i> <div class="content"><?php esc_html_e( 'Access to your Database', 'mainwp' ); ?></div>
                                 </div>
                                 <div class="item" style="padding:0.21428571em 0;">
-                                    <i class="times red icon"></i> <div class="content"><?php esc_html_e( 'Access to your Screeen', 'mainwp' ); ?></div>
+                                    <i class="times red icon"></i> <div class="content"><?php esc_html_e( 'Access to your Screen', 'mainwp' ); ?></div>
                                 </div>
                                 <div class="item" style="padding:0 0 0 0.21428571em;">
                                     <i class="check green icon"></i> <div class="content"><?php esc_html_e( 'Processes only information you submit', 'mainwp' ); ?></div>
@@ -2872,9 +2872,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         </div>
                     </div>
 
-                    <div class="ui card">
+                    <?php // Hidden rather than omitted: saving support settings reads this card's toggle on every page. ?>
+                    <div class="ui card" <?php echo '' !== $video_id ? '' : 'style="display:none"'; ?>>
                         <div class="content">
-                            <a id="mainwp-start-video-card" class="<?php echo $enable_guided_video ? '' : 'mainwp-disabled-link'; ?>" <?php echo '' !== $video_id ? '' : 'style="display:none"'; ?> onclick="jQuery('#mainwp-update-permissions-button').fadeOut(200);jQuery('#mainwp-help-back-button').fadeIn(200);mainwp_help_modal_start_content_onclick( false, '<?php echo esc_js( $video_id ); ?>', false );return false;" >
+                            <a id="mainwp-start-video-card" class="<?php echo $enable_guided_video ? '' : 'mainwp-disabled-link'; ?>" onclick="jQuery('#mainwp-update-permissions-button').fadeOut(200);jQuery('#mainwp-help-back-button').fadeIn(200);mainwp_help_modal_start_content_onclick( false, '<?php echo esc_js( $video_id ); ?>', false );return false;" >
                                 <div class="header"><?php esc_html_e( 'MainWP 101 Video Tour', 'mainwp' ); ?></div>
                                 <div class="ui hidden divider"></div>
                                 <i class="youtube big grey icon" style="opacity:0.5"></i>
@@ -2910,7 +2911,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div class="ui hidden divider"></div>
                             <i class="ticket big grey icon" style="opacity:0.5"></i>
                             <div class="ui fitted hidden divider"></div><br/>
-                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support ? we\'re here to help you.', 'mainwp' ); ?></span>
+                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support. We\'re here to help you.', 'mainwp' ); ?></span>
 
                             </a>
                         </div>

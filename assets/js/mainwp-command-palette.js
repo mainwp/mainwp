@@ -512,6 +512,33 @@
             } );
         } );
 
+        // Support is a sidebar footer link, not a menu page, so the menu commands never include it.
+        if ( document.getElementById( 'mainwp-help-menu-item' ) && document.getElementById( 'mainwp-start-chat-card' ) && siteConfig.strings?.supportChat ) {
+            dispatcher.registerCommand( {
+                name: 'mainwp/support-assistant',
+                label: siteConfig.strings.supportChat,
+                searchLabel: siteConfig.strings.supportChat,
+                keywords: [ 'mainwp', 'support', 'assistant', 'chat', 'help', 'ai' ],
+                category: 'command',
+                callback: ( { close } = {} ) => {
+                    const dismiss = close || getDispatcher()?.close;
+                    if ( typeof dismiss === 'function' ) {
+                        dismiss();
+                    }
+                    // Same clicks a user makes. The modal reopens on whichever screen
+                    // it was left on, so a disabled Assistant goes back to the Support
+                    // options, where its toggle can be turned on.
+                    const chatCard = document.getElementById( 'mainwp-start-chat-card' );
+                    document.getElementById( 'mainwp-help-menu-item' )?.click();
+                    if ( chatCard?.classList.contains( 'mainwp-disabled-link' ) ) {
+                        document.getElementById( 'mainwp-help-back-button' )?.click();
+                    } else {
+                        chatCard?.click();
+                    }
+                },
+            } );
+        }
+
         if (
             ! siteLoaderRegistered && siteConfig.ajaxUrl && siteConfig.searchNonce &&
             siteConfig.strings && window.wp.element && window.wp.i18n &&

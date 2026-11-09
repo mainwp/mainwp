@@ -110,7 +110,7 @@ function fixture( supportsLoader = true, mainwpPage = true, withPalette = false,
             commands: [ { name: 'existing-menu', label: 'Settings', url: '/settings' } ],
             siteSearch: {
                 ajaxUrl: adminDirectory + 'admin-ajax.php', searchNonce: 'search-nonce',
-                strings: { searchError: 'Retry search', syncingAction: 'Syncing…', searchLabel:'Search sites, clients and commands', actionsFor:'Actions for %s', siteAction:'%1$s for %2$s', selectSite:'Select site', actions:'Actions', search:'Search', enter:'Enter', keyboard:'Enter for %s' },
+                strings: { supportChat: 'Open the Support Assistant', searchError: 'Retry search', syncingAction: 'Syncing…', searchLabel:'Search sites, clients and commands', actionsFor:'Actions for %s', siteAction:'%1$s for %2$s', selectSite:'Select site', actions:'Actions', search:'Search', enter:'Enter', keyboard:'Enter for %s' },
             },
         },
         wp: {
@@ -231,6 +231,16 @@ function fixture( supportsLoader = true, mainwpPage = true, withPalette = false,
     return {
         requests, registered, assigned, opened, spoken, elements, palette, input,
         syncCalls, syncQueues, popups, savedStatuses, sync: window.dashboardSync,
+        addSupport( clicks, withMenu = true, withCard = true, chatDisabled = false ) {
+            for ( const [ id, present ] of [ [ 'mainwp-help-menu-item', withMenu ], [ 'mainwp-start-chat-card', withCard ], [ 'mainwp-help-back-button', true ] ] ) {
+                if ( present ) {
+                    const node = element( 'a' );
+                    node.id = id;
+                    node.className = 'mainwp-start-chat-card' === id && chatDisabled ? 'mainwp-disabled-link' : '';
+                    node.click = () => clicks.push( { id, closed } );
+                }
+            }
+        },
         get reloaded() { return reloaded; },
         get closed() { return closed; },
         get activeElement() { return document.activeElement; },
@@ -662,4 +672,31 @@ test( 'valid entity navigation supports a Dashboard in a subdirectory', async ()
     commands[ 1 ].callback();
     assert.deepEqual( app.opened, [ [ 'http://dash.local/dashboard/wp-admin/admin.php?page=SiteOpen&websiteid=28&_opennonce=signed-value', '_blank', 'noopener,noreferrer' ] ] );
     assert.deepEqual( app.assigned, [ 'http://dash.local/dashboard/wp-admin/admin.php?page=ManageClients&client_id=1' ] );
+} );
+
+test( 'Open the Support Assistant opens the Support modal on its chat card', () => {
+    for ( const availability of [ [ false, false ], [ true, false ], [ false, true ] ] ) {
+        const app = fixture();
+        app.addSupport( [], ...availability );
+        app.runTimers( 150 );
+        assert.equal( app.registered.some( command => command.name === 'mainwp/support-assistant' ), false );
+    }
+    const clicks = [];
+    const app = fixture();
+    app.addSupport( clicks );
+    app.runTimers( 150 );
+    const support = app.registered.filter( command => command.name === 'mainwp/support-assistant' ).at( -1 );
+    assert.equal( support.label, 'Open the Support Assistant' );
+    support.callback();
+    assert.deepEqual( clicks, [ { id: 'mainwp-help-menu-item', closed: 1 }, { id: 'mainwp-start-chat-card', closed: 1 } ], 'Close the palette, open Support, then the chat card' );
+    assert.deepEqual( app.assigned, [] );
+} );
+
+test( 'A disabled Support Assistant returns the modal to the Support options', () => {
+    const clicks = [];
+    const app = fixture();
+    app.addSupport( clicks, true, true, true );
+    app.runTimers( 150 );
+    app.registered.filter( command => command.name === 'mainwp/support-assistant' ).at( -1 ).callback();
+    assert.deepEqual( Array.from( clicks, click => click.id ), [ 'mainwp-help-menu-item', 'mainwp-help-back-button' ] );
 } );

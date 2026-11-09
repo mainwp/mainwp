@@ -57,4 +57,22 @@ class SupportModalTest extends \PHPUnit\Framework\TestCase {
             $this->assertSame( 1, $xpath->query( '//a[@id="mainwp-start-chat-card"][@aria-disabled="' . ( $enabled ? 'false' : 'true' ) . '"]' )->length );
         }
     }
+
+    public function test_video_card_is_hidden_on_pages_without_a_video(): void {
+        $GLOBALS['support_modal_options'] = array( 'mainwp_enable_guided_video' => 1 );
+        foreach ( array( 'mainwp_tab' => true, 'ServerInformation' => false ) as $page => $has_video ) {
+            $_GET = array( 'page' => $page );
+            ob_start();
+            MainWP_UI::render_help_modal();
+            $dom = new \DOMDocument();
+            @$dom->loadHTML( ob_get_clean() );
+            $xpath = new \DOMXPath( $dom );
+            $card  = $xpath->query( '//a[@id="mainwp-start-video-card"]/ancestor::div[contains(concat(" ", @class, " "), " card ")][1]' )->item( 0 );
+            $this->assertNotNull( $card, $page );
+            $this->assertSame( $has_video ? '' : 'display:none', $card->getAttribute( 'style' ), $page );
+            $this->assertSame( '', $xpath->query( '//a[@id="mainwp-start-video-card"]' )->item( 0 )->getAttribute( 'style' ), $page );
+            // The save handler reads this toggle on every page.
+            $this->assertSame( 1, $xpath->query( '//*[@id="mainwp-guided-video-check"]' )->length, $page );
+        }
+    }
 }

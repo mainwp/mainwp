@@ -2124,6 +2124,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             }
         }
 
+        // Older narrow-screen saves stored the display-only single-column layout.
+        $collapsed_layout = is_array( $wgsorted ) && count( $wgsorted ) > 1;
+        if ( $collapsed_layout ) {
+            foreach ( $wgsorted as $saved_widget ) {
+                if ( ! is_array( $saved_widget ) || ! isset( $saved_widget['x'], $saved_widget['w'] ) || 0 !== (int) $saved_widget['x'] || 1 !== (int) $saved_widget['w'] ) {
+                    $collapsed_layout = false;
+                    break;
+                }
+            }
+        }
+        if ( $collapsed_layout ) {
+            $wgsorted = array();
+        }
+
         $wgsorted = apply_filters( 'mainwp_do_widget_boxes_sorted', $wgsorted, $page, $client_id );
 
         if ( 'mainwp_page_manageclients' === $page ) {
@@ -2842,12 +2856,12 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <div class="ui secondary card">
                         <div class="content">
                             <button type="button" id="mainwp-start-chat-card" data-can-open-assistant="<?php echo $can_open_assistant_chat ? '1' : '0'; ?>" class="<?php echo $assistant_card_is_enabled ? '' : 'mainwp-disabled-link'; ?>" <?php echo $assistant_card_is_enabled ? '' : 'disabled aria-disabled="true"'; ?>>
-                                <div class="header"><?php esc_html_e( 'Support Assistant', 'mainwp' ); ?></div>
+                                <div class="header"><?php esc_html_e( 'MainWP Assistant', 'mainwp' ); ?></div>
                                 <div class="ui hidden divider"></div>
                                 <i class="comments big green icon"></i>
-                                <div><?php esc_html_e( 'Open Support Assistant', 'mainwp' ); ?></div>
+                                <div><?php esc_html_e( 'Open MainWP Assistant', 'mainwp' ); ?></div>
                                 <div class="ui fitted hidden divider"></div><br/>
-                                <span class="ui grey small text"><?php esc_html_e( 'Ask questions about MainWP and get answers from the official documentation.', 'mainwp' ); ?> <span class="ui mini green label">BETA</span></span>
+                                <span class="ui grey small text"><?php esc_html_e( 'Ask about MainWP, or work with your sites through your own AI provider.', 'mainwp' ); ?> <span class="ui mini green label">BETA</span></span>
                             </button>
                         </div>
                         <div class="content">
@@ -3009,7 +3023,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * This panel contains the AI chat interface and appears as a fixed
      * bottom-right overlay. It's independent of the help modal and can
      * be opened from the left navigation menu or the help modal's
-     * Support Assistant card. Includes a bottom tab bar for Home/Messages
+     * MainWP Assistant card. Includes a bottom tab bar for Home/Messages
      * navigation (hidden on the Chat screen on desktop).
      *
      * @return void Outputs the assistant panel HTML.
@@ -3084,7 +3098,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     data-inverted="" data-position="bottom center">
                     <i class="expand icon"></i>
                 </button>
-                <button class="close-button" aria-label="<?php esc_attr_e( 'Close assistant panel', 'mainwp' ); ?>"><i class="close icon"></i></button>
+                <button class="close-button" aria-label="<?php esc_attr_e( 'Close assistant panel', 'mainwp' ); ?>"><i class="times icon"></i></button>
             </div>
             <div id="mainwp-assistant-live-region" aria-live="polite" aria-atomic="true" class="mainwp-sr-only"></div>
 
@@ -3161,7 +3175,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <!-- First-use disclosure banner -->
                 <div class="ui info message mainwp-mintlify-disclosure" id="mainwp-mintlify-disclosure" style="display:none;">
                     <button type="button" class="mainwp-mintlify-disclosure-dismiss" id="mainwp-mintlify-disclosure-dismiss" aria-label="<?php esc_attr_e( 'Dismiss', 'mainwp' ); ?>">
-                        <i class="close icon"></i>
+                        <i class="times icon"></i>
                     </button>
                     <div class="header"><?php esc_html_e( 'Conversation History', 'mainwp' ); ?></div>
                     <p>
@@ -3240,7 +3254,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                     <i class="book icon"></i>
                                     <?php esc_html_e( 'Docs', 'mainwp' ); ?>
                                 </button>
-                                <button type="button" class="mainwp-mode-pill" data-mode="agent" role="radio" aria-checked="false" data-tooltip="<?php esc_attr_e( 'Works with your sites through your AI provider. Actions run only after you confirm them.', 'mainwp' ); ?>" data-inverted="" data-position="top right">
+                                <button type="button" class="mainwp-mode-pill" data-mode="agent" role="radio" aria-checked="false" data-tooltip="<?php esc_attr_e( 'Works with your sites through your AI provider. Actions run only after you confirm them.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                                     <i class="globe icon"></i>
                                     <?php esc_html_e( 'Sites', 'mainwp' ); ?>
                                 </button>

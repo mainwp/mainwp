@@ -52,7 +52,7 @@ class MainWP_Assistant_Activity_Widget {
                 <div class="fourteen wide column">
                     <h2 class="ui header handle-drag">
                         <?php esc_html_e( 'AI Assistant Activity', 'mainwp' ); ?>
-                        <div class="sub header"><?php esc_html_e( 'Every assistant action, with its status and duration.', 'mainwp' ); ?></div>
+                        <div class="sub header"><?php esc_html_e( 'Conversation starts, chat failures, and assistant actions.', 'mainwp' ); ?></div>
                     </h2>
                 </div>
                 <div class="two wide column right aligned">

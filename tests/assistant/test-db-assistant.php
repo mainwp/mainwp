@@ -328,7 +328,8 @@ class Test_DB_Assistant extends MainWP_Assistant_Test_Case {
 
 		// Create 5 conversations.
 		for ( $i = 1; $i <= 5; $i++ ) {
-			$this->create_test_conversation( $user_id, "Conversation $i" );
+			$id = $this->create_test_conversation( $user_id, "Conversation $i" );
+			$this->add_test_message( $id, 'user', 'Question' );
 		}
 
 		$result = MainWP_DB_Assistant::instance()->get_user_conversations( $user_id, 1, 3 );
@@ -371,11 +372,13 @@ class Test_DB_Assistant extends MainWP_Assistant_Test_Case {
 	 */
 	public function test_get_user_conversations_scoped_to_user() {
 		$user_a = $this->set_current_user_as_admin();
-		$this->create_test_conversation( $user_a, 'User A Conv' );
+		$id = $this->create_test_conversation( $user_a, 'User A Conv' );
+		$this->add_test_message( $id, 'user', 'Question', $user_a );
 
 		$user_b = $this->create_other_admin();
 		wp_set_current_user( $user_b );
-		$this->create_test_conversation( $user_b, 'User B Conv' );
+		$id = $this->create_test_conversation( $user_b, 'User B Conv' );
+		$this->add_test_message( $id, 'user', 'Question', $user_b );
 
 		// Get User A's conversations.
 		$result_a = MainWP_DB_Assistant::instance()->get_user_conversations( $user_a );
@@ -397,6 +400,9 @@ class Test_DB_Assistant extends MainWP_Assistant_Test_Case {
 		$first_id  = $this->create_test_conversation( $user_id, 'First Created' );
 		$second_id = $this->create_test_conversation( $user_id, 'Second Created' );
 		$third_id  = $this->create_test_conversation( $user_id, 'Third Created' );
+		foreach ( array( $first_id, $second_id, $third_id ) as $id ) {
+			$this->add_test_message( $id, 'user', 'Question' );
+		}
 
 		global $wpdb;
 		$wpdb->update(
@@ -1049,7 +1055,8 @@ class Test_DB_Assistant extends MainWP_Assistant_Test_Case {
 		$this->created_conversation_ids[] = $wpdb->insert_id;
 
 		// Create new conversation.
-		$this->create_test_conversation( $user_id, 'Test New Conv' );
+		$id = $this->create_test_conversation( $user_id, 'Test New Conv' );
+		$this->add_test_message( $id, 'user', 'Question' );
 
 		$deleted = MainWP_DB_Assistant::instance()->cleanup_old_conversations( 30, $user_id );
 

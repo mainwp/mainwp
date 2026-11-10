@@ -2228,8 +2228,9 @@ window.MainWPMintlifyChat = ( function( $ ) {
      * @param {boolean}            [truncated]          Whether the Bridge shortened the response.
      * @param {Array}              [truncatedFields]    Fields shortened by the Bridge.
      * @param {Object}             [feedback]           Saved answer feedback state.
+     * @param {string}             [storedMode]         Mode recorded for a replayed answer.
      */
-    function appendAssistantMessage( text, sources, usageInfo, executedAbilities, storedTime, truncated, truncatedFields, feedback ) {
+    function appendAssistantMessage( text, sources, usageInfo, executedAbilities, storedTime, truncated, truncatedFields, feedback, storedMode ) {
         let timestamp = formatTimestamp( storedTime );
         let parsedContent = parseMarkdown( text );
         let sourcesHtml = '';
@@ -2260,10 +2261,11 @@ window.MainWPMintlifyChat = ( function( $ ) {
         // The receipt names who answered: Sites receipts carry the serving
         // provider when known ("Sites · OpenAI") so the answer is attributable.
         // Tested in tests/js/test-mode-guards.js
-        let modeLabel = currentMode === 'agent'
+        let badgeMode = storedMode || currentMode;
+        let modeLabel = badgeMode === 'agent'
             ? l10n( 'mode_agent', 'Sites' )
             : l10n( 'mode_ask', 'Docs' );
-        if ( currentMode === 'agent' && currentProvider && typeof currentProvider === 'string' ) {
+        if ( badgeMode === 'agent' && currentProvider && typeof currentProvider === 'string' ) {
             modeLabel += ' &middot; ' + escapeHtml( currentProvider );
         }
 
@@ -2377,7 +2379,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
 
         let html = '<div class="mainwp-mintlify-message mainwp-mintlify-error-message">' +
                        '<div class="ui red message">' +
-                           '<i class="warning sign icon"></i> ' + escapeHtml( displayText ) + linkHtml + retryHtml +
+                           escapeHtml( displayText ) + linkHtml + retryHtml +
                        '</div>' +
                    '</div>';
 
@@ -3033,7 +3035,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
 
         if ( dismissible ) {
             $card.append(
-                $( '<button type="button" class="mainwp-assistant-connect-dismiss"><i class="close icon"></i></button>' )
+                $( '<button type="button" class="mainwp-assistant-connect-dismiss"><i class="times icon"></i></button>' )
                     .attr( 'aria-label', l10n( 'connect_card_dismiss', 'Dismiss' ) )
                     .on( 'click', function() {
                         try {
@@ -3903,7 +3905,8 @@ window.MainWPMintlifyChat = ( function( $ ) {
                         // Explicit load: match the conversation's mode and update the override.
                         // requestMode moves with the pill so the next request posts what
                         // the pill shows; the localStorage preference is NOT touched.
-                        if ( response.data.mode === 'agent' && response.data.provider_name ) {
+                        // A provider check that already found no provider (false) wins over the stored one.
+                        if ( response.data.mode === 'agent' && response.data.provider_name && false !== availableProviderName ) {
                             availableProviderName = response.data.provider_name;
                             userModeOverride = 'agent';
                             requestMode = 'agent';
@@ -3915,7 +3918,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
                         }
                     } else {
                         // Silent restore: preserve the current mode and only cache the provider name for the toggle.
-                        if ( response.data.mode === 'agent' && response.data.provider_name ) {
+                        if ( response.data.mode === 'agent' && response.data.provider_name && false !== availableProviderName ) {
                             availableProviderName = response.data.provider_name;
                         }
                     }
@@ -3935,7 +3938,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
                             } else if ( msg.role === 'user' ) {
                                 appendUserMessage( msg.content, msg.created_at );
                             } else if ( msg.role === 'assistant' ) {
-                                appendAssistantMessage( msg.content, normalizeStoredSources( msg.sources ), parseUsageFromResponse( msg ) || msg.tokens || null, msg.executed_abilities || [], msg.created_at, false, undefined, msg.feedback );
+                                appendAssistantMessage( msg.content, normalizeStoredSources( msg.sources ), parseUsageFromResponse( msg ) || msg.tokens || null, msg.executed_abilities || [], msg.created_at, false, undefined, msg.feedback, msg.route === 'agent' || msg.route === 'ask' ? msg.route : response.data.mode );
                             } else if ( msg.role === 'system' ) {
                                 appendSystemMessage( msg.content );
                             }
@@ -4707,6 +4710,15 @@ window.MainWPMintlifyChat = ( function( $ ) {
     // PROVIDER AVAILABILITY
     // =========================================================================
 
+    function applyInitialMode( mode, providerName ) {
+        // A pending availability check must not replace a loaded or selected mode.
+        if ( userModeOverride ) {
+            return;
+        }
+        requestMode = mode;
+        updateModeIndicator( mode, providerName );
+    }
+
     /**
      * Check provider availability with automatic retry on failure.
      *
@@ -4740,7 +4752,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
                     // Don't clear the preference: the provider might exist, the check just failed transiently.
                     let savedPref = localStorage.getItem( 'mainwp_assistant_mode_preference' );
                     if ( savedPref === 'agent' ) {
-                        updateModeIndicator( 'ask', null );
+                        applyInitialMode( 'ask', null );
                     }
                 } else if ( ! response.data.available ) {
                     // Provider check succeeded: confirmed no provider available.
@@ -4751,6 +4763,11 @@ window.MainWPMintlifyChat = ( function( $ ) {
                     wizardAvailable = response.data.wizard_available === true;
                     setAgentPillUnavailable( true );
 
+                    // Sites mode cannot run without a provider, so this also replaces a loaded or selected Sites mode.
+                    if ( 'agent' === userModeOverride ) {
+                        userModeOverride = 'ask';
+                    }
+                    requestMode = 'ask';
                     updateModeIndicator( 'ask', null );
 
                     maybeRenderWelcomeConnectCard();
@@ -4768,16 +4785,17 @@ window.MainWPMintlifyChat = ( function( $ ) {
                     wizardAvailable = false;
                     setAgentPillUnavailable( false );
 
-                    // Respect saved mode preference from localStorage.
-                    // Tested in tests/js/test-mode-guards.js
+                    // A saved Docs choice stays sticky unless this session already chose a mode.
                     let savedPref = localStorage.getItem( 'mainwp_assistant_mode_preference' );
                     if ( savedPref === 'ask' ) {
-                        userModeOverride = 'ask';
-                        updateModeIndicator( 'ask', null );
+                        applyInitialMode( 'ask', null );
+                        if ( ! userModeOverride ) {
+                            userModeOverride = 'ask';
+                        }
                     } else if ( savedPref === 'agent' ) {
-                        updateModeIndicator( 'agent', response.data.provider_name );
+                        applyInitialMode( 'agent', response.data.provider_name );
                     } else {
-                        updateModeIndicator( 'ask', null );
+                        applyInitialMode( 'ask', null );
                     }
                 }
 
@@ -4839,7 +4857,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
                 // Don't clear the preference: the provider might exist, the network just failed.
                 let savedPref = localStorage.getItem( 'mainwp_assistant_mode_preference' );
                 if ( savedPref === 'agent' ) {
-                    updateModeIndicator( 'ask', null );
+                    applyInitialMode( 'ask', null );
                 }
 
                 attemptConversationRestore();

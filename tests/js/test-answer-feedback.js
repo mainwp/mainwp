@@ -110,7 +110,7 @@ assert.equal( calls.at( -1 ).options.data.conversation_id, 99, 'Use the answer c
 assert.equal( calls.at( -1 ).options.data.message_id, 88 );
 complete( null );
 assert.ok( source.includes( 'response.data.truncated_fields, response.data.feedback );' ), 'New answers must pass feedback metadata to the renderer' );
-assert.ok( source.includes( 'msg.created_at, false, undefined, msg.feedback );' ), 'History must pass feedback metadata to the renderer' );
+assert.ok( source.includes( 'msg.created_at, false, undefined, msg.feedback, msg.route === \'agent\' || msg.route === \'ask\' ? msg.route : response.data.mode );' ), 'History must pass feedback metadata to the renderer' );
 const recoveryCall = source.match( /appendAssistantMessage\( answer\.content[^\n]+/ );
 assert.ok( recoveryCall, 'Transport recovery must render the stored answer' );
 const answer = {

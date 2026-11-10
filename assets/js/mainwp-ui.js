@@ -1015,7 +1015,7 @@ let mainwp_help_modal_start_content_onclick = function (tour_id, video_id) {
     }
 }
 
-// The Support Assistant card used to carry a server-baked onclick, so a card
+// The MainWP Assistant card used to carry a server-baked onclick, so a card
 // un-dimmed after the permission save stayed dead until a reload. Gate the
 // open on the card's current state instead.
 jQuery(document).on('click', '#mainwp-start-chat-card', function (e) {

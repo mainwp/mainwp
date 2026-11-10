@@ -159,9 +159,9 @@ runTest( 'drift guard: handleChatJobComplete matches resolveAsyncMode()', () => 
  * Returns { mode, provider, newOverride, newRequestMode } or null (no
  * updateModeIndicator call, requestMode untouched).
  */
-function resolveLoadMode( override, isSilentRestore, serverMode, serverProviderName ) {
+function resolveLoadMode( override, isSilentRestore, serverMode, serverProviderName, knownProvider ) {
 	if ( ! isSilentRestore ) {
-		if ( serverMode === 'agent' && serverProviderName ) {
+		if ( serverMode === 'agent' && serverProviderName && false !== knownProvider ) {
 			return { mode: 'agent', provider: serverProviderName, newOverride: 'agent', newRequestMode: 'agent' };
 		}
 		return { mode: 'ask', provider: null, newOverride: 'ask', newRequestMode: 'ask' };
@@ -298,7 +298,8 @@ runTest( 'drift guard: loadConversation() mode restore matches resolveLoadMode()
 		"                        // Explicit load: match the conversation's mode and update the override.\n" +
 		"                        // requestMode moves with the pill so the next request posts what\n" +
 		"                        // the pill shows; the localStorage preference is NOT touched.\n" +
-		"                        if ( response.data.mode === 'agent' && response.data.provider_name ) {\n" +
+		"                        // A provider check that already found no provider (false) wins over the stored one.\n" +
+		"                        if ( response.data.mode === 'agent' && response.data.provider_name && false !== availableProviderName ) {\n" +
 		"                            availableProviderName = response.data.provider_name;\n" +
 		"                            userModeOverride = 'agent';\n" +
 		"                            requestMode = 'agent';\n" +
@@ -339,10 +340,10 @@ runTest( 'drift guard: updateModeIndicator synchronizes both pills', () => {
 runTest( 'drift guard: appendAssistantMessage() attribution label matches resolveAttributionLabel()', () => {
 	assertSourceContains(
 		'attribution label',
-		"let modeLabel = currentMode === 'agent'\n" +
+		"let modeLabel = badgeMode === 'agent'\n" +
 		"            ? l10n( 'mode_agent', 'Sites' )\n" +
 		"            : l10n( 'mode_ask', 'Docs' );\n" +
-		"        if ( currentMode === 'agent' && currentProvider && typeof currentProvider === 'string' ) {"
+		"        if ( badgeMode === 'agent' && currentProvider && typeof currentProvider === 'string' ) {"
 	);
 } );
 
@@ -387,9 +388,9 @@ function resolveAvailabilityRestore( checkState, savedPref ) {
 }
 
 runTest( 'drift guard: checkProviderAvailability() preference restore matches resolveAvailabilityRestore()', () => {
-	assertSourceContains( 'check-failed correction', "if ( savedPref === 'agent' ) {\n                        updateModeIndicator( 'ask', null );\n                    }" );
+	assertSourceContains( 'check-failed correction', "if ( savedPref === 'agent' ) {\n                        applyInitialMode( 'ask', null );\n                    }" );
 	assertSourceContains( 'unavailable clears stale Agent pref', "if ( savedPref === 'agent' ) {\n                        localStorage.removeItem( 'mainwp_assistant_mode_preference' );\n                    }" );
-	assertSourceContains( 'available + saved ask restore', "if ( savedPref === 'ask' ) {\n                        userModeOverride = 'ask';\n                        updateModeIndicator( 'ask', null );\n                    } else if ( savedPref === 'agent' ) {" );
+	assertSourceContains( 'available + saved ask restore', "if ( savedPref === 'ask' ) {\n                        applyInitialMode( 'ask', null );\n                        if ( ! userModeOverride ) {\n                            userModeOverride = 'ask';\n                        }\n                    } else if ( savedPref === 'agent' ) {" );
 } );
 
 // ─── Test scenarios ────────────────────────────────────────────────────────────
@@ -414,6 +415,12 @@ runTest( '3. Explicit click, Agent conv → agent mode, override=agent, requestM
 runTest( '4. Explicit click, Ask conv → ask mode, override=ask, requestMode=ask', () => {
 	const result = resolveLoadMode( null, false, 'ask', null );
 	assert.deepEqual( result, { mode: 'ask', provider: null, newOverride: 'ask', newRequestMode: 'ask' } );
+} );
+
+runTest( 'explicit load of a Sites conversation stays in Docs when no provider is available', () => {
+	const result = resolveLoadMode( null, false, 'agent', 'OpenAI', false );
+	assert.strictEqual( result.mode, 'ask' );
+	assert.strictEqual( result.newRequestMode, 'ask' );
 } );
 
 runTest( 'Reload shows Regenerate only for a bound user/assistant tail without cancellation', () => {
@@ -611,7 +618,7 @@ runTest( '23. Available + auto/missing pref → Docs indicator', () => {
 	assert.deepEqual( resolveAvailabilityRestore( 'available', null ), { needsSetup: false, indicator: { mode: 'ask', provider: null } } );
 } );
 
-runTest( '24. Available + explicit prefs restore as before', () => {
+runTest( '24. Available preferences keep their indicator and Docs override', () => {
 	assert.deepEqual(
 		resolveAvailabilityRestore( 'available', 'ask' ),
 		{ needsSetup: false, override: 'ask', indicator: { mode: 'ask', provider: null } }

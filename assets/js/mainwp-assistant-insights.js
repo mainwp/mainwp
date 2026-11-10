@@ -92,7 +92,7 @@
         const strings = mainwpAssistantInsights.strings;
         switch (status) {
             case 'started':
-                return '<span class="status-started"><i class="comment alternate icon"></i> ' + (strings.started || 'Started') + '</span>';
+                return '<span class="status-started"><i class="comment alternate icon"></i> ' + strings.started + '</span>';
             case 'executed':
                 return '<span class="status-executed"><i class="check circle icon"></i> ' + strings.executed + '</span>';
             case 'failed':
@@ -188,8 +188,9 @@
                 data: 'duration',
                 title: strings.duration || 'Duration',
                 orderable: false,
-                render: function (data) {
-                    return formatDuration(data);
+                render: function (data, type, row) {
+                    // Conversation starts and chat failures carry the PHP request time, not a job duration.
+                    return row.status === 'started' || ! row.ability ? '—' : formatDuration(data);
                 }
             },
             {

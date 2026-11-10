@@ -83,8 +83,8 @@ class MainWP_Assistant_Summary_Widget {
                                 <div class="header">
                                     <span class="ui large text"><i class="exclamation triangle icon assistant-error"></i> <span id="assistant-failed-count">--</span></span>
                                 </div>
-                                <div class="description" data-tooltip="<?php esc_attr_e( 'Assistant actions that returned an error in the selected period.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                    <strong><?php esc_html_e( 'Failed Executions', 'mainwp' ); ?></strong>
+                                <div class="description" data-tooltip="<?php esc_attr_e( 'Chat requests and assistant actions that returned an error in the selected period.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                    <strong><?php esc_html_e( 'Failed requests', 'mainwp' ); ?></strong>
                                 </div>
                             </div>
                         </div>

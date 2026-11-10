@@ -334,6 +334,10 @@ class MainWP_Assistant_Insights { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 : __( 'Conversation', 'mainwp' );
         }
 
+        if ( 'failed' === $item->action && empty( $ability ) ) {
+            return __( 'Chat request', 'mainwp' );
+        }
+
         return MainWP_Assistant_Insights_Helper::instance()->format_ability_name( $ability );
     }
 
@@ -378,7 +382,7 @@ class MainWP_Assistant_Insights { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'canViewAllUsers' => static::can_view_all_users(),
                 'startOfWeek'     => (int) get_option( 'start_of_week', 0 ), // 0=Sunday, 1=Monday, etc.
                 'strings'         => array(
-                    'started'              => esc_html__( 'Started', 'mainwp' ),
+                    'started'              => esc_html__( 'New conversation', 'mainwp' ),
                     'executed'             => esc_html__( 'Executed', 'mainwp' ),
                     'failed'               => esc_html__( 'Failed', 'mainwp' ),
                     'confirmed'            => esc_html__( 'Confirmed', 'mainwp' ),

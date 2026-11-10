@@ -107,7 +107,7 @@ var MainWPAssistantPanel = ( function( $ ) {
         $( document ).on( 'keydown.assistantPanel', function( e ) {
             if ( e.key === 'Escape' && state.isOpen ) {
                 // Defer to Fomantic modal/dimmer ESC handling when one is active.
-                if ( $( '.ui.modal.visible, .ui.dimmer.active' ).length ) {
+                if ( $( '.ui.modal.visible, .ui.dimmer.active' ).filter( ':visible' ).length ) {
                     return;
                 }
                 if ( state.panelState === 'maximized' ) {
@@ -984,7 +984,7 @@ var MainWPAssistantPanel = ( function( $ ) {
 
         // Yield focus control when an external modal or dimmer is active,
         // so keyboard users can interact with modal controls.
-        if ( $( '.ui.modal.visible, .ui.dimmer.active' ).length ) {
+        if ( $( '.ui.modal.visible, .ui.dimmer.active' ).filter( ':visible' ).length ) {
             return;
         }
 

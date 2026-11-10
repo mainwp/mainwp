@@ -74,6 +74,7 @@ class MainWP_Assistant_Insights_Helper extends MainWP_DB_Base {
         add_action( 'mainwp_assistant_ability_executed', array( __CLASS__, 'invalidate_cache' ) );
         add_action( 'mainwp_assistant_ability_failed', array( __CLASS__, 'invalidate_cache' ) );
         add_action( 'mainwp_assistant_ability_confirmed', array( __CLASS__, 'invalidate_cache' ) );
+        add_action( 'mainwp_assistant_chat_failed', array( __CLASS__, 'invalidate_cache' ) );
         add_action( 'mainwp_assistant_conversation_started', array( __CLASS__, 'invalidate_cache' ) );
     }
 
@@ -914,6 +915,7 @@ class MainWP_Assistant_Insights_Helper extends MainWP_DB_Base {
                      ON m_ability.meta_log_id = lg.log_id
                      AND m_ability.meta_key = 'ability'
                  WHERE lg.connector = 'assistant'
+                     AND lg.context = 'abilities'
                      AND lg.action IN ('executed','confirmed','failed')
                  ORDER BY lg.created ASC",
                 (string) $conversation_id

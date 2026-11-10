@@ -2382,6 +2382,10 @@ Guidelines:
                 $job_data['error']      = $result->get_error_message();
                 $job_data['error_code'] = $result->get_error_code();
 
+                if ( 'failed' === $job_data['status'] && ! $this->is_active_job_cancelled() ) {
+                    do_action( 'mainwp_assistant_chat_failed', $job_data['conversation_id'], $job_data['user_id'], $result->get_error_code(), 'agent' );
+                }
+
                 // Provider failures carry retry advice the bubble needs; the
                 // poll and SSE transports can only relay what is stored here.
                 $error_data = $result->get_error_data();
@@ -4377,11 +4381,21 @@ Guidelines:
      * @return bool True when a non-empty credential exists.
      */
     private static function connector_has_credentials( $auth ) {
+        return '' !== self::connector_credential( $auth );
+    }
+
+    /**
+     * Resolve the key with the same precedence as WordPress Connectors.
+     *
+     * @param array $auth Connector authentication metadata.
+     * @return string Effective credential, or an empty string.
+     */
+    private static function connector_credential( $auth ) {
         $env_var = (string) ( $auth['env_var_name'] ?? '' );
         if ( '' !== $env_var ) {
             $env_value = getenv( $env_var );
             if ( false !== $env_value && '' !== $env_value ) {
-                return true;
+                return $env_value;
             }
         }
 
@@ -4389,16 +4403,56 @@ Guidelines:
         if ( '' !== $constant && defined( $constant ) ) {
             $const_value = constant( $constant );
             if ( is_string( $const_value ) && '' !== $const_value ) {
-                return true;
+                return $const_value;
             }
         }
 
         $setting = (string) ( $auth['setting_name'] ?? '' );
-        if ( '' !== $setting && '' !== (string) get_option( $setting, '' ) ) {
-            return true;
-        }
+        return '' !== $setting ? (string) get_option( $setting, '' ) : '';
+    }
 
-        return false;
+    /**
+     * Hash the effective credential set without retaining any key material.
+     *
+     * @return string Credential fingerprint.
+     */
+    private static function credential_fingerprint() {
+        $credentials = array();
+        $connectors  = function_exists( 'wp_get_connectors' ) ? wp_get_connectors() : array();
+        foreach ( self::credentialed_provider_ids() as $id ) {
+            $auth               = $connectors[ $id ]['authentication'] ?? array();
+            $credentials[ $id ] = hash( 'sha256', self::connector_credential( $auth ) );
+        }
+        ksort( $credentials );
+        return hash( 'sha256', wp_json_encode( $credentials ) );
+    }
+
+    /**
+     * Return the last credential failure only while the same keys are in use.
+     *
+     * @return array|null Failure details safe to display, or null.
+     */
+    public static function get_provider_failure() {
+        $failure = get_option( 'mainwp_assistant_provider_failure' );
+        if ( ! is_array( $failure ) || ! is_string( $failure['fingerprint'] ?? null ) || ! hash_equals( self::credential_fingerprint(), $failure['fingerprint'] ) ) {
+            return null;
+        }
+        $code = sanitize_key( $failure['code'] ?? '' );
+        if ( ! in_array( $code, array( 'provider_key_rejected', 'no_usable_provider' ), true ) ) {
+            return null;
+        }
+        $date    = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $failure['time'] ?? 0 ) );
+        $message = 'provider_key_rejected' === $code
+            /* translators: %s: date and time of the failed request. */
+            ? sprintf( __( 'Last Sites request failed: the provider rejected the key (%s)', 'mainwp' ), $date )
+            /* translators: %s: date and time of the failed request. */
+            : sprintf( __( 'Last Sites request failed: no usable AI provider (%s)', 'mainwp' ), $date );
+        return array(
+            'code'     => $code,
+            'time'     => absint( $failure['time'] ?? 0 ),
+            'provider' => sanitize_key( $failure['provider'] ?? '' ),
+            'message'  => $message,
+        );
     }
 
     /**
@@ -5006,6 +5060,9 @@ Guidelines:
             add_action( 'wp_ai_client_before_generate_result', $attribute );
         }
 
+        // Keep failures tied to the keys in use when the request starts.
+        $credential_fingerprint = self::credential_fingerprint();
+
         try {
             $result = $this->generate_ai_result( $builder );
         } finally {
@@ -5015,13 +5072,28 @@ Guidelines:
         }
 
         if ( is_wp_error( $result ) ) {
-            return $this->map_provider_wp_error( $result, $this->turn_provider_id );
+            $mapped = $this->map_provider_wp_error( $result, $this->turn_provider_id );
+            if ( in_array( $mapped->get_error_code(), array( 'provider_key_rejected', 'no_usable_provider' ), true ) ) {
+                update_option(
+                    'mainwp_assistant_provider_failure',
+                    array(
+                        'code'        => $mapped->get_error_code(),
+                        'time'        => time(),
+                        'provider'    => 'no_usable_provider' === $mapped->get_error_code() && count( self::credentialed_provider_ids() ) > 1 ? '' : sanitize_key( $this->turn_provider_id ),
+                        'fingerprint' => $credential_fingerprint,
+                    ),
+                    false
+                );
+            }
+            return $mapped;
         }
 
         $parsed = $this->extract_result_payload( $result );
         if ( is_wp_error( $parsed ) ) {
             return $parsed;
         }
+
+        delete_option( 'mainwp_assistant_provider_failure' );
 
         // Accrue this round-trip into the daily spend total while the exact
         // token usage and resolved model are in hand.
@@ -6733,6 +6805,7 @@ Guidelines:
         if ( $history_opt_out ) {
             $body = $this->execute_bridge_request( $message, $context );
             if ( is_wp_error( $body ) ) {
+                do_action( 'mainwp_assistant_chat_failed', 0, $user_id, $body->get_error_code(), 'ask' );
                 return $body;
             }
             $boundary_error = $this->consent_boundary_error();
@@ -6798,6 +6871,7 @@ Guidelines:
 
         $body = $this->execute_bridge_request( $message, $context );
         if ( is_wp_error( $body ) ) {
+            do_action( 'mainwp_assistant_chat_failed', $conversation_id, $user_id, $body->get_error_code(), 'ask' );
             if ( $new_conversation ) {
                 MainWP_DB_Assistant::instance()->delete_conversation( $conversation_id, $user_id );
             }
@@ -6839,6 +6913,9 @@ Guidelines:
 
         $assistant_sources = $this->sanitize_sources_for_storage( $normalized['sources'] ?? array() );
         $answer_metadata   = ! empty( $assistant_sources ) ? array( 'sources' => $assistant_sources ) : array();
+
+        // Conversation mode can change after this answer is stored.
+        $answer_metadata['route'] = 'ask';
         if ( ! empty( $normalized['feedback_message_id'] ) ) {
             $answer_metadata['feedback_message_id'] = $normalized['feedback_message_id'];
             $answer_metadata['feedback_rating']     = null;
@@ -7312,8 +7389,11 @@ Guidelines:
             foreach ( $messages as $msg ) {
                 $usage        = $this->extract_message_usage_full( $msg );
                 $cost_payload = $this->extract_message_cost_payload( $msg );
+                $message_meta = ! empty( $msg->metadata ) ? json_decode( $msg->metadata, true ) : array();
+                $route        = is_array( $message_meta ) && isset( $message_meta['route'] ) ? sanitize_key( $message_meta['route'] ) : '';
 
                 $formatted_messages[] = array(
+                    'route'              => in_array( $route, array( 'agent', 'ask' ), true ) ? $route : '',
                     'message_id'         => (int) $msg->id,
                     'role'               => $msg->role,
                     'content'            => $msg->content,

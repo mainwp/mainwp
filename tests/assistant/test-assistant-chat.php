@@ -2953,6 +2953,246 @@ class Test_Assistant_Chat extends MainWP_Assistant_Test_Case {
 		$this->assertCount( 3, $assistant->bridge_contexts, 'A foreign conversation must not reach the bridge.' );
 	}
 
+	private function run_failing_agent_turn( $assistant, $user_id ) {
+		$method = new \ReflectionMethod( MainWP_Assistant::class, 'core_chat_turn' );
+		$method->setAccessible( true );
+		$resolved = null;
+		return $method->invokeArgs( $assistant, array( 'Question', array(), array(), $user_id, &$resolved, false ) );
+	}
+
+	private function record_provider_failure() {
+		if ( ! function_exists( 'wp_ai_client_prompt' ) ) {
+			$this->markTestSkipped( 'WP AI Client not available in this WordPress version.' );
+		}
+		$user_id = $this->set_current_user_as_admin();
+		$this->set_assistant_enabled( true );
+		$this->set_assistant_consent( true );
+		update_option( 'connectors_ai_google_api_key', 'fixture-key-rejected' );
+		$assistant = new Testable_Agent_Assistant();
+		$assistant->canned_results = array( new \WP_Error( 'prompt_client_error', 'Rejected', array( 'status' => 401 ) ) );
+		$this->assertSame( 'provider_key_rejected', $this->run_failing_agent_turn( $assistant, $user_id )->get_error_code() );
+		return array( $assistant, $user_id );
+	}
+
+	private function render_providers_tab_html() {
+		$method = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Assistant_Settings::class, 'render_providers_tab' );
+		$method->setAccessible( true );
+		ob_start();
+		$method->invoke( null );
+		return ob_get_clean();
+	}
+
+	public function test_rejected_key_notice_replaces_ready() {
+		$this->record_provider_failure();
+		$html = $this->render_providers_tab_html();
+		$this->assertStringContainsString( 'Last Sites request failed: the provider rejected the key (', $html );
+		$this->assertStringNotContainsString( 'Ready. Found a configured AI provider.', $html );
+		$this->assertStringNotContainsString( 'Connected - Google (Gemini)', $html );
+		$this->assertStringContainsString( 'Replace key', $html );
+		$failure = MainWP_Assistant::get_provider_failure();
+		$this->assertSame( 'provider_key_rejected', $failure['code'] );
+		$this->assertSame( 'google', $failure['provider'] );
+		$this->assertStringNotContainsString( 'fixture-key-rejected', wp_json_encode( get_option( 'mainwp_assistant_provider_failure' ) ) );
+		$previous_env = getenv( 'GOOGLE_API_KEY' );
+		try {
+			putenv( 'GOOGLE_API_KEY=fixture-server-key' );
+			$this->record_provider_failure();
+			$html = $this->render_providers_tab_html();
+			$this->assertStringContainsString( 'Last Sites request failed:', $html );
+			$this->assertStringContainsString( 'through its server configuration', $html );
+		} finally {
+			putenv( false === $previous_env ? 'GOOGLE_API_KEY' : 'GOOGLE_API_KEY=' . $previous_env );
+		}
+
+	}
+
+	public function test_success_clears_provider_failure() {
+		list( $assistant, $user_id ) = $this->record_provider_failure();
+		$this->assertNotFalse( get_option( 'mainwp_assistant_provider_failure' ) );
+		$assistant->canned_results = array( $this->make_text_result( 'Working' ) );
+		$this->assertIsArray( $this->run_failing_agent_turn( $assistant, $user_id ) );
+		$this->assertFalse( get_option( 'mainwp_assistant_provider_failure' ) );
+		$this->assertStringNotContainsString( 'Last Sites request failed:', $this->render_providers_tab_html() );
+	}
+
+	public function test_key_replacement_retires_provider_failure() {
+		$this->record_provider_failure();
+		$this->assertStringContainsString( 'Last Sites request failed:', $this->render_providers_tab_html() );
+		update_option( 'connectors_ai_google_api_key', 'fixture-key-replaced' );
+		$this->assertStringNotContainsString( 'Last Sites request failed:', $this->render_providers_tab_html() );
+		$this->assertStringContainsString( 'Ready. Found a configured AI provider.', $this->render_providers_tab_html() );
+	}
+
+	public function test_unattributed_failure_stays_on_sites_row() {
+		if ( ! function_exists( 'wp_ai_client_prompt' ) ) {
+			$this->markTestSkipped( 'WP AI Client not available in this WordPress version.' );
+		}
+		$user_id = $this->set_current_user_as_admin();
+		$this->set_assistant_enabled( true );
+		$this->set_assistant_consent( true );
+		update_option( 'connectors_ai_google_api_key', 'fixture-google' );
+		$registry = \WordPress\AiClient\AiClient::defaultRegistry();
+		$property = new \ReflectionProperty( $registry, 'registeredIdsToClassNames' );
+		$property->setAccessible( true );
+		$before = $property->getValue( $registry );
+		$property->setValue( $registry, array_merge( $before, array( 'second_provider' => $before['google'] ) ) );
+		$connectors = \WP_Connector_Registry::get_instance();
+		$connector = wp_get_connector( 'google' );
+		$connector['authentication']['setting_name'] = 'second_provider_key';
+		unset( $connector['authentication']['env_var_name'], $connector['authentication']['constant_name'] );
+		$this->assertNotNull( $connectors->register( 'second_provider', $connector ) );
+		update_option( 'second_provider_key', 'fixture-second' );
+		try {
+			$assistant = new Testable_Agent_Assistant();
+			$assistant->canned_results = array( new \WP_Error( 'prompt_invalid_argument', 'No models found for text generation' ) );
+			$this->assertSame( 'no_usable_provider', $this->run_failing_agent_turn( $assistant, $user_id )->get_error_code() );
+			$failure = get_option( 'mainwp_assistant_provider_failure' );
+			$this->assertIsArray( $failure );
+			$this->assertEmpty( $failure['provider'] );
+			$html = $this->render_providers_tab_html();
+			$this->assertSame( 1, substr_count( $html, 'Last Sites request failed:' ) );
+			$this->assertStringContainsString( 'Connected - Google (Gemini)', $html );
+		} finally {
+			$connectors->unregister( 'second_provider' );
+			$property->setValue( $registry, $before );
+		}
+	}
+
+	public function test_chat_failure_hook_logs_and_invalidates_summary() {
+		if ( ! function_exists( 'wp_ai_client_prompt' ) ) {
+			$this->markTestSkipped( 'WP AI Client not available in this WordPress version.' );
+		}
+		global $wpdb;
+		\MainWP\Dashboard\Module\Log\Log_Manager::instance();
+		\MainWP\Dashboard\Module\Log\Log_Install::instance()->install();
+		// dbDelta commits the fixture transaction when it creates the log tables.
+		$this->start_transaction();
+		$user_id = $this->set_current_user_as_admin();
+		$this->set_assistant_enabled( true );
+		$this->set_assistant_consent( true );
+		$hook = 'mainwp_assistant_chat_failed';
+		$before = isset( $GLOBALS['wp_filter'][ $hook ] ) ? clone $GLOBALS['wp_filter'][ $hook ] : null;
+		remove_all_actions( $hook );
+		$connector = new \MainWP\Dashboard\Module\Log\Connector_Assistant();
+		$connector->register();
+		\MainWP\Dashboard\MainWP_Assistant_Insights_Helper::init();
+		$helper = \MainWP\Dashboard\MainWP_Assistant_Insights_Helper::instance();
+		try {
+			$this->assertSame( 0, $helper->get_summary_metrics( $user_id )['failed_count'] );
+			$conversation_id = $this->create_test_conversation( $user_id, 'Failed request' );
+			$assistant = new Testable_Agent_Assistant();
+			$assistant->canned_results = array( new \WP_Error( 'prompt_client_error', 'Rejected', array( 'status' => 401 ) ) );
+			$method = new \ReflectionMethod( MainWP_Assistant::class, 'queue_chat_job' );
+			$method->setAccessible( true );
+			$result = $method->invoke( $assistant, 'Question', $conversation_id, array(), false, false );
+			$assistant->process_chat_job( $result['job_id'] );
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->mainwp_tbl_logs} WHERE connector = 'assistant' AND action = 'failed' AND context = 'chat' AND user_id = %d", $user_id ) );
+			$this->assertCount( 1, $rows );
+			$this->assertSame( 1, $helper->get_summary_metrics( $user_id )['failed_count'] );
+			$this->assertSame( array(), $helper->get_conversation_abilities( $conversation_id ) );
+			$label = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Assistant_Insights::class, 'activity_ability_label' );
+			$label->setAccessible( true );
+			$this->assertSame( 'Chat request', $label->invoke( null, (object) array( 'action' => 'failed', 'meta' => array() ) ) );
+
+			$cancelled = new Testable_Async_Assistant();
+			$cancelled->ai_chat_response = new \WP_Error( 'assistant_stopped', 'Stopped' );
+			$job = $cancelled->test_queue_chat_job( 'Question', $conversation_id, array(), false, false );
+			$cancelled->process_chat_job( $job['job_id'] );
+			$this->assertSame( 1, $helper->get_summary_metrics( $user_id )['failed_count'] );
+
+			$assistant->canned_results = array( new \WP_Error( 'prompt_client_error', 'Rejected', array( 'status' => 401 ) ) );
+			$method = new \ReflectionMethod( MainWP_Assistant::class, 'queue_chat_job' );
+			$method->setAccessible( true );
+			$job = $method->invoke( $assistant, 'Question', $conversation_id, array(), false, false );
+			$assistant->during_generation = static function () use ( $job ) {
+				set_transient( 'mainwp_chat_job_cancel_' . $job['job_id'], 1, HOUR_IN_SECONDS );
+			};
+			$assistant->process_chat_job( $job['job_id'] );
+			$this->assertSame( 1, $helper->get_summary_metrics( $user_id )['failed_count'] );
+
+			$bridge = new Testable_Bridge_Assistant();
+			$bridge->bridge_response = new \WP_Error( 'bridge_failed', 'Bridge failed' );
+			$method = new \ReflectionMethod( MainWP_Assistant::class, 'send_to_bridge_docs' );
+			$method->setAccessible( true );
+			$this->assertWPError( $method->invoke( $bridge, 'Question', 0, array() ) );
+			$this->assertSame( 2, $helper->get_summary_metrics( $user_id )['failed_count'] );
+			$this->assertSame( 2, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->mainwp_tbl_logs} WHERE connector = 'assistant' AND action = 'failed' AND context = 'chat' AND user_id = %d", $user_id ) ) );
+			update_user_meta( $user_id, 'mainwp_assistant_history_opt_out', 1 );
+			$this->assertWPError( $method->invoke( $bridge, 'Question', 0, array() ) );
+			$this->assertSame( 3, $helper->get_summary_metrics( $user_id )['failed_count'] );
+
+		} finally {
+			foreach ( $connector->actions as $action ) {
+				remove_action( $action, array( $connector, 'callback' ) );
+			}
+			remove_all_actions( $hook );
+			if ( $before ) {
+				$GLOBALS['wp_filter'][ $hook ] = $before;
+			}
+			$helper::invalidate_cache();
+		}
+	}
+
+	public function test_history_hides_shells_before_pagination_and_keeps_retry() {
+		if ( ! function_exists( 'wp_ai_client_prompt' ) ) {
+			$this->markTestSkipped( 'WP AI Client not available in this WordPress version.' );
+		}
+		$user_id = $this->set_current_user_as_admin();
+		$this->set_assistant_enabled( true );
+		$this->set_assistant_consent( true );
+		$db = MainWP_DB_Assistant::instance();
+		$real = $this->create_test_conversation( $user_id, 'Older real conversation' );
+		$db->add_message( $real, 'user', 'Question', $user_id );
+		for ( $i = 0; $i < 51; ++$i ) {
+			$shell = $this->create_test_conversation( $user_id, 'Retryable shell' );
+		}
+		$assistant = new Testable_Agent_Assistant();
+		$method = new \ReflectionMethod( MainWP_Assistant::class, 'queue_chat_job' );
+		$method->setAccessible( true );
+		$assistant->canned_results = array( new \WP_Error( 'prompt_client_error', 'Rejected', array( 'status' => 401 ) ) );
+		$job = $method->invoke( $assistant, 'Question', $shell, array(), false, false );
+		$assistant->process_chat_job( $job['job_id'] );
+		$list = $db->get_user_conversations( $user_id, 1, 50 );
+		$this->assertSame( 1, $list['total'] );
+		$this->assertSame( array( $real ), array_map( 'intval', wp_list_pluck( $list['conversations'], 'id' ) ) );
+		$export = $db->get_user_conversations( $user_id, 1, 100, true );
+		$this->assertSame( 52, $export['total'] );
+		$this->assertContains( $shell, array_map( 'intval', wp_list_pluck( $export['conversations'], 'id' ) ) );
+		$assistant->canned_results = array( $this->make_text_result( 'Retry succeeded' ) );
+		$job = $method->invoke( $assistant, 'Question', $shell, array(), false, false );
+		$assistant->process_chat_job( $job['job_id'] );
+		$list = $db->get_user_conversations( $user_id, 1, 50 );
+		$this->assertSame( 2, $list['total'] );
+		$this->assertSame( 2, (int) $list['conversations'][0]->message_count );
+		$this->assertSame( $shell, (int) $list['conversations'][0]->id );
+	}
+
+	/** Stored routes distinguish Docs answers from Sites answers with citations. */
+	public function test_handle_load_conversation_returns_sanitized_routes() {
+		$user_id = $this->set_current_user_as_admin();
+		$this->set_assistant_enabled( true );
+		$this->set_assistant_consent( true );
+		$conversation_id = $this->create_test_conversation( $user_id, 'Routes' );
+		foreach ( array( 'agent', 'ask', '<script>agent</script>', 'unknown', null ) as $route ) {
+			$meta = null === $route ? array() : array( 'route' => $route );
+			MainWP_DB_Assistant::instance()->add_message( $conversation_id, 'assistant', 'Answer', $user_id, $meta );
+		}
+		$response = $this->invoke_assistant_ajax_method( 'handle_load_conversation', MainWP_Assistant::AJAX_LOAD_CONVERSATION, array( 'conversation_id' => $conversation_id ) );
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( array( 'agent', 'ask', '', '', '' ), array_column( $response['data']['messages'], 'route' ) );
+		$bridge = new Testable_Bridge_Assistant();
+		$bridge->bridge_response = array( 'response' => 'Uncited Docs answer', 'sources' => array() );
+		$method = new \ReflectionMethod( MainWP_Assistant::class, 'send_to_bridge_docs' );
+		$method->setAccessible( true );
+		$docs = $method->invoke( $bridge, 'Docs question', 0, array() );
+		$this->assertIsArray( $docs );
+		$this->created_conversation_ids[] = $docs['conversation_id'];
+		$response = $this->invoke_assistant_ajax_method( 'handle_load_conversation', MainWP_Assistant::AJAX_LOAD_CONVERSATION, array( 'conversation_id' => $docs['conversation_id'] ) );
+		$this->assertSame( 'ask', $response['data']['messages'][1]['route'] );
+		$this->assertSame( array(), $response['data']['messages'][1]['sources'] );
+
+	}
+
 	/**
 	 * Test handle_load_conversation returns persisted per-message sources.
 	 */
@@ -4389,7 +4629,7 @@ class Test_Assistant_Chat extends MainWP_Assistant_Test_Case {
 		$db              = MainWP_DB_Assistant::instance();
 		$conversation_id = $this->create_test_conversation( $user_id, 'Docs Regenerate Conversation' );
 		$db->add_message( $conversation_id, 'user', 'How do I add a site?', $user_id );
-		$db->add_message( $conversation_id, 'assistant', 'same answer', $user_id );
+		$db->add_message( $conversation_id, 'assistant', 'same answer', $user_id, array( 'route' => 'ask' ) );
 		$original_messages = $db->get_messages( $conversation_id, $user_id );
 		$assistant         = new Testable_Bridge_Assistant();
 		$assistant->bridge_response = array( 'response' => 'same answer', 'sources' => array() );

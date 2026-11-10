@@ -368,6 +368,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $has_ai_client    = function_exists( 'wp_supports_ai' );
         $supports_ai      = $has_ai_client && wp_supports_ai();
         $agent_available  = MainWP_Assistant::agent_mode_available();
+        $provider_failure = MainWP_Assistant::get_provider_failure();
         $model_preference = get_option( 'mainwp_assistant_model_preference', '' );
 
         // Google connection state, read in the same order the endpoints use:
@@ -418,7 +419,9 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Sites mode', 'mainwp' ); ?></label>
                     <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Whether the assistant can run actions on your sites. Sites mode needs at least one AI provider with a working API key.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <?php if ( $agent_available ) : ?>
+                        <?php if ( $provider_failure ) : ?>
+                            <div class="ui visible warning message"><?php echo esc_html( $provider_failure['message'] ); ?></div>
+                        <?php elseif ( $agent_available ) : ?>
                             <i class="green check circle icon"></i><?php esc_html_e( 'Ready. Found a configured AI provider.', 'mainwp' ); ?>
                         <?php else : ?>
                             <div class="ui blue message">
@@ -431,6 +434,9 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Google Gemini', 'mainwp' ); ?></label>
                     <div class="ten wide column">
+                        <?php if ( $provider_failure && 'google' === $provider_failure['provider'] ) : ?>
+                            <div class="ui visible warning message"><?php echo esc_html( $provider_failure['message'] ); ?></div>
+                        <?php endif; ?>
                         <?php if ( ! $has_ai_client ) : ?>
                             <div class="ui visible info blue message">
                                 <?php
@@ -461,6 +467,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 <?php esc_html_e( 'This site supplies a Google API key through its server configuration. That key takes priority over anything stored here, so change it where it is defined.', 'mainwp' ); ?>
                             </div>
                         <?php elseif ( 'database' === $key_source && $google_active && $agent_available ) : ?>
+                            <?php if ( ! $provider_failure || 'google' !== $provider_failure['provider'] ) : ?>
                             <h4 class="ui header mainwp-assistant-connected-header">
                                 <i class="green check circle icon"></i>
                                 <div class="content">
@@ -468,6 +475,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                     <div class="sub header"><?php echo esc_html( MainWP_Assistant_Onboarding::free_tier_disclosure() ); ?></div>
                                 </div>
                             </h4>
+                            <?php endif; ?>
                             <p><?php esc_html_e( 'Stored key', 'mainwp' ); ?>: <span class="mainwp-assistant-key-masked"><?php echo esc_html( $key_masked ); ?></span></p>
                             <button type="button" class="ui basic button mainwp-assistant-connect-cta" data-onboarding-source="replace">
                                 <?php esc_html_e( 'Replace key', 'mainwp' ); ?>
@@ -1381,7 +1389,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $db       = MainWP_DB_Assistant::instance();
         $page     = 1;
         $per_page = 100; // Maximum allowed by get_user_conversations.
-        $result   = $db->get_user_conversations( $user_id, $page, $per_page );
+        $result   = $db->get_user_conversations( $user_id, $page, $per_page, true );
 
         if ( is_wp_error( $result ) || ! is_array( $result ) ) {
             $message = is_wp_error( $result ) ? $result->get_error_message() : __( 'Failed to export history.', 'mainwp' );
@@ -1467,7 +1475,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
 
             ++$page;
-            $result = $db->get_user_conversations( $user_id, $page, $per_page );
+            $result = $db->get_user_conversations( $user_id, $page, $per_page, true );
             if ( is_wp_error( $result ) || ! is_array( $result ) ) {
                 MainWP_Logger::instance()->debug(
                     'Assistant export history failed loading conversations page ' . (int) $page . ': ' .

@@ -37,6 +37,7 @@ class Connector_Assistant extends Log_Connector {
         'mainwp_assistant_ability_failed',
         'mainwp_assistant_ability_confirmed',
         'mainwp_assistant_conversation_started',
+        'mainwp_assistant_chat_failed',
     );
 
     /**
@@ -327,6 +328,25 @@ class Connector_Assistant extends Log_Connector {
             1,
             absint( $user_id )
         );
+    }
+
+    /**
+     * Record a failed chat request without retaining prompts or provider text.
+     *
+     * @param int    $conversation_id Conversation ID (0 for stateless).
+     * @param int    $user_id         Request owner.
+     * @param string $error_code      Failure code.
+     * @param string $mode            Request route.
+     */
+    public function callback_mainwp_assistant_chat_failed( $conversation_id, $user_id, $error_code, $mode ) {
+        $args = array(
+            'error_code' => sanitize_key( $error_code ),
+            'route'      => 'agent' === $mode ? 'agent' : 'ask',
+        );
+        if ( $conversation_id ) {
+            $args['conversation_id'] = absint( $conversation_id );
+        }
+        $this->log( esc_html__( 'Chat request failed', 'mainwp' ), $args, 0, 'chat', 'failed', 0, absint( $user_id ) );
     }
 
     /**

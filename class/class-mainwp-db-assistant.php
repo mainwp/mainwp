@@ -477,13 +477,14 @@ class MainWP_DB_Assistant extends MainWP_DB_Base {
      * Includes message_count for each conversation via SQL COUNT() join,
      * avoiding the need for separate queries per conversation.
      *
-     * @param int $user_id  User ID.
-     * @param int $page     Page number (1-based).
-     * @param int $per_page Items per page.
+     * @param int  $user_id       User ID.
+     * @param int  $page          Page number (1-based).
+     * @param int  $per_page      Items per page.
+     * @param bool $include_empty Include conversations that have no messages.
      *
      * @return array Array with 'conversations' and 'total' keys.
      */
-    public function get_user_conversations( $user_id, $page = 1, $per_page = 20 ) {
+    public function get_user_conversations( $user_id, $page = 1, $per_page = 20, $include_empty = false ) {
         $user_id  = absint( $user_id );
         $page     = max( 1, absint( $page ) );
         $per_page = max( 1, min( 100, absint( $per_page ) ) );
@@ -492,9 +493,16 @@ class MainWP_DB_Assistant extends MainWP_DB_Base {
         $conversations_table = esc_sql( $this->table_name( 'assistant_conversations' ) );
         $messages_table      = esc_sql( $this->table_name( 'assistant_messages' ) );
 
+        // A failed Sites request leaves a conversation with no messages. Lists hide
+        // those, but the history export keeps every stored conversation.
+        $total_filter   = $include_empty ? '' : "AND EXISTS (SELECT 1 FROM {$messages_table} m WHERE m.conversation_id = c.id)";
+        $listed_filter  = $include_empty ? '' : "AND EXISTS (SELECT 1 FROM {$messages_table} visible_message WHERE visible_message.conversation_id = listed.id)";
+        $counted_filter = $include_empty ? '' : "AND EXISTS (SELECT 1 FROM {$messages_table} counted_message WHERE counted_message.conversation_id = counted.id)";
+
         $total = (int) $this->wpdb->get_var(
             $this->wpdb->prepare(
-                "SELECT COUNT(*) FROM {$conversations_table} WHERE user_id = %d",
+                "SELECT COUNT(*) FROM {$conversations_table} c WHERE user_id = %d
+                    {$total_filter}",
                 $user_id
             )
         );
@@ -516,8 +524,9 @@ class MainWP_DB_Assistant extends MainWP_DB_Base {
                  FROM {$conversations_table} c
                  INNER JOIN (
                      SELECT id
-                     FROM {$conversations_table}
+                     FROM {$conversations_table} listed
                      WHERE user_id = %d
+                       {$listed_filter}
                      ORDER BY updated_at DESC, id DESC
                      LIMIT %d OFFSET %d
                  ) paged_conversations ON c.id = paged_conversations.id
@@ -526,8 +535,9 @@ class MainWP_DB_Assistant extends MainWP_DB_Base {
                      FROM {$messages_table} m
                      INNER JOIN (
                          SELECT id
-                         FROM {$conversations_table}
+                         FROM {$conversations_table} counted
                          WHERE user_id = %d
+                           {$counted_filter}
                          ORDER BY updated_at DESC, id DESC
                          LIMIT %d OFFSET %d
                      ) paged_message_ids ON m.conversation_id = paged_message_ids.id

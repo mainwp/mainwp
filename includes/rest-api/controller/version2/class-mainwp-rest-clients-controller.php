@@ -926,7 +926,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function create_client_fields( $request ) {
-        $permission = $this->check_operation_right( 'manage_clients' );
+        $permission = $this->check_client_field_write_access();
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1030,7 +1030,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function edit_client_fields( $request ) {
-        $permission = $this->check_operation_right( 'manage_clients' );
+        $permission = $this->check_client_field_write_access();
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1128,7 +1128,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function delete_client_fields( $request ) {
-        $permission = $this->check_operation_right( 'manage_clients' );
+        $permission = $this->check_client_field_write_access();
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1371,6 +1371,29 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         }
 
         return false;
+    }
+
+    /**
+     * Require unrestricted access to write client field definitions.
+     *
+     * @return true|WP_Error
+     */
+    private function check_client_field_write_access() {
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
+        if ( 'all' !== \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all()
+            || 'all' !== \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all() ) {
+            return new WP_Error(
+                'mainwp_restricted_account',
+                __( 'This action is not available for accounts restricted to a subset of sites or tags.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        return true;
     }
 
     /**

@@ -80,6 +80,48 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
     }
 
     /**
+     * Show the storage confirmation form only for an inconclusive check.
+     */
+    public static function render_private_storage_settings(): void {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() || ! MainWP_System_Utility::is_admin()
+            || MainWP_System_Utility::is_team_control_staff() || ! current_user_can( 'manage_options' )
+            || ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
+        if ( isset( $_GET['backup_storage_confirmation_failed'] ) && '1' === $_GET['backup_storage_confirmation_failed'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only feedback from the save redirect.
+            echo '<div class="ui red message" role="alert">' . esc_html__( 'The backup directory could not be confirmed. Review its current status below.', 'mainwp' ) . '</div>';
+        }
+        $storage = MainWP_Backup_Private_Root::storage_status();
+        if ( null === $storage || ! in_array( $storage['status'], array( 'confirmation_required', 'public' ), true ) ) {
+            return;
+        }
+        ?>
+        <div id="mainwp-private-backup-storage" class="ui <?php echo 'public' === $storage['status'] ? 'red' : 'yellow'; ?> message">
+            <div class="header">
+                <?php
+                if ( 'public' === $storage['status'] ) {
+                    esc_html_e( 'Backup directory is publicly accessible', 'mainwp' );
+                } else {
+                    esc_html_e( 'Confirm your private backup directory', 'mainwp' );
+                }
+                ?>
+            </div>
+            <p><code><?php echo esc_html( $storage['path'] ); ?></code></p>
+            <?php if ( 'public' === $storage['status'] ) : ?>
+                <p><?php esc_html_e( 'Backup writes are blocked. Ask your host to block web access to this directory or move your backups to a private directory.', 'mainwp' ); ?></p>
+            <?php else : ?>
+                <p><?php esc_html_e( 'MainWP could not verify that this directory is private. Confirm it only after your host verifies that no domain or web-server alias serves it.', 'mainwp' ); ?></p>
+                <form method="post" action="">
+                    <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'BackupSettings' ) ); ?>" />
+                    <input type="hidden" name="mainwp_backup_storage_key" value="<?php echo esc_attr( $storage['key'] ); ?>" />
+                    <button type="submit" name="submit" value="confirm_backup_storage" class="ui button"><?php esc_html_e( 'Confirm private directory', 'mainwp' ); ?></button>
+                </form>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
      * Method render_settings()
      *
      * Render backup settings.

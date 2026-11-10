@@ -1204,21 +1204,25 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $params = array();
         }
 
-        $client = '';
-        if ( is_array( $client_ids ) ) {
-            // valid client ids.
-            $client_ids = array_filter(
-                $client_ids,
-                function ( $e ) {
-                    return is_numeric( $e ) && ! empty( $e ) ? true : false; // to valid client ids.
-                }
-            );
-            $client     = implode( ';', $client_ids );
-        } else {
-            $client = $client_ids;
+        if ( is_string( $client_ids ) || is_int( $client_ids ) ) {
+            $client_ids = explode( ';', (string) $client_ids );
         }
 
-        $params['client'] = $client;
+        if ( ! is_array( $client_ids ) ) {
+            return false;
+        }
+
+        $client_ids = array_filter(
+            $client_ids,
+            static function ( $id ) {
+                return MainWP_Utility::ctype_digit( $id ) && 0 < (int) $id;
+            }
+        );
+        if ( empty( $client_ids ) ) {
+            return false;
+        }
+
+        $params['client'] = implode( ';', $client_ids );
 
         return MainWP_DB::instance()->get_websites_for_current_user( $params );
     }

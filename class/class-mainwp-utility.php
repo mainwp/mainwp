@@ -2988,66 +2988,63 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return mixed result.
      */
     public static function get_remote_favicon( $url, $favi = '', $item_id = false, $file_prefix = '' ) { // phpcs:ignore -- NOSONAR - complex.
+        $favi          = empty( $favi ) ? 'favicon.ico' : $favi;
+        $allowed_types = array(
+            'ico'  => IMAGETYPE_ICO,
+            'png'  => IMAGETYPE_PNG,
+            'jpg'  => IMAGETYPE_JPEG,
+            'jpeg' => IMAGETYPE_JPEG,
+            'gif'  => IMAGETYPE_GIF,
+            'webp' => IMAGETYPE_WEBP,
+        );
 
-        if ( empty( $favi ) ) {
-            $favi = 'favicon.ico';
+        if ( ! is_string( $favi ) || ! preg_match( '/\A[a-zA-Z0-9_-][a-zA-Z0-9._-]*\z/', $favi ) ) {
+            return false;
         }
 
-        if ( '/' !== substr( $url, - 1 ) ) {
-            $url .= '/';
+        $extension = strtolower( pathinfo( $favi, PATHINFO_EXTENSION ) );
+        if ( ! isset( $allowed_types[ $extension ] ) || ( ! empty( $item_id ) && ! is_int( $item_id ) && ! is_string( $item_id ) ) || ! is_string( $file_prefix ) ) {
+            return false;
         }
 
-        $favi_url = $url . $favi;
+        $item_id  = empty( $item_id ) ? time() . '-' . wp_rand( 100, 999 ) : $item_id;
+        $basename = ( '' === $file_prefix ? 'favi-' : $file_prefix ) . $item_id;
+        if ( ! preg_match( '/\A[a-zA-Z0-9_-]{1,200}\z/', $basename ) ) {
+            return false;
+        }
 
-        $content = MainWP_Connect::get_file_content( $favi_url );
+        $url     = trailingslashit( $url );
+        $content = MainWP_Connect::get_file_content( $url . $favi );
 
         if ( empty( $content ) && 'favicon.ico' === $favi ) {
-            $favi_url = $url . 'favicon.png';
-            $content  = MainWP_Connect::get_file_content( $favi_url ); // try other file.
+            $extension = 'png';
+            $content   = MainWP_Connect::get_file_content( $url . 'favicon.png' );
         }
-
-        if ( ! empty( $content ) ) {
-
-            MainWP_System_Utility::get_wp_file_system();
-
-            global $wp_filesystem;
-
-            $dirs     = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
-            $iconsDir = $dirs[0];
-            if ( $favi ) {
-
-                $tmp = explode( '.', $favi );
-                if ( 2 !== count( $tmp ) ) {
-                    return false;
-                }
-
-                $favi_ext = $tmp[1];
-
-                if ( empty( $item_id ) ) {
-                    $item_id = time() . '-' . wp_rand( 100, 999 );
-                }
-                if ( ! empty( $file_prefix ) ) {
-                    $filename = $file_prefix . $item_id . '.' . $favi_ext;
-                } else {
-                    $filename = 'favi-' . $item_id . '.' . $favi_ext;
-                }
-
-                $size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore --
-                if ( $size ) {
-                    MainWP_Logger::instance()->debug( 'Icon Cost Product size :: ' . $size );
-                    return array(
-                        'result' => 'success',
-                        'file'   => $filename,
-                        'dir'    => $iconsDir,
-                    );
-                } else {
-                    return array( 'error' => 'Save icon file failed.' );
-                }
-            }
-            return false;
-        } else {
+        if ( empty( $content ) ) {
             return array( 'error' => esc_html__( 'Download icon file failed', 'mainwp' ) );
         }
+
+        $image = @getimagesizefromstring( $content ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Malformed remote images are rejected without displaying parsing warnings.
+        if ( false === $image || $allowed_types[ $extension ] !== $image[2] || $image[0] < 1 || $image[1] < 1 ) {
+            return false;
+        }
+
+        $filename = $basename . '.' . $extension;
+        if ( ! MainWP_System_Utility::get_wp_file_system() ) {
+            return array( 'error' => 'Save icon file failed.' );
+        }
+
+        global $wp_filesystem;
+        $dirs = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
+        if ( ! $wp_filesystem->put_contents( $dirs[0] . $filename, $content ) ) {
+            return array( 'error' => 'Save icon file failed.' );
+        }
+
+        return array(
+            'result' => 'success',
+            'file'   => $filename,
+            'dir'    => $dirs[0],
+        );
     }
 
     /**

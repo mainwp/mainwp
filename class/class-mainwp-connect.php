@@ -3297,7 +3297,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * The www alias and scheme changes keep downloads on the same Child host.
+     * Match the Child host, allowing the www alias. The transport enforces redirect protocols.
      *
      * @param string $site_url Site URL.
      * @param string $effective_url Download URL.
@@ -3391,13 +3391,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             )
         );
 
-        $options = array(
+        $https_download = 'https' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+        $options        = array(
             CURLOPT_HEADER          => false,
             CURLOPT_USERAGENT       => $agent,
             CURLOPT_ENCODING        => 'none',
             CURLOPT_FOLLOWLOCATION  => true,
             CURLOPT_PROTOCOLS       => CURLPROTO_HTTP | CURLPROTO_HTTPS,
-            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_REDIR_PROTOCOLS => $https_download ? CURLPROTO_HTTPS : CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_MAXREDIRS       => 3,
             CURLOPT_CONNECTTIMEOUT  => (int) $timeouts['connect_timeout'],
             CURLOPT_TIMEOUT         => (int) $timeouts['timeout'],
@@ -3470,7 +3471,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $response_headers = array(); // New status line (redirect) - discard previous headers.
                 }
                 if ( 0 === stripos( $trimmed, 'Location:' ) && (int) curl_getinfo( $handle, CURLINFO_RESPONSE_CODE ) >= 300 && (int) curl_getinfo( $handle, CURLINFO_RESPONSE_CODE ) < 400 ) {
-                    $redirect = \WP_Http::make_absolute_url( trim( substr( $trimmed, 9 ) ), (string) curl_getinfo( $handle, CURLINFO_EFFECTIVE_URL ) );
+                    $current_url = (string) curl_getinfo( $handle, CURLINFO_EFFECTIVE_URL );
+                    $redirect    = \WP_Http::make_absolute_url( trim( substr( $trimmed, 9 ) ), $current_url );
+                    if ( 'https' === strtolower( (string) wp_parse_url( $current_url, PHP_URL_SCHEME ) ) && 'https' !== strtolower( (string) wp_parse_url( $redirect, PHP_URL_SCHEME ) ) ) {
+                        $state->exception = new MainWP_Exception( esc_html__( 'The backup download redirected from HTTPS to an insecure URL.', 'mainwp' ), '', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR );
+                        return -1;
+                    }
                     // Refusing after the transfer would still let the Child contact another host.
                     if ( ! static::download_hosts_match( $site_url, $redirect ) ) {
                         $state->exception = new MainWP_Exception( esc_html__( 'The backup download redirected to a different host.', 'mainwp' ), '', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR );

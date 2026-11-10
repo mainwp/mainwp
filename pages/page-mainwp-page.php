@@ -1538,7 +1538,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             foreach ( $selected_sites as $k ) {
                                 if ( MainWP_Utility::ctype_digit( $k ) ) {
                                     $website = MainWP_DB::instance()->get_website_by_id( $k );
-                                    if ( ! $website ) {
+                                    if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
                                         continue;
                                     }
                                     if ( '' === $website->sync_errors && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
@@ -1568,7 +1568,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 if ( MainWP_Utility::ctype_digit( $k ) ) {
                                     $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
                                     while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
-                                        if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                                        if ( ! MainWP_System_Utility::can_edit_website( $website ) || '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                             continue;
                                         }
                                         $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );

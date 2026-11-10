@@ -79,6 +79,13 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     private static string $recovery_passphrase_rejected = '';
 
     /**
+     * Whether the storage confirmation was refused on the last settings save.
+     *
+     * @var bool
+     */
+    private static bool $storage_confirmation_failed = false;
+
+    /**
      * Count errors from the authenticated settings POST, kept in this request.
      *
      * @var array
@@ -400,6 +407,9 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( '' !== self::recovery_passphrase_rejection() ) {
             $args['backup_recovery_passphrase_rejected'] = self::recovery_passphrase_rejection();
         }
+        if ( self::$storage_confirmation_failed ) {
+            $args['backup_storage_confirmation_failed'] = 1;
+        }
         return $args;
     }
 
@@ -576,9 +586,19 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function handle_settings_post(): bool {
         self::$encryption_forced_off        = false;
         self::$recovery_passphrase_rejected = '';
+        self::$storage_confirmation_failed  = false;
         self::$count_errors                 = array();
         if ( MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-            if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'BackupSettings' ) ) {
+            if ( isset( $_POST['submit'], $_POST['wp_nonce'] ) && is_string( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_POST['wp_nonce'] ) ), 'BackupSettings' ) ) {
+                if ( is_string( $_POST['submit'] ) && 'confirm_backup_storage' === sanitize_key( wp_unslash( $_POST['submit'] ) ) ) {
+                    if ( ! current_user_can( 'manage_options' ) ) {
+                        return false;
+                    }
+                    $key = isset( $_POST['mainwp_backup_storage_key'] ) && is_string( $_POST['mainwp_backup_storage_key'] ) ? sanitize_key( wp_unslash( $_POST['mainwp_backup_storage_key'] ) ) : '';
+
+                    self::$storage_confirmation_failed = ! MainWP_Backup_Private_Root::confirm_storage( $key );
+                    return ! self::$storage_confirmation_failed;
+                }
                 $counts = array();
                 foreach ( array(
                     'mainwp_options_backupOnServer' => 'mainwp_backupsOnServer',

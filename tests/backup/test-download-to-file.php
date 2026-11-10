@@ -515,6 +515,22 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 		}
 	}
 
+	/** An HTTPS transfer permits only HTTPS redirects before contacting the Child. */
+	public function test_https_download_restricts_redirect_protocol(): void {
+		$observe = function ( $options ) {
+			$this->assertSame( CURLPROTO_HTTPS, $options[ CURLOPT_REDIR_PROTOCOLS ] ?? null );
+			throw new \RuntimeException( 'Captured redirect options before the request.' );
+		};
+		add_filter( 'mainwp_download_to_file_curl_options', $observe );
+		try {
+			$this->expectException( \RuntimeException::class );
+			$this->expectExceptionMessage( 'Captured redirect options before the request.' );
+			MainWP_Connect::download_to_file( 'https://example.test/archive.zip', $this->temp_download_path(), 4096 );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_curl_options', $observe );
+		}
+	}
+
 	/** A successful response from a different host must never become an archive. */
 	public function test_download_refuses_effective_host_outside_site(): void {
 		$file    = $this->temp_download_path();

@@ -1241,7 +1241,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $allowed_roles = array( 'subscriber', 'administrator', 'editor', 'author', 'contributor' );
             $ret           = '';
             foreach ( $role as $ro ) {
-                if ( in_array( $ro, $allowed_roles ) ) {
+                if ( in_array( $ro, $allowed_roles, true ) ) {
                     $ret .= ucfirst( $ro ) . ', ';
                 }
             }
@@ -1253,7 +1253,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return $ret;
         }
 
-        return ucfirst( $role );
+        return is_string( $role ) ? ucfirst( $role ) : '';
     }
 
     /**
@@ -1332,7 +1332,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     }
                     ?>
                 </td>
-                <td class="role column-role not-selectable"><?php echo static::get_role( $user['role'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+                <td class="role column-role not-selectable"><?php echo esc_html( static::get_role( $user['role'] ) ); ?></td>
                 <td class="posts column-posts not-selectable"><a href="<?php echo esc_url( admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) ) . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
                 <td class="website column-website not-selectable"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
                 <td class="right aligned not-selectable">

@@ -382,11 +382,15 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
-			function ( $pre, $website, $what, $params ) {
-				$this->calls[] = array(
+			function ( $pre, $website, $what, $params, $verify_signature ) {
+				$call = array(
 					'what'   => $what,
 					'params' => $params,
 				);
+				if ( 'backup_safety_archive' === $what ) {
+					$call['verify_signature'] = $verify_signature;
+				}
+				$this->calls[] = $call;
 				if ( isset( $this->responses[ $what ] ) ) {
 					$scripted = $this->responses[ $what ];
 					if ( is_array( $scripted ) && isset( $scripted[0] ) && ( is_array( $scripted[0] ) || $scripted[0] instanceof \Throwable ) ) {
@@ -403,7 +407,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				return array( 'result' => 'ok' );
 			},
 			10,
-			4
+			5
 		);
 	}
 
@@ -432,12 +436,296 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Removal stays unconfirmed until the Child reports its resulting state.
+	 */
+	public function test_safety_archive_removal_requires_child_confirmation_and_persists_unknown() {
+		$cp                                       = $this->safety_checkpoint();
+		$cp['options']                            = array( 'pre_snapshot' => true );
+		$job                                      = $this->make_job( $cp, 'completed', array( 'pre_snapshot_task_id' => 'safety-task' ) );
+		$store                                    = MainWP_Backup_Restore_Job_Store::instance();
+		$this->responses['backup_safety_archive'] = array(
+			array(
+				'state'           => 'present',
+				'task_id'         => 'safety-task',
+				'file'            => 'backup-pre.tar.gz',
+				'mtime'           => 123,
+				'task_started_at' => '2026-11-09 01:00:00',
+			),
+			new \RuntimeException( 'connection lost after delete' ),
+		);
+		$reply                                    = $this->orchestrator->remove_safety_archive( $job );
+		$this->assertTrue( $reply['unconfirmed'] );
+		$this->assertSame( 0, $this->calls[0]['params']['remove'] );
+		$this->assertSame( 1, $this->calls[1]['params']['remove'] );
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertTrue( $fresh->checkpoint['safety_removal_pending'] );
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $fresh ) );
+		$this->assertEmpty( $fresh->checkpoint['safety_removed'] ?? false );
+		$this->responses['backup_safety_archive'] = array(
+			'state'   => 'removed',
+			'task_id' => 'safety-task',
+			'file'    => 'backup-pre.tar.gz',
+		);
+		$this->calls                              = array();
+		$reconciled                               = $this->orchestrator->remove_safety_archive( $fresh, true );
+		$this->assertSame( array( 'state' => 'removed' ), $reconciled, wp_json_encode( $this->calls ) );
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertTrue( $fresh->checkpoint['safety_removed'] );
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $fresh ) );
+		$this->assertSame( 0, end( $this->calls )['params']['remove'] );
+	}
+
+	/** Deletion reserves the same site slot used by rollback. */
+	public function test_safety_archive_delete_and_rollback_share_site_admission() {
+		$cp            = $this->safety_checkpoint();
+		$cp['options'] = array( 'pre_snapshot' => true );
+		$job           = $this->make_job( $cp, 'completed', array( 'pre_snapshot_task_id' => 'safety-task' ) );
+		$store         = MainWP_Backup_Restore_Job_Store::instance();
+		$reservation   = $store->reserve_site( $this->site_id, 'rollback-first' );
+		$this->assertGreaterThan( 0, $reservation );
+		$this->assertArrayHasKey( 'error', $this->orchestrator->remove_safety_archive( $job ) );
+		$store->release_reservation( $reservation );
+		$probed = false;
+		$probe  = function ( $pre, $website, $operation ) use ( $store, &$probed ) {
+			if ( 'backup_safety_archive' === $operation ) {
+				$probed = true;
+				$this->assertSame( 0, $store->reserve_site( $this->site_id, 'rollback-second' ) );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $probe, 20, 3 );
+		$this->responses['backup_safety_archive'] = array(
+			'state'           => 'present',
+			'task_id'         => 'safety-task',
+			'file'            => 'backup-pre.tar.gz',
+			'mtime'           => 123,
+			'task_started_at' => '2026-11-09 01:00:00',
+		);
+		try {
+			$this->orchestrator->remove_safety_archive( $job );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $probe, 20 );
+		}
+		$this->assertTrue( $probed );
+	}
+
+	/** Rollback explains why a removed or unconfirmed source is unavailable. */
+	public function test_rollback_reports_safety_archive_removal_state() {
+		foreach ( array(
+			'safety_removed'         => 'was removed',
+			'safety_removal_pending' => 'not confirmed',
+		) as $flag => $message ) {
+			$checkpoint          = $this->safety_checkpoint();
+			$checkpoint[ $flag ] = true;
+			$job                 = $this->make_job( $checkpoint, 'completed', array( 'pre_snapshot_task_id' => 'safety-task' ) );
+			try {
+				$this->orchestrator->initiate_rollback( $job );
+				$this->fail( 'Rollback accepted an unavailable safety archive.' );
+			} catch ( \MainWP\Dashboard\MainWP_Exception $error ) {
+				$this->assertStringContainsString( $message, $error->getMessage() );
+			}
+		}
+	}
+
+	/** Confirmed automatic pruning resolves an earlier lost removal response. */
+	public function test_confirmed_prune_resolves_an_earlier_unconfirmed_removal() {
+		$checkpoint                           = $this->safety_checkpoint();
+		$checkpoint['options']                = array( 'pre_snapshot' => true );
+		$checkpoint['safety_removal_pending'] = true;
+		$checkpoint['pre_snapshot_pruned']    = true;
+		$job                                  = $this->make_job( $checkpoint, 'completed', array( 'pre_snapshot_task_id' => 'safety-task' ) );
+		$this->assertSame( array( 'state' => 'removed' ), $this->orchestrator->remove_safety_archive( $job, true ) );
+		$fresh = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		$this->assertEmpty( $fresh->checkpoint['safety_removal_pending'] ?? false );
+		$this->assertTrue( $fresh->checkpoint['safety_removed'] );
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $fresh ) );
+		$this->assertSame( array(), $this->calls );
+	}
+
+	/** Restore details use the existing pruned enum after manual removal. */
+	public function test_restore_details_reports_a_manually_removed_safety_backup_as_pruned() {
+		$checkpoint                   = $this->safety_checkpoint();
+		$checkpoint['options']        = array( 'pre_snapshot' => true );
+		$checkpoint['safety_removed'] = true;
+		$job                          = $this->make_job( $checkpoint, 'completed', array( 'pre_snapshot_task_id' => 'safety-task' ) );
+		$detail                       = \MainWP\Dashboard\MainWP_Backup_Read_Model::restore_job_details( (int) $job->id );
+		$this->assertSame( 'pruned', $detail['job']['safety_backup'] );
+	}
+
+	/** An older Child cannot disable a still-usable rollback after a read-only refusal. */
+	public function test_safety_archive_probe_refusal_preserves_rollback() {
+		$checkpoint                               = $this->safety_checkpoint();
+		$checkpoint['options']                    = array( 'pre_snapshot' => true );
+		$job                                      = $this->make_job( $checkpoint, 'completed', array( 'pre_snapshot_task_id' => 'safety-task' ) );
+		$this->responses['backup_safety_archive'] = array( 'error' => 'Unknown action' );
+		$this->assertArrayHasKey( 'error', $this->orchestrator->remove_safety_archive( $job ) );
+		$fresh = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		$this->assertEmpty( $fresh->checkpoint['safety_removal_pending'] ?? false );
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $fresh ) );
+		$this->assertCount( 1, $this->calls );
+		$this->assertSame( 0, $this->calls[0]['params']['remove'] );
+	}
+
+	/** A verified intact refusal clears uncertainty without recording deletion. */
+	public function test_identified_intact_refusal_clears_pending_removal() {
+		$checkpoint                               = $this->safety_checkpoint();
+		$checkpoint['options']                    = array( 'pre_snapshot' => true );
+		$checkpoint['safety_removal_pending']     = true;
+		$job                                      = $this->make_job( $checkpoint, 'completed', array( 'pre_snapshot_task_id' => 'safety-task' ) );
+		$this->responses['backup_safety_archive'] = array(
+			'error'   => 'In use',
+			'state'   => 'present',
+			'task_id' => 'safety-task',
+			'file'    => $checkpoint['pre_snapshot_artifacts'][0]['file'],
+		);
+		$reply                                    = $this->orchestrator->remove_safety_archive( $job, true );
+		$this->assertSame( 'present', $reply['state'] );
+		$this->assertArrayHasKey( 'error', $reply );
+		$fresh = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		$this->assertEmpty( $fresh->checkpoint['safety_removal_pending'] ?? false );
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $fresh ) );
+	}
+
+	/** The handler runs the existing nonce validator before any Child request. */
+	public function test_safety_archive_handler_rejects_invalid_nonce() {
+		$this->set_current_user_as_admin();
+		$handler          = new class() extends MainWP_Post_Backup_Handler {
+			/**
+			 * Convert only the nonce validator's die branch into an observable exception.
+			 *
+			 * @param string|int $action Nonce action or the default sentinel.
+			 * @param string     $query_arg Request field carrying the nonce.
+			 * @param bool       $out_die Whether the validator terminates on failure.
+			 * @throws \RuntimeException When the nonce is rejected.
+			 */
+			public function check_security( $action = -1, $query_arg = 'security', $out_die = true ) {
+				if ( ! parent::check_security( $action, $query_arg, false ) ) {
+					throw new \RuntimeException( 'nonce-refused' );
+				}
+				return true;
+			}
+		};
+		$original_post    = $_POST;
+		$original_request = $_REQUEST;
+		$_POST            = array(
+			'job_id'   => 1,
+			'security' => 'invalid',
+		);
+		$_REQUEST         = $_POST;
+		try {
+			$handler->mainwp_restore_delete_safety();
+			$this->fail( 'Invalid nonce reached the handler.' );
+		} catch ( \RuntimeException $error ) {
+			$this->assertSame( 'nonce-refused', $error->getMessage() );
+		} finally {
+			$_POST    = $original_post;
+			$_REQUEST = $original_request;
+		}
+		$this->assertSame( array(), $this->calls );
+	}
+
+	/** Authorized requests use the same nonce as rollback. */
+	public function test_safety_archive_handler_accepts_authorized_confirmed_removal() {
+		$this->set_current_user_as_admin();
+		$checkpoint                               = $this->safety_checkpoint();
+		$checkpoint['options']                    = array( 'pre_snapshot' => true );
+		$job                                      = $this->make_job( $checkpoint, 'completed', array( 'pre_snapshot_task_id' => 'safety-task' ) );
+		$this->responses['backup_safety_archive'] = array(
+			array(
+				'state'           => 'present',
+				'task_id'         => 'safety-task',
+				'file'            => 'backup-pre.tar.gz',
+				'mtime'           => 123,
+				'task_started_at' => '2026-11-09 01:00:00',
+			),
+			array(
+				'state'   => 'removed',
+				'task_id' => 'safety-task',
+				'file'    => 'backup-pre.tar.gz',
+			),
+		);
+		$original_post                            = $_POST;
+		$original_request                         = $_REQUEST;
+		$_POST                                    = array(
+			'job_id'   => $job->id,
+			'security' => wp_create_nonce( 'mainwp_restore_rollback' ),
+		);
+		$_REQUEST                                 = $_POST;
+		try {
+			$reply = $this->invoke_ajax_handler( 'mainwp_restore_delete_safety' );
+		} finally {
+			$_POST    = $original_post;
+			$_REQUEST = $original_request;
+		}
+		$this->assertSame( array( 'state' => 'removed' ), $reply );
+		$this->assertCount( 2, $this->calls );
+		$this->assertTrue( $this->calls[0]['verify_signature'] );
+		$this->assertTrue( $this->calls[1]['verify_signature'] );
+		$this->assertSame( 0, $this->calls[0]['params']['remove'] );
+		$this->assertSame( 1, $this->calls[1]['params']['remove'] );
+	}
+
+	/** Direct handler calls cannot bypass the restore capability. */
+	public function test_safety_archive_handler_denies_restore_right_on_existing_job() {
+		$this->set_current_user_as_admin();
+		$checkpoint                               = $this->safety_checkpoint();
+		$checkpoint['options']                    = array( 'pre_snapshot' => true );
+		$job                                      = $this->make_job( $checkpoint, 'completed', array( 'pre_snapshot_task_id' => 'safety-task' ) );
+		$this->responses['backup_safety_archive'] = array(
+			array(
+				'state'           => 'present',
+				'task_id'         => 'safety-task',
+				'file'            => 'backup-pre.tar.gz',
+				'mtime'           => 123,
+				'task_started_at' => '2026-11-09 01:00:00',
+			),
+			array(
+				'state'   => 'removed',
+				'task_id' => 'safety-task',
+				'file'    => 'backup-pre.tar.gz',
+			),
+		);
+		$deny                                     = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'restore_backups' === $right ? false : $allowed;
+		};
+		$end                                      = static function () {
+			return static function () {
+				throw new \RuntimeException( 'json-end' );
+			};
+		};
+		$original_post                            = $_POST;
+		$original_request                         = $_REQUEST;
+		$_POST                                    = array(
+			'job_id'   => $job->id,
+			'security' => wp_create_nonce( 'mainwp_restore_rollback' ),
+		);
+		$_REQUEST                                 = $_POST;
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $end );
+		ob_start();
+		try {
+			MainWP_Post_Backup_Handler::instance()->mainwp_restore_delete_safety();
+		} catch ( \RuntimeException $error ) {
+			$this->assertSame( 'json-end', $error->getMessage() );
+		} finally {
+			$body = ob_get_clean();
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			remove_filter( 'wp_die_ajax_handler', $end );
+			$_POST    = $original_post;
+			$_REQUEST = $original_request;
+		}
+		$this->assertArrayHasKey( 'error', json_decode( $body, true ) );
+		$this->assertSame( array(), $this->calls );
+	}
+
+	/**
 	 * Create a job with a staged-ready local plan.
 	 *
 	 * @param array  $checkpoint_over Checkpoint overrides.
-	 * @param string $status         Initial status.
-	 * @param array  $extra           Extra columns.
-	 *
+	 * @param string $status Initial status.
+	 * @param array  $extra Extra columns.
 	 * @return object Job row.
 	 */
 	private function make_job( $checkpoint_over = array(), $status = MainWP_Backup_Restore_Job_Store::STATUS_PENDING, $extra = array() ) {

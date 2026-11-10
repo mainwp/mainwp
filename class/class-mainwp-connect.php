@@ -1015,6 +1015,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     }
                 }
 
+                if ( 'backup_safety_archive' === $what && isset( $params['binding'], $params['remove'] ) ) {
+                    $data_sign_v2['binding'] = $params['binding'];
+                    $data_sign_v2['remove']  = (string) $params['remove'];
+                }
+
                 $sign_success_v2 = null;
 
                 $sign_value_v2 = wp_json_encode( $data_sign_v2 );

@@ -109,6 +109,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 $this->add_action( 'mainwp_restore_admission_status', array( &$this, 'mainwp_restore_admission_status' ) );
                 $this->add_action( 'mainwp_restore_cancel', array( &$this, 'mainwp_restore_cancel' ) );
                 $this->add_action( 'mainwp_restore_rollback', array( &$this, 'mainwp_restore_rollback' ) );
+                $this->add_action( 'mainwp_restore_delete_safety', array( &$this, 'mainwp_restore_delete_safety' ) );
             }
             $this->add_action( 'mainwp_native_backup_initiate', array( &$this, 'mainwp_native_backup_initiate' ) );
             $this->add_action( 'mainwp_native_backup_progress', array( &$this, 'mainwp_native_backup_progress' ) );
@@ -849,6 +850,21 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
         wp_send_json( array( 'result' => 'stopped' === $outcome ? 'stopped' : ( 'cancel_pending' === $outcome ? 'pending' : 'ok' ) ) );
+    }
+
+    /**
+     * Remove or reconcile a restore's safety archive using restore authorization.
+     */
+    public function mainwp_restore_delete_safety() {
+        $this->secure_request( 'mainwp_restore_rollback' );
+        $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $job    = MainWP_Backup_Operations::authorize_restore_job( $job_id, true, 'ui' );
+        if ( is_wp_error( $job ) || null === $job ) {
+            wp_send_json( array( 'error' => __( 'Restore job not found.', 'mainwp' ) ) );
+            return;
+        }
+        $reconcile = isset( $_POST['reconcile'] ) && '1' === $_POST['reconcile']; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        wp_send_json( MainWP_Backup_Restore_Orchestrator::instance()->remove_safety_archive( $job, $reconcile ) );
     }
 
     /**

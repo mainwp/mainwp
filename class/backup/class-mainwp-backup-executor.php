@@ -3026,6 +3026,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'pid'                   => time(),
                     'f'                     => '',
                 );
+                if ( '' !== $owner ) {
+                    $params['safety_restore_id'] = $owner;
+                }
                 if ( 'full' === $type && '' !== $owner ) {
                     // This create can replace the shared list used by incremental backups.
                     global $wpdb;

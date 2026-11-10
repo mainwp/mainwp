@@ -1408,15 +1408,30 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         var jobLabels = job.is_rollback ? rollbackStatusLabels : statusLabels;
                         var jobMessage = ( job.error_code && restoreOutcomeMessages[ job.error_code ] ) || job.last_error;
                         if ( 'completed' === job.status && ! jobMessage ) {
-                            jobMessage = safetyNoteText;
+                            jobMessage = job.safety_removed || job.safety_removal_pending ? statusLabels.completed : safetyNoteText;
                         }
                         var showRollback = job.has_rollback && canRestore;
+                        if ( job.safety_removed || job.safety_removal_pending ) {
+                            showRollback = false;
+                        }
                         var sentence = restoreOutcomeSentence( job, showRollback && ! job.is_rollback );
                         var $details = $( '<td></td>' ).text( jobMessage ).addClass( 'mainwp-backup-error-text' );
                         if ( sentence ) {
                             $details.append( $( '<div></div>' ).text( sentence ) );
                         }
                         var $action = $( '<td class="collapsing"></td>' );
+                        if ( job.safety_removed ) {
+                            $details.append( $( '<div></div>' ).text( '<?php echo esc_js( __( 'Safety backup removed. Roll Back is no longer available.', 'mainwp' ) ); ?>' ) );
+                        } else if ( job.safety_removal_pending ) {
+                            $details.append( $( '<div class="ui yellow message"></div>' ).text( '<?php echo esc_js( __( 'Removal not confirmed. Check the safety backup status before using Roll Back.', 'mainwp' ) ); ?>' ) );
+                        }
+                        if ( canRestore && ! job.is_rollback && ! job.safety_removed && ( job.has_rollback || job.safety_removal_pending ) ) {
+                            $( '<button type="button" class="ui mini basic button mainwp-safety-delete"></button>' )
+                                .attr( 'data-job-id', job.job_id ).attr( 'data-reconcile', job.safety_removal_pending ? '1' : '0' )
+                                .prop( 'disabled', !! response.active_restore_job_id || siteDisconnected )
+                                .text( job.safety_removal_pending ? '<?php echo esc_js( __( 'Check removal', 'mainwp' ) ); ?>' : '<?php echo esc_js( __( 'Delete Safety Backup', 'mainwp' ) ); ?>' )
+                                .appendTo( $action );
+                        }
                         // A failed rollback still holds the safety backup it
                         // restores from, so it offers another attempt.
                         if ( showRollback ) {
@@ -2829,6 +2844,37 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             $( '#mainwp-snapshots-empty-backup' ).on( 'click', function () {
                 $( '#mainwp-native-backup-now-btn' ).trigger( 'click' );
+            } );
+
+            $( document ).on( 'click', '.mainwp-safety-delete', function () {
+                var $button = $( this );
+                var site = currentSite;
+                var job = $button.attr( 'data-job-id' );
+                var reconcile = $button.attr( 'data-reconcile' ) === '1';
+                var send = function () {
+                    if ( site !== currentSite ) { return; }
+                    $button.prop( 'disabled', true );
+                    $.post( ajaxurl, { action: 'mainwp_restore_delete_safety', security: nonces.rollback, job_id: job, reconcile: reconcile ? '1' : '0' } )
+                        .done( function ( response ) {
+                            if ( site !== currentSite ) { return; }
+                            if ( ! response || typeof response !== 'object' ) {
+                                mainwp_confirm( '<?php echo esc_js( __( 'Removal not confirmed. Reload Restore History and check the safety backup status before using Roll Back.', 'mainwp' ) ); ?>', function () {} );
+                                loadSnapshots( site );
+                                return;
+                            }
+                            if ( response.error ) {
+                                mainwp_confirm( escAttr( response.error ), function () {} );
+                            }
+                            loadSnapshots( site );
+                        } ).fail( function () {
+                            if ( site !== currentSite ) { return; }
+                            mainwp_confirm( '<?php echo esc_js( __( 'Removal not confirmed. Reload Restore History and check the safety backup status before using Roll Back.', 'mainwp' ) ); ?>', function () {} );
+                            loadSnapshots( site );
+                        } );
+                };
+                if ( reconcile ) { send(); } else {
+                    mainwp_confirm( '<?php echo esc_js( __( 'Delete this safety backup? This permanently removes this restore’s Roll Back option. Other backups and backup inventory files will be kept.', 'mainwp' ) ); ?>', send );
+                }
             } );
 
             $( '#mainwp-native-backup-now-btn' ).on( 'click', function ( event, confirmed ) {

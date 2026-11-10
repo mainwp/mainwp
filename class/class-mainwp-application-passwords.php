@@ -96,6 +96,11 @@ class MainWP_Application_Passwords {  // phpcs:ignore Generic.Classes.OpeningBra
             return new \WP_Error( 'db_error', __( 'Could not save application password.', 'mainwp' ) );
         }
 
+        $network_id = get_main_network_id();
+        if ( ! get_network_option( $network_id, 'using_application_passwords' ) ) {
+            update_network_option( $network_id, 'using_application_passwords', true );
+        }
+
         /**
          * Fires when an application password is created.
          *

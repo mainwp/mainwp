@@ -2883,6 +2883,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] && ! MainWP_Backup_Settings_View::render_save_notice() ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only feedback. ?>
                 <div class="ui green message"><?php esc_html_e( 'Backup settings have been saved successfully.', 'mainwp' ); ?><i class="close icon"></i></div>
             <?php endif; ?>
+            <?php MainWP_Backup_Settings_View::render_private_storage_settings(); ?>
             <form method="post" action="" class="ui form">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'BackupSettings' ) ); ?>" />

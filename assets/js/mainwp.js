@@ -1417,8 +1417,11 @@ let dashboard_update_next_int = function (websiteId, data, errors, action) {
         success: function (pWebsiteId, pAction) {
             return function (response) {
                 if (response.error) {
-                    let extErr = response.error;
-                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="bottom right" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
+                    const status = jQuery('<span data-inverted="" data-position="bottom right">')
+                        .attr('data-tooltip', mainwp_entities_text(response.error))
+                        .append('<i class="exclamation red icon"></i>')
+                        .prop('outerHTML');
+                    dashboard_update_site_status(pWebsiteId, status);
                     if (response.failure_ux) {
                         jQuery('#mainwp-sync-sites-modal .sync-sites-content-massage').append(response.failure_ux);
                     }

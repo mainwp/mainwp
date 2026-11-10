@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.4
 Requires PHP: 8.3
-Stable tag: 6.4.2
+Stable tag: 6.4.2.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -153,6 +153,10 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.4.2.1 - 11-10-2026 =
+
+* Security: Strengthened Dashboard permissions, private backup storage, and communication with connected sites.
 
 = 6.4.2 - 11-10-2026 =
 

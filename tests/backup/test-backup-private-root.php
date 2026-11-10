@@ -9,6 +9,8 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
 use MainWP\Dashboard\MainWP_Backup_Diagnostics;
+use MainWP\Dashboard\MainWP_Backup_Settings;
+use MainWP\Dashboard\MainWP_Backup_Settings_View;
 use MainWP\Dashboard\MainWP_Backup_Retention_Executor;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_TestRestore_Sandbox;
@@ -171,13 +173,13 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Loopback outages allow backups and produce opt-in diagnostics without probe secrets.
+	 * Loopback outages block writes and produce opt-in diagnostics without probe secrets.
 	 *
 	 * @dataProvider unknown_probe_responses
 	 * @param bool $enabled Diagnostics setting.
 	 * @param int  $status Zero for a transport error, otherwise an HTTP status.
 	 */
-	public function test_unknown_probe_allows_with_opt_in_diagnostics( bool $enabled, int $status ): void {
+	public function test_unknown_probe_blocks_with_opt_in_diagnostics( bool $enabled, int $status ): void {
 		$this->map_probe_root();
 		$diag     = $this->private_root . '/diagnostics';
 		$requests = 0;
@@ -195,12 +197,12 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		};
 		add_filter( 'pre_http_request', $http, 10, 3 );
 		try {
-			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertDirectoryDoesNotExist( $this->private_root . '/sites' );
 			$cache = get_option( 'mainwp_backup_private_root_probe' );
 			$this->assertSame( 'unknown', $cache['verdict'] );
 			$this->assertEqualsWithDelta( time() + DAY_IN_SECONDS, $cache['expires'], 5 );
-			MainWP_Backup_Private_Root::reset();
-			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 8 ) );
+			$this->assertIsString( MainWP_Backup_Private_Root::site_path( 7 ) );
 		} finally {
 			remove_filter( 'pre_http_request', $http );
 		}
@@ -226,7 +228,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Transport errors and server failures share the allow policy.
+	 * Transport errors and server failures share the refusal policy.
 	 *
 	 * @return array
 	 */
@@ -317,6 +319,10 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		};
 		add_filter( 'pre_http_request', $http );
 		try {
+			remove_filter( 'mainwp_backup_verified_private_root', array( $this, 'filter_private_root' ) );
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertSame( 0, $requests, 'A guessed URL cannot confirm custom storage.' );
+			add_filter( 'mainwp_backup_verified_private_root', array( $this, 'filter_private_root' ) );
 			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
 			$cache = get_option( 'mainwp_backup_private_root_probe' );
 			$this->assertSame( hash( 'sha256', $this->private_root . "\n" . site_url() ), $cache['key'] );
@@ -330,6 +336,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			mkdir( $this->private_root . '-filtered', 0700 );
 			$filter = fn() => $this->private_root . '-filtered';
 			add_filter( 'mainwp_backup_private_root', $filter, 20 );
+			add_filter( 'mainwp_backup_verified_private_root', $filter, 20 );
 			MainWP_Backup_Private_Root::reset();
 			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
 			$this->assertSame( 2, $requests );
@@ -378,11 +385,134 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			$this->assertDirectoryDoesNotExist( $this->private_root );
 			add_filter( 'site_url', static fn() => 'https://example.org', 20 );
 			MainWP_Backup_Private_Root::reset();
+			remove_filter( 'mainwp_backup_verified_private_root', array( $this, 'filter_private_root' ) );
+			$refusal = MainWP_Backup_Private_Root::site_dir( 7 );
+			$this->assertWPError( $refusal );
+			$this->assertStringContainsString( 'Built-In Backups settings', $refusal->get_error_message() );
+			$wrong_root = fn() => $this->private_root . '-other';
+			add_filter( 'mainwp_backup_verified_private_root', $wrong_root );
+			$this->assertWPError( MainWP_Backup_Private_Root::staging_dir( 'restore-staging', 'job' ) );
+			remove_filter( 'mainwp_backup_verified_private_root', $wrong_root );
+			$this->assertDirectoryDoesNotExist( $this->private_root );
+			add_filter( 'mainwp_backup_verified_private_root', array( $this, 'filter_private_root' ) );
 			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertIsString( MainWP_Backup_Private_Root::staging_dir( 'restore-staging', 'job' ) );
 			$this->assertFalse( get_option( 'mainwp_backup_private_root_probe' ) );
 			$this->assertSame( 0, $requests );
 		} finally {
 			remove_filter( 'pre_http_request', $http );
+			if ( null === $document_root ) {
+				unset( $_SERVER['DOCUMENT_ROOT'] );
+			} else {
+				$_SERVER['DOCUMENT_ROOT'] = $document_root;
+			}
+		}
+	}
+
+	/** Only an authorized settings save can confirm an inconclusive path. */
+	public function test_storage_confirmation_in_settings_and_public_refusal(): void {
+		$admin_id = $this->set_current_user_as_admin();
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		remove_filter( 'mainwp_backup_verified_private_root', array( $this, 'filter_private_root' ) );
+		$this->map_probe_root();
+		mkdir( $this->private_root, 0700 );
+		$public = false;
+		$http   = static function ( $pre, $args, $url ) use ( &$public ) {
+			if ( ! $public ) {
+				return new \WP_Error( 'http_request_failed' );
+			}
+			return array(
+				'response' => array( 'code' => 200 ),
+				'body'     => file_get_contents( rawurldecode( wp_parse_url( $url, PHP_URL_PATH ) ) ),
+			);
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		$saved_post = $_POST;
+		try {
+			$storage = MainWP_Backup_Private_Root::storage_status();
+			$this->assertSame( 'confirmation_required', $storage['status'] );
+			$this->assertStringContainsString( 'confirm_backup_storage', $this->render_storage_confirmation() );
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 7 ) );
+
+			$_POST = array(
+				'submit'                    => 'confirm_backup_storage',
+				'wp_nonce'                  => 'invalid',
+				'mainwp_backup_storage_key' => $storage['key'],
+			);
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+			$subscriber = $this->factory->user->create( array( 'role' => 'subscriber' ) );
+			wp_set_current_user( $subscriber );
+			$_POST['wp_nonce'] = wp_create_nonce( 'BackupSettings' );
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( '', $this->render_storage_confirmation() );
+			wp_set_current_user( $admin_id );
+			$_POST['wp_nonce']                  = wp_create_nonce( 'BackupSettings' );
+			$_POST['mainwp_backup_storage_key'] = str_repeat( '0', 64 );
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertFalse( get_option( 'mainwp_backup_private_root_confirmation' ) );
+
+			$_POST['mainwp_backup_storage_key'] = $storage['key'];
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertIsString( MainWP_Backup_Private_Root::staging_dir( 'restore-staging', 'job' ) );
+			$this->assertSame( '', $this->render_storage_confirmation() );
+
+			$other_root = fn() => $this->private_root . '-filtered';
+			add_filter( 'mainwp_backup_private_root', $other_root, 20 );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+			remove_filter( 'mainwp_backup_private_root', $other_root, 20 );
+			$public = true;
+			MainWP_Backup_Private_Root::reset();
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 8 ) );
+			$this->assertFalse( get_option( 'mainwp_backup_private_root_confirmation' ) );
+			$this->assertStringContainsString( 'publicly accessible', $this->render_storage_confirmation() );
+			$this->assertStringNotContainsString( 'confirm_backup_storage', $this->render_storage_confirmation() );
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+
+			$public = false;
+			MainWP_Backup_Private_Root::reset();
+			$this->assertSame( 'public', MainWP_Backup_Private_Root::storage_status()['status'] );
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertDirectoryDoesNotExist( $this->private_root . '/sites/8' );
+		} finally {
+			$_POST = $saved_post;
+			remove_filter( 'pre_http_request', $http, 10 );
+		}
+	}
+
+	/**
+	 * Render the storage panel for the current WordPress user.
+	 *
+	 * @return string
+	 */
+	private function render_storage_confirmation(): string {
+		ob_start();
+		MainWP_Backup_Settings_View::render_private_storage_settings();
+		return ob_get_clean();
+	}
+
+	/** An existing unmapped private_html root stays readable and refuses new writes. */
+	public function test_unmapped_private_html_refuses_writes(): void {
+		$root          = $this->private_root . '/private_html/backups';
+		$root_filter   = static fn() => $root;
+		$site_filter   = static fn() => 'https://example.org';
+		$document_root = $_SERVER['DOCUMENT_ROOT'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Preserve the original test environment.
+
+		$_SERVER['DOCUMENT_ROOT'] = '';
+		add_filter( 'mainwp_backup_private_root', $root_filter, 999 );
+		add_filter( 'site_url', $site_filter, 999 );
+		try {
+			wp_mkdir_p( $root . '/sites/7' );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertSame( $root . '/sites/7/', MainWP_Backup_Private_Root::site_path( 7 ) );
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 8 ) );
+			$this->assertDirectoryDoesNotExist( $root . '/sites/8' );
+		} finally {
+			remove_filter( 'mainwp_backup_private_root', $root_filter, 999 );
+			remove_filter( 'site_url', $site_filter, 999 );
 			if ( null === $document_root ) {
 				unset( $_SERVER['DOCUMENT_ROOT'] );
 			} else {
@@ -401,6 +531,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		$_SERVER['DOCUMENT_ROOT'] = $this->private_root;
 		add_filter( 'site_url', static fn() => 'https://example.org' );
 		add_filter( 'mainwp_backup_private_root', static fn() => $root, 20 );
+		add_filter( 'mainwp_backup_verified_private_root', static fn() => $root, 20 );
 		mkdir( $root, 0700, true );
 		update_option(
 			'mainwp_backup_private_root_probe',
@@ -665,6 +796,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_var_export -- PHP literals preserve fixture paths in the isolated process.
 		$script = 'define("ABSPATH", ' . var_export( $wp . '/', true ) . '); define("WP_CONTENT_DIR", ABSPATH . "wp-content");'
 			. 'define("MAINWP_BACKUP_PRIVATE_DIR", ' . var_export( $root, true ) . ');'
+			. 'define("MAINWP_BACKUP_VERIFIED_PRIVATE_DIR", MAINWP_BACKUP_PRIVATE_DIR);'
 			. 'define("DAY_IN_SECONDS", 86400);'
 			. 'function wp_normalize_path($p) { return $p; } function untrailingslashit($p) { return rtrim($p, "/"); }'
 			. 'function trailingslashit($p) { return rtrim($p, "/") . "/"; } function path_is_absolute($p) { return $p[0] === "/"; }'
@@ -714,6 +846,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		parent::setUp();
 		$this->set_up_private_root();
 		delete_option( 'mainwp_backup_private_root_probe' );
+		delete_option( 'mainwp_backup_private_root_confirmation' );
 		add_filter(
 			'upload_dir',
 			function ( $dirs ) {
@@ -1182,7 +1315,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	public function test_sibling_fallback_selection_matrix() {
 		$rows = array(
 			'default writable'         => array( 'default', 0700, 'default', '' ),
-			'private_html writable'    => array( 'default', 0500, 'private_html', '' ),
+			'private_html skipped'     => array( 'default', 0500, 'private', '' ),
 			'private writable'         => array( 'private', 0500, 'private', '' ),
 			'both roots exist'         => array( 'both', 0700, 'default', '' ),
 			'default read-only'        => array( 'default-readonly', 0500, 'default', 'directory is not writable' ),
@@ -1192,7 +1325,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			'default symlink refused'  => array( 'default-symlink', 0700, 'error', 'directory is a symlink' ),
 			'dangling default refused' => array( 'default-dangling', 0700, 'error', 'directory is a symlink' ),
 			'no sibling directories'   => array( 'no-siblings', 0500, 'default', 'could not create directory' ),
-			'equivalent filter path'   => array( 'trailing-slash', 0500, 'private_html', '' ),
+			'equivalent filter path'   => array( 'trailing-slash', 0500, 'private', '' ),
 			'constant skips ladder'    => array( 'constant', 0500, 'default', 'could not create directory' ),
 			'filter skips ladder'      => array( 'filter', 0500, 'override', 'could not create directory' ),
 			'nothing writable'         => array( 'blocked', 0500, 'default', 'could not create directory' ),
@@ -1307,9 +1440,9 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 					$this->assertDirectoryDoesNotExist( $base . '/private', $label );
 				}
 				if ( in_array( $mode, array( 'blocked', 'no-siblings' ), true ) ) {
-					$this->assertStringContainsString( 'Sibling directories tried: private_html, private.', $result[2], $label );
+					$this->assertStringContainsString( 'Sibling directory tried for new backups: private.', $result[2], $label );
 				} else {
-					$this->assertStringNotContainsString( 'Sibling directories tried:', $result[2], $label );
+					$this->assertStringNotContainsString( 'Sibling directory tried for new backups:', $result[2], $label );
 				}
 			} finally {
 				chmod( $base, 0700 );

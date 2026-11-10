@@ -210,6 +210,35 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A resumed SFTP job cleans directories even after its sweep was saved.
+	 *
+	 * @return void
+	 */
+	public function test_resumed_sftp_job_cleans_directories() {
+		list( $dest_id ) = $this->make_local_destination();
+		$this->enqueue_delete( 980099, $dest_id, '5/980099/', array() );
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$job                 = $store->get_jobs_for_snapshot( 980099, 'delete' )[0];
+		$checkpoint          = $job->checkpoint;
+		$checkpoint['swept'] = true;
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$provider = $this->getMockBuilder( \MainWP\Dashboard\MainWP_Backup_Storage_SFTP::class )->disableOriginalConstructor()->onlyMethods( array( 'cleanup_snapshot_directories' ) )->getMock();
+		$provider->expects( $this->once() )->method( 'cleanup_snapshot_directories' )->with( '5/980099/' );
+		$destinations = $this->createMock( MainWP_Backup_Storage_Destinations::class );
+		$destinations->method( 'get_destination' )->willReturn( MainWP_Backup_Storage_Destinations::instance()->get_destination( $dest_id ) );
+		$destinations->method( 'make_provider' )->willReturn( $provider );
+		$instance = new \ReflectionProperty( MainWP_Backup_Storage_Destinations::class, 'instance' );
+		$original = $instance->getValue();
+		$instance->setValue( null, $destinations );
+		try {
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+		} finally {
+			$instance->setValue( null, $original );
+		}
+		$this->assertSame( 'complete', $store->get_jobs_for_snapshot( 980099, 'delete' )[0]->status );
+	}
+
+	/**
 	 * A zero budget makes no destructive progress; the job stays runnable
 	 * and a later tick finishes it from the checkpoint.
 	 *

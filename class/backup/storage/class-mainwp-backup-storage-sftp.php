@@ -512,6 +512,34 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
     }
 
     /**
+     * Remove empty directories owned by a completed snapshot deletion.
+     *
+     * @param string $prefix Upload-time snapshot prefix.
+     * @return void
+     */
+    public function cleanup_snapshot_directories( string $prefix ): void {
+        if ( 1 !== preg_match( '/^[1-9][0-9]*(?:-[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?)?\/[1-9][0-9]*\/$/D', $prefix ) ) {
+            return;
+        }
+        try {
+            $sftp = $this->connection();
+        } catch ( \Throwable $e ) {
+            do_action( 'mainwp_log_warning', 'Could not connect for SFTP backup directory cleanup: ' . $prefix );
+            return;
+        }
+        foreach ( array( 'chunks', 'files', '' ) as $child ) {
+            try {
+                $path = $this->resolve( rtrim( $prefix . $child, '/' ) );
+                if ( $sftp->is_dir( $path ) && ! $sftp->rmdir( $path ) ) {
+                    do_action( 'mainwp_log_warning', 'Could not remove an empty SFTP backup directory: ' . $prefix . $child );
+                }
+            } catch ( \Throwable $e ) {
+                do_action( 'mainwp_log_warning', 'Could not remove an empty SFTP backup directory: ' . $prefix . $child );
+            }
+        }
+    }
+
+    /**
      * Prove the base path exists and is writable with a probe object.
      *
      * @return array

@@ -221,6 +221,9 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                 $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
             }
 
+            if ( $provider instanceof MainWP_Backup_Storage_SFTP ) {
+                $provider->cleanup_snapshot_directories( (string) ( $checkpoint['prefix'] ?? '' ) );
+            }
             $store->complete_job( (int) $job->id, $this->lock_token );
         } catch ( \Throwable $e ) {
             $this->handle_failure( $job, $destination, $e, $now );

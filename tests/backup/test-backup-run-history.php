@@ -698,15 +698,16 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		$site = $this->site();
 		$task = $this->task( array( $site ) );
 		$now  = time();
+		$slot = $now + ( $ahead ? HOUR_IN_SECONDS : -HOUR_IN_SECONDS );
 		MainWP_DB_Backup::instance()->update_backup_task_with_values(
 			$task->id,
 			array(
 				'schedule'       => $schedule,
 				'interval_hours' => 'interval' === $schedule ? 4 : 0,
-				'time_of_day'    => wp_date( 'H:i', $now + ( $ahead ? HOUR_IN_SECONDS : -HOUR_IN_SECONDS ) ),
-				'day_of_week'    => (int) wp_date( 'w', $now ),
-				'day_of_month'   => (int) wp_date( 'j', $now ),
-				'next_run'       => $now + ( $ahead ? HOUR_IN_SECONDS : -HOUR_IN_SECONDS ) - $now % 60,
+				'time_of_day'    => wp_date( 'H:i', $slot ),
+				'day_of_week'    => (int) wp_date( 'w', $slot ),
+				'day_of_month'   => (int) wp_date( 'j', $slot ),
+				'next_run'       => $slot - $now % 60,
 				'last_run'       => $now - DAY_IN_SECONDS,
 				'completed'      => $now - DAY_IN_SECONDS,
 			)

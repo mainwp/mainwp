@@ -1667,13 +1667,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function showReconcileNote( verification, subType, isRollback ) {
                 var $note = $( '#mainwp-restore-reconcile-note' ).removeClass( 'blue yellow' ).empty().hide();
-                if ( 'db' === subType || isRollback || ! verification || ! verification.reconcile ) {
+                if ( 'db' === subType || ! verification || ! verification.reconcile ) {
                     return;
                 }
                 var reconcile = verification.reconcile;
                 if ( 'skipped' === reconcile.status ) {
                     if ( [ 'no_manifest', 'no_walk_params' ].indexOf( reconcile.reason ) !== -1 ) {
-                        $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed, because the backup has no file list to compare against. Backups made before MainWP Child 6.3-beta1 never have one.', 'mainwp' ) ); ?>' ).show();
+                        $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed, because the backup has no file list to compare against.', 'mainwp' ) ); ?>' ).show();
                     } else if ( [ 'empty_manifest', 'manifest_unverified' ].indexOf( reconcile.reason ) !== -1 ) {
                         $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( "Files added after this backup were not removed, because the backup's file list could not be verified.", 'mainwp' ) ); ?>' ).show();
                     } else if ( 'unarchived_invalid' === reconcile.reason ) {

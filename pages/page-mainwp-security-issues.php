@@ -346,28 +346,20 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return '';
         }
 
-        $skip_features = array(
-            'db_reporting',
-            'php_reporting',
-            'wp_uptodate',
-            'phpversion_matched',
-            'sslprotocol',
-            'debug_disabled',
-        );
+        $skip_features = array();
 
         /**
          * Filters security issues from fixing
          *
          * Filters the default security checks and enables user to disable certain issues from being fixed by using the Fix All button.
          *
-         * @param bool   false          Whether security issues should be filtered.
-         * @param object $skip_features Object containing data from che chid site related to security issues.
-         *                              Available options: 'db_reporting', 'php_reporting'.
-         * @param object $website       Object containing child site data.
+         * @param array  $skip_features         Security checks to skip. Defaults to an empty array.
+         * @param array  $default_skip_features Default security checks to skip (empty).
+         * @param object $website              Object containing child site data.
          *
          * @since 4.1
          */
-        $skip_features = apply_filters( 'mainwp_security_post_data', false, $skip_features, $website );
+        $skip_features = apply_filters( 'mainwp_security_post_data', array(), $skip_features, $website );
 
         $feature   = isset( $_REQUEST['feature'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['feature'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
         $post_data = array( 'feature' => $feature );

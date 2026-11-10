@@ -152,7 +152,7 @@ class Log_Manager {
 
         add_filter( 'mainwp_module_log_enable_insert_log_type', array( $this, 'hook_enable_insert_log_type' ), 10, 2 );
         add_filter( 'mainwp_get_cron_jobs_init', array( $this, 'hook_get_cron_jobs_init' ), 10, 2 ); // on/off by change status of use wp cron option.
-        add_filter( 'mainwp_module_logs_changes_logs_sync_params', array( $this, 'hook_changes_logs_sync_params' ), 10, 2 ); // on/off by change status of use wp cron option.
+        add_filter( 'mainwp_module_logs_changes_logs_sync_params', array( $this, 'hook_changes_logs_sync_params' ), 10, 2 ); // Every sync; mainwp_module_logs_sync_changes_log turns it off.
         add_filter( 'mainwp_module_logs_get_log_records', array( $this, 'hook_get_log_records' ), 10, 2 ); // Retrieves MainWP log records based on provided query parameters.
 
         if ( $this->is_enabled_auto_archive_logs() && ! empty( $this->settings->options['records_logs_ttl'] ) ) {
@@ -510,9 +510,9 @@ class Log_Manager {
      */
     public function hook_changes_logs_sync_params( $params, $site_id, $postdata = array() ) {
 
-        // if it is not a manual sync data.
-        $sync_logs = isset( $_POST['action'] ) && 'mainwp_syncsites' === $_POST['action'] ? true : false; //phpcs:ignore --ok.
-        $sync_logs = apply_filters( 'mainwp_module_logs_sync_changes_log', $sync_logs );
+        // Every sync asks, not only the UI Sync button: the Child returns no events
+        // without these params and purges unsynced ones after child_logs_ttl days.
+        $sync_logs = apply_filters( 'mainwp_module_logs_sync_changes_log', true );
 
         if ( ! $sync_logs ) {
             return $params;

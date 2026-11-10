@@ -1128,7 +1128,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
     public static function render_screen_options() {
 
         $default_widgets = array(
-            'recent_events'     => esc_html__( 'Recent Activity Log', 'mainwp' ),
+            'recent_events'     => esc_html__( 'Recent Activity', 'mainwp' ),
             'log_plugins'       => esc_html__( 'Plugin Management Activity Overview', 'mainwp' ),
             'log_themes'        => esc_html__( 'Themes Management Activity Overview', 'mainwp' ),
             'log_sites'         => esc_html__( 'Site Management Activity Metrics', 'mainwp' ),
@@ -1176,7 +1176,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         <?php if ( isset( $_GET['page'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
         <div class="ui grid field">
             <label class="six wide column"><?php esc_html_e( 'Show widgets', 'mainwp' ); ?></label>
-            <div class="ten wide column" <?php echo 'data-tooltip="' . esc_attr__( 'Select widgets that you want to hide in the MainWP Operations page.', 'mainwp' ); ?> data-inverted="" data-position="top left">
+            <div class="ten wide column" <?php echo 'data-tooltip="' . esc_attr__( 'Select widgets that you want to hide in the MainWP Insights page.', 'mainwp' ); ?> data-inverted="" data-position="top left">
                 <ul class="mainwp_hide_wpmenu_checkboxes">
                 <?php
                 foreach ( $default_widgets as $name => $title ) {

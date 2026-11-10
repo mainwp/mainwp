@@ -53,7 +53,7 @@ class MainWP_Backup_Filename_Tokens_Test extends MainWP_Abilities_Test_Case {
 					'name'     => 'Token task',
 					'type'     => 'full',
 					'schedule' => 'daily',
-					'site_ids' => array( $this->create_test_site() ),
+					'site_ids' => array( $this->create_test_site( array( 'version' => '6.4' ) ) ),
 				),
 				$fields
 			),
@@ -134,6 +134,42 @@ class MainWP_Backup_Filename_Tokens_Test extends MainWP_Abilities_Test_Case {
 		);
 		$this->assertSame( 'x....evil-%date%', $this->stored( $id )->filename );
 		$this->assertSame( 'a/b/%date%', $this->stored( $id )->subfolder );
+
+		$rooted = $this->create( array( 'subfolder' => '/etc/%date%' ) );
+		$this->assertSame( 'etc/%date%', $this->stored( $rooted )->subfolder );
+	}
+
+	/**
+	 * Paths that would escape or reroot the destination folder.
+	 *
+	 * @return array
+	 */
+	public static function rooted_subfolders(): array {
+		return array(
+			'leading slash'      => array( '/etc/x', 'etc/x' ),
+			'doubled slashes'    => array( '//a//b/', 'a/b' ),
+			'blank segment'      => array( 'a/ /b', 'a/b' ),
+			'UNC share'          => array( '\\\\srv\\share\\x', 'srv/share/x' ),
+			'mixed separators'   => array( 'a\\b/c', 'a/b/c' ),
+			'dot segments'       => array( '/./../x/', 'x' ),
+			'sanitized to empty' => array( 'a/|/b', 'a/b' ),
+		);
+	}
+
+	/**
+	 * Empty segments are dropped so a sanitized path never starts at a root.
+	 *
+	 * @dataProvider rooted_subfolders
+	 * @param string $in  Raw folder path.
+	 * @param string $out Expected relative path.
+	 */
+	public function test_subfolder_path_stays_relative( string $in, string $out ): void {
+		$this->assertSame( $out, MainWP_Backup_File_Manager::sanitize_subfolder_path( $in ) );
+	}
+
+	/** A stored template with a leading slash still expands to a relative folder. */
+	public function test_rooted_subfolder_template_expands_relative(): void {
+		$this->assertSame( 'Shop/db', MainWP_Backup_File_Manager::expand_subfolder( '/%sitename%/%type%', 'Shop', 'https://example.com', 'db' ) );
 	}
 
 	/** Expansion puts the run date and time into the archive name. */

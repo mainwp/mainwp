@@ -231,10 +231,18 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
             }
         }
 
-        if ( '' === $this->base_path || ! is_dir( $this->base_path ) ) {
+        if ( '' === $this->base_path ) {
             return array(
                 'ok'    => false,
-                'error' => 'Base path does not exist.',
+                'error' => __( 'Enter a folder on the Dashboard server.', 'mainwp' ),
+            );
+        }
+
+        if ( ! is_dir( $this->base_path ) ) {
+            return array(
+                'ok'    => false,
+                /* translators: %s: directory path */
+                'error' => sprintf( __( 'The folder %s does not exist on the Dashboard server.', 'mainwp' ), $this->base_path ),
             );
         }
 
@@ -242,7 +250,8 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
         if ( ! $this->put_object( $probe, 'probe' ) ) {
             return array(
                 'ok'    => false,
-                'error' => 'Base path is not writable.',
+                /* translators: %s: directory path */
+                'error' => sprintf( __( 'The web server cannot write to the folder %s on the Dashboard server.', 'mainwp' ), $this->base_path ),
             );
         }
         $this->delete_object( $probe );

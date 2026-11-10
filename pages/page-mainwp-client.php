@@ -1669,10 +1669,17 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return;
         }
 
+        // Status transitions update every assigned site after the client hooks below.
+        // Keep newly selected sites in the same pre-transition state as existing sites.
+        $was_suspended      = 1 === (int) $old_suspended;
+        $is_suspended       = 1 === (int) $new_suspended;
+        $status_transition  = isset( $client_to_add['suspended'] ) && $was_suspended !== $is_suspended;
+        $inherit_suspension = ! $status_transition;
+
         if ( $client_id ) {
-            MainWP_DB_Client::instance()->update_selected_sites_for_client( $client_id, $selected_sites );
+            MainWP_DB_Client::instance()->update_selected_sites_for_client( $client_id, $selected_sites, $inherit_suspension );
         } elseif ( is_object( $inserted ) ) {
-            MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites );
+            MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites, $inherit_suspension );
             $client_id = $inserted->client_id;
         }
 
@@ -1705,9 +1712,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
 
             // Sites follow the client only into or out of Suspended; Lead and Lost leave them alone.
-            $was_suspended = 1 === (int) $old_suspended;
-            $is_suspended  = 1 === (int) $new_suspended;
-            if ( isset( $client_to_add['suspended'] ) && $was_suspended !== $is_suspended ) {
+            if ( $status_transition ) {
                 MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $inserted->client_id, $is_suspended ? 1 : 0 );
             }
         }

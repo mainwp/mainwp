@@ -49,6 +49,10 @@ function harness() {
     const renderStart = source.indexOf( 'function (', typeStart );
     const renderEnd = source.indexOf( '\n                        }', renderStart );
     vm.runInContext( 'var typeCell = ' + phpToJs( source.slice( renderStart, renderEnd ) ) + '\n};', context );
+    for (const name of ['uploadProgressText', 'uploadDetails']) {
+        const start = source.indexOf('function ' + name + '(');
+        vm.runInContext(phpToJs(source.slice(start, source.indexOf('\n            }', start) + '\n            }'.length)), context);
+    }
     for ( const name of [ '.mainwp-snapshot-uploads-toggle', '.mainwp-snapshot-skipped-toggle' ] ) {
         const clickStart = source.indexOf( "$( '#mainwp-restore-snapshots-table' ).on( 'click', '" + name + "'" );
         assert.ok( clickStart >= 0 );

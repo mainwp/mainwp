@@ -302,7 +302,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Describe a received body without retaining its raw contents.
      *
      * @param mixed $body Received response.
-     * @return string Safe description and, where possible, a short excerpt.
+     * @return string Fixed description without response content.
      */
     public static function describe_received_response( $body ) {
         if ( ! is_string( $body ) ) {
@@ -336,15 +336,6 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return __( 'Body: the site returned binary data, possibly encoded or compressed by the host. Ask the host to check response encoding for wp-admin/admin-ajax.php.', 'mainwp' );
         }
 
-        // Check the capped raw markup too: stripping tags first would discard
-        // sensitive field names while leaving their values in visible text.
-        $safe = self::sanitize_diagnostic_text( $sample );
-        if ( false !== stripos( self::decode_diagnostic_text( $sample ), 'cookie' ) ) {
-            $safe = self::sensitive_text();
-        }
-        $text      = html_entity_decode( $safe, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-        $text      = wp_strip_all_tags( $text, true );
-        $text      = trim( (string) preg_replace( '/\s+/', ' ', $text ) );
         $html      = false !== strpos( $sample, '<' ) && false !== strpos( $sample, '>' );
         $challenge = false !== stripos( $sample, 'wp-login' ) || false !== stripos( $sample, 'captcha' ) || false !== stripos( $sample, 'checking your browser' ) || false !== stripos( $sample, 'just a moment' );
         if ( $challenge ) {
@@ -354,15 +345,88 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         } else {
             $description = __( 'Body: the site returned text instead of the MainWP response. Ask the host to check the registration request to wp-admin/admin-ajax.php.', 'mainwp' );
         }
-        if ( $safe === $sample && preg_match( '/<title\b[^>]*>(.*?)<\/title\s*>/is', $sample, $title ) ) {
-            $text = trim( wp_strip_all_tags( html_entity_decode( $title[1], ENT_QUOTES | ENT_HTML5, 'UTF-8' ), true ) );
-        }
-        $excerpt = wp_html_excerpt( $text, 200, '…' );
-        if ( '' !== $excerpt ) {
-            /* translators: %s: short redacted response excerpt. */
-            $description .= "\n" . sprintf( __( 'Excerpt: %s', 'mainwp' ), $excerpt );
-        }
         return $description;
+    }
+
+    /**
+     * Remove legacy response dumps while retaining fixed diagnostic guidance.
+     *
+     * @param string $message Stored sync error, including failure HTML.
+     * @return string Error without response content.
+     */
+    public static function sanitize_sync_error( $message ) {
+        $descriptions = array(
+            'Body: the site returned an empty response. Ask the host to check the registration request to wp-admin/admin-ajax.php.',
+            'Body: a MainWP response was found but could not be read. Ask the host to check whether a plugin or proxy altered the response.',
+            'Body: the site returned binary data, possibly encoded or compressed by the host. Ask the host to check response encoding for wp-admin/admin-ajax.php.',
+            'Body: the site returned a login or challenge page instead of the MainWP response. Check the site firewall, security and caching plugins.',
+            'Body: the site returned an HTML page instead of the MainWP response. A firewall, security or caching plugin may have replaced it. Check those rules for wp-admin/admin-ajax.php.',
+            'Body: the site returned text instead of the MainWP response. Ask the host to check the registration request to wp-admin/admin-ajax.php.',
+            'Body: the site returned a MainWP error response. Follow the specific error message to complete the connection.',
+            'Body: received but not shown, because it may contain sensitive data.',
+            'Body: no readable child response was returned.',
+        );
+        foreach ( array( '', '<mainwp>', "\0", 'captcha', '<html>', 'text' ) as $sample ) {
+            $descriptions[] = self::describe_received_response( $sample );
+        }
+        $descriptions[] = __( 'Body: the site returned a MainWP error response. Follow the specific error message to complete the connection.', 'mainwp' );
+        $descriptions[] = __( 'Body: received but not shown, because it may contain sensitive data.', 'mainwp' );
+        $descriptions[] = __( 'Body: no readable child response was returned.', 'mainwp' );
+        $descriptions   = array_merge( $descriptions, array_map( 'esc_html', $descriptions ) );
+        $labels         = array( 'Body:', 'Excerpt:' );
+        foreach ( $descriptions as $description ) {
+            $labels[] = $description;
+        }
+        /* translators: %s: short redacted response excerpt. */
+        $labels[] = sprintf( __( 'Excerpt: %s', 'mainwp' ), '' );
+        $labels[] = esc_html( end( $labels ) );
+        $labels   = array_filter(
+            $labels,
+            static function ( $label ) {
+                return strlen( trim( $label ) ) > 3;
+            }
+        );
+        $pattern  = '~(?:^|[\r\n>])\K(?:' . implode(
+            '|',
+            array_map(
+                static function ( $label ) {
+                    return preg_quote( $label, '~' );
+                },
+                $labels
+            )
+        ) . ').*?(?=(?i:</pre\s*>)|$)~s';
+
+        $original = (string) $message;
+        $message  = preg_replace_callback(
+            $pattern,
+            static function ( $parts ) use ( $descriptions ) {
+                foreach ( $descriptions as $description ) {
+                    if ( 0 === strpos( $parts[0], $description ) ) {
+                        return $description;
+                    }
+                }
+                return '';
+            },
+            (string) $message
+        );
+        if ( ! is_string( $message ) ) {
+            return self::unredactable_text();
+        }
+
+        // Older locales are unavailable after a language change. A generated
+        // response ends with a body block; fixed descriptions occupy one line.
+        $result = preg_replace_callback(
+            '~(<pre\b[^>]*>)(.*?)(</pre\s*>)~is',
+            static function ( $parts ) {
+                $boundary = strrpos( $parts[2], "\n\n" );
+                if ( false !== $boundary && false !== strpos( substr( $parts[2], $boundary + 2 ), "\n" ) ) {
+                    return $parts[1] . substr( $parts[2], 0, $boundary + 2 ) . $parts[3];
+                }
+                return $parts[0];
+            },
+            $message
+        );
+        return is_string( $result ) && ( '' !== $result || '' === $original ) ? $result : self::unredactable_text();
     }
 
     /**

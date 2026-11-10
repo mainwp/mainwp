@@ -298,6 +298,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             'transfer'   => array(),
         );
 
+        if ( MainWP_Backup_Restore_Job_Store::valid_admission_token( $options['admission_token'] ?? null ) ) {
+            $checkpoint['admission_token'] = $options['admission_token'];
+        }
+
         $metadata = MainWP_Backup_Monitor::restore_plan_metadata( (array) $resolved['plan'] );
         if ( ! empty( $metadata ) ) {
             $admission = MainWP_Backup_Monitor::admit_restore_plan( MainWP_DB::instance()->get_website_by_id( $site_id ), (array) $resolved['plan'], '', true );
@@ -338,6 +342,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             // A concurrent submit won the slot for this site.
             throw new MainWP_Exception( $running, null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- callers pass escaped strings.
         }
+        $test_restore = $store->get_live_test_restore_for_site( $site_id );
+        if ( null !== $test_restore ) {
+            $refusal = new MainWP_Exception( esc_html__( 'An automatic test restore is running on this site. Try again in about a minute.', 'mainwp' ), null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+            $refusal->set_data(
+                array(
+                    'test_restore_running' => true,
+                    'snapshot_id'          => (int) $test_restore->snapshot_id,
+                )
+            );
+            throw $refusal; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- fixed translated message.
+        }
         throw new MainWP_Exception( esc_html__( 'Another backup action is working on this site. Try again in a minute.', 'mainwp' ), null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped and the code is a trusted constant.
     }
 
@@ -375,10 +390,16 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @return string|null Error code to refuse with, or null to proceed.
      */
     public function woo_preserve_refusal( object $website, ?object $snapshot ): ?string {
+        $clamp = static function ( $timeout, $what = '' ) {
+            return 'restore_preflight' === $what ? min( 30, (int) $timeout ) : $timeout;
+        };
+        add_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX, 2 );
         try {
             $preflight = MainWP_Connect::fetch_url_authed( $website, 'restore_preflight', array(), false, false, false );
         } catch ( \Throwable $e ) {
             return null; // Unreachable: the apply-phase gate backstops.
+        } finally {
+            remove_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
         }
         if ( ! is_array( $preflight ) || isset( $preflight['error'] ) || ! array_key_exists( 'woo_hpos_enabled', $preflight ) ) {
             return null; // Older child or malformed response: defer.
@@ -495,12 +516,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param object $failed_job Finished (failed, cancelled, or completed)
      *                           restore job carrying pre_snapshot_artifacts
      *                           in its checkpoint.
+     * @param array  $options Browser admission token, when supplied.
      *
      * @throws MainWP_Exception When the job has no rollback source or its format metadata is invalid.
      *
      * @return int New job id.
      */
-    public function initiate_rollback( object $failed_job ): int {
+    public function initiate_rollback( object $failed_job, array $options = array() ): int {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -532,7 +554,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( null === $source || (int) $source->site_id !== (int) $failed_job->site_id ) {
                 throw new MainWP_Exception( esc_html__( 'Restore job not found.', 'mainwp' ) );
             }
-            $job_id      = $this->admit_rollback( $reservation, $source );
+            $job_id      = $this->admit_rollback( $reservation, $source, $options );
             $reservation = 0;
         } finally {
             if ( $reservation > 0 ) {
@@ -563,12 +585,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *
      * @param int    $reservation Reservation id holding the site.
      * @param object $failed_job  Source restore job, freshly read.
+     * @param array  $options Browser admission token, when supplied.
      *
      * @throws MainWP_Exception When the job has no rollback source or its format metadata is invalid.
      *
      * @return int New job id.
      */
-    private function admit_rollback( int $reservation, object $failed_job ): int {
+    private function admit_rollback( int $reservation, object $failed_job, array $options = array() ): int {
         $this->assert_rollback_status( $failed_job );
 
         $artifacts = isset( $failed_job->checkpoint['pre_snapshot_artifacts'] ) ? (array) $failed_job->checkpoint['pre_snapshot_artifacts'] : array();
@@ -630,6 +653,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             ),
             'transfer'               => array(),
         );
+        if ( MainWP_Backup_Restore_Job_Store::valid_admission_token( $options['admission_token'] ?? null ) ) {
+            $checkpoint['admission_token'] = $options['admission_token'];
+        }
         if ( ! empty( $failed_job->checkpoint['source_site_id'] ) ) {
             $checkpoint['source_site_id'] = (int) $failed_job->checkpoint['source_site_id'];
         }

@@ -416,6 +416,7 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ), 'The scratch database must be dropped.' );
 		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'], 'The sandbox temp dir must be removed.' );
+		$this->assertNull( \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance()->get_live_test_restore_for_site( $this->site_id ) );
 	}
 
 	/** The shared staging driver must mark damage before a sandbox imports bytes. */
@@ -809,7 +810,28 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$driver         = new Testable_TestRestore_Driver();
-		$driver->driver = new TestRestore_Incomplete_Staging_Driver();
+		$driver->driver = new class() extends TestRestore_Incomplete_Staging_Driver {
+			/**
+			 * Observe ownership before the early return.
+			 *
+			 * @var object|null
+			 */
+			public $reservation;
+
+			/**
+			 * Capture the live reader while staging holds it.
+			 *
+			 * @param int   $job_id Staging id.
+			 * @param array $plan Plan.
+			 * @param float $deadline Deadline.
+			 * @return array Staging outcome.
+			 */
+			public function stage_artifacts( int $job_id, array &$plan, float $deadline ): array {
+				$snapshot          = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $plan[0]['snapshot_id'] );
+				$this->reservation = \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance()->get_live_test_restore_for_site( (int) $snapshot->site_id );
+				return parent::stage_artifacts( $job_id, $plan, $deadline );
+			}
+		};
 
 		$result = $driver->verify_snapshot( $snapshot_id );
 
@@ -822,6 +844,9 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 		$this->assertSame( '', (string) $snapshot->test_restore_state, 'A staging budget miss must not record a terminal state on a healthy snapshot.' );
+		$this->assertNotNull( $driver->driver->reservation );
+		$this->assertSame( $snapshot_id, (int) $driver->driver->reservation->snapshot_id );
+		$this->assertNull( \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance()->get_live_test_restore_for_site( $this->site_id ), 'An early return without a result releases the running badge.' );
 	}
 
 	/**
@@ -898,11 +923,35 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The sandbox is fully torn down on both a passing and a failing run: no
-	 * scratch database and no temp dir linger either way.
+	 * Save failures preserve the driver's verdict and leave recorded state unchanged.
 	 *
 	 * @return void
 	 */
+	public function test_save_failure_does_not_escape_the_driver_or_change_the_verdict() {
+		$dump   = $this->write_db_dump( 'save-fail.sql.gz', $this->sentinel_sql() );
+		$id     = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'save-fail.sql.gz',
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+		$filter = 'pre_update_option_mainwp_testrestore_result_' . $id;
+		add_filter( $filter, '__return_false' );
+		try {
+			$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $id );
+			$this->assertSame( 'pass', $result['state'] );
+			$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->test_restore_state );
+		} finally {
+			remove_filter( $filter, '__return_false' );
+		}
+	}
+
+	/** Scratch databases and directories are removed after passing and failing runs. */
 	public function test_sandbox_torn_down_on_pass_and_fail() {
 		// Pass run.
 		$dump_ok = $this->write_db_dump( 'ok.sql.gz', $this->sentinel_sql() );
@@ -937,6 +986,9 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		);
 		$fail     = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $fail_id );
 		$this->assertSame( 'fail', $fail['state'] );
+		$details = MainWP_Backup_Snapshots::instance()->get_test_restore_details( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $fail_id ) );
+		$this->assertSame( $fail['error_code'], $details['error_code'] );
+		$this->assertNotEmpty( $details['error'] );
 		$this->assertFalse( $this->db_exists( $fail['sandbox']['db_name'] ) );
 		$this->assertDirectoryDoesNotExist( $fail['sandbox']['temp_dir'] );
 	}

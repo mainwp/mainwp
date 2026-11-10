@@ -715,9 +715,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', ! empty( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365 );
                 MainWP_Utility::update_option( 'mainwp_abandoned_check_by_local_date', isset( $_POST['mainwp_abandoned_check_by_local_date'] ) ? 1 : 0 );
 
-                $actions_notification_enable = ( isset( $_POST['mainwp_site_actions_notification_enable'] ) ? 1 : 0 );
-                MainWP_Utility::update_option( 'mainwp_site_actions_notification_enable', $actions_notification_enable );
-
                 //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 // Handle custom date/time formats.
                 if ( ! empty( $_POST['date_format'] ) && isset( $_POST['date_format_custom'] )
@@ -818,7 +815,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_abandoned_check_by_local_date',
             'mainwp_check_http_response',
             'mainwp_check_http_response_method',
-            'mainwp_site_actions_notification_enable',
             'mainwp_use_favicon',
             'mainwp_backupsOnServer',
             'mainwp_maximumFileDescriptors',
@@ -2468,7 +2464,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                             </div>
                                             <div class="ui grid field">
                                                 <label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to set a new pair of OpenSSL Keys', 'mainwp' ); ?></label>
-                                                <div class="ten wide column" id="mainwp-renew-connections-tool" data-content="<?php esc_attr_e( 'This will function renew connection and reconnect site right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                                                <div class="ten wide column" id="mainwp-renew-connections-tool" data-content="<?php esc_attr_e( 'This function will renew the connection and reconnect the site right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
                                                         <a href="javascript:void(0)" onclick="mainwp_tool_renew_connections_show(); return false;" class="ui button green basic"><?php esc_html_e( 'Reset OpenSSL Key Pair', 'mainwp' ); ?></a>
                                                 </div>
                                             </div>
@@ -2488,7 +2484,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
                         <div class="ui grid field">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
-                        <div class="ten wide column" id="mainwp-disconnect-sites-tool" data-content="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                        <div class="ten wide column" id="mainwp-disconnect-sites-tool" data-content="<?php esc_attr_e( 'This function will break the connection and leave the MainWP Child plugin active, which makes your sites vulnerable. Use only if you intend to reconnect the site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
                             <a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Sites', 'mainwp' ); ?></a>
                     </div>
                     </div>
@@ -2500,7 +2496,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Delete archived Network Activity data', 'mainwp' ); ?></label>
-                        <div class="ten wide column" id="mainwp-clear-archived-sites-changes-data" data-content="<?php esc_attr_e( 'Delete archived sNetwork Activity data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                        <div class="ten wide column" id="mainwp-clear-archived-sites-changes-data" data-content="<?php esc_attr_e( 'Delete archived Network Activity data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
                             <a href="admin.php?page=MainWPTools&clearArchivedSitesChangesData=yes&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'clear_archived_sites_changes' ) ); ?>" onclick="mainwp_tool_confirm_to_process(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Archived Network Activity Data', 'mainwp' ); ?></a>
                         </div>
                     </div>
@@ -2603,6 +2599,19 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
 
     /**
+     * Get the built-in appearance choices in display order.
+     *
+     * @return array Theme keys and translated labels.
+     */
+    public static function get_builtin_theme_choices() {
+        return array(
+            'system'       => __( 'System', 'mainwp' ),
+            'default'      => __( 'Light', 'mainwp' ),
+            'default-dark' => __( 'Dark', 'mainwp' ),
+        );
+    }
+
+    /**
      * Render MainWP themes selection.
      */
     public function render_select_custom_themes() { // phpcs:ignore -- NOSONAR - complex.
@@ -2611,10 +2620,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             // to compatible with Custom Dashboard extension settings.
             $compat_settings = get_option( 'mainwp_custom_dashboard_settings' );
             if ( is_array( $compat_settings ) && isset( $compat_settings['theme'] ) ) {
-                $compat_theme = $compat_settings['theme'];
-            }
-            if ( null !== $compat_theme ) {
-                $custom_theme = $compat_theme;
+                $custom_theme = $compat_settings['theme'];
             }
         }
         $themes_files = static::get_instance()->get_custom_themes_files();
@@ -2622,7 +2628,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             $themes_files = array();
         }
         ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="default">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools" default-indi-value="<?php echo esc_attr( MainWP_Settings_Indicator::get_defaults_value( 'mainwp_selected_theme' ) ); ?>">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_selected_theme', $custom_theme );
@@ -2631,8 +2637,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             </label>
             <div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection settings-field-value-change-handler">
-                    <option value="default" <?php echo ( 'default' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Light', 'mainwp' ); ?></option>
-                    <option value="default-dark" <?php echo ( 'default-dark' === $custom_theme || empty( $custom_theme ) ) ? 'selected' : ''; ?>><?php esc_html_e( 'Dark', 'mainwp' ); ?></option>
+                    <?php foreach ( static::get_builtin_theme_choices() as $theme => $label ) : ?>
+                        <option value="<?php echo esc_attr( $theme ); ?>" <?php selected( $custom_theme ?: 'default', $theme ); ?>><?php echo esc_html( $label ); ?></option>
+                    <?php endforeach; ?>
                     <?php if ( 'default-2024' === $custom_theme ) { ?>
                     <option value="default-2024" <?php echo ( 'default-2024' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default 2024', 'mainwp' ); ?></option>
                     <?php } ?>
@@ -2704,16 +2711,12 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             // to compatible with Custom Dashboard extension settings.
             $compat_settings = get_option( 'mainwp_custom_dashboard_settings' );
             if ( is_array( $compat_settings ) && isset( $compat_settings['theme'] ) ) {
-                $compat_theme = $compat_settings['theme'];
-            }
-
-            if ( null !== $compat_theme ) {
-                $custom_theme = $compat_theme;
+                $custom_theme = $compat_settings['theme'];
             }
         }
 
         if ( ! empty( $custom_theme ) ) {
-            if ( 'default' === $custom_theme || 'default-dark' === $custom_theme || 'default-2024' === $custom_theme || 'dark' === $custom_theme || 'wpadmin' === $custom_theme || 'minimalistic' === $custom_theme ) {
+            if ( in_array( $custom_theme, array( 'system', 'default', 'default-dark', 'default-2024', 'dark', 'wpadmin', 'minimalistic' ), true ) ) {
                 return $custom_theme;
             }
             $dirs      = $this->get_custom_theme_folder();

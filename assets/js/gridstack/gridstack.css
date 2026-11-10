@@ -1,16 +1,9 @@
 /**
- * gridstack SASS styles 12.3.1
+ * gridstack SASS styles 14.1.0
  * Copyright (c) 2021-2025 Alain Dumesny - see GridStack root license
  */
 .grid-stack {
   position: relative;
-}
-
-.grid-stack-rtl {
-  direction: ltr;
-}
-.grid-stack-rtl > .grid-stack-item {
-  direction: rtl;
 }
 
 .grid-stack-placeholder > .placeholder-content {
@@ -25,7 +18,6 @@
   position: absolute;
   padding: 0;
   top: 0;
-  left: 0;
   width: var(--gs-column-width);
   height: var(--gs-cell-height);
 }
@@ -40,6 +32,14 @@
   overflow-y: hidden;
 }
 
+.grid-stack:not(.grid-stack-rtl) > .grid-stack-item {
+  left: 0;
+}
+
+.grid-stack.grid-stack-rtl > .grid-stack-item {
+  right: 0;
+}
+
 .grid-stack > .grid-stack-item > .grid-stack-item-content,
 .grid-stack > .grid-stack-placeholder > .placeholder-content {
   top: var(--gs-item-margin-top);
@@ -52,8 +52,10 @@
   position: absolute;
   font-size: 0.1px;
   display: block;
-  -ms-touch-action: none;
-  touch-action: none;
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+  user-select: none;
+  z-index: 100;
 }
 .grid-stack-item.ui-resizable-disabled > .ui-resizable-handle, .grid-stack-item.ui-resizable-autohide > .ui-resizable-handle {
   display: none;
@@ -65,17 +67,21 @@
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23666" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 20 20"><path d="m10 3 2 2H8l2-2v14l-2-2h4l-2 2"/></svg>');
   background-repeat: no-repeat;
   background-position: center;
+  z-index: 101;
+}
+.grid-stack-item > .ui-resizable-ne {
+  transform: rotate(45deg);
 }
 .grid-stack-item > .ui-resizable-sw {
   transform: rotate(45deg);
-  cursor: sw-resize;
-  width: 20px;
-  height: 20px;
-  bottom: var(--gs-item-margin-bottom);
-  left: var(--gs-item-margin-left);
 }
 .grid-stack-item > .ui-resizable-nw {
   transform: rotate(-45deg);
+}
+.grid-stack-item > .ui-resizable-se {
+  transform: rotate(-45deg);
+}
+.grid-stack-item > .ui-resizable-nw {
   cursor: nw-resize;
   width: 20px;
   height: 20px;
@@ -95,7 +101,6 @@
   height: 20px;
   top: var(--gs-item-margin-top);
   right: var(--gs-item-margin-right);
-  transform: rotate(45deg);
 }
 .grid-stack-item > .ui-resizable-e {
   cursor: e-resize;
@@ -110,7 +115,6 @@
   height: 20px;
   bottom: var(--gs-item-margin-bottom);
   right: var(--gs-item-margin-right);
-  transform: rotate(-45deg);
 }
 .grid-stack-item > .ui-resizable-s {
   cursor: s-resize;
@@ -118,6 +122,13 @@
   left: 25px;
   bottom: var(--gs-item-margin-bottom);
   right: 25px;
+}
+.grid-stack-item > .ui-resizable-sw {
+  cursor: sw-resize;
+  width: 20px;
+  height: 20px;
+  bottom: var(--gs-item-margin-bottom);
+  left: var(--gs-item-margin-left);
 }
 .grid-stack-item > .ui-resizable-w {
   cursor: w-resize;
@@ -130,12 +141,38 @@
   display: none !important;
 }
 .grid-stack-item.ui-draggable-dragging {
-  will-change: left, top;
+  will-change: left, right, top;
 }
 .grid-stack-item.ui-resizable-resizing {
   will-change: width, height;
 }
+.grid-stack-item.ui-draggable-armed {
+  cursor: move;
+  animation: gs-armed-wiggle 0.25s ease-in-out infinite;
+}
+.grid-stack-item > .ui-resizable-handle.ui-resizable-armed {
+  animation: gs-armed-pulse 0.5s ease-in-out infinite;
+}
 
+@keyframes gs-armed-wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-1.5deg);
+  }
+  75% {
+    transform: rotate(1.5deg);
+  }
+}
+@keyframes gs-armed-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
 .ui-draggable-dragging,
 .ui-resizable-resizing {
   z-index: 10000;
@@ -148,19 +185,144 @@
 
 .grid-stack-animate,
 .grid-stack-animate .grid-stack-item {
-  transition: left 0.3s, top 0.3s, height 0.3s, width 0.3s;
+  transition: left 0.3s, right 0.3s, top 0.3s, height 0.3s, width 0.3s;
 }
 
 .grid-stack-animate .grid-stack-item.ui-draggable-dragging,
 .grid-stack-animate .grid-stack-item.ui-resizable-resizing,
 .grid-stack-animate .grid-stack-item.grid-stack-placeholder {
-  transition: left 0s, top 0s, height 0s, width 0s;
+  transition: left 0s, right 0s, top 0s, height 0s, width 0s;
 }
 
 .grid-stack > .grid-stack-item[gs-y="0"] {
   top: 0px;
 }
 
-.grid-stack > .grid-stack-item[gs-x="0"] {
+.grid-stack:not(.grid-stack-rtl) > .grid-stack-item[gs-x="0"] {
   left: 0%;
+}
+
+.grid-stack.grid-stack-rtl > .grid-stack-item[gs-x="0"] {
+  right: 0%;
+}
+
+.gs-print-show {
+  display: none;
+}
+
+@media print {
+  @page gs-landscape {
+    size: landscape;
+  }
+  @page gs-portrait {
+    size: portrait;
+  }
+  /* ========================================================================
+     PRINT LAYOUT
+     GridStack normally positions items with `position: absolute`, which browsers
+     can't paginate at all (it's removed from the flow). For print we switch to
+     block/float flow instead: items auto-size their height to content and flow
+     left to right, wrapping naturally across pages without being sliced in half.
+     Trade-off: this ignores the exact on-screen Y coordinate, so if one item in
+     a row is much taller than its siblings, shorter siblings in the next row
+     still can't start higher than that tall item's bottom (plain CSS has no
+     print-safe masonry packing) - hidden items don't cause this though, since
+     a display:none item simply takes no space and following items move up.
+     ======================================================================== */
+  .grid-stack {
+    display: block !important;
+    height: auto !important;
+    position: static !important;
+  }
+  .grid-stack > .grid-stack-item {
+    display: block !important;
+    float: left !important;
+    position: static !important;
+    height: auto !important; /* Let it grow with content */
+    left: auto !important;
+    top: auto !important;
+    /* Proportional width based on grid columns */
+    width: calc(100% * var(--gs-w) / var(--gs-columns, 12)) !important;
+    /* Prevent slicing items across pages */
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .grid-stack > .grid-stack-item > .grid-stack-item-content {
+    position: relative !important; /* change from absolute to relative to dictate parent height */
+    height: auto !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    /* Convert absolute positioning offsets to margins to keep the gaps */
+    margin-top: var(--gs-item-margin-top) !important;
+    margin-right: var(--gs-item-margin-right) !important;
+    margin-bottom: var(--gs-item-margin-bottom) !important;
+    margin-left: var(--gs-item-margin-left) !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+  }
+  /* ========================================================================
+     PER-WIDGET PrintOptions
+     ======================================================================== */
+  .gs-print-hide {
+    display: none;
+  }
+  .gs-print-show {
+    display: block;
+  }
+  /* opt-in for any element (not just grid items) that must not have a page break land right after
+     it - ex: a section/table header that has to stay with the content that follows. Put this on a
+     plain block-level wrapper rather than directly on a `display:flex`/`grid` element: Chrome's print
+     engine ignores break-after/page-break-after set on flex/grid containers themselves. */
+  .gs-print-avoid-break-after {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+  /* needs to out-specificity the base item rule above (display: block !important)
+     so a hidden widget actually collapses instead of still reserving its slot */
+  .grid-stack > .grid-stack-item.gs-print-hide {
+    display: none !important;
+  }
+  /* pageBreak/orientation need the item to be a normal block box: Chrome's print
+     engine ignores forced page breaks on floated elements, so pull these out of
+     the float flow (their width is kept as-is - a plain block box already can't
+     have a later float rise up beside it, so nothing else tucks into the row). */
+  .grid-stack > .grid-stack-item[gs-page-break=true],
+  .grid-stack > .grid-stack-item[gs-print-orientation] {
+    float: none !important;
+    clear: both !important;
+  }
+  .grid-stack > .grid-stack-item[gs-page-break=true] {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  .grid-stack > .grid-stack-item[gs-print-orientation=landscape] {
+    page: gs-landscape;
+    /* Force item to take proper landscape width, overriding portrait-page sizing.
+       vmax ensures we get the long edge of the paper regardless of default printer orientation */
+    min-width: calc(100vmax * var(--gs-w) / var(--gs-columns, 12)) !important;
+  }
+  .grid-stack > .grid-stack-item[gs-print-orientation=portrait] {
+    page: gs-portrait;
+    /* vmin ensures we get the short edge of the paper */
+    min-width: calc(100vmin * var(--gs-w) / var(--gs-columns, 12)) !important;
+  }
+  /* breakInside opts a widget (tall table/datagrid, or a section wrapping a nested sub-grid) out of
+     the base rule's break-inside: avoid, so it can fragment across pages instead of being pushed
+     whole to the next page whenever it doesn't fit in the space remaining on the current one - which
+     otherwise leaves the current page mostly blank. Pulled out of the float flow and widened to the
+     full print width, same reasoning as pageBreak/orientation above: Chrome can mis-paginate a
+     floated box that's allowed to break across pages, overlapping the next floated sibling. */
+  .grid-stack > .grid-stack-item[gs-break-inside=true] {
+    float: none !important;
+    clear: both !important;
+    width: 100% !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+  /* Hide interactive elements during print */
+  .grid-stack > .grid-stack-item > .ui-resizable-handle {
+    display: none !important;
+  }
 }

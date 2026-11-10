@@ -53,3 +53,11 @@ test( 'every literal AJAX action posted from assets/js has a PHP registration', 
     }
     assert.deepEqual( [ ...new Set( orphans ) ], [] );
 } );
+
+test( 'pCloud Save with a code posts the registered connect action', () => {
+    const handler = fs.readFileSync(path.join(root, 'class/backup/storage/class-mainwp-backup-storage-handler.php'), 'utf8');
+    const view = fs.readFileSync(path.join(root, 'pages/backup/page-mainwp-backup-storage-view.php'), 'utf8');
+    assert.match(handler, /\$this->add_action\( 'mainwp_pcloud_connect', array\( &\$this, 'ajax_pcloud_connect' \) \)/);
+    assert.match(view, /destinationData\( 'mainwp_pcloud_connect' \)/);
+    assert.match(handler, /\$this->secure_request\( 'mainwp_pcloud_connect' \)/);
+} );

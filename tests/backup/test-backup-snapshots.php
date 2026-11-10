@@ -88,11 +88,84 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Recording a snapshot returns its id and the row round-trips with the
-	 * archives list decoded.
+	 * Saved failure details survive reads and clear after a passing result.
 	 *
 	 * @return void
 	 */
+	public function test_test_restore_failure_details_round_trip_and_clear_on_pass() {
+		$store = MainWP_Backup_Snapshots::instance();
+		$id    = $this->record();
+		$store->set_test_restore_result(
+			$id,
+			'fail',
+			1700000000,
+			array(
+				'error_code' => 'mainwp_sandbox_apply_failed',
+				'error'      => '<b>Archive could not be read.</b> ' . ABSPATH . 'private.sql',
+				'checks'     => array(
+					array(
+						'name'   => 'files_extracted',
+						'ok'     => false,
+						'detail' => '0 files',
+					),
+				),
+			)
+		);
+		$details = $store->get_test_restore_details( $store->get_snapshot_by_id( $id ) );
+		$this->assertSame( 'mainwp_sandbox_apply_failed', $details['error_code'] );
+		$this->assertStringContainsString( 'Archive could not be read.', $details['error'] );
+		$this->assertStringNotContainsString( '<b>', $details['error'] );
+		$this->assertStringNotContainsString( ABSPATH, $details['error'] );
+		$this->assertFalse( $details['assertions'][0]['ok'] );
+		$read = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Backup_Read_Model::class, 'snapshot_test_restore' );
+		$read->setAccessible( true );
+		$view = $read->invoke( null, $store->get_snapshot_by_id( $id ) );
+		$this->assertSame( $details['error'], $view['error'] );
+		$this->assertSame( $details['assertions'], $view['assertions'] );
+		$this->assertSame( array( 'files_extracted', 'db_imported', 'db_has_rows' ), $view['checks'] );
+		$store->set_test_restore_result( $id, 'pass', 1700000001 );
+		$details = $store->get_test_restore_details( $store->get_snapshot_by_id( $id ) );
+		$this->assertSame( '', $details['error'] );
+		$this->assertSame( '', $details['error_code'] );
+		$this->assertSame( array(), $details['assertions'] );
+	}
+
+	/** A failed details write must leave the recorded verdict unchanged. */
+	public function test_test_restore_does_not_record_success_when_details_cannot_be_saved() {
+		$store  = MainWP_Backup_Snapshots::instance();
+		$id     = $this->record();
+		$filter = 'pre_update_option_mainwp_testrestore_result_' . $id;
+		add_filter( $filter, '__return_false' );
+		$caught = null;
+		try {
+			$store->set_test_restore_result( $id, 'pass', 1700000000 );
+		} catch ( \MainWP\Dashboard\MainWP_Exception $error ) {
+			$caught = $error;
+		} finally {
+			remove_filter( $filter, '__return_false' );
+		}
+		$this->assertNotNull( $caught );
+		$this->assertSame( 'mainwp_testrestore_save_failed', $caught->get_message_error_code() );
+		$this->assertSame( '', $store->get_snapshot_by_id( $id )->test_restore_state );
+	}
+
+	/** Sanitization preserves useful references and complete UTF-8 characters. */
+	public function test_test_restore_message_preserves_relative_paths_urls_and_utf8() {
+		$method = new \ReflectionMethod( MainWP_Backup_Snapshots::class, 'test_restore_message' );
+		$method->setAccessible( true );
+		$store    = MainWP_Backup_Snapshots::instance();
+		$relative = 'wp-content/uploads/2026/dump.sql';
+		$url      = 'https://example.com/docs/backups/restore';
+		$this->assertSame( $relative, $method->invoke( $store, $relative ) );
+		$this->assertSame( $url, $method->invoke( $store, $url ) );
+		$long    = str_repeat( 'a', 999 ) . 'ü';
+		$bounded = $method->invoke( $store, $long );
+		$this->assertNotEmpty( $bounded );
+		$this->assertSame( 1, preg_match( '//u', $bounded ) );
+		$this->assertLessThanOrEqual( 1000, strlen( $bounded ) );
+	}
+
+	/** Recorded snapshots retain their id and decoded archive list. */
 	public function test_record_snapshot_round_trips() {
 		$id = $this->record();
 

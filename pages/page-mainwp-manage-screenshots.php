@@ -428,9 +428,11 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                             ?>
 
                             <div class="card" site-url="<?php echo esc_url( $website->url ); ?>">
+                                <?php if ( MainWP_UI::is_site_preview_enabled() ) : ?>
                                 <div class="image" data-tooltip="<?php echo esc_attr( $status_tooltip ); ?>" data-position="top center" data-inverted="">
                                     <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" data-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $site_mshot['requeue_src'] ); ?>">
                                 </div>
+                                <?php endif; ?>
                                 <div class="ui <?php echo esc_attr( $status_color ); ?> corner label">
                                     <i class="<?php echo esc_attr( $status_icon ); ?> icon"></i>
                                 </div>
@@ -541,7 +543,7 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
-                        <div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                        <div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
                             <?php
                             if ( $is_demo ) {
                                     MainWP_Demo_Handle::get_instance()->render_demo_disable_button( '<a href="#" disabled="disabled" class="ui button green basic disabled">' . esc_html__( 'Disconnect Websites.', 'mainwp' ) . '</a>' );

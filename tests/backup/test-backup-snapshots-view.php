@@ -389,7 +389,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'mainwp_native_backup_progress', $output );
 		$this->assertStringContainsString( 'function pollBackup', $output, 'The poll loop must be present.' );
 		$this->assertMatchesRegularExpression(
-			"/'completed' === data\.status[^}]*loadSnapshots\( currentSite \)/s",
+			'/Backup completed successfully\.(?:(?!return;).)*?loadSnapshots\( siteId \)/s',
 			$output,
 			'A completed backup must refresh the list in place, not reload.'
 		);

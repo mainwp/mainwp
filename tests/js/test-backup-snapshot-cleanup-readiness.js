@@ -47,6 +47,8 @@ function harness() {
         return {fail(callback) { request.failure = callback; return this; }};
     };
     context.snapshotsTable = {clear() { tableEvents.push('clear'); return this; }, draw() { tableEvents.push('draw'); return this; }, rows: {add(rows) { tableEvents.push(rows); }}};
+    Object.assign(context, {snapshotPollTimer: 0, snapshotPollFailures: 0, scheduleSnapshotPoll() {}});
+    context.window = context.window || {clearTimeout() {}};
     vm.createContext(context);
     const evaluate = code => vm.runInContext(code.replace(/<\?php[\s\S]*?\?>/g, 'Localized text'), context);
     for (const name of ['escAttr', 'enableSnapshotControls', 'loadSnapshots']) {

@@ -374,7 +374,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Edit api key v1.
         if ( ! is_numeric( $cons_key_id ) ) {
-            if ( ! MainWP_System_Utility::is_admin() || MainWP_System_Utility::is_team_control_staff() ) {
+            if ( ! MainWP_Rest_Api_Page::can_manage_legacy_api_keys() ) {
                 return new WP_Error(
                     'mainwp_restricted_account',
                     __( 'Only unrestricted administrators can edit legacy API keys.', 'mainwp' ),

@@ -9,6 +9,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Read_Model;
+use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
 use MainWP\Dashboard\MainWP_DB;
 
@@ -156,5 +157,49 @@ class MainWP_Backup_Restorable_Evidence_Test extends MainWP_Abilities_Test_Case 
 			$this->assertSame( $entry['catalog_restore_reason'], $entry['restore_reason'] );
 		}
 		$this->assertFalse( MainWP_Backup_Read_Model::get_backup_snapshot( 987673 )['restorable'] );
+	}
+	/** A list shares one liveness read while only the reserved snapshot gets the badge. */
+	public function test_snapshot_list_reads_live_test_restore_once() {
+		$this->insert_read_fixture(
+			'wp_backup_snapshot',
+			array(
+				'id'       => 987679,
+				'site_id'  => $this->site_id,
+				'task_id'  => 987671,
+				'type'     => 'full',
+				'created'  => 2000000001,
+				'archives' => '[]',
+			)
+		);
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$id    = $store->reserve_site( $this->site_id, 'test_restore', 987673 );
+		$this->assertGreaterThan( 0, $id );
+		$reads = 0;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$count = static function ( $sql ) use ( &$reads, $table ) {
+			if ( str_contains( $sql, $table ) && str_contains( $sql, 'IS_USED_LOCK' ) ) {
+				++$reads;
+			}
+			return $sql;
+		};
+		try {
+			$this->assertTrue( $store->renew_reservation( $id ) );
+			add_filter( 'query', $count );
+			try {
+				$entries = MainWP_Backup_Read_Model::list_backup_snapshots( $this->site_id, false );
+			} finally {
+				remove_filter( 'query', $count );
+			}
+			$this->assertCount( 2, $entries );
+			$this->assertSame( 1, $reads );
+			foreach ( $entries as $entry ) {
+				$this->assertSame( 987673 === (int) $entry['snapshot']->id, $entry['test_restore_running'] );
+			}
+		} finally {
+			$store->release_reservation( $id );
+		}
+		foreach ( MainWP_Backup_Read_Model::list_backup_snapshots( $this->site_id, false ) as $entry ) {
+			$this->assertFalse( $entry['test_restore_running'] );
+		}
 	}
 }

@@ -308,7 +308,7 @@ class MainWP_Abilities_Backups {
                             ),
                             'provider' => array(
                                 'type' => 'string',
-                                'enum' => array( 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                                'enum' => array( 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local' ),
                             ),
                         ),
                     ),
@@ -543,6 +543,7 @@ class MainWP_Abilities_Backups {
                                 ),
                             ),
                             'uploads'  => array(
+                                'description'          => 'Upload counts: pending includes active uploads and retryable failures; failed counts only permanent failures.',
                                 'type'                 => array( 'object', 'null' ),
                                 'additionalProperties' => false,
                                 'required'             => array( 'total', 'complete', 'failed', 'pending' ),
@@ -1365,6 +1366,24 @@ class MainWP_Abilities_Backups {
             'additionalProperties' => false,
             'required'             => array( 'state', 'attempted_at', 'result_at', 'checks', 'scope' ),
             'properties'           => array(
+                'error_code'   => array( 'type' => 'string' ),
+                'error'        => array( 'type' => 'string' ),
+                'assertions'   => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'                 => 'object',
+                        'additionalProperties' => false,
+                        'required'             => array( 'name', 'ok', 'detail' ),
+                        'properties'           => array(
+                            'name'   => array(
+                                'type' => 'string',
+                                'enum' => array( 'files_extracted', 'db_imported', 'db_has_rows', 'sentinel_checksum' ),
+                            ),
+                            'ok'     => array( 'type' => 'boolean' ),
+                            'detail' => array( 'type' => 'string' ),
+                        ),
+                    ),
+                ),
                 'state'        => array(
                     'type'        => 'string',
                     'enum'        => array( 'never', 'pass', 'fail', 'unsupported', 'unavailable' ),
@@ -1420,7 +1439,7 @@ class MainWP_Abilities_Backups {
                 ),
                 'provider'         => array(
                     'type'        => array( 'string', 'null' ),
-                    'enum'        => array( 's3', 'gcs', 'dropbox', 'sftp', 'local', null ),
+                    'enum'        => array( 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local', null ),
                     'description' => 'Null when the destination was deleted before the upload was queued.',
                 ),
                 'status'           => array(
@@ -2052,7 +2071,7 @@ class MainWP_Abilities_Backups {
             'properties'           => array(
                 'provider' => array(
                     'type'    => 'string',
-                    'enum'    => array( 'any', 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                    'enum'    => array( 'any', 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local' ),
                     'default' => 'any',
                 ),
                 'page'     => self::page_schema(),
@@ -2296,7 +2315,7 @@ class MainWP_Abilities_Backups {
                 ),
                 'provider'                      => array(
                     'type' => 'string',
-                    'enum' => array( 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                    'enum' => array( 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local' ),
                 ),
                 'is_default'                    => array(
                     'type' => 'boolean',
@@ -3001,6 +3020,7 @@ class MainWP_Abilities_Backups {
                                         's3',
                                         'gcs',
                                         'dropbox',
+                                        'pcloud',
                                         'sftp',
                                         'local',
                                     ),
@@ -3219,6 +3239,7 @@ class MainWP_Abilities_Backups {
                                         's3',
                                         'gcs',
                                         'dropbox',
+                                        'pcloud',
                                         'sftp',
                                         'local',
                                     ),
@@ -3967,7 +3988,7 @@ class MainWP_Abilities_Backups {
             'mainwp/create-backup-task-v1',
             array(
                 'label'               => __( 'Create Backup Task', 'mainwp' ),
-                'description'         => __( 'Create a scheduled backup task: name, type, schedule, sites or groups, destinations, retention, archive format and excludes. dry_run returns the normalized task and its first run time. Possible errors: mainwp_invalid_input, mainwp_site_not_found, mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'description'         => __( 'Create a scheduled backup task: name, type, schedule, sites or groups, destinations, retention, archive format and excludes. dry_run returns the normalized task and its first run time. Possible errors: mainwp_invalid_input, mainwp_site_not_found, mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled, mainwp_backup_child_update_required (a selected site\'s MainWP Child is older than 6.4).', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::create_backup_task_input_schema(),
@@ -4229,7 +4250,7 @@ class MainWP_Abilities_Backups {
             'mainwp/update-backup-task-v1',
             array(
                 'label'               => __( 'Update Backup Task', 'mainwp' ),
-                'description'         => __( 'Change any subset of a task\'s fields; omitted fields keep their values. Saving makes you the task owner, as the Backups page does. Tightening retention also requires Delete Backup Tasks. Lowering retention prunes on the next sweep; dry_run lists the affected snapshots and the owner change. Possible errors: mainwp_invalid_input, mainwp_insufficient_right, mainwp_backup_task_not_found, mainwp_site_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'description'         => __( 'Change any subset of a task\'s fields; omitted fields keep their values. Saving makes you the task owner, as the Backups page does. Tightening retention also requires Delete Backup Tasks. Lowering retention prunes on the next sweep; dry_run lists the affected snapshots and the owner change. Possible errors: mainwp_invalid_input, mainwp_insufficient_right, mainwp_backup_task_not_found, mainwp_site_not_found, mainwp_backup_legacy_disabled, mainwp_backup_child_update_required (a newly added site\'s MainWP Child is older than 6.4).', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::update_backup_task_input_schema(),
@@ -5901,7 +5922,7 @@ class MainWP_Abilities_Backups {
                     ),
                     'provider'            => array(
                         'type' => 'string',
-                        'enum' => array( 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                        'enum' => array( 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local' ),
                     ),
                     'writes_probe_object' => array(
                         'type' => 'boolean',

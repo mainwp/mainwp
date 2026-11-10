@@ -2792,4 +2792,37 @@ class MainWP_Backups_Destination_Count_Test extends MainWP_Abilities_Test_Case {
 			MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		}
 	}
+	/** Every provider enum accepts pCloud while preserving existing providers and sentinels. */
+	public function test_pcloud_provider_enums_in_all_backup_schemas(): void {
+		$expected = array( 's3', 'gcs', 'dropbox', 'pcloud', 'sftp', 'local' );
+		$methods  = array( 'get_backup_task_output_schema', 'upload_item_schema', 'list_backup_destinations_input_schema', 'destination_schema', 'run_site_backup_output_schema', 'run_backup_task_output_schema', 'test_backup_destination_output_schema' );
+		foreach ( $methods as $method ) {
+			$reflection = new \ReflectionMethod( MainWP_Abilities_Backups::class, $method );
+			$reflection->setAccessible( true );
+			$schema = $reflection->invoke( null );
+			$enums  = array();
+			$walk   = static function ( array $node ) use ( &$walk, &$enums ) {
+				if ( isset( $node['enum'] ) && in_array( 'dropbox', $node['enum'], true ) ) {
+					$enums[] = $node;
+				}
+				foreach ( $node as $child ) {
+					if ( is_array( $child ) ) {
+						$walk( $child );
+					}
+				}
+			};
+			$walk( $schema );
+			$this->assertCount( 1, $enums, $method );
+			$enum = $expected;
+			if ( 'upload_item_schema' === $method ) {
+				$enum[] = null;
+			}
+			if ( 'list_backup_destinations_input_schema' === $method ) {
+				array_unshift( $enum, 'any' );
+			}
+			$this->assertSame( $enum, $enums[0]['enum'], $method );
+			$this->assertTrue( rest_validate_value_from_schema( 'pcloud', $enums[0] ), $method );
+			$this->assertWPError( rest_validate_value_from_schema( 'unsupported', $enums[0] ), $method );
+		}
+	}
 }

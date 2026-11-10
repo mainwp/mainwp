@@ -312,6 +312,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     's3'      => 'cloud',
                     'gcs'     => 'google',
                     'dropbox' => 'dropbox',
+                    'pcloud'  => 'cloud',
                     'sftp'    => 'server',
                     'local'   => 'hdd outline',
                 );

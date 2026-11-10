@@ -445,6 +445,84 @@ class MainWP_Backup_V2_Restore_Admission_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( array(), $this->calls );
 	}
 
+	/** A refused format consumes the cadence, so its result must reach the snapshot row. */
+	public function test_testrestore_refusal_records_unsupported_result() {
+		global $wpdb;
+		$id = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'       => 0,
+				'site_id'       => $this->site_id,
+				'type'          => 'full',
+				'parent_id'     => null,
+				'archives'      => array(
+					array(
+						'file' => 'backup.zip',
+						'size' => 9,
+						'role' => 'full',
+					),
+				),
+				'manifest_path' => '',
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		$plan                   = $this->plan();
+		$plan[0]['snapshot_id'] = $id;
+		try {
+			$catalog        = new class() extends \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog {
+				/**
+				 * Source plan.
+				 *
+				 * @var array
+				 */
+				public $plan = array();
+
+				/**
+				 * Return the plan already resolved by storage-reader fixtures.
+				 *
+				 * @param int $snapshot_id Snapshot.
+				 * @param int $expected_site_id Site.
+				 * @return array Resolved source.
+				 */
+				public function resolve_restorable_chain( int $snapshot_id, int $expected_site_id = 0 ): array {
+					return array(
+						'ok'   => true,
+						'plan' => $this->plan,
+					);
+				}
+			};
+			$catalog->plan  = $plan;
+			$driver         = new class() extends \MainWP\Dashboard\MainWP_Backup_TestRestore_Driver {
+				/**
+				 * Catalog fixture.
+				 *
+				 * @var object
+				 */
+				public $source;
+
+				/**
+				 * Source catalog.
+				 *
+				 * @return \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog
+				 */
+				protected function catalog(): \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog {
+					return $this->source;
+				}
+			};
+			$driver->source = $catalog;
+			$result         = $driver->verify_snapshot( $id );
+			$this->assertSame( 'unsupported', $result['state'] );
+			$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+			$this->assertSame( 'unsupported', (string) $snapshot->test_restore_state );
+			$this->assertGreaterThan( 0, (int) $snapshot->test_restore_result_at );
+			$this->assertSame( array(), $this->calls );
+			$staging = \MainWP\Dashboard\MainWP_Backup_Private_Root::staging_path( 'restore-staging', (string) ( \MainWP\Dashboard\MainWP_Backup_TestRestore_Driver::STAGING_NAMESPACE + $id ) );
+			$this->assertIsString( $staging );
+			$this->assertDirectoryDoesNotExist( $staging );
+		} finally {
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . ' WHERE id = %d', $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
+		}
+	}
+
 	/** Safety capture cannot silently create a legacy backup for v2. */
 	public function test_v2_safety_backup_is_refused_until_its_producer_is_available() {
 		$this->enable( true );

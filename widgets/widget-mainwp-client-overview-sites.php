@@ -302,6 +302,8 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
             'offset'       => 0,
             'rowcount'     => 9999,
             'client_id'    => array( $client_id ),
+            // premium_upgrades: sync stores it as a site option; the wp table column of the same name stays empty.
+            'extra_view'   => array( 'favi_icon', 'premium_upgrades' ),
         );
 
         $totalRecords = 0;

@@ -140,6 +140,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( (int) $snapshot_id, array_map( 'intval', $destination_ids ) );
+        MainWP_Post_Backup_Handler::kick_backup_continuation();
         $this->resolve_snapshot_offsite_state( (int) $snapshot_id );
     }
 
@@ -209,7 +210,9 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * backups-continue cron lane. Stop after MAX_JOBS_PER_TICK attempts
      * or a repeated acquisition, so a parked job cannot spin within the tick.
      * A repeated acquisition ends the tick; jobs behind it wait for the next one.
-     * A zero budget still allows one attempt to checkpoint.
+     * A zero budget still allows one attempt to checkpoint. Stopping on the
+     * attempt limit or the deadline with uploads still due schedules a
+     * continuation, so they do not wait for the periodic cron tick.
      *
      * @param int      $budget_seconds Work budget for this tick.
      * @param int|null $now            Clock override for tests.
@@ -245,6 +248,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 $store->release_lock( (int) $job->id, $token );
             }
         } while ( $job_count < self::MAX_JOBS_PER_TICK && microtime( true ) < $deadline );
+
+        if ( $store->has_runnable_job( null === $now ? time() : $now ) ) {
+            MainWP_Post_Backup_Handler::kick_backup_continuation();
+        }
     }
 
     /**
@@ -323,7 +330,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $chunking = false;
         try {
-            if ( 'dropbox' === $destination->provider && MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot ) ) {
+            if ( in_array( $destination->provider, array( 'dropbox', 'pcloud' ), true ) && MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot ) ) {
                 $destination = MainWP_Backup_Storage_Destinations::instance()->prepare_retention_identity( $destination );
                 $provider    = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
             }
@@ -368,7 +375,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 throw new \RuntimeException( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ), 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are escaped by consumers.
             }
 
-            $status = $job->status;
+            $job->checkpoint = $checkpoint;
+            $status          = $job->status;
 
             if ( in_array( $status, array( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING ), true ) ) {
                 $recorded_sizes = array();
@@ -502,6 +510,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         return array(
+            'remote_prefix'      => MainWP_Backup_Remote_Path::for_new_upload( $snapshot ),
             'artifacts'          => $artifacts,
             'chunk_size'         => max( 1024, $chunk_size ),
             'whole_threshold'    => $threshold,
@@ -1151,6 +1160,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 return MainWP_Backup_Error_Codes::ERR_S3_FAILED;
             case 'gcs':
                 return MainWP_Backup_Error_Codes::ERR_GCS_FAILED;
+            case 'pcloud':
+                return MainWP_Backup_Error_Codes::ERR_PCLOUD_FAILED;
             case 'dropbox':
                 return MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED;
             case 'ftp':
@@ -1174,8 +1185,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      */
     private function remote_prefix( object $job ): string {
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $job->snapshot_id );
-        $site_id  = null !== $snapshot ? (int) $snapshot->site_id : 0;
-        return $site_id . '/' . (int) $job->snapshot_id . '/';
+        return MainWP_Backup_Remote_Path::for_upload( $snapshot, (array) $job->checkpoint );
     }
 
     /**

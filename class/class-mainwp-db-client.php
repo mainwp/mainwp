@@ -467,7 +467,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @throws MainWP_Exception On errors.
      *
-     * @return bool.
+     * @return object|false|null The saved client row, or false when the data is invalid or the write fails.
      */
     public function update_client( $data, $throw_out = false ) {
         if ( empty( $data ) || ! is_array( $data ) ) {
@@ -492,7 +492,13 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( ! empty( $client_id ) ) {
-            $this->wpdb->update( $this->table_name( 'wp_clients' ), $data, array( 'client_id' => intval( $client_id ) ) );
+            // update() is false only on a database error; 0 rows means the values were already stored.
+            if ( false === $this->wpdb->update( $this->table_name( 'wp_clients' ), $data, array( 'client_id' => intval( $client_id ) ) ) ) {
+                if ( $throw_out ) {
+                    throw new MainWP_Exception( esc_html__( 'The client could not be saved. Please try again.', 'mainwp' ) );
+                }
+                return false;
+            }
             return $this->get_wp_client_by( 'client_id', $client_id );
         } elseif ( $this->wpdb->insert( $this->table_name( 'wp_clients' ), $data ) ) {
                 return $this->get_wp_client_by( 'client_id', $this->wpdb->insert_id );
@@ -1050,12 +1056,13 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * Update client.
      *
-     * @param int   $client_id client id.
-     * @param array $site_ids site ids.
+     * @param int   $client_id          Client id.
+     * @param array $site_ids           Site ids.
+     * @param bool  $inherit_suspension Whether new assignments inherit suspension now. Client status transitions apply it after their hooks.
      *
      * @return bool true|false.
      */
-    public function update_selected_sites_for_client( $client_id, $site_ids ) {
+    public function update_selected_sites_for_client( $client_id, $site_ids, $inherit_suspension = true ) {
         if ( empty( $client_id ) ) {
             return false;
         }
@@ -1071,6 +1078,12 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         if ( is_array( $site_ids ) && ! empty( $site_ids ) ) {
             $safe_site_ids = implode( ',', array_map( 'intval', $site_ids ) );
+            // A site joining a client that is already suspended must not stay active, but sites
+            // the client already had keep any status set on them individually.
+            $client_status = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT suspended FROM %i WHERE client_id=%d', $this->table_name( 'wp_clients' ), $client_id ) );
+            if ( $inherit_suspension && 1 === (int) $client_status ) {
+                $this->wpdb->query( $this->wpdb->prepare( 'UPDATE %i SET suspended=1 WHERE client_id<>%d AND id IN (' . $safe_site_ids . ')', $this->table_name( 'wp' ), $client_id ) );
+            }
             $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $table_wp . ' SET client_id=0 WHERE client_id=%d AND id NOT IN (' . $safe_site_ids . ')', $client_id ) );
             $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $table_wp . ' SET client_id=%d WHERE id IN (' . $safe_site_ids . ')', $client_id ) );
             return true;

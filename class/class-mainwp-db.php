@@ -453,7 +453,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             if ( in_array( 'available_update', $status ) ) {
                 $available_sql = " ( wp.plugin_upgrades <> '' &&  wp.plugin_upgrades <> '[]' ) OR (  wp.theme_upgrades <> '' &&  wp.theme_upgrades <> '[]'  ) OR (  wp.translation_upgrades <> '' &&  wp.translation_upgrades <> '[]' ) OR ( wp.premium_upgrades <> '' &&  wp.premium_upgrades <> '[]' ) ";
                 $table_name    = esc_sql( $this->table_name( 'wp_options' ) );
-                $results       = $this->wpdb->get_results( "SELECT wpid FROM {$table_name} WHERE name = 'wp_upgrades' AND value <> '' AND value <> '[]'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; the rest of the query is a literal.
+                // Sync stores premium updates in the site options table; the wp.premium_upgrades column is never written.
+                $results = $this->wpdb->get_results( "SELECT wpid FROM {$table_name} WHERE name IN ( 'wp_upgrades', 'premium_upgrades' ) AND value <> '' AND value <> '[]'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; the rest of the query is a literal.
                 if ( $results ) {
                     $wp_ids = array();
                     foreach ( $results as $item ) {
@@ -1568,7 +1569,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 if ( in_array( 'available_update', $status ) ) {
                     $available_sql = " ( wp.plugin_upgrades <> '' &&  wp.plugin_upgrades <> '[]' ) OR (  wp.theme_upgrades <> '' &&  wp.theme_upgrades <> '[]'  ) OR (  wp.translation_upgrades <> '' &&  wp.translation_upgrades <> '[]' ) OR ( wp.premium_upgrades <> '' &&  wp.premium_upgrades <> '[]' ) ";
                     $options_table = esc_sql( $this->table_name( 'wp_options' ) );
-                    $results       = $this->wpdb->get_results( "SELECT wpid FROM {$options_table} WHERE name = 'wp_upgrades' AND value <> '' AND value <> '[]'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; the rest of the query is a literal.
+                    // Sync stores premium updates in the site options table; the wp.premium_upgrades column is never written.
+                    $results = $this->wpdb->get_results( "SELECT wpid FROM {$options_table} WHERE name IN ( 'wp_upgrades', 'premium_upgrades' ) AND value <> '' AND value <> '[]'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; the rest of the query is a literal.
                     if ( $results ) {
                         $wp_ids = array();
                         foreach ( $results as $item ) {
@@ -3616,6 +3618,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( ! empty( $fields ) ) {
             $previous_sync_errors = null;
             if ( is_array( $fields ) && array_key_exists( 'sync_errors', $fields ) ) {
+                $fields['sync_errors'] = MainWP_Connect_Failure_Ux::sanitize_sync_error( $fields['sync_errors'] );
                 // get_var() also returns null for an empty string, so retain the row to distinguish missing sites.
                 $previous_sync_values = $this->wpdb->get_row(
                     $this->wpdb->prepare( 'SELECT sync_errors FROM %i WHERE wpid = %d', $this->table_name( 'wp_sync' ), $websiteid )

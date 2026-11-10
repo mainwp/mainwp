@@ -523,7 +523,7 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
             if ( '' === $this->base_path || ! $this->connection()->is_dir( $this->base_path ) ) {
                 return array(
                     'ok'    => false,
-                    'error' => 'Base path does not exist on the SFTP server.',
+                    'error' => __( 'The folder does not exist on the SFTP server.', 'mainwp' ),
                 );
             }
 

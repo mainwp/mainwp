@@ -26,6 +26,8 @@ class MainWP_Backup_Restore_Ajax_Test extends \WP_UnitTestCase {
 	 */
 	private $actions = array(
 		'mainwp_restore_snapshot_list',
+		'mainwp_restore_snapshot_activity',
+		'mainwp_restore_admission_status',
 		'mainwp_restore_initiate',
 		'mainwp_restore_progress',
 		'mainwp_restore_cancel',
@@ -109,7 +111,7 @@ class MainWP_Backup_Restore_Ajax_Test extends \WP_UnitTestCase {
 		try {
 			MainWP_Post_Backup_Handler::instance()->init();
 			foreach ( $this->actions as $action ) {
-				$read = in_array( $action, array( 'mainwp_restore_snapshot_list', 'mainwp_restore_progress' ), true );
+				$read = in_array( $action, array( 'mainwp_restore_snapshot_list', 'mainwp_restore_snapshot_activity', 'mainwp_restore_progress' ), true );
 				$this->assertSame( $read, $this->handler_registered( 'wp_ajax_' . $action ), $action );
 			}
 		} finally {

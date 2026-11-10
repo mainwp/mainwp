@@ -117,6 +117,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         // site timezone; a timezone change moves every wall-clock slot.
         add_action( 'update_option_timezone_string', array( $this, 'recompute_backup_next_runs' ) );
         add_action( 'update_option_gmt_offset', array( $this, 'recompute_backup_next_runs' ) );
+        // MainWP_Utility::update_option() adds the option on first save, so both hooks are needed.
+        add_action( 'add_option_mainwp_backup_start_offset_minutes', array( $this, 'recompute_backup_next_runs_for_start_offset' ), 10, 0 );
+        add_action( 'update_option_mainwp_backup_start_offset_minutes', array( $this, 'recompute_backup_next_runs_for_start_offset' ), 10, 0 );
 
         $this->init_cron();
     }
@@ -1974,6 +1977,42 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         foreach ( $tasks as $task ) {
             if ( (int) $task->interval_hours <= 0 && '' === (string) $task->time_of_day ) {
+                continue;
+            }
+
+            $next_run = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
+
+            if ( $next_run !== (int) $task->next_run ) {
+                MainWP_DB_Backup::instance()->update_backup_task_next_run( $task->id, (int) $task->next_run, $next_run );
+            }
+        }
+    }
+
+    /**
+     * Apply a changed start spread to wall-clock tasks that are not close
+     * to running.
+     *
+     * A slot due within the largest possible window keeps its stored time:
+     * it may sit inside its old delay, and recomputing it with a smaller
+     * window would move it to the next day. It runs as stored, and the
+     * advance after it applies the new window.
+     *
+     * @return void
+     */
+    public function recompute_backup_next_runs_for_start_offset() {
+        $tasks = MainWP_DB_Backup::instance()->get_backup_tasks();
+        if ( empty( $tasks ) ) {
+            return;
+        }
+
+        $now        = time();
+        $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), $now );
+
+        foreach ( $tasks as $task ) {
+            if ( (int) $task->interval_hours > 0 || '' === (string) $task->time_of_day ) {
+                continue;
+            }
+            if ( (int) $task->next_run <= $now + MainWP_Backup_Settings::MAX_START_OFFSET_MINUTES * MINUTE_IN_SECONDS ) {
                 continue;
             }
 

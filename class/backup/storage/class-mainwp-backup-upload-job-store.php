@@ -224,6 +224,26 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
     }
 
     /**
+     * Whether acquire_next_job() could hand out an upload at this time.
+     *
+     * @param int $now Current time.
+     *
+     * @return bool True when a job is active, past its backoff and not leased.
+     */
+    public function has_runnable_job( int $now ): bool {
+        $statuses = static::active_statuses();
+        $holders  = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+        $found    = $this->wpdb->get_var(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- status placeholders and bind array grow together.
+                'SELECT id FROM ' . $this->table() . " WHERE kind = %s AND status IN ( {$holders} ) AND next_retry_at <= %d AND locked_until < %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholder list built from the counted status array.
+                array_merge( array( self::KIND_UPLOAD ), $statuses, array( $now, $now ) )
+            )
+        );
+
+        return null !== $found;
+    }
+
+    /**
      * Keep retention's latest-write bound current before provider requests.
      *
      * @param int      $job_id        Job id.

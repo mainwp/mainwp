@@ -29,6 +29,15 @@ class Add_Site_CLI_Output_Double {
 	public static $messages = array();
 
 	/**
+	 * Capture a warning without terminating the command.
+	 *
+	 * @param string $message Command output.
+	 */
+	public static function warning( $message ) {
+		self::$messages[] = array( 'warning', $message );
+	}
+
+	/**
 	 * Capture a successful command result.
 	 *
 	 * @param string $message Command output.

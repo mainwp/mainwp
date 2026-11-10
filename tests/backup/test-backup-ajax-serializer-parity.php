@@ -100,6 +100,7 @@ class MainWP_Backup_Ajax_Serializer_Parity_Test extends MainWP_Abilities_Test_Ca
 		add_filter( 'mainwp_restore_foreground_budget', $budget );
 		add_filter( 'wp_doing_ajax', '__return_true' );
 		add_filter( 'wp_die_ajax_handler', $die );
+		$before = time();
 		ob_start();
 		try {
 			MainWP_Post_Backup_Handler::instance()->$handler();
@@ -117,6 +118,14 @@ class MainWP_Backup_Ajax_Serializer_Parity_Test extends MainWP_Abilities_Test_Ca
 		if ( 'mainwp_restore_progress' === $handler ) {
 			$this->assertArrayHasKey( 'restore_outcome', $actual );
 			$this->assertNull( $actual['restore_outcome'] );
+		}
+		if ( in_array( $handler, array( 'mainwp_restore_snapshot_list', 'mainwp_backuptask_run_status' ), true ) ) {
+			// The page's clock offset comes from this value, so it must be the
+			// server's current time; the fixture keeps a fixed placeholder.
+			$this->assertIsInt( $actual['server_time'] );
+			$this->assertGreaterThanOrEqual( $before, $actual['server_time'] );
+			$this->assertLessThanOrEqual( time(), $actual['server_time'] );
+			$actual['server_time'] = 0;
 		}
 		$path = __DIR__ . '/fixtures/ajax-' . $handler . '.json';
 		$this->assertFileExists( $path );

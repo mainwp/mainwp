@@ -23,6 +23,8 @@ function callback() {
         pollBackup: () => calls.push( 'poll' ),
         window: { setTimeout: ( fn, delay ) => { calls.push( [ 'timer', delay ] ); return 99; } }
     };
+    Object.assign(context, {snapshotPollTimer: 0, snapshotPollFailures: 0, scheduleSnapshotPoll() {}});
+    context.window = context.window || {clearTimeout() {}};
     vm.createContext( context );
     const schedule = source.indexOf( 'function scheduleBackupPoll(' );
     context.backupFollowGen = 0;
@@ -30,7 +32,7 @@ function callback() {
     context.backupPollTimer = null;
     context.window.clearTimeout = () => {};
     vm.runInContext( source.slice( schedule, source.indexOf( '\n            }', schedule ) + '\n            }'.length ), context );
-    vm.runInContext( 'var initiate = ' + source.slice( start, end ) + '};', context );
+    vm.runInContext( 'var initiate = ' + source.slice( start, end ).replace( /<\?php[\s\S]*?\?>/g, 'Translated text' ) + '};', context );
     return { context, calls };
 }
 

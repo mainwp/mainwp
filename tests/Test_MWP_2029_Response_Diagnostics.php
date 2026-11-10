@@ -54,7 +54,7 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 				$body = $prefix . str_repeat( 'x', 4096 - strlen( $prefix ) - $cut ) . $character . '</p></html>';
 				$text = MainWP_Connect_Failure_Ux::describe_received_response( $body );
 				$this->assertStringContainsString( 'HTML page', $text );
-				$this->assertStringContainsString( 'Maintenance window', $text );
+				$this->assertStringNotContainsString( 'Maintenance window', $text );
 				$this->assertStringNotContainsString( 'binary data', $text );
 			}
 		}
@@ -77,12 +77,12 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Html title identifies replacement page.
+	 * HTML classification does not retain the page title.
 	 */
 	public function test_html_title_identifies_replacement_page(): void {
 		$text = MainWP_Connect_Failure_Ux::describe_received_response( '<html><title>Maintenance window</title><p>Try later</p></html>' );
 		$this->assertStringContainsString( 'HTML page', $text );
-		$this->assertStringContainsString( 'Maintenance window', $text );
+		$this->assertStringNotContainsString( 'Maintenance window', $text );
 		$this->assertStringNotContainsString( '<title>', $text );
 	}
 
@@ -100,7 +100,7 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 	public function test_plain_response_has_a_short_excerpt(): void {
 		$text = MainWP_Connect_Failure_Ux::describe_received_response( 'Temporarily unavailable' );
 		$this->assertStringContainsString( 'text instead of the MainWP response', $text );
-		$this->assertStringContainsString( 'Temporarily unavailable', $text );
+		$this->assertStringNotContainsString( 'Temporarily unavailable', $text );
 	}
 
 	/**
@@ -139,7 +139,7 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 		) as $body ) {
 			$text = MainWP_Connect_Failure_Ux::describe_received_response( $body );
 			$this->assertStringNotContainsString( 'obviously-fake-password', $text );
-			$this->assertStringContainsString( 'hidden', $text );
+			$this->assertStringNotContainsString( 'Excerpt:', $text );
 		}
 	}
 
@@ -147,7 +147,7 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 	public function test_cookie_header_excerpts_are_hidden(): void {
 		foreach ( array( 'Cookie: wordpress_logged_in_abc=OBVIOUS_FAKE_VALUE', 'Set-Cookie: wpfoo=OBVIOUS_FAKE_VALUE; Path=/', 'Cookie%3A%20wordpress_logged_in_abc%3DOBVIOUS_FAKE_VALUE', '{"Cookie":"wordpress_logged_in_abc=OBVIOUS_FAKE_VALUE"}', '<dt>Cookie</dt><dd>wordpress_logged_in_abc=OBVIOUS_FAKE_VALUE</dd>' ) as $body ) {
 			$text = MainWP_Connect_Failure_Ux::describe_received_response( $body );
-			$this->assertStringContainsString( 'hidden', $text );
+			$this->assertStringNotContainsString( 'Excerpt:', $text );
 			$this->assertStringNotContainsString( 'OBVIOUS_FAKE_VALUE', $text );
 		}
 	}
@@ -198,11 +198,11 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 			)
 		);
 		$details    = MainWP_Connect_Failure_Ux::from_exception( null, $output );
-		$this->assertStringContainsString( 'Maintenance window', $details['response']['text'] );
+		$this->assertStringNotContainsString( 'Maintenance window', $details['response']['text'] );
 		$this->assertStringNotContainsString( 'no readable child response', $details['response']['text'] );
 		$this->assertSame( '', $output['response_body'] );
 		$this->assertSame( $diagnostic, $output['response_diagnostic'] );
-		$this->assertStringContainsString( 'Maintenance window', MainWP_Connect_Failure_Ux::render_html( $details ) );
+		$this->assertStringNotContainsString( 'Maintenance window', MainWP_Connect_Failure_Ux::render_html( $details ) );
 	}
 	/** Rendering escapes metadata even if its source contains markup. */
 	public function test_rendering_escapes_diagnostic_metadata(): void {
@@ -235,7 +235,7 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 		$this->assertSame( 200, $output['http_status'] );
 		$this->assertSame( '', $output['response_body'] );
 		$this->assertStringContainsString( 'HTML page', $output['failure_ux'] );
-		$this->assertStringContainsString( 'hidden', $output['failure_ux'] );
+		$this->assertStringNotContainsString( 'Excerpt:', $output['failure_ux'] );
 		$this->assertStringNotContainsString( 'obviously-fake-password', wp_json_encode( $output ) );
 		$this->assertStringContainsString( 'HTML page', MainWP_Connect_Failure_Ux::readable_response_from_output( array(), $exception ) );
 	}
@@ -284,7 +284,7 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 	public function test_transport_excerpt_is_escaped_for_html(): void {
 		list( $information, $output, $exception ) = $this->request_fixture( '<html><title>A &amp; B</title><script>alert(1)</script></html>' );
 		$this->assertInstanceOf( \MainWP\Dashboard\MainWP_Exception::class, $exception );
-		$this->assertStringContainsString( 'A &amp; B', $output['failure_ux'] );
+		$this->assertStringNotContainsString( 'A &amp; B', $output['failure_ux'] );
 		$this->assertStringNotContainsString( '<script>', $output['failure_ux'] );
 		$this->assertStringNotContainsString( 'alert(1)', $output['failure_ux'] );
 	}
@@ -295,7 +295,7 @@ class Test_MWP_2029_Response_Diagnostics extends \WP_UnitTestCase {
 		$this->assertSame( 200, $probe['httpCode'] );
 		$this->assertSame( '', $probe['error'] );
 		$this->assertStringContainsString( 'HTML page', $probe['response_diagnostic'] );
-		$this->assertStringContainsString( 'Maintenance', $probe['response_readable'] );
+		$this->assertStringNotContainsString( 'Maintenance', $probe['response_readable'] );
 		list( $information, $output, $exception ) = $this->request_fixture( '<mainwp>' . base64_encode( '{"error":"Administrator user does not exist.","error_code":"REG_ERROR8"}' ) . '</mainwp>' );
 		$this->assertNull( $exception );
 		$this->assertSame( 'Administrator user does not exist.', $information['error'] );

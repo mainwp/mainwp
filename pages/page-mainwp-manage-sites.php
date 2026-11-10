@@ -404,11 +404,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         $list_items = array(
-            'login'                    => esc_html__( 'Jump to WP Admin', 'mainwp' ),
+            'login'                    => esc_html__( 'Go to WP Admin', 'mainwp' ),
             'update'                   => esc_html__( 'Updates', 'mainwp' ),
             'wpcore_update'            => esc_html__( 'WP updates', 'mainwp' ),
             'plugin_update'            => esc_html__( 'Plugin updates', 'mainwp' ),
             'theme_update'             => esc_html__( 'Theme updates', 'mainwp' ),
+            'abandoned'                => esc_html__( 'Abandoned plugins/themes', 'mainwp' ),
             'site-cost-tracker'        => esc_html__( 'Cost Tracker', 'mainwp' ),
             'note'                     => esc_html__( 'Notes', 'mainwp' ),
             'site_preview'             => esc_html__( 'Site preview', 'mainwp' ),
@@ -501,7 +502,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                             <?php
                                             $show_col = ! isset( $show_cols[ $name ] ) || ( 1 === (int) $show_cols[ $name ] );
 
-                                            if ( 'added_datetime' === $name && ! isset( $show_cols[ $name ] ) ) {
+                                            if ( in_array( $name, array( 'added_datetime', 'abandoned' ), true ) && ! isset( $show_cols[ $name ] ) ) {
                                                 $show_col = false; // default is hidden.
                                             }
 
@@ -522,9 +523,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         </div>
                     </div>
                     <div class="ui grid field">
-                        <label class="six wide column middle aligned"><?php esc_html_e( 'Optimize for shared hosting or big networks', 'mainwp' ); ?></label>
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Optimize data loading', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will cache updates for faster loading.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                            <input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Disabled', 'mainwp' ); ?></label>
+                            <input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Enabled', 'mainwp' ); ?></label>
                         </div>
                     </div>
                     <div class="ui grid field">
@@ -533,7 +534,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
-                        <div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+                        <div class="ten wide column" id="mainwp-disconnect-sites-tool" data-tooltip="<?php esc_attr_e( 'This function will break the connection and leave the MainWP Child plugin active.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
                             <a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo esc_html( wp_create_nonce( 'disconnect_sites' ) ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites.', 'mainwp' ); ?></a>
                         </div>
                     </div>
@@ -835,7 +836,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         ?>
         <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-add-sites-tabular-menu">
-            <a class="item <?php echo esc_attr( 'single-site' === $active ? 'active' : '' ); ?>>" data-tab="single-site" <?php echo $item_link ? 'href="admin.php?page=managesites&do=new&menu_active=single-site"' : ''; ?> >
+            <a class="item <?php echo esc_attr( 'single-site' === $active ? 'active' : '' ); ?>" data-tab="single-site" <?php echo $item_link ? 'href="admin.php?page=managesites&do=new&menu_active=single-site"' : ''; ?> >
                 <i class="wordpress icon"></i><?php //phpcs:ignore -- WP icon. ?>
                 <?php esc_html_e( 'Single Site', 'mainwp' ); ?>
             </a>
@@ -1475,7 +1476,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-new-sites-info-message' ) ) : ?>
                     <div class="ui message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-new-sites-info-message"></i>
-                        <?php /* translators: 1: Bulb emoji element, 2: Opening link tag, 3: Closing link tag */ printf( esc_html__( '%1$s Tip: If you\'re importing 10 or fewer sites, we recommend using the %2$sAdd Multiple Sites%3$s screen instead , it\'s faster and doesn\'t require a CSV file.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<a href="admin.php?page=managesites&do=new&data-tab=multiple-site">', '</a>' ); ?>
+                        <?php /* translators: 1: Bulb emoji element, 2: Opening link tag, 3: Closing link tag */ printf( esc_html__( '%1$s Tip: If you\'re importing 10 or fewer sites, we recommend using the %2$sAdd Multiple Sites%3$s screen instead; it\'s faster and doesn\'t require a CSV file.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<a href="admin.php?page=managesites&do=new&data-tab=multiple-site">', '</a>' ); ?>
                     </div>
                 <?php endif; ?>
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>

@@ -434,12 +434,13 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
 
         $website = MainWP_DB::instance()->get_website_by_id( $website->id );
 
-        $error_text = wp_strip_all_tags( $website->sync_errors );
+        $sync_error = MainWP_Connect_Failure_Ux::sanitize_sync_error( $website->sync_errors );
+        $error_text = wp_strip_all_tags( $sync_error );
         die(
             wp_json_encode(
                 array(
                     'error'      => esc_html( $error_text ),
-                    'failure_ux' => wp_kses( $website->sync_errors, MainWP_Connect_Failure_Ux::kses_allowed() ),
+                    'failure_ux' => wp_kses( $sync_error, MainWP_Connect_Failure_Ux::kses_allowed() ),
                 )
             )
         );

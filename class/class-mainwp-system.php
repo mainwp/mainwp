@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.4.1'; // NOSONAR.
+    public static $version = '6.4.2-rc.3'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -395,7 +395,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_notice_wp_mail_failed',
                 'mainwp_show_language_updates',
                 'mainwp_logger_check_daily',
-                'mainwp_site_actions_notification_enable',
                 'mainwp_update_check_version',
                 'mainwp_admin_init_update_data',
                 'mainwp_setting_demo_mode_enabled',
@@ -1097,8 +1096,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( $load_gridstack ) {
             static::$defer_js_handle[] = 'mainwp_gridstack';
-            wp_enqueue_script( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack-all.js', array( 'jquery' ), $this->current_version, true );
-            wp_enqueue_style( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack.min.css', array(), $this->current_version );
+            wp_enqueue_script( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack-all.js', array( 'jquery' ), '14.1.0', true );
+            wp_enqueue_style( 'mainwp_gridstack', MAINWP_PLUGIN_URL . 'assets/js/gridstack/gridstack.min.css', array(), '14.1.0' );
         }
 
         if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] || 'ManageGroups' === $_GET['page'] ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -2027,7 +2026,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             // load custom MainWP theme.
             $selected_theme = MainWP_Settings::get_instance()->get_selected_theme();
             if ( ! empty( $selected_theme ) ) {
-                if ( 'dark' === $selected_theme ) {
+                if ( 'system' === $selected_theme ) {
+                    static::enqueue_system_theme();
+                } elseif ( 'dark' === $selected_theme ) {
                     wp_enqueue_style( 'mainwp-custom-dashboard-extension-dark-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-dark-theme.css', array(), $this->current_version );
                 } elseif ( 'wpadmin' === $selected_theme ) {
                     wp_enqueue_style( 'mainwp-custom-dashboard-extension-wp-admin-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-wpadmin-theme.css', array(), $this->current_version );
@@ -2051,6 +2052,14 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_style( 'mainwp-fonts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-fonts.css', array(), $this->current_version );
             wp_enqueue_style( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.css', array(), $this->current_version );
         }
+    }
+
+    /**
+     * Load the built-in themes according to the browser's appearance preference.
+     */
+    public static function enqueue_system_theme() {
+        wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-theme.css', array(), MAINWP_VERSION, '(prefers-color-scheme: light)' );
+        wp_enqueue_style( 'mainwp-custom-dashboard-extension-default-dark-theme', MAINWP_PLUGIN_URL . 'assets/css/themes/mainwp-default-dark-theme.css', array(), MAINWP_VERSION, '(prefers-color-scheme: dark)' );
     }
 
     /**

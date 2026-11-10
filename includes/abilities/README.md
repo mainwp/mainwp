@@ -1,8 +1,5 @@
 # MainWP Abilities API - Developer Documentation
 
-Version: 1.0  
-Last Updated: 2025-12-03
-
 ## Overview
 
 The MainWP Abilities API provides a standardized, schema-validated interface for managing MainWP child sites, updates, clients, tags, batch operations, knowledge records, and backups. Built on WordPress's Abilities API (introduced in WP 6.9), it enables secure, discoverable operations for MCP tools, REST API consumers, and extensions.

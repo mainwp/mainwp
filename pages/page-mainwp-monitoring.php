@@ -118,7 +118,7 @@ class MainWP_Monitoring { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
         }
 
         if ( isset( $columns['login'] ) ) {
-            $columns['login'] = esc_html__( 'Jump to WP Admin', 'mainwp' );
+            $columns['login'] = esc_html__( 'Go to WP Admin', 'mainwp' );
         }
 
         if ( isset( $columns['site_preview'] ) ) {

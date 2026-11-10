@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.4
 Requires PHP: 8.3
-Stable tag: 6.4.1
+Stable tag: 6.4.2-rc.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -153,6 +153,64 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.4.2-rc.3 - 11-6-2026 =
+
+* Added: pCloud as a storage destination for Built-In Backups, with support for US and EU accounts.
+* Added: System appearance mode that follows device preferences, alongside per-user Light and Dark settings.
+* Added: Reconnect all accessible disconnected sites from the Connection Status widget, with per-site results.
+* Fixed: TAR Test Restore failures involving filenames containing literal question marks and mixed filename spellings.
+* Fixed: Test Restore failure details are now retained and displayed in snapshot tooltips, including after automatic status refreshes.
+* Fixed: Backup upload progress and retry reporting, with more reliable background upload continuation.
+* Fixed: Restore and rollback dialogs recovering incorrectly after failed or lost requests.
+* Fixed: Missing premium plugin changelogs are now retrieved from the Child site while preserving existing details.
+* Fixed: Kept the second-level navigation toggle visible when its menu is collapsed.
+* Fixed: Site Hardening visibility for users without the required permission.
+* Updated: Flagged sites running MainWP Child versions older than 6.4 and prevented adding them to Built-In Backups tasks.
+* Updated: Backup task API results now count retrying uploads as pending and permanent upload failures as failed.
+* Updated: Improved API Access labels, API key save messages, and copy-key guidance.
+* Updated: Corrected Site management labels, help links, CSV guidance, and markup.
+* Updated: Improved Network Activity labels, guidance, and event naming.
+* Updated: Identified MainWP MCP activity in Network Activity.
+* Updated: Removed stored sync-response excerpts and sanitized diagnostic output.
+* Updated: Improved the Get MainWP Pro overlay layout and accessibility.
+* Updated: Corrected Password Policy documentation to describe password-change reminders.
+* Updated: Restricted creation, migration, and editing of legacy REST API v1-compatible keys to unrestricted administrators.
+
+= 6.4.2-rc.2 - 11-5-2026 =
+
+* Added: Reconnect all accessible disconnected sites from the Connection Status widget, with per-site results.
+* Added: Optional delays to spread scheduled Built-In Backups task starts over a configurable time window.
+* Added: Optional Manage Sites column showing abandoned plugin and theme counts.
+* Added: Support for disabling site screenshot previews across the Dashboard.
+* Added: Support for custom Dashboard download URLs when wp-admin access is restricted.
+* Fixed: Selected sites are now preserved when switching selection tabs while editing Built-In Backups tasks.
+* Fixed: Large Built-In Backups downloads now use smaller parts to avoid server response-size limits.
+* Updated: Improved Built-In Backups error readability, added requirements guidance, and clarified folder locations in error messages.
+* Updated: New remote backup folders now include site names for easier identification.
+* Updated: Upgraded the Dashboard widget layout library to GridStack 14.1.0.
+
+= 6.4.2-rc.1 - 11-4-2026 =
+
+* Fixed: Corrected premium plugin and theme update counts in Manage Sites and the Client Overview Sites widget, including sorting by available updates.
+* Fixed: Sites with only premium updates are now included in REST API available-update filters, with accurate totals and pagination.
+* Fixed: REST API site requests now return custom field values when including or excluding specific sites.
+* Fixed: Custom field requests no longer overwrite site IDs, URLs, or other built-in site details.
+* Fixed: Non-MainWP Changes now sync during scheduled, REST API, and WP-CLI syncs.
+* Fixed: Prevented widgets from briefly overlapping while Overview pages load.
+* Fixed: Uptime Monitoring Check Now now matches keywords against page content only, preventing response headers from incorrectly marking a site as Up.
+* Fixed: Newly selected sites now inherit suspension when saving a suspended client, while existing individual site settings are preserved.
+* Fixed: Failed client saves now report an error without changing associated site statuses.
+* Fixed: Resolved WP-CLI errors when unignoring plugin and theme updates, with support for selecting a specific version.
+* Fixed: Bulk disconnection through WP-CLI now continues after individual site failures and reports the overall result.
+* Fixed: Improved REST API update queue failure handling and reporting of sites that could not be queued.
+* Fixed: Test Restore now correctly records unsupported backup formats.
+* Fixed: Corrected backup subfolder paths containing leading or repeated separators.
+* Fixed: Prevented PHP deprecation warnings when changing user passwords on servers without the mbstring extension.
+* Updated: Corrected WP-CLI help, available options, and command examples.
+* Updated: Improved privacy checks when renaming tags through restricted API access.
+* Updated: Improved handling of connection renewal and disconnection error messages.
+* Updated: Clarified the database permissions required for Test Restore.
 
 = 6.4.1 - 11-3-2026 =
 
@@ -617,7 +675,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Fixed: Prevented dismissed site changes from reappearing in the "Sites Changes" table after updating to version 5.5.
 * Fixed: An issue with the accordion element icon not rotating when the element is expanded or collapsed.
 * Fixed: In multiple places there was "Are you sure." so it was fixed to "Are you sure?" in confirmation popups.
-* Added: Password policy management to set and enforce password expiration rules. [(Request by Julia)](https://voice.mainwp.com/p/force-enforce-report-2fa)
+* Added: Password policy management to set password-change reminders for users on child sites. [(Request by Julia)](https://voice.mainwp.com/p/force-enforce-report-2fa)
 * Added: Cost import functionality for easier cost entry management.
 * Added: "Jump to WP Admin" quick link in site dropdown menu.
 * Added: Monitoring data retention settings with configurable duration options (30, 90, 180, 365 days, or keep forever).

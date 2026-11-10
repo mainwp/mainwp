@@ -96,6 +96,29 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     }
 
     /**
+     * Method is_site_preview_enabled()
+     *
+     * Whether the dashboard shows site screenshots. Each screenshot is loaded
+     * from mShots (WordPress.com), which fetches the child site to render it.
+     *
+     * @return bool True to show site screenshots.
+     */
+    public static function is_site_preview_enabled() {
+        /**
+         * Filter: mainwp_site_preview_enabled
+         *
+         * Return false to turn off the site screenshots (mShots by WordPress.com)
+         * everywhere in the dashboard, for example when a firewall blocks the
+         * mShots crawler or the site URLs should not be sent to a third party.
+         *
+         * @since 6.3.1
+         *
+         * @param bool $enabled Whether to show site screenshots. Default true.
+         */
+        return (bool) apply_filters( 'mainwp_site_preview_enabled', true );
+    }
+
+    /**
      * Method select_sites_box()
      *
      * Select sites box.
@@ -317,21 +340,22 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     /**
      * Method render_select_sites()
      *
-     * @param object $websites Object containing child sites info.
-     * @param string $type Selector type.
-     * @param mixed  $selected_websites Selected Child Sites.
-     * @param bool   $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
-     * @param mixed  $edit_site_id Child Site ID to edit.
-     * @param bool   $show_select_all    Whether or not to show select all, Default: true.
-     * @param mixed  $add_edit_client_id Show enable sites for client. Default: false, 0: add new client, 0 <: edit client.
-     * @param bool   $show_select_all_disc    Whether or not to show select all disconnect sites, Default: false.
+     * @param object     $websites Object containing child sites info.
+     * @param string     $type Selector type.
+     * @param mixed      $selected_websites Selected Child Sites.
+     * @param bool       $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
+     * @param mixed      $edit_site_id Child Site ID to edit.
+     * @param bool       $show_select_all    Whether or not to show select all, Default: true.
+     * @param mixed      $add_edit_client_id Show enable sites for client. Default: false, 0: add new client, 0 <: edit client.
+     * @param bool       $show_select_all_disc    Whether or not to show select all disconnect sites, Default: false.
+     * @param array|null $backup_task_saved_sites Saved explicit sites when rendering a backup task.
      *
      * @return void Render Select Sites html.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false, $show_select_all_disc = false ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function render_select_sites( $websites, $type, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id = false, $show_select_all_disc = false, $backup_task_saved_sites = null ) { // phpcs:ignore -- NOSONAR - complex.
         /**
          * Action: mainwp_before_select_sites_list
          *
@@ -399,12 +423,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                         $disconnected = true;
                                         ++$count_disc;
                                     }
+                                    $needs_child_update = null !== $backup_task_saved_sites && MainWP_Backup_Monitor::child_version_requires_task_spine_update( $website );
+                                    if ( $needs_child_update && ! in_array( (int) $website->id, $backup_task_saved_sites, true ) ) {
+                                        $selected = false;
+                                        $disabled = 'disabled="disabled"';
+                                    }
                                     $sel_id_prefix = MainWP_Utility::gen_rand_id( $website->id, true );
                                     ?>
                                     <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo $selected ? 'selected_sites_item_checked' : ''; ?> <?php echo esc_html( $disconnected ? 'warning' : '' ); ?>">
                                     <input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo 'radio' === $type ? 'selected_sites' : 'selected_sites[]'; ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo esc_attr( $sel_id_prefix ); ?>" <?php echo $selected ? 'checked="true"' : ''; ?> />
                                         <label for="selected_sites_<?php echo esc_attr( $sel_id_prefix ); ?>">
                                             <?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
+                                            <?php if ( $needs_child_update ) : ?>
+                                                <span class="ui small basic yellow label"><?php esc_html_e( 'Needs MainWP Child 6.4', 'mainwp' ); ?></span>
+                                            <?php endif; ?>
                                         </label>
                                     </div>
                                     <?php
@@ -445,9 +477,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * Render selected staging sites.
      *
-     * @param mixed  $selected_websites Selected Child Sites.
-     * @param mixed  $edit_site_id Child Site ID to edit.
-     * @param string $type Selector type.
+     * @param mixed      $selected_websites Selected Child Sites.
+     * @param mixed      $edit_site_id Child Site ID to edit.
+     * @param string     $type Selector type.
+     * @param array|null $backup_task_saved_sites Saved explicit sites when rendering a backup task.
      *
      * @return void Render selected staging sites html.
      *
@@ -456,7 +489,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      */
-    public static function render_select_sites_staging( $selected_websites, $edit_site_id, $type = 'checkbox' ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function render_select_sites_staging( $selected_websites, $edit_site_id, $type = 'checkbox', $backup_task_saved_sites = null ) { //phpcs:ignore -- NOSONAR - complex.
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'yes' ) );
 
         static $rendered_count = 0;
@@ -486,12 +519,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                                 if ( $edit_site_id && $website->id !== $edit_site_id ) {
                                     $disabled = 'disabled="disabled"';
                                 }
+                                $needs_child_update = null !== $backup_task_saved_sites && MainWP_Backup_Monitor::child_version_requires_task_spine_update( $website );
+                                if ( $needs_child_update && ! in_array( (int) $website->id, $backup_task_saved_sites, true ) ) {
+                                    $selected = false;
+                                    $disabled = 'disabled="disabled"';
+                                }
                                 $sel_id_prefix3 = MainWP_Utility::gen_rand_id( $website->id, true );
                                 ?>
                                 <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo $selected ? 'selected_sites_item_checked' : ''; ?>">
                                     <input <?php echo esc_html( $disabled ); ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo 'radio' === $type ? 'selected_sites' : 'selected_sites[]'; ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo esc_attr( $sel_id_prefix3 ); ?>" <?php echo $selected ? 'checked="true"' : ''; ?> />
                                     <label for="selected_sites_<?php echo esc_attr( $sel_id_prefix3 ); ?>">
                                         <?php echo esc_html( stripslashes( $website->name ) ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
+                                        <?php if ( $needs_child_update ) : ?>
+                                            <span class="ui small basic yellow label"><?php esc_html_e( 'Needs MainWP Child 6.4', 'mainwp' ); ?></span>
+                                        <?php endif; ?>
                                     </label>
                                 </div>
                                 <?php
@@ -1532,7 +1573,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $sidebar_pages                = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
         $sidebar_pages                = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
         $sidebar_pages                = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
-        $custom_theme                 = MainWP_Settings::get_instance()->get_current_user_theme();
         $screen                       = get_current_screen();
         $show_command_palette_trigger = wp_script_is( 'wp-core-commands', 'enqueued' );
         $command_palette_shortcut     = '';
@@ -1548,22 +1588,6 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
             /* translators: %s: Keyboard shortcut label. */
             $command_palette_label = sprintf( esc_attr__( 'Search sites, clients and commands (%s)', 'mainwp' ), $command_palette_shortcut );
-        }
-
-        if ( false === $custom_theme ) {
-            $compat_theme = null;
-            // to compatible with Custom Dashboard extension settings.
-            $compat_settings = get_option( 'mainwp_custom_dashboard_settings' );
-            if ( is_array( $compat_settings ) && isset( $compat_settings['theme'] ) ) {
-                $compat_theme = $compat_settings['theme'];
-            }
-            if ( null !== $compat_theme ) {
-                $custom_theme = $compat_theme;
-            }
-        }
-        $themes_files = MainWP_Settings::get_instance()->get_custom_themes_files();
-        if ( empty( $themes_files ) ) {
-            $themes_files = array();
         }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1710,23 +1734,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <a class="ui button icon" id="mainwp-sites-sidebar" aria-label="<?php esc_attr_e( 'Open sites shortcuts sidebar', 'mainwp' ); ?>">
                 <i class="globe icon"></i>
             </a>
-            <?php if ( in_array( $custom_theme, array( 'default', 'default-dark' ), true ) && empty( $themes_files ) ) : ?>
-                <?php $is_dark_theme = 'default-dark' === $custom_theme; ?>
-                <button type="button" id="<?php echo esc_attr( $is_dark_theme ? 'mainwp-select-light-theme-button' : 'mainwp-select-dark-theme-button' ); ?>" class="mainwp-theme-toggle" role="switch" aria-checked="<?php echo $is_dark_theme ? 'true' : 'false'; ?>" aria-label="<?php esc_attr_e( 'Dark mode', 'mainwp' ); ?>" data-inverted="" data-position="bottom right" data-tooltip="<?php echo esc_attr( $is_dark_theme ? __( 'Switch to Light mode', 'mainwp' ) : __( 'Switch to Dark mode', 'mainwp' ) ); ?>">
-                    <span class="mainwp-theme-toggle-thumb" aria-hidden="true"></span>
-                    <svg class="mainwp-theme-toggle-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false">
-                        <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
-                        <path d="M12 1v3m0 16v3M1 12h3m16 0h3M4.22 4.22l2.12 2.12m11.32 11.32 2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
-                    </svg>
-                    <svg class="mainwp-theme-toggle-moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
-                    </svg>
-                </button>
-            <?php else : ?>
-                <a id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" aria-label="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_html_e( 'Select MainWP theme', 'mainwp' ); ?>">
-                    <i class="palette icon"></i>
-                </a>
-            <?php endif; ?>
+            <?php static::render_theme_picker(); ?>
         </span>
 
         <?php
@@ -1812,6 +1820,57 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     }
 
     /**
+     * Render the built-in appearance choices in the header or compact menu.
+     *
+     * @param bool $show_labels Whether to show the option names alongside the icons.
+     */
+    public static function render_theme_picker( $show_labels = false ) {
+        $settings       = MainWP_Settings::get_instance();
+        $selected_theme = $settings->get_selected_theme();
+        $choices        = MainWP_Settings::get_builtin_theme_choices();
+        if ( ! isset( $choices[ $selected_theme ] ) || ! empty( $settings->get_custom_themes_files() ) ) {
+            if ( $show_labels ) :
+                ?>
+                <div class="mainwp-theme-picker-labeled">
+                    <button type="button" class="ui mini basic button mainwp-selecte-theme-button">
+                        <i class="palette icon" aria-hidden="true"></i> <?php esc_html_e( 'Select MainWP theme', 'mainwp' ); ?>
+                    </button>
+                </div>
+            <?php else : ?>
+                <a id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" aria-label="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>">
+                    <i class="palette icon"></i>
+                </a>
+            <?php
+            endif;
+            return;
+        }
+
+        ?>
+        <div class="mainwp-theme-picker<?php echo $show_labels ? ' mainwp-theme-picker-labeled' : ''; ?>" role="group" aria-label="<?php esc_attr_e( 'Appearance', 'mainwp' ); ?>">
+            <?php foreach ( $choices as $theme => $label ) : ?>
+                <?php $tooltip = 'system' === $theme ? __( 'System (follows device)', 'mainwp' ) : $label; ?>
+                <button type="button" data-mainwp-theme="<?php echo esc_attr( $theme ); ?>" aria-label="<?php echo esc_attr( $tooltip ); ?>" aria-pressed="<?php echo $theme === $selected_theme ? 'true' : 'false'; ?>" data-tooltip="<?php echo esc_attr( $tooltip ); ?>" data-inverted="" data-position="<?php echo $show_labels ? 'top center' : 'bottom center'; ?>">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <?php if ( 'system' === $theme ) : ?>
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <path d="M12 17v4m-4 0h8" />
+                        <?php elseif ( 'default' === $theme ) : ?>
+                            <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+                            <path d="M12 1v3m0 16v3M1 12h3m16 0h3M4.22 4.22l2.12 2.12m11.32 11.32 2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
+                        <?php else : ?>
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+                        <?php endif; ?>
+                    </svg>
+                    <?php if ( $show_labels ) : ?>
+                        <?php echo esc_html( $label ); ?>
+                    <?php endif; ?>
+                </button>
+            <?php endforeach; ?>
+        </div>
+        <?php
+    }
+
+    /**
      * Method render_page_navigation()
      *
      * Render page navigation.
@@ -1856,7 +1915,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $website = MainWP_DB::instance()->get_website_by_id( $id );
 
                 // To avoid error in case of direct access to page with wrong id.
-                if ( ! empty( $website ) && ! empty( $website->url ) ) {
+                if ( ! empty( $website ) && ! empty( $website->url ) && static::is_site_preview_enabled() ) {
                     $overview_mshot = static::get_mshots_image_sources( $website->url, 170 );
                     ?>
                     <img alt="<?php esc_attr_e( 'Website preview', 'mainwp' ); ?>" src="<?php echo esc_url( $overview_mshot['src'] ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $overview_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $overview_mshot['requeue_src'] ); ?>" id="mainwp-site-preview-image">
@@ -2077,7 +2136,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php
         }
         ?>
-        <div id="mainwp-grid-stack-wrapper" class="grid-stack">
+        <div id="mainwp-grid-stack-wrapper" class="grid-stack mainwp-grid-stack-loading">
         <?php
         if ( isset( $mainwp_widget_boxes[ $page ] ) ) {
             foreach ( (array) $mainwp_widget_boxes[ $page ] as $box ) {
@@ -2143,6 +2202,10 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         ?>
         </div>
         <script type="text/javascript">
+                if ( 'undefined' === typeof jQuery ) {
+                    // The ready callback below can't run, so show the widgets unarranged instead of hidden.
+                    document.getElementById( 'mainwp-grid-stack-wrapper' ).classList.remove( 'mainwp-grid-stack-loading' );
+                }
                 let page_sortablewidgets = '<?php echo esc_js( $page ); ?>';
                 let page_widget = '<?php echo esc_js( $page_widget ); ?>';
                 jQuery( document ).ready( function( $ ) {
@@ -2153,7 +2216,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             let gsOpts = {
                 auto: true,
                 cellHeight: '1rem',
-                float: false,
+                mode: 'top',
                 resizable: {
                     handles: 'e,se,s,sw,w'
                 },
@@ -2165,17 +2228,21 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     breakpoints: [{w:768, c:1}],
                 },
             }
-            let grid = GridStack.init(gsOpts);
+            try {
+                let grid = GridStack.init(gsOpts);
 
-            grid.on('change', function() {
-                mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>, grid);
-            });
+                grid.on('change', function() {
+                    mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>, grid);
+                });
 
-            if (jQuery('#mainwp-widgets-selected-layout[data-save-on-load="true"]').length) {
-                mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>, grid);
+                if (jQuery('#mainwp-widgets-selected-layout[data-save-on-load="true"]').length) {
+                    mainwp_overview_gridstack_save_layout(<?php echo (int) $client_id; ?>, grid);
+                }
+            } finally {
+                // Show the widgets even when GridStack failed, unarranged rather than a blank page.
+                jQuery('#mainwp-grid-stack-wrapper').removeClass('mainwp-grid-stack-loading');
+                jQuery('#mainwp-widgets-placeholder').dimmer('hide');
             }
-
-            jQuery('#mainwp-widgets-placeholder').dimmer('hide');
         });
         </script>
         <?php
@@ -3156,15 +3223,17 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <?php if ( empty( $mainwp_api_key ) ) : ?>
                 <div class="header"><?php esc_html_e( 'Get MainWP Pro', 'mainwp' ); ?></div>
                 <div class="content">
-                    <div class="ui header"><?php esc_html_e( 'With your MainWP Pro subscription, you get access to:', 'mainwp' ); ?></div>
-                    <div class="ui bulleted list">
-                        <div class="item"><?php esc_html_e( 'All 30+ Existing Premium Add-ons', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'All Future Add-ons', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'Critical Security & Performance Updates', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'Priority Support with Subscription', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'Manage Unlimited Websites', 'mainwp' ); ?></div>
-                    </div>
-                    <a href="https://mainwp.com/signup/?utm_campaign=Dashboard%20-%20Upgrade%20to%20Pro&utm_source=Dashboard&utm_medium=grey%20link%20modal&utm_term=get%20mainwp%20pro" class="ui big green button" target="_blank">Get MainWP Pro</a> <?php // NOSONAR - noopener - open safe. ?>
+                    <p><?php esc_html_e( 'With your MainWP Pro subscription, you get access to:', 'mainwp' ); ?></p>
+                    <ul class="ui list">
+                        <li><?php esc_html_e( 'All 30+ Existing Premium Add-ons', 'mainwp' ); ?></li>
+                        <li><?php esc_html_e( 'All Future Add-ons', 'mainwp' ); ?></li>
+                        <li><?php esc_html_e( 'Critical Security & Performance Updates', 'mainwp' ); ?></li>
+                        <li><?php esc_html_e( 'Priority Support with Subscription', 'mainwp' ); ?></li>
+                        <li><?php esc_html_e( 'Manage Unlimited Websites', 'mainwp' ); ?></li>
+                    </ul>
+                </div>
+                <div class="actions">
+                    <a href="https://mainwp.com/signup/?utm_campaign=Dashboard%20-%20Upgrade%20to%20Pro&utm_source=Dashboard&utm_medium=grey%20link%20modal&utm_term=get%20mainwp%20pro" class="ui green button" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get MainWP Pro', 'mainwp' ); ?></a>
                 </div>
             <?php else : ?>
                 <div class="header"><?php esc_html_e( 'Install Add-ons', 'mainwp' ); ?></div>

@@ -890,6 +890,68 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Check now does not find a keyword that is only in the response headers (MWP-2113).
+	 *
+	 * @return void
+	 */
+	public function test_check_now_ignores_keyword_in_response_headers() {
+		// The HTTP fixture carries an "Accept-ranges: bytes" header that the body lacks.
+		$result = $this->check_now_with_body( 'Accept-ranges', 'Welcome' );
+
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $this->get_monitor()->last_status, 'A keyword only in the headers should leave the monitor down.' );
+		$this->assertStringContainsString( 'Keyword not found.', (string) $this->get_latest_heartbeat()->msg );
+		$this->assertStringContainsString( 'Accept-ranges: bytes', $result['data'], 'The public result filter must still receive headers.' );
+		$this->assertStringEndsWith( "\r\n\r\nWelcome", $result['data'] );
+	}
+
+	/**
+	 * Check now finds a keyword in the response body (MWP-2113).
+	 *
+	 * @return void
+	 */
+	public function test_check_now_finds_keyword_in_response_body() {
+		$this->check_now_with_body( 'Checkout', 'Go to checkout now' );
+
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::UP, (int) $this->get_monitor()->last_status );
+		$this->assertStringContainsString( 'Keyword is found.', (string) $this->get_latest_heartbeat()->msg );
+	}
+
+	/**
+	 * Check now reports an empty body as keyword not found, without a retry, as before MWP-2113.
+	 *
+	 * @return void
+	 */
+	public function test_check_now_empty_body_is_checked_once() {
+		$result = $this->check_now_with_body( 'Checkout', '' );
+
+		$this->assertSame( 1, $result['requests'], 'An empty body is still a response, so check now should not retry it.' );
+		$this->assertStringEndsWith( "\r\n\r\n", $result['data'], 'The raw response has headers and an empty body.' );
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $this->get_monitor()->last_status );
+		$this->assertStringContainsString( 'Keyword not found.', (string) $this->get_latest_heartbeat()->msg );
+	}
+
+	/**
+	 * Check now still retries once when no response arrives.
+	 *
+	 * @return void
+	 */
+	public function test_check_now_retries_when_no_response_arrives() {
+		$requests   = 0;
+		$url_filter = function () use ( &$requests ) {
+			++$requests;
+			return 'http://127.0.0.1:1/';
+		};
+		add_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+
+		$monitor = $this->get_monitor();
+		MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor( $monitor, $this->get_global_settings( 5 ), false, array( 'ignore_compatible_save' => 1 ) );
+
+		remove_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+
+		$this->assertSame( 2, $requests, 'A refused connection should be retried once.' );
+	}
+
+	/**
 	 * Keyword, body and expected result for a 200 response.
 	 *
 	 * @return array
@@ -932,6 +994,74 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		remove_filter( 'mainwp_uptime_monitor_check_result', $result_filter );
 
 		return $used_method;
+	}
+
+	/**
+	 * Run a real check now against a loopback HTTP response with known headers and body.
+	 *
+	 * @param string $keyword Configured keyword.
+	 * @param string $body    Response body.
+	 *
+	 * @return array The data the check got and the number of requests it made.
+	 */
+	private function check_now_with_body( $keyword, $body ) {
+		$global_settings               = $this->get_global_settings( 5 );
+		$global_settings['type']       = 'keyword';
+		$global_settings['keyword']    = $keyword;
+		$global_settings['maxretries'] = 0;
+
+		$script = <<<'FIXTURE'
+$body = base64_decode(trim(fgets(STDIN)));
+$server = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
+if (!$server) { fwrite(STDERR, 'Cannot open loopback fixture'); exit(1); }
+fwrite(STDOUT, stream_socket_get_name($server, false) . "\n");
+fflush(STDOUT);
+$client = stream_socket_accept($server, 10);
+if (!$client) { fclose($server); exit(2); }
+stream_set_timeout($client, 5);
+while (false !== ($line = fgets($client)) && "\r\n" !== $line) {}
+fwrite($client, "HTTP/1.1 200 OK\r\nAccept-ranges: bytes\r\nContent-Type: text/plain\r\nContent-Length: " . strlen($body) . "\r\nConnection: close\r\n\r\n" . $body);
+fclose($client);
+fclose($server);
+FIXTURE;
+		$server = proc_open( array( PHP_BINARY, '-r', $script ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );
+		$this->assertIsResource( $server, 'Loopback HTTP fixture must start.' );
+		fwrite( $pipes[0], base64_encode( $body ) . "\n" );
+		fclose( $pipes[0] );
+		stream_set_timeout( $pipes[1], 5 );
+		$address = trim( (string) fgets( $pipes[1] ) );
+
+		$requests      = 0;
+		$checked_data  = null;
+		$url_filter    = function () use ( &$requests, $address ) {
+			++$requests;
+			return 'http://' . $address . '/';
+		};
+		$result_filter = function ( $resp_info, $data ) use ( &$checked_data ) {
+			$checked_data = $data;
+			return $resp_info;
+		};
+
+		add_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+		add_filter( 'mainwp_uptime_monitor_check_result', $result_filter, 10, 2 );
+
+		try {
+			$this->assertNotSame( '', $address, 'Loopback fixture must publish its address.' );
+			$monitor = $this->get_monitor();
+			MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor( $monitor, $global_settings, false, array( 'ignore_compatible_save' => 1 ) );
+		} finally {
+			remove_filter( 'mainwp_uptime_monitoring_check_url', $url_filter );
+			remove_filter( 'mainwp_uptime_monitor_check_result', $result_filter, 10 );
+			proc_terminate( $server );
+			fclose( $pipes[1] );
+			fclose( $pipes[2] );
+			proc_close( $server );
+		}
+
+		return array(
+			'data'     => $checked_data,
+			'requests' => $requests,
+		);
 	}
 
     /**

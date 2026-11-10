@@ -3012,23 +3012,35 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // lane's flush, so owed cancels are landed here before the child
                 // refuses this create as busy.
                 MainWP_Manage_Backups_Handler::flush_pending_child_cancel( $website );
+                $params = array(
+                    'type'                  => $type,
+                    'exclude'               => '',
+                    'excludebackup'         => 0,
+                    'excludecache'          => 0,
+                    'excludenonwp'          => 0,
+                    'excludezip'            => 0,
+                    'ext'                   => $archive_ext,
+                    'file_descriptors_auto' => $file_descriptors_auto,
+                    'file_descriptors'      => $file_descriptors,
+                    'loadFilesBeforeZip'    => false,
+                    'pid'                   => time(),
+                    'f'                     => '',
+                );
+                if ( 'full' === $type && '' !== $owner ) {
+                    // This create can replace the shared list used by incremental backups.
+                    global $wpdb;
+                    $writer = 'pending:adhoc:' . wp_generate_uuid4();
+                    MainWP_DB::instance()->update_website_option( $website, 'native_manifest_snapshot', $writer );
+                    $recorded_writer = MainWP_DB::instance()->get_website_option( (int) $website->id, 'native_manifest_snapshot' );
+                    if ( '' !== $wpdb->last_error || $writer !== $recorded_writer ) {
+                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+                    }
+                    $params['emit_manifest'] = '1';
+                }
                 $information = MainWP_Connect::fetch_url_authed(
                     $website,
                     'backup_task_create',
-                    array(
-                        'type'                  => $type,
-                        'exclude'               => '',
-                        'excludebackup'         => 0,
-                        'excludecache'          => 0,
-                        'excludenonwp'          => 0,
-                        'excludezip'            => 0,
-                        'ext'                   => $archive_ext,
-                        'file_descriptors_auto' => $file_descriptors_auto,
-                        'file_descriptors'      => $file_descriptors,
-                        'loadFilesBeforeZip'    => false,
-                        'pid'                   => time(),
-                        'f'                     => '',
-                    ),
+                    $params,
                     false,
                     false,
                     false

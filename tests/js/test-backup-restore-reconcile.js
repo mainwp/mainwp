@@ -133,6 +133,16 @@ function createdJobCallback( h, action ) {
     return h.requests.pop().success;
 }
 
+test( 'mwp2259 legacy rollback shows the missing-inventory warning', () => {
+    const h = harness();
+    h.context.showReconcileNote( { reconcile: { status: 'skipped', reason: 'no_manifest' } }, 'full', true );
+    const note = h.context.$( '#mainwp-restore-reconcile-note' ).state;
+    assert.equal( note.visible, true );
+    assert.ok( note.classes.has( 'yellow' ) );
+    assert.match( note.text, /were not removed/ );
+    assert.doesNotMatch( note.text, /6\.3-beta1/ );
+} );
+
 for ( const [ action, label ] of [ [ 'mainwp_restore_initiate', 'Cancel Restore' ], [ 'mainwp_restore_rollback', 'Cancel Rollback' ] ] ) {
     for ( const canRestore of [ true, false ] ) {
         test( action + ' paints Queued and the permitted cancel before the first poll reply: ' + canRestore, () => {
@@ -362,7 +372,7 @@ for ( const reason of [ 'unarchived_invalid', 'unarchived_overflow', 'unarchived
 }
 
 for ( const status of [ 'completed', 'failed_permanent', 'failed_retryable' ] ) {
-    test( status + ' shows reconcile results while excluding db and rollback', () => {
+    test( status + ' shows reconcile results for restore and rollback while excluding db', () => {
         const h = harness();
         const data = { status, sub_type: 'files', verification: { reconcile: { status: 'done', kept: 1, kept_paths: [ 'host.php' ] } } };
         h.context.showProgress( data );
@@ -370,7 +380,7 @@ for ( const status of [ 'completed', 'failed_permanent', 'failed_retryable' ] ) 
         h.context.showProgress( { ...data, sub_type: 'db' } );
         assert.equal( h.note().visible, false );
         h.context.showProgress( { ...data, is_rollback: true } );
-        assert.equal( h.note().visible, false );
+        assert.equal( h.note().visible, true );
     } );
 }
 

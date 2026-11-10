@@ -1579,8 +1579,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $_error_code   = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
                 $_history_data = MainWP_Backup_Run_History::error_context( $e );
                 // Readiness, private-root and download-capacity failures need their specific remedy.
-                $_error_output = ! $_disk_refused && ! in_array( $_error_code, array( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ), true ) && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
-                $errorOutput  .= $_error_output . '<br />';
+                $_error_output   = ! $_disk_refused && ! in_array( $_error_code, array( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ), true ) && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
+                $_archive_detail = MainWP_Backup_Error_Codes::archive_download_detail( $_history_data['code'], $_history_data['extra'] );
+                if ( '' !== $_archive_detail ) {
+                    $_error_output .= ' ' . $_archive_detail;
+                }
+                $errorOutput .= $_error_output . '<br />';
                 // Progress rows can outlive the task-level error record.
                 $_progress        = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, (int) $siteid );
                 $_progress_values = array( 'last_error' => $_error_output );

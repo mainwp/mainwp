@@ -190,6 +190,12 @@ class MainWP_Backup_Run_History {
         $code  = MainWP_Backup_Error_Codes::code_for_exception( $error );
         $extra = $error instanceof MainWP_Exception ? (string) $error->get_message_extra() : '';
         $child = $error instanceof MainWP_Exception ? (string) $error->get_message_error_code() : '';
+        if ( '' !== MainWP_Backup_Error_Codes::archive_download_detail( $code, $extra ) ) {
+            return array(
+                'code'  => $code,
+                'extra' => $extra,
+            );
+        }
         if ( MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR === $code && preg_match( '/^mainwp_[a-z0-9_]{1,57}$/D', $child ) && MainWP_Backup_Operations::safe_error( $child )['code'] !== $child ) {
             $safe = self::history_error( $child, wp_specialchars_decode( MainWP_Error_Helper::get_error_message( $error ), ENT_QUOTES ) );
             return array(
@@ -262,7 +268,14 @@ class MainWP_Backup_Run_History {
      * @return array Safe code and message.
      */
     private static function history_error( string $code, string $extra ): array {
-        $safe = MainWP_Backup_Operations::safe_error( $code );
+        $safe   = MainWP_Backup_Operations::safe_error( $code );
+        $detail = MainWP_Backup_Error_Codes::archive_download_detail( $code, $extra );
+        if ( '' === $detail && preg_match( '/ HTTP ([1-5][0-9]{2})$/D', $extra, $match ) ) {
+            $detail = MainWP_Backup_Error_Codes::archive_download_detail( $code, 'HTTP ' . $match[1] );
+        }
+        if ( '' !== $detail ) {
+            $safe['message'] .= ' ' . wp_specialchars_decode( $detail, ENT_QUOTES );
+        }
         if ( $safe['code'] !== $code && preg_match( '/^mainwp_[a-z0-9_]{1,57}$/D', $code ) ) {
             $message = trim( MainWP_Backup_Error_Codes::sanitize_message( $extra ) );
             if ( '' !== $message ) {

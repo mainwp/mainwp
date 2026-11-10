@@ -20,6 +20,213 @@ use MainWP\Dashboard\MainWP_Backup_Schedule_Calculator;
 class MainWP_Backup_Schedule_Calculator_Test extends \WP_UnitTestCase {
 
 	/**
+	 * Pending and served occurrences retain their identity across calendar boundaries.
+	 *
+	 * @dataProvider mwp_2166_slots
+	 * @param string $now Reference UTC time.
+	 * @param array  $fields Task fields.
+	 * @param string $expected Expected UTC time.
+	 * @param string $served Last run argument.
+	 */
+	public function test_mwp_2166_offset_slots( $now, $fields, $expected, $served = '' ) {
+		$task       = $this->make_task(
+			$fields + array(
+				'id'          => 58,
+				'time_of_day' => '10:00',
+			)
+		);
+		$calculator = new MainWP_Backup_Schedule_Calculator( new \DateTimeZone( 'UTC' ), strtotime( $now . ' UTC' ), 30 );
+		$this->assertSame( strtotime( $expected . ' UTC' ), $calculator->compute_next_run( $task, '' === $served ? null : strtotime( $served . ' UTC' ) ) );
+	}
+
+	/**
+	 * Task 58 has a thirty-minute offset in a thirty-minute window.
+	 *
+	 * @return array
+	 */
+	public static function mwp_2166_slots() {
+		return array(
+			'before base'       => array( '2026-06-10 09:00', array(), '2026-06-10 10:30' ),
+			'pending gap'       => array( '2026-06-10 10:05', array(), '2026-06-10 10:30' ),
+			'exact base'        => array( '2026-06-10 10:00', array(), '2026-06-10 10:30' ),
+			'exact offset'      => array( '2026-06-10 10:30', array(), '2026-06-11 10:30' ),
+			'after offset'      => array( '2026-06-10 10:31', array(), '2026-06-11 10:30' ),
+			'daily midnight'    => array( '2026-06-11 00:05', array( 'time_of_day' => '23:50' ), '2026-06-11 00:20' ),
+			'weekly midnight'   => array(
+				'2026-06-11 00:05',
+				array(
+					'schedule'    => 'weekly',
+					'day_of_week' => 3,
+					'time_of_day' => '23:50',
+				),
+				'2026-06-11 00:20',
+			),
+			'monthly rollover'  => array(
+				'2026-07-01 00:05',
+				array(
+					'schedule'     => 'monthly',
+					'day_of_month' => 30,
+					'time_of_day'  => '23:50',
+				),
+				'2026-07-01 00:20',
+			),
+			'served base'       => array( '2026-06-10 10:06', array(), '2026-06-11 10:30', '2026-06-10 10:00' ),
+			'served gap'        => array( '2026-06-10 10:06', array(), '2026-06-11 10:30', '2026-06-10 10:06' ),
+			'task served bound' => array( '2026-06-10 10:06', array( 'last_run' => strtotime( '2026-06-10 10:06 UTC' ) ), '2026-06-11 10:30', '2026-06-09 10:00' ),
+			'weekly served'     => array(
+				'2026-06-10 10:06',
+				array(
+					'schedule'    => 'weekly',
+					'day_of_week' => 3,
+				),
+				'2026-06-17 10:30',
+				'2026-06-10 10:06',
+			),
+			'monthly served'    => array(
+				'2026-06-10 10:06',
+				array(
+					'schedule'     => 'monthly',
+					'day_of_month' => 10,
+				),
+				'2026-07-10 10:30',
+				'2026-06-10 10:06',
+			),
+		);
+	}
+
+	/** Stable task offsets spread starts while zero, interval and legacy modes keep their slots. */
+	public function test_mwp_2166_stable_spread_and_unchanged_modes() {
+		$tz   = new \DateTimeZone( 'UTC' );
+		$now  = strtotime( '2026-06-10 09:00 UTC' );
+		$base = strtotime( '2026-06-10 10:00 UTC' );
+		$on   = new MainWP_Backup_Schedule_Calculator( $tz, $now, 30 );
+		$off  = new MainWP_Backup_Schedule_Calculator( $tz, $now, 0 );
+		foreach ( array( 'daily', 'weekly', 'monthly' ) as $schedule ) {
+			$task = $this->make_task(
+				array(
+					'id'           => 1,
+					'schedule'     => $schedule,
+					'time_of_day'  => '10:00',
+					'day_of_week'  => 3,
+					'day_of_month' => 10,
+				)
+			);
+			$this->assertSame( $base, $off->compute_next_run( $task ) );
+			$this->assertSame( $base + 300, $on->compute_next_run( $task ) );
+			$this->assertSame( $base + 300, $on->compute_next_run( $task ) );
+		}
+		$this->assertSame(
+			$base + 1380,
+			$on->compute_next_run(
+				$this->make_task(
+					array(
+						'id'          => 2,
+						'time_of_day' => '10:00',
+					)
+				)
+			)
+		);
+		foreach ( array( 0, -1, null ) as $id ) {
+			$this->assertSame(
+				$base,
+				$on->compute_next_run(
+					$this->make_task(
+						array(
+							'id'          => $id,
+							'time_of_day' => '10:00',
+						)
+					)
+				)
+			);
+		}
+		$this->assertSame( $base, $on->compute_next_run( $this->make_task( array( 'time_of_day' => '10:00' ) ) ) );
+		foreach ( array( $on, $off ) as $calculator ) {
+			$this->assertSame( 0, $calculator->compute_next_run( $this->make_task( array( 'id' => 58 ) ) ) );
+			$interval = $this->make_task(
+				array(
+					'id'             => 58,
+					'schedule'       => 'interval',
+					'interval_hours' => 2,
+					'time_of_day'    => '10:00',
+				)
+			);
+			$this->assertSame( $now + HOUR_IN_SECONDS, $calculator->compute_next_run( $interval, $now - HOUR_IN_SECONDS ) );
+		}
+		$max = new MainWP_Backup_Schedule_Calculator( $tz, $now, 60 );
+		$this->assertSame(
+			$base + 2100,
+			$max->compute_next_run(
+				$this->make_task(
+					array(
+						'id'          => 1,
+						'time_of_day' => '10:00',
+					)
+				)
+			)
+		);
+	}
+
+	/** Fall-back repeats the clock hour without repeating the served occurrence. */
+	public function test_mwp_2166_dst_offset_advances_once() {
+		$tz    = new \DateTimeZone( 'America/New_York' );
+		$task  = $this->make_task(
+			array(
+				'id'          => 58,
+				'time_of_day' => '01:30',
+			)
+		);
+		$now   = $this->local_ts( '2026-10-31 23:00', 'America/New_York' );
+		$first = ( new MainWP_Backup_Schedule_Calculator( $tz, $now, 30 ) )->compute_next_run( $task );
+		$this->assertSame( strtotime( '2026-11-01 06:00 UTC' ), $first );
+		$this->assertSame( strtotime( '2026-11-02 07:00 UTC' ), ( new MainWP_Backup_Schedule_Calculator( $tz, $first, 30 ) )->compute_next_run( $task, $first ) );
+	}
+
+	/**
+	 * A fall-back occurrence runs once on its first instant for every schedule and fold length.
+	 *
+	 * @dataProvider mwp_2166_fold_cases
+	 * @param string $tz       Timezone identifier.
+	 * @param array  $fields   Task fields.
+	 * @param string $now      Reference UTC time.
+	 * @param string $served   Last run, or '' when none.
+	 * @param string $expected Expected UTC time.
+	 */
+	public function test_mwp_2166_fold_occurrence_runs_once( $tz, $fields, $now, $served, $expected ) {
+		$task       = $this->make_task( $fields + array( 'id' => 58 ) );
+		$calculator = new MainWP_Backup_Schedule_Calculator( new \DateTimeZone( $tz ), strtotime( $now . ' UTC' ), 30 );
+		$this->assertSame( strtotime( $expected . ' UTC' ), $calculator->compute_next_run( $task, '' === $served ? null : strtotime( $served . ' UTC' ) ) );
+	}
+
+	/**
+	 * New York folds one hour on 2026-11-01, Lord Howe thirty minutes on 2026-04-05, Troll two hours on 2026-10-25.
+	 *
+	 * @return array
+	 */
+	public static function mwp_2166_fold_cases() {
+		$weekly  = array(
+			'schedule'    => 'weekly',
+			'day_of_week' => 0,
+			'time_of_day' => '01:30',
+		);
+		$monthly = array(
+			'schedule'     => 'monthly',
+			'day_of_month' => 1,
+			'time_of_day'  => '01:30',
+		);
+		$howe    = array( 'time_of_day' => '01:45' );
+		return array(
+			'weekly before fold'     => array( 'America/New_York', $weekly, '2026-10-31 23:00', '', '2026-11-01 06:00' ),
+			'monthly before fold'    => array( 'America/New_York', $monthly, '2026-10-31 23:00', '', '2026-11-01 06:00' ),
+			'weekly served'          => array( 'America/New_York', $weekly, '2026-11-01 06:00', '2026-11-01 06:00', '2026-11-08 07:00' ),
+			'monthly served'         => array( 'America/New_York', $monthly, '2026-11-01 06:00', '2026-11-01 06:00', '2026-12-01 07:00' ),
+			'half-hour before fold'  => array( 'Australia/Lord_Howe', $howe, '2026-04-04 10:00', '', '2026-04-04 15:15' ),
+			'half-hour served first' => array( 'Australia/Lord_Howe', $howe, '2026-04-04 15:30', '2026-04-04 14:45', '2026-04-05 15:45' ),
+			// Troll folds two hours on 2026-10-25; the weekly search lands on the second 01:30.
+			'two-hour fold'          => array( 'Antarctica/Troll', $weekly, '2026-10-24 12:00', '', '2026-10-25 00:00' ),
+		);
+	}
+
+	/**
 	 * Build a task row object with schedule fields.
 	 *
 	 * @param array $fields Field overrides.

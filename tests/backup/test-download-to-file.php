@@ -129,6 +129,16 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 			remove_filter( 'mainwp_download_to_file_timeouts', $this->timeouts_filter );
 			$this->timeouts_filter = null;
 		}
+		if ( null !== $this->segment_filter ) {
+			remove_filter( 'mainwp_download_to_file_segment_bytes', $this->segment_filter );
+			$this->segment_filter = null;
+		}
+		foreach ( $this->range_logs as $log ) {
+			if ( is_file( sys_get_temp_dir() . '/' . $log ) ) {
+				unlink( sys_get_temp_dir() . '/' . $log );
+			}
+		}
+		$this->range_logs = array();
 		parent::tear_down();
 	}
 
@@ -603,5 +613,426 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Segment size override for the current test.
+	 *
+	 * @var callable|null
+	 */
+	private $segment_filter = null;
+
+	/**
+	 * Range log files the fixture server wrote for the current test.
+	 *
+	 * @var string[]
+	 */
+	private $range_logs = array();
+
+	/**
+	 * Use small segments so a few KB exercise the multi-part path.
+	 *
+	 * @param int $bytes Segment size.
+	 * @return void
+	 */
+	private function use_segment_bytes( $bytes ) {
+		$this->segment_filter = static function () use ( $bytes ) {
+			return $bytes;
+		};
+		add_filter( 'mainwp_download_to_file_segment_bytes', $this->segment_filter );
+	}
+
+	/**
+	 * A fresh range log name the fixture server appends to.
+	 *
+	 * @return string Log basename.
+	 */
+	private function range_log() {
+		$log                = 'mainwp-ranges-' . bin2hex( random_bytes( 6 ) );
+		$this->range_logs[] = $log;
+		return $log;
+	}
+
+	/**
+	 * Requests the fixture server saw, as [request marker, Range header] pairs.
+	 *
+	 * @param string $log Log basename.
+	 * @return array[]
+	 */
+	private function logged_requests( $log ) {
+		$path = sys_get_temp_dir() . '/' . $log;
+		if ( ! is_file( $path ) ) {
+			return array();
+		}
+		return array_map(
+			static function ( $line ) {
+				return array_slice( explode( '|', $line ), 0, 2 );
+			},
+			file( $path, FILE_IGNORE_NEW_LINES )
+		);
+	}
+
+	/**
+	 * Stand-in for per-request Child authorization: each call yields a distinct URL.
+	 *
+	 * @param string $route Route with query, without the request marker.
+	 * @param int    $calls By-ref count of renewals.
+	 * @return callable
+	 */
+	private function renewing_urls( $route, &$calls ) {
+		return static function () use ( $route, &$calls ) {
+			++$calls;
+			return static::fixture_url( $route . '&m=' . ( $calls + 1 ) );
+		};
+	}
+
+	/**
+	 * Run a segmented download against the bounded route.
+	 *
+	 * @param string   $route Route with query.
+	 * @param string   $file  Target path.
+	 * @param int      $size  Declared size.
+	 * @param int|null $calls By-ref renewal count.
+	 * @return void
+	 */
+	private function segmented_download( $route, $file, $size, &$calls = null ) {
+		$calls = 0;
+		MainWP_Connect::download_to_file( static::fixture_url( $route . '&m=1' ), $file, $size, null, null, null, $this->renewing_urls( $route, $calls ) );
+	}
+
+	/**
+	 * MWP-2183: an archive larger than the server's response cap arrives in
+	 * bounded parts from byte 0, each part on fresh authorization.
+	 *
+	 * @return void
+	 */
+	public function test_large_download_uses_bounded_segments_from_byte_zero() {
+		$this->use_segment_bytes( 4096 );
+		$log  = $this->range_log();
+		$file = $this->temp_download_path();
+
+		$this->segmented_download( '/bounded?size=10000&limit=4096&log=' . $log, $file, 10000, $calls );
+
+		$this->assertSame( static::fixture_content( 10000 ), file_get_contents( $file ) );
+		$this->assertSame(
+			array(
+				array( '1', 'bytes=0-4095' ),
+				array( '2', 'bytes=4096-8191' ),
+				array( '3', 'bytes=8192-9999' ),
+			),
+			$this->logged_requests( $log )
+		);
+		$this->assertSame( 2, $calls, 'Every request after the first must use a renewed URL.' );
+	}
+
+	/**
+	 * MWP-2183: a resume from a non-aligned offset stays bounded.
+	 *
+	 * @return void
+	 */
+	public function test_resumed_download_requests_bounded_segments() {
+		$this->use_segment_bytes( 4096 );
+		$log  = $this->range_log();
+		$file = $this->temp_download_path();
+		file_put_contents( $file, substr( static::fixture_content( 10000 ), 0, 1000 ) );
+
+		$this->segmented_download( '/bounded?size=10000&limit=4096&log=' . $log, $file, 10000, $calls );
+
+		$this->assertSame( static::fixture_content( 10000 ), file_get_contents( $file ) );
+		$this->assertSame(
+			array(
+				array( '1', 'bytes=1000-5095' ),
+				array( '2', 'bytes=5096-9191' ),
+				array( '3', 'bytes=9192-9999' ),
+			),
+			$this->logged_requests( $log )
+		);
+	}
+
+	/**
+	 * MWP-2183: the last part asks for exactly the remaining bytes.
+	 *
+	 * @return void
+	 */
+	public function test_final_short_segment_requests_only_remaining_bytes() {
+		$this->use_segment_bytes( 4096 );
+		$log  = $this->range_log();
+		$file = $this->temp_download_path();
+
+		$this->segmented_download( '/bounded?size=8200&limit=4096&log=' . $log, $file, 8200, $calls );
+
+		$requests = $this->logged_requests( $log );
+		$this->assertCount( 3, $requests );
+		$this->assertSame( 'bytes=8192-8199', $requests[2][1] );
+		$this->assertSame( static::fixture_content( 8200 ), file_get_contents( $file ) );
+	}
+
+	/**
+	 * Without a URL renewer the transfer keeps the single-request contract.
+	 *
+	 * @return void
+	 */
+	public function test_download_without_url_renewer_stays_single_request() {
+		$this->use_segment_bytes( 4096 );
+		$log  = $this->range_log();
+		$file = $this->temp_download_path();
+
+		MainWP_Connect::download_to_file( static::fixture_url( '/bounded?size=10000&log=' . $log . '&m=1' ), $file, 10000 );
+
+		$this->assertSame( array( array( '1', '' ) ), $this->logged_requests( $log ) );
+		$this->assertSame( static::fixture_content( 10000 ), file_get_contents( $file ) );
+	}
+
+	/**
+	 * MWP-2183: a later part whose Content-Range or Content-Length disagrees
+	 * with the request is refused before any of its bytes are appended.
+	 *
+	 * @dataProvider mismatched_segment_cases
+	 * @param string $fault Fixture fault on the second request.
+	 * @param string $code  Expected error code.
+	 * @return void
+	 */
+	public function test_mismatched_segment_is_rejected_before_append( $fault, $code ) {
+		$this->use_segment_bytes( 4096 );
+		$file = $this->temp_download_path();
+
+		try {
+			$this->segmented_download( '/bounded?size=10000&fault=' . $fault . '&at=2&log=' . $this->range_log(), $file, 10000 );
+			$this->fail( 'The mismatched segment was accepted.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( $code, $error->get_message_error_code() );
+		}
+
+		clearstatcache( true, $file );
+		$this->assertSame( substr( static::fixture_content( 10000 ), 0, 4096 ), file_get_contents( $file ), 'Only the validated first part may remain.' );
+	}
+
+	/**
+	 * Responses that must not reach the archive.
+	 *
+	 * @return array
+	 */
+	public static function mismatched_segment_cases() {
+		return array(
+			'Content-Range end'   => array( 'wrong-end', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ),
+			'Content-Range total' => array( 'wrong-total', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ),
+			'Content-Length'      => array( 'wrong-length', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ),
+			'body past range end' => array( 'overflow', MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ),
+			'error body'          => array( '500', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ),
+		);
+	}
+
+	/**
+	 * MWP-2183: a part that closes early keeps its valid bytes, and the next
+	 * call resumes from there.
+	 *
+	 * @return void
+	 */
+	public function test_short_segment_keeps_valid_prefix_for_resume() {
+		$this->use_segment_bytes( 4096 );
+		$file = $this->temp_download_path();
+
+		try {
+			$this->segmented_download( '/bounded?size=10000&fault=short&at=2&log=' . $this->range_log(), $file, 10000 );
+			$this->fail( 'The short segment was accepted.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, $error->get_message_error_code() );
+		}
+		clearstatcache( true, $file );
+		$this->assertSame( 8182, filesize( $file ) );
+
+		$log = $this->range_log();
+		$this->segmented_download( '/bounded?size=10000&log=' . $log, $file, 10000 );
+
+		$this->assertSame( 'bytes=8182-9999', $this->logged_requests( $log )[0][1] );
+		$this->assertSame( static::fixture_content( 10000 ), file_get_contents( $file ) );
+	}
+
+	/**
+	 * MWP-2183: a server that ignores Range answers 200 with the whole file;
+	 * it is written once from byte 0 and the part loop stops.
+	 *
+	 * @dataProvider range_ignored_requests
+	 * @param int $at Request that ignores Range.
+	 * @return void
+	 */
+	public function test_range_ignored_writes_whole_file_once_and_stops( $at ) {
+		$this->use_segment_bytes( 4096 );
+		$log  = $this->range_log();
+		$file = $this->temp_download_path();
+
+		$this->segmented_download( '/bounded?size=10000&fault=ignore&at=' . $at . '&log=' . $log, $file, 10000, $calls );
+
+		$this->assertSame( static::fixture_content( 10000 ), file_get_contents( $file ) );
+		$requests = $this->logged_requests( $log );
+		$this->assertCount( $at, $requests, 'No request may follow the 200.' );
+		$this->assertSame( 'bytes=0-4095', $requests[0][1] );
+		$this->assertSame( $at - 1, $calls );
+	}
+
+	/**
+	 * Request numbers that ignore Range.
+	 *
+	 * @return array
+	 */
+	public static function range_ignored_requests() {
+		return array(
+			'first part' => array( 1 ),
+			'later part' => array( 2 ),
+		);
+	}
+
+	/**
+	 * MWP-2183: a 416 on a later part restarts from byte 0 on a renewed URL;
+	 * the Child consumed the previous URL's token before answering.
+	 *
+	 * @return void
+	 */
+	public function test_416_on_later_segment_restarts_on_renewed_url() {
+		$this->use_segment_bytes( 4096 );
+		$log  = $this->range_log();
+		$file = $this->temp_download_path();
+
+		$this->segmented_download( '/bounded?size=10000&fault=416&at=2&log=' . $log, $file, 10000, $calls );
+
+		$this->assertSame( static::fixture_content( 10000 ), file_get_contents( $file ) );
+		$this->assertSame(
+			array( 'bytes=0-4095', 'bytes=4096-8191', 'bytes=0-4095', 'bytes=4096-8191', 'bytes=8192-9999' ),
+			array_column( $this->logged_requests( $log ), 1 )
+		);
+		$this->assertSame( array( '1', '2', '3', '4', '5' ), array_column( $this->logged_requests( $log ), 0 ), 'Each request needs its own URL.' );
+		$this->assertSame( 4, $calls );
+	}
+
+	/**
+	 * MWP-2183: a 413 gets its own code and an explanation of response limits.
+	 *
+	 * @return void
+	 */
+	public function test_http_413_reports_download_too_large() {
+		$file = $this->temp_download_path();
+
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/bounded?size=10000&limit=100' ), $file, 10000 );
+			$this->fail( 'The 413 was accepted.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DOWNLOAD_TOO_LARGE, $error->get_message_error_code() );
+			$this->assertSame( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_DOWNLOAD_TOO_LARGE ), $error->getMessage() );
+			$this->assertSame( 'HTTP 413', $error->get_message_extra( false ) );
+		}
+		$this->assertFileDoesNotExist( $file );
+	}
+
+	/**
+	 * Host-specific request headers must survive the generated Range header.
+	 *
+	 * @dataProvider range_header_download_cases
+	 * @param bool $bounded Whether to renew URLs for bounded parts.
+	 * @return void
+	 */
+	public function test_range_preserves_filtered_request_headers( $bounded ) {
+		$this->use_segment_bytes( 4096 );
+		$log    = $this->range_log();
+		$file   = $this->temp_download_path();
+		$filter = static function ( $options ) {
+			$options[ CURLOPT_HTTPHEADER ] = array( 'X-MainWP-Probe: retained', 'rAnGe: bytes=99999-' );
+			return $options;
+		};
+		add_filter( 'mainwp_download_to_file_curl_options', $filter );
+		try {
+			$route = '/bounded?size=10000&log=' . $log;
+			if ( $bounded ) {
+				$this->segmented_download( $route, $file, 10000 );
+			} else {
+				file_put_contents( $file, substr( static::fixture_content( 10000 ), 0, 1000 ) );
+				MainWP_Connect::download_to_file( static::fixture_url( $route . '&m=1' ), $file, 10000 );
+			}
+		} finally {
+			remove_filter( 'mainwp_download_to_file_curl_options', $filter );
+		}
+		$this->assertSame( static::fixture_content( 10000 ), file_get_contents( $file ) );
+		$this->assertSame(
+			$bounded ? array( 'bytes=0-4095', 'bytes=4096-8191', 'bytes=8192-9999' ) : array( 'bytes=1000-' ),
+			array_column( $this->logged_requests( $log ), 1 )
+		);
+		$lines = file( sys_get_temp_dir() . '/' . $log, FILE_IGNORE_NEW_LINES );
+		foreach ( $lines as $line ) {
+			$this->assertSame( 'retained', explode( '|', $line )[2], 'A request lost the filtered header.' );
+		}
+	}
+
+	/**
+	 * Both generated Range paths share the header merge contract.
+	 *
+	 * @return array
+	 */
+	public static function range_header_download_cases() {
+		return array(
+			'bounded parts'     => array( true ),
+			'open-ended resume' => array( false ),
+		);
+	}
+
+	/**
+	 * A successful part must not replenish the restart allowance.
+	 *
+	 * @return void
+	 */
+	public function test_repeated_416_stops_after_one_restart() {
+		$this->use_segment_bytes( 4096 );
+		$log  = $this->range_log();
+		$file = $this->temp_download_path();
+		try {
+			$this->segmented_download( '/bounded?size=10000&fault=416&at=2,4&log=' . $log, $file, 10000, $calls );
+			$this->fail( 'A second restart was allowed.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, $error->get_message_error_code() );
+		}
+		$this->assertSame(
+			array( 'bytes=0-4095', 'bytes=4096-8191', 'bytes=0-4095', 'bytes=4096-8191' ),
+			array_column( $this->logged_requests( $log ), 1 )
+		);
+		$this->assertSame( 3, $calls );
+	}
+
+	/**
+	 * Failed authorization must stop before another GET and retain validated bytes.
+	 *
+	 * @return void
+	 */
+	public function test_renewer_exception_keeps_prefix_and_stops_requests() {
+		$this->use_segment_bytes( 4096 );
+		$log     = $this->range_log();
+		$file    = $this->temp_download_path();
+		$failure = new MainWP_Exception( 'Renewal failed.', '', MainWP_Backup_Error_Codes::ERR_DL_TOKEN_INVALID );
+		$calls   = 0;
+		$renew   = static function () use ( $failure, &$calls ) {
+			++$calls;
+			throw $failure;
+		};
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/bounded?size=10000&log=' . $log . '&m=1' ), $file, 10000, null, null, null, $renew );
+			$this->fail( 'A failed renewal was ignored.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( $failure, $error );
+		}
+		$this->assertSame( 1, $calls );
+		$this->assertSame( array( array( '1', 'bytes=0-4095' ) ), $this->logged_requests( $log ) );
+		$this->assertSame( substr( static::fixture_content( 10000 ), 0, 4096 ), file_get_contents( $file ) );
+	}
+
+	/**
+	 * Content-Range and measured growth suffice when Content-Length is absent.
+	 *
+	 * @return void
+	 */
+	public function test_bounded_download_without_content_length() {
+		$this->use_segment_bytes( 4096 );
+		$log  = $this->range_log();
+		$file = $this->temp_download_path();
+		$this->segmented_download( '/bounded?size=10000&fault=no-length&at=1,2,3&log=' . $log, $file, 10000, $calls );
+		$this->assertSame( static::fixture_content( 10000 ), file_get_contents( $file ) );
+		$this->assertCount( 3, $this->logged_requests( $log ) );
+		$this->assertSame( 2, $calls );
 	}
 }

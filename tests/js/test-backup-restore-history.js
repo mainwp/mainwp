@@ -38,6 +38,7 @@ function harness( jobs, canRestore = true ) {
 		const state = { tag: selector, text: '', children: [], attrs: {}, props: {}, visible: false };
 		const element = {
 			state,
+			data() { return this; }, removeData() { return this; },
 			text( value ) { assert.equal( typeof value, 'string' ); state.text = value; state.children = []; return this; },
 			empty() { state.text = ''; state.children = []; return this; },
 			append( ...children ) {
@@ -71,7 +72,9 @@ function harness( jobs, canRestore = true ) {
 		callback( { failed_restore_jobs: jobs, snapshots: [], active_restore_job_id: 0 } );
 		return { fail() {} };
 	};
-	vm.createContext( context );
+	Object.assign(context, {snapshotListRequest: 0, snapshotPollTimer: 0, snapshotPollFailures: 0, scheduleSnapshotPoll() {}});
+    context.window = context.window || {clearTimeout() {}};
+    vm.createContext( context );
 	for ( const name of [ 'restoreReportLabels', 'restoreOutcomeMessages' ] ) {
 		const start = source.indexOf( 'var ' + name + ' = ' );
 		assert.ok( start >= 0 );

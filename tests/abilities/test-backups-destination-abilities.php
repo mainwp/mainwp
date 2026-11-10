@@ -398,7 +398,7 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 				'name'     => 'Out-of-scope destination task',
 				'type'     => 'full',
 				'schedule' => 'daily',
-				'site_ids' => array( $this->create_test_site() ),
+				'site_ids' => array( $this->create_test_site( array( 'version' => '6.4' ) ) ),
 			),
 			'ability'
 		);
@@ -927,7 +927,7 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 				'name'     => 'Destination task',
 				'type'     => 'full',
 				'schedule' => 'daily',
-				'site_ids' => array( $this->create_test_site() ),
+				'site_ids' => array( $this->create_test_site( array( 'version' => '6.4' ) ) ),
 			),
 			'ability'
 		);
@@ -1087,5 +1087,47 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 			remove_filter( 'mainwp_currentusercan', $deny );
 		}
 		$this->assertSame( 'Stored destination', MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->name );
+	}
+	/** Stored pCloud destinations are discoverable without exposing OAuth credentials. */
+	public function test_pcloud_destination_ability_reads_and_preview(): void {
+		$id = 0;
+		try {
+			$id     = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+				array(
+					'provider' => 'pcloud',
+					'name'     => 'pCloud archive',
+					'settings' => array(
+						'client_id'     => 'private-client',
+						'access_token'  => 'private-token',
+						'locationid'    => 2,
+						'base_path'     => 'private-folder',
+						'account_email' => 'private-owner@example.com',
+					),
+				)
+			);
+			$listed = $this->execute( 'list-backup-destinations', array( 'provider' => 'pcloud' ) );
+			$this->assert_output( 'list-backup-destinations', $listed );
+			$this->assertStringContainsString( 'pcloud', wp_json_encode( $listed ) );
+			$read = $this->execute( 'get-backup-destination', array( 'destination_id' => $id ) );
+			$this->assert_output( 'get-backup-destination', $read );
+			$preview = $this->execute(
+				'test-backup-destination',
+				array(
+					'destination_id' => $id,
+					'dry_run'        => true,
+				)
+			);
+			$this->assert_output( 'test-backup-destination', $preview );
+			$this->assertSame( 'pcloud', $preview['would_affect']['provider'] );
+			foreach ( array( 'private-client', 'private-token', 'private-folder', 'private-owner@example.com', 'access_token', 'client_secret', 'locationid', 'account_email' ) as $private ) {
+				$this->assertStringNotContainsString( $private, wp_json_encode( array( $listed, $read, $preview ) ) );
+			}
+		} finally {
+			// Encrypted settings write a key file that the rolled-back test transaction leaves behind.
+			if ( $id > 0 ) {
+				MainWP_Backup_Storage_Destinations::instance()->delete_destination( $id );
+			}
+		}
+		$this->assertFalse( wp_has_ability( 'mainwp/create-backup-destination-v1' ) );
 	}
 }

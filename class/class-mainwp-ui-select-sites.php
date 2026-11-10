@@ -49,6 +49,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *  @type bool    $show_client (bool) True, if show clients. False if not.
      *  @type bool    $enable_suspended_clients (bool) True, if enable suspended clients. False if not.
      *  @type array   $selected_clients Selected Clients.
+     *  @type bool    $keep_selection_on_tab_change True keeps the selection when the user opens another tab; checking an item there replaces it. Default: false.
      * }
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
@@ -68,6 +69,7 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $enableSuspendedClients = isset( $params['enable_suspended_clients'] ) ? $params['enable_suspended_clients'] : false;
         $selected_clients       = isset( $params['selected_clients'] ) ? $params['selected_clients'] : array();
         $add_edit_client_id     = isset( $params['add_edit_client_id'] ) ? $params['add_edit_client_id'] : false;
+        $keep_tab_selection     = ! empty( $params['keep_selection_on_tab_change'] );
 
         if ( $postId ) {
 
@@ -120,9 +122,10 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'enable_suspended_clients'   => $enableSuspendedClients,
             'selected_clients'           => $selected_clients,
             'add_edit_client_id'         => $add_edit_client_id,
+            'backup_task_saved_sites'    => $params['backup_task_saved_sites'] ?? null,
         );
         ?>
-        <div id="mainwp-select-sites" class="mainwp_select_sites_wrapper">
+        <div id="mainwp-select-sites" class="mainwp_select_sites_wrapper"<?php echo $keep_tab_selection ? ' data-keep-tab-selection="1"' : ''; ?>>
         <?php static::select_sites_box_body( $params ); ?>
     </div>
         <?php
@@ -251,17 +254,15 @@ class MainWP_UI_Select_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 </div>
             </div>
         </div>
-        <?php
-        ?>
         <div class="ui tab <?php echo 'site' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-sites-<?php echo esc_attr( $tab_id ); ?>" id="mainwp-select-sites">
         <?php
-            MainWP_UI::render_select_sites( $websites, $type, $selected_sites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id, $show_selectall_disc );
+            MainWP_UI::render_select_sites( $websites, $type, $selected_sites, $enableOfflineSites, $edit_site_id, $show_select_all, $add_edit_client_id, $show_selectall_disc, $params['backup_task_saved_sites'] ?? null );
         ?>
         </div>
         <?php if ( $staging_enabled ) { ?>
             <div class="ui tab <?php echo 'staging' === $selectedby ? 'active' : ''; ?>" data-tab="mainwp-select-staging-sites-<?php echo esc_attr( $tab_id ); ?>">
                 <?php
-                    MainWP_UI::render_select_sites_staging( $selected_sites, $edit_site_id, $type );
+                    MainWP_UI::render_select_sites_staging( $selected_sites, $edit_site_id, $type, $params['backup_task_saved_sites'] ?? null );
                 ?>
             </div>
             <?php

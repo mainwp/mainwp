@@ -248,7 +248,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'SecurityScan'         => array(
                 'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
                 'title'  => esc_html__( 'Site Hardening', 'mainwp' ),
-                'access' => true,
+                'access' => \mainwp_current_user_can( 'dashboard', 'manage_security_issues' ),
             ),
         );
 
@@ -274,12 +274,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( $website ) {
                 $reconnect = '';
                 if ( $site_id && $website && '' !== $website->sync_errors ) {
-                    $reconnect = '<a href="#" class="mainwp-updates-overview-reconnect-site item" adminuser="' . esc_attr( $website->adminname ) . '" siteid="' . intval( $site_id ) . '"><i class="sync alternate icon"></i> Reconnect</a>';
+                    $reconnect = '<a href="#" class="mainwp-updates-overview-reconnect-site item" adminuser="' . esc_attr( $website->adminname ) . '" siteid="' . intval( $site_id ) . '"><i class="sync alternate icon"></i> ' . esc_html__( 'Reconnect', 'mainwp' ) . '</a>';
                 }
                 $wp_admin_href = MainWP_Site_Open::get_open_site_url( $site_id, false, false );
                 $dropdown      = $reconnect . '
-                <a class="item mainwp-remove-site-button" site-id="' . intval( $site_id ) . '" id="mainwp-remove-site-button" href="#"><i class="trash grey icon"></i> Remove Site</a>
-                <a id="mainwp-go-wp-admin-button" target="_blank" href="' . $wp_admin_href . '" class="item open_newwindow_wpadmin"><i class="sign in grey icon"></i> Go to WP Admin</a>
+                <a class="item mainwp-remove-site-button" site-id="' . intval( $site_id ) . '" id="mainwp-remove-site-button" href="#"><i class="trash grey icon"></i> ' . esc_html__( 'Remove Site', 'mainwp' ) . '</a>
+                <a id="mainwp-go-wp-admin-button" target="_blank" href="' . esc_url( $wp_admin_href ) . '" class="item open_newwindow_wpadmin"><i class="sign in grey icon"></i> ' . esc_html__( 'Go to WP Admin', 'mainwp' ) . '</a>
                 ';
                 $site_icon     = '';
                 if ( 1 === (int) get_option( 'mainwp_use_favicon', 1 ) ) {

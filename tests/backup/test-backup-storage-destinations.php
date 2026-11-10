@@ -13,6 +13,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/class-backup-pcloud-transport-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Credential_Storage;
 use MainWP\Dashboard\MainWP_DB;
@@ -996,5 +998,161 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $raced );
 		$this->assertSame( 'concurrent-token', $store->get_destination( $id )->settings['refresh_token'] );
 		$this->assertCount( $key_count, $this->keys_dir_listing(), 'The refused worker must retire only its unpersisted key.' );
+	}
+	/** A browser edit between identity initialization and proof persistence fences the cron writer. */
+	public function test_pcloud_prepare_identity_concurrent_edit_refuses_stale_proof() {
+		$store                   = MainWP_Backup_Storage_Destinations::instance();
+		$settings                = array(
+			'client_id'    => 'client',
+			'access_token' => 'old',
+			'locationid'   => 2,
+			'base_path'    => 'MainWP Backups',
+		);
+		$id                      = $store->add_destination(
+			array(
+				'provider' => 'pcloud',
+				'name'     => 'Before',
+				'settings' => $settings,
+			)
+		);
+		$state                   = array();
+		$transport               = MainWP_PCloud_Transport_Fixture::transport( $state );
+		$raced                   = false;
+		$state['before_request'] = function ( $method ) use ( &$raced, $store, $id ) {
+			if ( 'userinfo' === $method && ! $raced ) {
+				$raced   = true;
+				$current = $store->get_destination( $id );
+				$this->assertArrayHasKey( '_mainwp_retention_identity', $current->settings, 'Initialization must land before HTTP proof.' );
+				$this->assertArrayNotHasKey( 'receipt', $current->settings['_mainwp_retention_identity'] );
+				$current->settings['access_token'] = 'browser-token';
+				$this->assertTrue(
+					$store->update_destination(
+						$id,
+						array(
+							'name'     => 'Browser edit',
+							'settings' => $current->settings,
+						)
+					)
+				);
+			}
+		};
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			try {
+				$store->prepare_retention_identity( $store->get_destination( $id ) );
+				$this->fail( 'The stale conditional proof write must throw.' );
+			} catch ( \RuntimeException $e ) {
+				$this->assertStringContainsString( 'changed before its backup identity', $e->getMessage() );
+			}
+			$this->assertTrue( $raced );
+			$current = $store->get_destination( $id );
+			$this->assertSame( 'Browser edit', $current->name );
+			$this->assertSame( 'browser-token', $current->settings['access_token'] );
+			$this->assertArrayNotHasKey( 'receipt', $current->settings['_mainwp_retention_identity'] );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** Rotation keeps account/folder bindings; another account or recreated folder changes them. */
+	public function test_pcloud_prepare_identity_rotation_account_and_recreated_folder() {
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$store      = MainWP_Backup_Storage_Destinations::instance();
+		$settings   = array(
+			'client_id'    => 'client',
+			'access_token' => 'original',
+			'locationid'   => 1,
+			'base_path'    => 'MainWP Backups',
+		);
+		$id         = $store->add_destination(
+			array(
+				'provider' => 'pcloud',
+				'name'     => 'pCloud',
+				'settings' => $settings,
+			)
+		);
+		$state      = array();
+		$transport  = MainWP_PCloud_Transport_Fixture::transport( $state );
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$original = $store->prepare_retention_identity( $store->get_destination( $id ) );
+			$binding  = $protection::destination_binding( $original );
+			$this->assertTrue( $protection::pcloud_identity_valid( $original->settings ) );
+			foreach ( array( 'same', 'account', 'folder' ) as $change ) {
+				$row                           = $store->get_destination( $id );
+				$row->settings['access_token'] = 'token-' . $change;
+				$this->assertTrue( $store->update_destination( $id, array( 'settings' => $row->settings ) ) );
+				if ( 'account' === $change ) {
+					$state['userid'] = '202';
+				}
+				if ( 'folder' === $change ) {
+					$state['userid']   = '101';
+					$state['folders']  = array( '' => '0' );
+					$state['folderid'] = '230808';
+				}
+				$proved = $store->prepare_retention_identity( $store->get_destination( $id ) );
+				$this->assertTrue( $protection::pcloud_identity_valid( $proved->settings ) );
+				if ( 'same' === $change ) {
+					$this->assertSame( $binding, $protection::destination_binding( $proved ) );
+				} else {
+					$this->assertNotSame( $binding, $protection::destination_binding( $proved ) );
+				}
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
+	}
+
+	/** Connection changes invalidate receipts and never reuse verified bindings; pruning is offline. */
+	public function test_pcloud_receipt_invalidates_changed_connection_without_http() {
+		$protection  = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$settings    = $protection::with_pcloud_identity(
+			array(
+				'client_id'    => 'client',
+				'access_token' => 'token',
+				'locationid'   => 1,
+				'base_path'    => 'MainWP Backups',
+			),
+			'101',
+			'230807'
+		);
+		$destination = (object) array(
+			'provider' => 'pcloud',
+			'settings' => $settings,
+		);
+		$binding     = $protection::destination_binding( $destination );
+		$calls       = 0;
+		$transport   = static function () use ( &$calls ) {
+			++$calls;
+			return new \WP_Error( 'unexpected', 'No HTTP during retention' );
+		};
+		add_filter( 'pre_http_request', $transport );
+		try {
+			$this->assertTrue( $protection::pcloud_identity_valid( $settings ) );
+			foreach ( array(
+				'access_token' => 'new-token',
+				'locationid'   => 2,
+				'base_path'    => 'Other',
+				'client_id'    => 'other-client',
+			) as $field => $value ) {
+				$changed = array_merge( $settings, array( $field => $value ) );
+				$this->assertFalse( $protection::pcloud_identity_valid( $changed ) );
+				$destination->settings = $changed;
+				$this->assertNotSame( $binding, $protection::destination_binding( $destination ) );
+				unset( $changed['_mainwp_retention_identity'] );
+				$without_proof = (object) array(
+					'provider' => 'pcloud',
+					'settings' => $changed,
+				);
+				$this->assertSame( $protection::destination_binding( $without_proof ), $protection::destination_binding( $destination ) );
+			}
+			$this->assertSame( 0, $calls );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
 	}
 }

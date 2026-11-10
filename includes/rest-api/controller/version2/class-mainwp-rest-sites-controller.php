@@ -8,7 +8,9 @@
  */
 
 use MainWP\Dashboard\MainWP_Sync;
+use MainWP\Dashboard\MainWP_Connect_Failure_Ux;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Database_Schema_Checker;
 use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Manage_Sites_Handler;
@@ -721,12 +723,27 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // spelling is already requested.
         $query_columns = array( 'recent_comments', 'recent_posts', 'recent_pages', 'phpversion', 'added_timestamp', 'wp_upgrades', 'signature_algo', 'verify_method', 'cust_site_icon_info', 'security_stats' );
 
+        // The aliases are selected after wp.* and wp_sync.*, so a name like id or url
+        // would replace the site's own value with the option's, NULL when the site has
+        // no such option (MWP-2163). The schema checker already caches these columns.
+        $site_columns = array();
+        $schema       = MainWP_Database_Schema_Checker::get_core_db_schema_info();
+        foreach ( array( 'wp', 'wp_sync' ) as $table ) {
+            $columns = $schema[ MainWP_DB::instance()->get_table_name( $table ) ]['columns'] ?? array();
+            if ( is_array( $columns ) ) {
+                $site_columns = array_merge( $site_columns, array_map( 'strtolower', array_keys( $columns ) ) );
+            }
+        }
+        // Nothing writes the premium_upgrades column; the sync stores the live value as a
+        // site option, so here the alias is the real data and callers rely on it.
+        $site_columns = array_diff( $site_columns, array( 'premium_upgrades' ) );
+
         // MySQL compares these aliases without regard to case, so FOO after foo is
         // the same column twice. Keep the first spelling, or the query's own.
         $unique = array();
         foreach ( $fields as $name ) {
             $key = strtolower( $name );
-            if ( ! isset( $unique[ $key ] ) ) {
+            if ( ! isset( $unique[ $key ] ) && ! in_array( $key, $site_columns, true ) ) {
                 $unique[ $key ] = in_array( $key, $query_columns, true ) ? $key : $name;
             }
         }
@@ -951,12 +968,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // Fallback: Legacy logic when Abilities API is not available.
         $args['selectgroups'] = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
         $args['full_data']    = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
-        // Fetch health_site_status onto the rows (extra_view = SQL column, fields =
-        // what map_site() keeps) so prepare_item_for_response() reads the health data
-        // off the object instead of a per-site query.
+        // Fetch health_site_status and the custom fields onto the rows (extra_view =
+        // SQL column, fields = what map_site() keeps; a name left out of fields comes
+        // back as ''). With health_site_status on the object, prepare_item_for_response()
+        // skips a per-site health query.
         $args['extra_view'] = array_merge( array( 'health_site_status' ), $custom_fields );
         $args_fields        = isset( $args['fields'] ) && is_array( $args['fields'] ) ? $args['fields'] : array();
-        $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields );
+        $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields, $custom_fields );
 
         $args = $this->scope_site_query_args( $args );
         if ( null === $args ) {
@@ -3286,7 +3304,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'themes'               => $site_object->themes,
                 'plugins'              => $site_object->plugins,
                 'automatic_update'     => ! empty( $site_object->automatic_update ) ? $site_object->automatic_update : 0,
-                'sync_errors'          => $site_object->sync_errors,
+                'sync_errors'          => MainWP_Connect_Failure_Ux::sanitize_sync_error( $site_object->sync_errors ),
                 'last_post_gmt'        => $site_object->last_post_gmt,
                 'health_value'         => $site_object->health_value,
                 'phpversion'           => $site_object->phpversion,
@@ -3468,6 +3486,14 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     $data[ $field ] = $item->{$field};
                 }
             }
+        }
+
+        if ( isset( $data['sync_errors'] ) ) {
+            $data['sync_errors'] = MainWP_Connect_Failure_Ux::sanitize_sync_error( $data['sync_errors'] );
+        }
+        if ( isset( $item->sync_errors ) ) {
+            $item              = clone $item;
+            $item->sync_errors = MainWP_Connect_Failure_Ux::sanitize_sync_error( $item->sync_errors );
         }
 
         // Requested custom_fields can JOIN secret site options onto the row, so strip

@@ -1010,7 +1010,7 @@ return array(
     ),
     1935 => array(
         'type_id'     => 1935,
-        'desc'        => esc_html__( 'New recurring task (cron job) created', 'mainwp' ),
+        'desc'        => esc_html__( 'Recurring task (cron job) rescheduled', 'mainwp' ),
         'context'     => 'cron-job',
         'action_name' => 'created',
     ),

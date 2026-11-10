@@ -1464,7 +1464,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 <?php endif; ?>
                                     <a class="item mainwp-copy-row-value" href="#" data-copy-target=".copyPermalinkValue" data-copy-success="<?php echo esc_attr__( 'Copied permalink to clipboard.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy Permalink', 'mainwp' ); ?></a>
                                     <a class="item mainwp-copy-row-value" href="#" data-copy-target=".postId" data-copy-success="<?php echo esc_attr__( 'Copied ID to clipboard.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy ID', 'mainwp' ); ?></a>
-                                    <a class="item" href="<?php MainWP_Site_Open::get_open_site_admin_link( $website->id, true ); //phpcs:ignore -- ok. ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+                                    <a class="item" href="<?php MainWP_Site_Open::get_open_site_admin_link( $website->id, true ); //phpcs:ignore -- ok. ?>" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
                                     <?php
                                     /**
                                      * Action: mainwp_posts_table_action

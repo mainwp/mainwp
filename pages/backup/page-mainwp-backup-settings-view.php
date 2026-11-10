@@ -88,6 +88,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $backupsOnServer            = get_option( 'mainwp_backupsOnServer' );
         $onDemandRetentionCount     = MainWP_Backup_Settings::get_on_demand_retention_count();
+        $startOffsetMinutes         = MainWP_Backup_Settings::get_backup_start_offset_minutes();
         $archiveFormat              = get_option( 'mainwp_archiveFormat' );
         $maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
         $maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
@@ -111,6 +112,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             $submitted                  = array_filter( wp_unslash( $_POST ), 'is_scalar' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Re-render scalar form values; each output is escaped.
             $backupsOnServer            = $submitted['mainwp_options_backupOnServer'] ?? $backupsOnServer;
             $onDemandRetentionCount     = $submitted['mainwp_options_onDemandRetentionCount'] ?? $onDemandRetentionCount;
+            $startOffsetMinutes         = $submitted['mainwp_options_backupStartOffset'] ?? $startOffsetMinutes;
             $archiveFormat              = $submitted['mainwp_archiveFormat'] ?? $archiveFormat;
             $maximumFileDescriptors     = $submitted['mainwp_options_maximumFileDescriptors'] ?? $maximumFileDescriptors;
             $primaryBackup              = $submitted['mainwp_primaryBackup'] ?? $primaryBackup;
@@ -208,6 +210,23 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             <div class="ten wide column">
                 <span data-tooltip="<?php esc_attr_e( 'How many on-demand (Back up now) snapshots to keep per site before the oldest are pruned. Minimum 1.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_onDemandRetentionCount" value="<?php echo esc_attr( $onDemandRetentionCount ); ?>"/></span>
                 <span class="ui small text"><?php esc_html_e( 'Counts the backups made with Back Up Now on the Snapshots & Restore page, per site.', 'mainwp' ); ?></span>
+            </div>
+        </div>
+
+        <?php $startOffsetError = isset( $countErrors['mainwp_options_backupStartOffset'] ); ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field <?php echo $startOffsetError ? 'error' : ''; ?>" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
+            <label class="six wide column middle aligned" for="mainwp-backup-start-offset">
+            <?php
+            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_start_offset_minutes', (int) $startOffsetMinutes, true, 0 );
+            esc_html_e( 'Spread scheduled backup starts', 'mainwp' );
+            ?>
+            </label>
+            <div class="ten wide column">
+                <span data-tooltip="<?php /* translators: %d: maximum number of minutes. */ echo esc_attr( sprintf( __( 'Maximum delay in minutes, from 0 to %d.', 'mainwp' ), MainWP_Backup_Settings::MAX_START_OFFSET_MINUTES ) ); ?>" data-inverted=""><input type="text" inputmode="numeric" class="settings-field-value-change-handler" name="mainwp_options_backupStartOffset" id="mainwp-backup-start-offset" value="<?php echo esc_attr( $startOffsetMinutes ); ?>" <?php echo $startOffsetError ? 'aria-invalid="true" aria-describedby="mainwp-backup-start-offset-error"' : ''; ?>/></span>
+                <?php if ( $startOffsetError ) : ?>
+                    <div class="ui pointing red basic label" id="mainwp-backup-start-offset-error" role="alert"><?php echo esc_html( $countErrors['mainwp_options_backupStartOffset'] ); ?></div>
+                <?php endif; ?>
+                <span class="ui small text"><?php esc_html_e( "Starts each daily, weekly or monthly backup task up to this many minutes after its scheduled time, so tasks set for the same time don't all start at once. Each task keeps the same delay every run. 0 turns this off. Interval tasks are not affected.", 'mainwp' ); ?></span>
             </div>
         </div>
 

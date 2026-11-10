@@ -998,14 +998,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
 
         // Handle password update.
         if ( ! empty( $user_data['user_pass'] ) ) {
-            $pass = '';
-            if ( function_exists( '\mb_convert_encoding' ) ) {
-                $pass = \mb_convert_encoding( $user_data['user_pass'], 'ISO-8859-1', 'UTF-8' );
-            } else {
-                // phpcs:disable Generic.PHP.DeprecatedFunctions.Deprecated
-                $pass = utf8_decode( $user_data['user_pass'] ); // to compatible.
-                // phpcs:enable Generic.PHP.DeprecatedFunctions.Deprecated
-            }
+            $pass = MainWP_Utility::utf8_to_latin1( $user_data['user_pass'] );
 
             if ( ! empty( $pass ) ) {
                 $user_data['pass1'] = $pass;

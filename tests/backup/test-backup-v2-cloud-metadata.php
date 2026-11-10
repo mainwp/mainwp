@@ -275,7 +275,7 @@ class MainWP_Backup_V2_Cloud_Metadata_Test extends MainWP_Abilities_Test_Case {
 	 * @return string Manifest path.
 	 */
 	private function manifest_path() {
-		return $this->dir . '/remote/9901/' . $this->snapshot_id . '/manifest.json';
+		return $this->dir . '/remote/9901-test-site/' . $this->snapshot_id . '/manifest.json';
 	}
 
 	/**
@@ -387,7 +387,7 @@ class MainWP_Backup_V2_Cloud_Metadata_Test extends MainWP_Abilities_Test_Case {
 		$checkpoint['manifest_submitted'] = false;
 		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
 		$this->assertTrue( $store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING ) );
-		$prefix = $this->dir . '/remote/9901/' . $this->snapshot_id;
+		$prefix = $this->dir . '/remote/9901-test-site/' . $this->snapshot_id;
 		$this->remove_tree( $prefix );
 		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 60 );
 		$after = $store->get_jobs_for_snapshot( $this->snapshot_id )[0];

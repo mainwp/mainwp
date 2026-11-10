@@ -48,24 +48,56 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
         \WP_CLI::add_command( 'mainwp', static::class );
     }
 
+    // The sites, site and updates help blocks indent each description instead of
+    // using WP-CLI's ": description" lines. A ":" line makes WP-CLI build a synopsis
+    // and validate arguments against it. That would turn the undocumented --list and
+    // --count, which still print the site table, into errors, and would drop a bare
+    // --adminpassword or --ver before the handler can refuse it.
+
     /**
-     * List information about added child sites.
+     * Lists, counts, syncs, checks or disconnects child sites.
+     *
+     * With no option, prints a table of all child sites.
      *
      * ## OPTIONS
      *
-     * [--list]
-     *  : Get a list of all child sites
+     * [<websiteids>]
+     *     Comma-separated child site IDs for --check-sites or --disconnect-sites. Leave out to use every site.
      *
-     * [--count]
-     *  : If set, count child sites.
+     * [--all-sites]
+     *     List all child sites.
      *
+     * [--all-sites-count]
+     *     Show how many child sites there are.
+     *
+     * [--connected-sites]
+     *     List connected child sites.
+     *
+     * [--connected-sites-count]
+     *     Show how many child sites are connected.
+     *
+     * [--disconnected-sites]
+     *     List disconnected child sites.
+     *
+     * [--disconnected-sites-count]
+     *     Show how many child sites are disconnected.
+     *
+     * [--sync-sites]
+     *     Sync all child sites.
+     *
+     * [--check-sites]
+     *     Check the HTTP status of child sites.
+     *
+     * [--disconnect-sites]
+     *     Disconnect child sites. Every site is tried, and the command fails at the end if any site could not be disconnected.
      *
      * ## EXAMPLES
      *
-     *     wp mainwp sites --list
-     *     wp mainwp sites --all-sites-count
-     *
-     * ## Synopsis [--list] [--all-sites-count]
+     *     wp mainwp sites
+     *     wp mainwp sites --connected-sites-count
+     *     wp mainwp sites --sync-sites
+     *     wp mainwp sites --check-sites 2,5
+     *     wp mainwp sites --disconnect-sites 2,5
      *
      * @param array $args Function arguments.
      * @param array $assoc_args Function associate arguments.
@@ -120,31 +152,182 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
     }
 
     /**
-     * Site commands.
+     * Shows, adds, edits, updates or removes a child site.
+     *
+     * Every option except --add-site needs the child site ID.
      *
      * ## OPTIONS
      *
+     * [<websiteid>]
+     *     Child site ID. Required by every option except --add-site.
+     *
      * [--site]
-     *  : Get site data
+     *     Show the site's name, URL, admin username, HTTP response, notes and health details.
      *
      * [--site-info]
-     *  : If set, get site info.
+     *     Show the site's WordPress, PHP, MySQL and MainWP Child versions, memory limit, active theme and IP address.
+     *
+     * [--site-installed-plugins]
+     *     List installed plugins.
+     *
+     * [--site-installed-plugins-count]
+     *     Show how many plugins are installed.
+     *
+     * [--site-active-plugins]
+     *     List active plugins.
+     *
+     * [--site-active-plugins-count]
+     *     Show how many plugins are active.
+     *
+     * [--site-inactive-plugins]
+     *     List inactive plugins.
+     *
+     * [--site-inactive-plugins-count]
+     *     Show how many plugins are inactive.
+     *
+     * [--site-installed-themes]
+     *     List installed themes.
+     *
+     * [--site-installed-themes-count]
+     *     Show how many themes are installed.
+     *
+     * [--site-active-themes]
+     *     Show the active theme.
+     *
+     * [--site-inactive-themes]
+     *     List inactive themes.
+     *
+     * [--site-inactive-themes-count]
+     *     Show how many themes are inactive.
+     *
+     * [--site-available-updates]
+     *     List available WordPress, plugin, theme and translation updates.
+     *
+     * [--site-available-updates-count]
+     *     Show how many updates are available.
+     *
+     * [--site-abandoned-plugins]
+     *     List abandoned plugins.
+     *
+     * [--site-abandoned-plugins-count]
+     *     Show how many plugins are abandoned.
+     *
+     * [--site-abandoned-themes]
+     *     List abandoned themes.
+     *
+     * [--site-abandoned-themes-count]
+     *     Show how many themes are abandoned.
+     *
+     * [--site-http-status]
+     *     Run an HTTP status check on the site.
+     *
+     * [--site-health-score]
+     *     Show whether the site health is Good or Should be improved.
+     *
+     * [--site-security-issues]
+     *     List the results of the basic security checks.
      *
      * [--add-site]
-     *  : Add a child site. Requires --site-url, --name and --admin.
+     *     Add a child site. Needs --site-url, --name and --admin.
+     *
+     * [--site-url=<url>]
+     *     Child site URL, for --add-site.
+     *
+     * [--name=<name>]
+     *     Site name, for --add-site and --edit-site.
+     *
+     * [--admin=<username>]
+     *     Child site administrator username, for --add-site and --edit-site.
      *
      * [--adminpassword=<password>]
-     *  : Child administrator password for --add-site, when required by the Child plugin.
-     *    Defaults to HTTPS with certificate verification. HTTP requires --ssl_verify=0.
-     *    Use --ssl_verify=0 to opt out of certificate verification only if you accept the risk.
+     *     Child site administrator password, for --add-site when the MainWP Child plugin asks for it. Needs an https:// site URL. With --ssl_verify=0 an http:// URL is also accepted, and the password is then sent unencrypted.
      *
+     * [--ssl_verify=<value>]
+     *     Certificate check for --add-site: 1 verifies the HTTPS certificate, 2 uses the Dashboard's global SSL setting, 0 turns the check off. Defaults to 2, or to 1 with --adminpassword. Use 0 only if you accept the risk.
+     *
+     * [--uniqueid=<id>]
+     *     Unique security ID set in the MainWP Child plugin, for --add-site and --edit-site.
+     *
+     * [--force_use_ipv4=<value>]
+     *     Set to 1 to connect over IPv4 only, for --add-site.
+     *
+     * [--ssl_version=<version>]
+     *     SSL version to use, for --add-site.
+     *
+     * [--sslversion=<version>]
+     *     SSL version to use, for --edit-site.
+     *
+     * [--http_user=<username>]
+     *     HTTP basic authentication username, for --add-site and --edit-site.
+     *
+     * [--http_pass=<password>]
+     *     HTTP basic authentication password, for --add-site and --edit-site.
+     *
+     * [--groupids=<ids>]
+     *     Comma-separated tag IDs to add the site to, for --add-site.
+     *
+     * [--edit-site]
+     *     Change the settings given with --name, --admin, --uniqueid, --sslversion, --http_user or --http_pass.
+     *
+     * [--sync-site]
+     *     Sync the site.
+     *
+     * [--reconnect-site]
+     *     Reconnect the site.
+     *
+     * [--disconnect-site]
+     *     Disconnect the site.
+     *
+     * [--remove-site]
+     *     Remove the site from the MainWP Dashboard.
+     *
+     * [--site-update-wordpress]
+     *     Update WordPress core.
+     *
+     * [--site-update-plugins]
+     *     Update all plugins.
+     *
+     * [--site-update-themes]
+     *     Update all themes.
+     *
+     * [--site-update-translations]
+     *     Update all translations.
+     *
+     * [--site-update-item]
+     *     Update one plugin or theme. Needs --type and --slug.
+     *
+     * [--type=<type>]
+     *     plugin or theme, for --site-update-item.
+     *
+     * [--slug=<slug>]
+     *     Plugin file, such as akismet/akismet.php, or theme folder name, for --site-update-item.
+     *
+     * [--site-manage-plugin]
+     *     Activate, deactivate or delete a plugin. Needs --plugin and --action.
+     *
+     * [--plugin=<plugin>]
+     *     Plugin file, such as akismet/akismet.php, for --site-manage-plugin. Separate several with ||.
+     *
+     * [--site-manage-theme]
+     *     Activate or delete a theme. Needs --theme and --action.
+     *
+     * [--theme=<theme>]
+     *     Theme folder name, for --site-manage-theme. Separate several with ||.
+     *
+     * [--action=<action>]
+     *     activate, deactivate or delete for --site-manage-plugin; activate or delete for --site-manage-theme.
+     *
+     * [--check-site-http-status]
+     *     Check the site's HTTP status and print the response code.
      *
      * ## EXAMPLES
      *
-     *     wp mainwp site --site [<websiteid>]
-     *     wp mainwp site --site-info [<websiteid>]
-     *
-     * ## Synopsis [--site] [--site-info] [...]
+     *     wp mainwp site --site-info 3
+     *     wp mainwp site --site-available-updates 3
+     *     wp mainwp site --add-site --site-url=https://example.com --name="Example" --admin=admin
+     *     wp mainwp site --edit-site 3 --name="New name"
+     *     wp mainwp site --site-update-item 3 --type=plugin --slug=akismet/akismet.php
+     *     wp mainwp site --site-manage-plugin 3 --plugin=akismet/akismet.php --action=deactivate
      *
      * @param array $args Function arguments.
      * @param array $assoc_args Function associate arguments.
@@ -155,45 +338,60 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
 
 
     /**
-     * Updates commands.
+     * Lists available and ignored updates, and ignores or unignores them.
      *
      * ## OPTIONS
      *
-     * [--available-updates <websiteid>]
-     *  : Get available updates
+     * [<websiteid>]
+     *     Child site ID. Required by --site-ignored-plugins-updates, --site-ignored-themes-updates, --ignore-update and --unignore-update. Optional for --ignored-plugins-updates and --ignored-themes-updates.
      *
-     * [--ignored-plugins-updates <websiteid>]
-     *  : If set, get ignored plugins updates.
+     * [--available-updates]
+     *     List available updates on all child sites.
      *
-     * [--site-ignored-plugins-updates  <websiteid>]
-     *  : If set, get ignored plugins updates of site.
+     * [--ignored-plugins-updates]
+     *     List globally ignored plugin updates. With a site ID, also list that site's ignored plugin updates.
      *
-     * [--ignored-themes-updates <websiteid>]
-     *  : If set, get ignored themes updates.
+     * [--site-ignored-plugins-updates]
+     *     List the plugin updates ignored on one site.
      *
-     * [--site-ignored-themes-updates <websiteid>]
-     *  : If set, get ignored themes updates of site.
+     * [--ignored-themes-updates]
+     *     List globally ignored theme updates. With a site ID, also list that site's ignored theme updates.
      *
-     * [--ignore-updates --type=[type] --slug=[slug]]
-     *  : If set, ignored updates.
+     * [--site-ignored-themes-updates]
+     *     List the theme updates ignored on one site.
      *
-     * [--ignore-update <websiteid> --type=[type] --slug=[slug]]
-     *  : If set, ignored update.
+     * [--ignore-updates]
+     *     Ignore all versions of a plugin or theme update on every site. Needs --type, --slug and --name.
      *
-     * [--unignore-updates --type=[type] --slug=[slug]]
-     *  : If set, unignore updates.
+     * [--ignore-update]
+     *     Ignore all versions of a plugin or theme update on one site. Needs --type, --slug and --name.
      *
-     * [--unignore-update <websiteid> --type=[type] --slug=[slug]]
-     *  : If set, unignore update.
+     * [--unignore-updates]
+     *     Stop ignoring a plugin or theme update globally. Needs --type and --slug.
      *
+     * [--unignore-update]
+     *     Stop ignoring a plugin or theme update on one site. Needs --type and --slug.
+     *
+     * [--type=<type>]
+     *     plugin or theme.
+     *
+     * [--slug=<slug>]
+     *     Plugin file, such as akismet/akismet.php, or theme folder name.
+     *
+     * [--name=<name>]
+     *     Plugin or theme name to show in the ignored list, for --ignore-updates and --ignore-update.
+     *
+     * [--ver=<version>]
+     *     Version to unignore, for --unignore-updates and --unignore-update. Leave out to unignore all versions.
      *
      * ## EXAMPLES
      *
      *     wp mainwp updates --available-updates
      *     wp mainwp updates --ignored-plugins-updates
      *     wp mainwp updates --site-ignored-plugins-updates 3
-     *
-     * ## Synopsis [--available-updates] [--ignored-plugins-updates] [--site-ignored-plugins-updates] [...]
+     *     wp mainwp updates --ignore-updates --type=plugin --slug=akismet/akismet.php --name="Akismet Anti-spam"
+     *     wp mainwp updates --unignore-updates --type=plugin --slug=akismet/akismet.php
+     *     wp mainwp updates --unignore-update 3 --type=plugin --slug=akismet/akismet.php
      *
      * @param array $args Function arguments.
      * @param array $assoc_args Function associate arguments.

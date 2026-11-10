@@ -322,11 +322,13 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		$original   = $encryption->set_recovery_passphrase( 'original settings recovery passphrase' );
 		update_option( 'mainwp_enableNativeBackups', 0 );
 		update_option( 'mainwp_on_demand_retention_count', 5 );
+		update_option( 'mainwp_backup_start_offset_minutes', 5 );
 		$_POST = array(
 			'submit'                                    => '1',
 			'wp_nonce'                                  => wp_create_nonce( 'BackupSettings' ),
 			'mainwp_options_enableNativeBackups'        => '1',
 			'mainwp_options_onDemandRetentionCount'     => '9',
+			'mainwp_options_backupStartOffset'          => '30',
 			'mainwp_options_backupEncryptionPassphrase' => 'replacement settings recovery passphrase',
 			'mainwp_options_backupEncryptionCurrentPassphrase' => 'original settings recovery passphrase',
 		);
@@ -338,6 +340,7 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 			$saved = MainWP_Backup_Settings::handle_settings_post();
 			$this->assertSame( $allowed ? 1 : 0, (int) get_option( 'mainwp_enableNativeBackups' ) );
 			$this->assertSame( $allowed ? 9 : 5, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+			$this->assertSame( $allowed ? 30 : 5, (int) get_option( 'mainwp_backup_start_offset_minutes' ) );
 			if ( $allowed ) {
 				$this->assertNotSame( $original, $encryption->get_recovery_blob() );
 			} else {

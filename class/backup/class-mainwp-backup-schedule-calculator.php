@@ -47,14 +47,43 @@ class MainWP_Backup_Schedule_Calculator { // phpcs:ignore Generic.Classes.Openin
     private $now;
 
     /**
+     * Start spread window in minutes; 0 keeps every slot exactly on time.
+     *
+     * @var int
+     */
+    private $start_offset_window;
+
+    /**
      * Constructor.
      *
-     * @param \DateTimeZone $timezone Site timezone, usually wp_timezone().
-     * @param int           $now      Current UTC timestamp.
+     * @param \DateTimeZone $timezone            Site timezone, usually wp_timezone().
+     * @param int           $now                 Current UTC timestamp.
+     * @param int|null      $start_offset_window Start spread in minutes; null reads the saved setting.
      */
-    public function __construct( \DateTimeZone $timezone, int $now ) {
-        $this->timezone = $timezone;
-        $this->now      = $now;
+    public function __construct( \DateTimeZone $timezone, int $now, ?int $start_offset_window = null ) {
+        $this->timezone            = $timezone;
+        $this->now                 = $now;
+        $this->start_offset_window = null === $start_offset_window ? MainWP_Backup_Settings::get_backup_start_offset_minutes() : max( 0, $start_offset_window );
+    }
+
+    /**
+     * A task's delay inside the spread window.
+     *
+     * Derived from the task id rather than rolled per run, so a preview,
+     * a save and every later advance agree on the same slot. An unsaved
+     * task has no id yet and runs on its base slot.
+     *
+     * @param object $task   Task row.
+     * @param int    $window Window in minutes.
+     *
+     * @return int Delay in seconds.
+     */
+    private static function start_offset_seconds( object $task, int $window ): int {
+        $id = isset( $task->id ) ? (int) $task->id : 0;
+        if ( $window <= 0 || $id <= 0 ) {
+            return 0;
+        }
+        return ( (int) sprintf( '%u', crc32( 'mainwp_backup_start_offset_' . $id ) ) % ( $window + 1 ) ) * MINUTE_IN_SECONDS;
     }
 
     /**
@@ -84,6 +113,10 @@ class MainWP_Backup_Schedule_Calculator { // phpcs:ignore Generic.Classes.Openin
             return 0;
         }
 
+        if ( $this->start_offset_window > 0 ) {
+            return $this->next_with_start_offset( $task, $last_run );
+        }
+
         $schedule = isset( $task->schedule ) ? (string) $task->schedule : '';
 
         switch ( $schedule ) {
@@ -98,6 +131,76 @@ class MainWP_Backup_Schedule_Calculator { // phpcs:ignore Generic.Classes.Openin
             default:
                 return 0;
         }
+    }
+
+    /**
+     * Next wall-clock run with the task's start delay applied.
+     *
+     * The base slot search starts from now minus the delay, so an
+     * occurrence whose delayed start is still ahead stays scheduled even
+     * when its base time has passed, including across midnight or a month
+     * boundary. It also starts no earlier than the last run, so a base
+     * slot a run already served, perhaps under a different window, is
+     * never scheduled twice.
+     *
+     * @param object   $task     Task row with wall-clock schedule fields.
+     * @param int|null $last_run Served slot or last run start.
+     *
+     * @return int Next UTC run timestamp.
+     */
+    private function next_with_start_offset( object $task, ?int $last_run ): int {
+        $offset = self::start_offset_seconds( $task, $this->start_offset_window );
+        $served = max( (int) $last_run, isset( $task->last_run ) ? (int) $task->last_run : 0 );
+        $ref    = max( $this->now - $offset, $served );
+        $base   = ( new self( $this->timezone, $ref, 0 ) )->compute_next_run( $task, $last_run );
+
+        // On a fall-back day a wall-clock time exists twice, and the slot
+        // math may land on either instant depending on the starting offset.
+        // Both are one occurrence: it is pinned to the first instant, and
+        // when that is already behind the search start (served, or its
+        // delayed start has passed) the occurrence is not repeated.
+        if ( $base > 0 ) {
+            $first = $this->first_instant( $base );
+            if ( $first <= $ref ) {
+                $base  = ( new self( $this->timezone, $base, 0 ) )->compute_next_run( $task, $last_run );
+                $first = $base > 0 ? $this->first_instant( $base ) : 0;
+            }
+            $base = $first;
+        }
+
+        return $base > 0 ? $base + $offset : 0;
+    }
+
+    /**
+     * The earliest instant that shows the same site-local time.
+     *
+     * An earlier instant with the same wall-clock reading only exists inside
+     * a fall-back fold, which lasts 30 minutes in some zones (Lord Howe)
+     * and an hour or more in others, so each fold length is checked.
+     *
+     * @param int $timestamp UTC timestamp.
+     *
+     * @return int The first instant with this local time.
+     */
+    private function first_instant( int $timestamp ): int {
+        $wall = $this->wall_clock( $timestamp );
+        foreach ( array( 2 * HOUR_IN_SECONDS, HOUR_IN_SECONDS, 30 * MINUTE_IN_SECONDS ) as $fold ) {
+            if ( $this->wall_clock( $timestamp - $fold ) === $wall ) {
+                return $timestamp - $fold;
+            }
+        }
+        return $timestamp;
+    }
+
+    /**
+     * A UTC instant as a site-local time, for comparing wall-clock slots.
+     *
+     * @param int $timestamp UTC timestamp.
+     *
+     * @return string Local time as Y-m-d H:i:s.
+     */
+    private function wall_clock( int $timestamp ): string {
+        return ( new \DateTimeImmutable( '@' . $timestamp ) )->setTimezone( $this->timezone )->format( 'Y-m-d H:i:s' );
     }
 
     /**

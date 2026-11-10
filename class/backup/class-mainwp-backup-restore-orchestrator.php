@@ -298,6 +298,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             'transfer'   => array(),
         );
 
+        if ( MainWP_Backup_Restore_Job_Store::valid_admission_token( $options['admission_token'] ?? null ) ) {
+            $checkpoint['admission_token'] = $options['admission_token'];
+        }
+
         $metadata = MainWP_Backup_Monitor::restore_plan_metadata( (array) $resolved['plan'] );
         if ( ! empty( $metadata ) ) {
             $admission = MainWP_Backup_Monitor::admit_restore_plan( MainWP_DB::instance()->get_website_by_id( $site_id ), (array) $resolved['plan'], '', true );
@@ -338,6 +342,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             // A concurrent submit won the slot for this site.
             throw new MainWP_Exception( $running, null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- callers pass escaped strings.
         }
+        $test_restore = $store->get_live_test_restore_for_site( $site_id );
+        if ( null !== $test_restore ) {
+            $refusal = new MainWP_Exception( esc_html__( 'An automatic test restore is running on this site. Try again in about a minute.', 'mainwp' ), null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+            $refusal->set_data(
+                array(
+                    'test_restore_running' => true,
+                    'snapshot_id'          => (int) $test_restore->snapshot_id,
+                )
+            );
+            throw $refusal; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- fixed translated message.
+        }
         throw new MainWP_Exception( esc_html__( 'Another backup action is working on this site. Try again in a minute.', 'mainwp' ), null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped and the code is a trusted constant.
     }
 
@@ -375,10 +390,16 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @return string|null Error code to refuse with, or null to proceed.
      */
     public function woo_preserve_refusal( object $website, ?object $snapshot ): ?string {
+        $clamp = static function ( $timeout, $what = '' ) {
+            return 'restore_preflight' === $what ? min( 30, (int) $timeout ) : $timeout;
+        };
+        add_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX, 2 );
         try {
             $preflight = MainWP_Connect::fetch_url_authed( $website, 'restore_preflight', array(), false, false, false );
         } catch ( \Throwable $e ) {
             return null; // Unreachable: the apply-phase gate backstops.
+        } finally {
+            remove_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
         }
         if ( ! is_array( $preflight ) || isset( $preflight['error'] ) || ! array_key_exists( 'woo_hpos_enabled', $preflight ) ) {
             return null; // Older child or malformed response: defer.
@@ -495,12 +516,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param object $failed_job Finished (failed, cancelled, or completed)
      *                           restore job carrying pre_snapshot_artifacts
      *                           in its checkpoint.
+     * @param array  $options Browser admission token, when supplied.
      *
      * @throws MainWP_Exception When the job has no rollback source or its format metadata is invalid.
      *
      * @return int New job id.
      */
-    public function initiate_rollback( object $failed_job ): int {
+    public function initiate_rollback( object $failed_job, array $options = array() ): int {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -532,7 +554,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( null === $source || (int) $source->site_id !== (int) $failed_job->site_id ) {
                 throw new MainWP_Exception( esc_html__( 'Restore job not found.', 'mainwp' ) );
             }
-            $job_id      = $this->admit_rollback( $reservation, $source );
+            $job_id      = $this->admit_rollback( $reservation, $source, $options );
             $reservation = 0;
         } finally {
             if ( $reservation > 0 ) {
@@ -563,12 +585,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *
      * @param int    $reservation Reservation id holding the site.
      * @param object $failed_job  Source restore job, freshly read.
+     * @param array  $options Browser admission token, when supplied.
      *
      * @throws MainWP_Exception When the job has no rollback source or its format metadata is invalid.
      *
      * @return int New job id.
      */
-    private function admit_rollback( int $reservation, object $failed_job ): int {
+    private function admit_rollback( int $reservation, object $failed_job, array $options = array() ): int {
         $this->assert_rollback_status( $failed_job );
 
         $artifacts = isset( $failed_job->checkpoint['pre_snapshot_artifacts'] ) ? (array) $failed_job->checkpoint['pre_snapshot_artifacts'] : array();
@@ -605,13 +628,16 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 'role'        => isset( $artifact['role'] ) ? (string) $artifact['role'] : 'full',
                 'file'        => (string) $artifact['file'],
                 'size'        => isset( $artifact['size'] ) ? (int) $artifact['size'] : 0,
-                'sha256'      => '',
+                'sha256'      => is_string( $artifact['sha256'] ?? null ) && preg_match( '/^[a-f0-9]{64}$/D', $artifact['sha256'] ) ? $artifact['sha256'] : '',
                 'snapshot_id' => 0,
                 'source'      => 'adopt',
                 'local_path'  => '',
                 'remote_key'  => '',
                 'adopt_only'  => true,
             );
+            if ( 'manifest' === ( $artifact['role'] ?? '' ) && isset( $artifact['walk'] ) && is_array( $artifact['walk'] ) ) {
+                $plan[ count( $plan ) - 1 ]['walk'] = $artifact['walk'];
+            }
             if ( ! empty( $metadata ) && 'db' !== ( $artifact['role'] ?? '' ) ) {
                 $plan[ count( $plan ) - 1 ] = array_merge( $plan[ count( $plan ) - 1 ], $metadata );
             }
@@ -630,6 +656,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             ),
             'transfer'               => array(),
         );
+        if ( MainWP_Backup_Restore_Job_Store::valid_admission_token( $options['admission_token'] ?? null ) ) {
+            $checkpoint['admission_token'] = $options['admission_token'];
+        }
         if ( ! empty( $failed_job->checkpoint['source_site_id'] ) ) {
             $checkpoint['source_site_id'] = (int) $failed_job->checkpoint['source_site_id'];
         }
@@ -2102,6 +2131,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
         $artifacts = array();
         $reprobed  = false;
+        if ( ! empty( $checkpoint['is_rollback'] ) && ! isset( $checkpoint['reconcile_withheld'] ) ) {
+            $checkpoint['reconcile_withheld'] = 'no_manifest';
+        }
         foreach ( $plan as $entry ) {
             $artifacts[] = array(
                 'role'       => $entry['role'],
@@ -2113,7 +2145,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( ! empty( $metadata ) ) {
                 $artifacts[ count( $artifacts ) - 1 ]['backup_format'] = 2;
             }
-            if ( 'db' !== $options['sub_type'] && 'manifest' === $entry['role'] && (int) $entry['snapshot_id'] === (int) $job->snapshot_id && isset( $entry['walk'] ) && is_array( $entry['walk'] ) ) {
+            $rollback_manifest = ! empty( $checkpoint['is_rollback'] ) && ! empty( $entry['adopt_only'] ) && is_string( $entry['sha256'] ?? null ) && preg_match( '/^[a-f0-9]{64}$/D', $entry['sha256'] );
+            if ( 'db' !== $options['sub_type'] && 'manifest' === $entry['role'] && ( $rollback_manifest || ( empty( $checkpoint['is_rollback'] ) && (int) $entry['snapshot_id'] === (int) $job->snapshot_id ) ) && isset( $entry['walk'] ) && is_array( $entry['walk'] ) ) {
                 $needs_unarchived = array_key_exists( 'unarchived', $entry['walk'] ) || array_key_exists( 'unarchived_overflow', $entry['walk'] );
                 $reprobed         = $reprobed || $needs_unarchived;
                 // A failed refresh leaves cached flags intact; only a fresh answer authorizes deletion.
@@ -2121,6 +2154,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     unset( $options['reconcile'] );
                     $checkpoint['reconcile_withheld'] = 'unarchived_unsupported';
                 } else {
+                    if ( 'no_manifest' === ( $checkpoint['reconcile_withheld'] ?? '' ) ) {
+                        unset( $checkpoint['reconcile_withheld'] );
+                    }
                     $options['reconcile'] = array(
                         'manifest' => $entry['file'],
                         'walk'     => $entry['walk'],
@@ -2235,10 +2271,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @return array Verification with the withholding reason when applicable.
      */
     private function apply_withheld_reconcile_reason( array $verification, array $checkpoint ): array {
-        if ( 'unarchived_unsupported' === ( $checkpoint['reconcile_withheld'] ?? '' ) && ( ! array_key_exists( 'reconcile', $verification ) || ( 'skipped' === ( $verification['reconcile']['status'] ?? '' ) && 'no_manifest' === ( $verification['reconcile']['reason'] ?? '' ) ) ) ) {
-            $verification['reconcile'] = array(
-                'status' => 'skipped',
-                'reason' => 'unarchived_unsupported',
+        $has_manifest = ! empty( array_filter( (array) ( $checkpoint['plan'] ?? array() ), static fn( $entry ) => 'manifest' === ( $entry['role'] ?? '' ) ) );
+        $reason       = $checkpoint['reconcile_withheld'] ?? ( ! empty( $checkpoint['is_rollback'] ) ? ( $has_manifest ? 'manifest_unverified' : 'no_manifest' ) : '' );
+        if ( in_array( $reason, array( 'unarchived_unsupported', 'no_manifest', 'manifest_unverified' ), true ) && ( ! array_key_exists( 'reconcile', $verification ) || ( 'skipped' === ( $verification['reconcile']['status'] ?? '' ) && 'no_manifest' === ( $verification['reconcile']['reason'] ?? '' ) ) ) ) {
+            $verification['reconcile'] = array_replace(
+                is_array( $verification['reconcile'] ?? null ) ? $verification['reconcile'] : array(),
+                array(
+                    'status' => 'skipped',
+                    'reason' => $reason,
+                )
             );
         }
         return $verification;
@@ -2259,6 +2300,28 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $error_code = isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
         if ( '' === $error_code && isset( $payload['sub_state']['error']['code'] ) ) {
             $error_code = (string) $payload['sub_state']['error']['code'];
+        }
+
+        $checkpoint = $checkpoint ?? $job->checkpoint;
+        $message    = (string) ( $payload['sub_state']['error']['message'] ?? $payload['error'] ?? '' );
+        if ( MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND === $error_code && ! empty( $checkpoint['is_rollback'] ) && empty( $checkpoint['rollback_manifest_fallback'] ) ) {
+            foreach ( (array) ( $checkpoint['plan'] ?? array() ) as $entry ) {
+                if ( 'manifest' !== ( $entry['role'] ?? '' ) || empty( $entry['adopt_only'] ) || 'Rollback artifact not found on this site: ' . $entry['file'] !== $message ) {
+                    continue;
+                }
+                // A later backup may replace files.list; only the archive is required for overlay.
+                $checkpoint['plan']                       = array_values( array_filter( $checkpoint['plan'], static fn( $artifact ) => 'manifest' !== ( $artifact['role'] ?? '' ) ) );
+                $checkpoint['rollback_manifest_fallback'] = true;
+                $checkpoint['reconcile_withheld']         = 'manifest_unverified';
+                $checkpoint['transfer']                   = array();
+                $checkpoint['restore_id']                 = strtolower( wp_generate_password( 12, false ) );
+                unset( $checkpoint['child_create_attempted'], $checkpoint['restore_outcome'], $checkpoint['child_failure_code'] );
+                if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ), $this->lock_token ) ) {
+                    return false;
+                }
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                return false;
+            }
         }
 
         // A failed cloud pull never fails the restore: the job goes

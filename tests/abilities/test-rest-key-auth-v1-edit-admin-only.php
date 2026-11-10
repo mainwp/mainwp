@@ -156,7 +156,7 @@ class Test_REST_Key_Auth_V1_Edit_Admin_Only extends MainWP_Abilities_Test_Case {
 	 * @param string $method HTTP method.
 	 * @return void
 	 */
-	private function authenticate_owner( bool $staff, string $route, string $method ): void {
+	private function authenticate_owner( bool $staff, string $route, string $method, bool $level10 = false ): void {
 		if ( $staff ) {
 			$this->added_role = null !== add_role(
 				'mainwp_legacy_edit_fixture',
@@ -168,7 +168,10 @@ class Test_REST_Key_Auth_V1_Edit_Admin_Only extends MainWP_Abilities_Test_Case {
 			);
 			$owner_id         = self::factory()->user->create( array( 'role' => 'mainwp_legacy_edit_fixture' ) );
 		} else {
-			$owner_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+			$owner_id = self::factory()->user->create( array( 'role' => $level10 ? 'editor' : 'administrator' ) );
+			if ( $level10 ) {
+				( new \WP_User( $owner_id ) )->add_cap( 'level_10' );
+			}
 		}
 		$credentials          = $this->create_rest_api_key( $owner_id, 'read_write' );
 		$this->created_keys[] = $credentials;
@@ -187,8 +190,8 @@ class Test_REST_Key_Auth_V1_Edit_Admin_Only extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $owner_id, (int) $this->auth->get_rest_valid_user()->user_id );
 		$this->assertSame( $staff, MainWP_System_Utility::is_team_control_staff() );
 		$this->assertTrue( MainWP_System_Utility::is_admin() );
-		$this->assertSame( ! $staff, current_user_can( 'manage_options' ) );
-		$this->assertSame( ! $staff, in_array( 'administrator', wp_get_current_user()->roles, true ) );
+		$this->assertSame( ! $staff && ! $level10, current_user_can( 'manage_options' ) );
+		$this->assertSame( ! $staff && ! $level10, in_array( 'administrator', wp_get_current_user()->roles, true ) );
 	}
 
 	/**
@@ -265,6 +268,17 @@ class Test_REST_Key_Auth_V1_Edit_Admin_Only extends MainWP_Abilities_Test_Case {
 		$response = $this->dispatch_edit( $method, $identifier );
 		$key      = get_option( 'mainwp_rest_api_keys' )[ $identifier ];
 		$this->assertTrue( $before === $this->legacy_option_bytes(), 'Legacy option bytes changed: ' . wp_json_encode( array_intersect_key( $key, array_flip( array( 'desc', 'enabled', 'perms' ) ) ) ) );
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'mainwp_restricted_account', $response->get_data()['code'] );
+	}
+
+	/** Legacy level ten capabilities do not grant administrator ownership. */
+	public function test_level_ten_nonadministrator_cannot_edit_legacy_key(): void {
+		$identifier = $this->legacy_key();
+		$this->authenticate_owner( false, '/mainwp/v2/rest-api/edit-key/' . $identifier, 'PUT', true );
+		$before = $this->legacy_option_bytes();
+		$response = $this->dispatch_edit( 'PUT', $identifier );
+		$this->assertSame( $before, $this->legacy_option_bytes() );
 		$this->assertSame( 403, $response->get_status() );
 		$this->assertSame( 'mainwp_restricted_account', $response->get_data()['code'] );
 	}

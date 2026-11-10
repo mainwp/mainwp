@@ -31,14 +31,14 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      *
      * @var string[]
      */
-    const ALLOWED_PROVIDERS = array( 'local', 's3', 'gcs', 'dropbox', 'sftp' );
+    const ALLOWED_PROVIDERS = array( 'local', 's3', 'gcs', 'dropbox', 'pcloud', 'sftp' );
 
     /**
      * Settings fields treated as secrets: never echoed, kept on blank edit.
      *
      * @var string[]
      */
-    const SECRET_FIELDS = array( 'secret_key', 'app_secret', 'refresh_token', 'password', 'private_key' );
+    const SECRET_FIELDS = array( 'secret_key', 'app_secret', 'refresh_token', 'password', 'private_key', 'access_token', 'client_secret' );
 
     /**
      * Instance variable class.
@@ -75,6 +75,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $this->add_action( 'mainwp_storage_default', array( &$this, 'ajax_storage_default' ) );
         $this->add_action( 'mainwp_storage_get', array( &$this, 'ajax_storage_get' ) );
         $this->add_action( 'mainwp_dropbox_oauth_start', array( &$this, 'ajax_dropbox_oauth_start' ) );
+        $this->add_action( 'mainwp_pcloud_connect', array( &$this, 'ajax_pcloud_connect' ) );
 
         // init() itself runs during admin_init (priority 20), so a later
         // admin_init registration would never fire - sniff directly.
@@ -317,6 +318,249 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     }
 
     /**
+     * Connect pCloud with a code the user pasted from pCloud's approval page.
+     *
+     * @return void
+     */
+    public function ajax_pcloud_connect() {
+        $this->secure_request( 'mainwp_pcloud_connect' );
+        $this->check_permission();
+        $this->check_unrestricted_permission();
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request.
+        $code = isset( $_POST['authorization_code'] ) && is_string( $_POST['authorization_code'] ) ? sanitize_text_field( wp_unslash( $_POST['authorization_code'] ) ) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request.
+        $stash_key = isset( $_POST['stash_key'] ) && is_string( $_POST['stash_key'] ) ? sanitize_text_field( wp_unslash( $_POST['stash_key'] ) ) : '';
+        die( wp_json_encode( static::connect_pcloud( $this->read_destination_input(), $code, $stash_key ) ) );
+    }
+
+    /**
+     * Exchange a pasted code, then save the destination through the normal test-then-persist path.
+     *
+     * The code is single use, so the destination is validated before it is spent. The app, region and
+     * token reach the save only through its server-side argument; the code itself is never stored.
+     *
+     * @param array  $input     Destination fields: id, name, is_default, settings{base_path, minimum_remote_retention_days}.
+     * @param string $code      Authorization code shown by pCloud.
+     * @param string $stash_key Single-use account-change confirmation key.
+     *
+     * @return array {id} on success, {error} on failure.
+     */
+    public static function connect_pcloud( array $input, string $code, string $stash_key = '' ) {
+        if ( '' !== $stash_key ) {
+            $stash = static::consume_pcloud_connection( $stash_key, (int) ( $input['id'] ?? 0 ) );
+            if ( isset( $stash['error'] ) ) {
+                return $stash;
+            }
+            $input    = $stash['input'];
+            $oauth    = $stash['oauth'];
+            $replaces = $stash['replaces'];
+            // A switch leaves the old account's token working, so a failed save loses nothing.
+            $reconnecting_id = 0;
+        } else {
+            $code = trim( $code );
+            if ( '' === $code ) {
+                return array( 'error' => esc_html__( 'Paste the authorization code from pCloud, then save.', 'mainwp' ) );
+            }
+            $input['provider'] = 'pcloud';
+            $merged            = static::merge_candidate( $input );
+            if ( isset( $merged['error'] ) ) {
+                return $merged;
+            }
+            $credentials = MainWP_Backup_Storage_PCloud::app_credentials();
+            if ( '' === $credentials['client_id'] || '' === $credentials['client_secret'] ) {
+                return array( 'error' => esc_html__( 'pCloud connections are not available on this Dashboard yet.', 'mainwp' ) );
+            }
+            $connection = MainWP_Backup_Storage_PCloud::exchange_code_for_region( $credentials['client_id'], $credentials['client_secret'], $code );
+            if ( isset( $connection['error'] ) ) {
+                return array( 'error' => $connection['error'] );
+            }
+            $oauth = array(
+                'client_id'    => $credentials['client_id'],
+                'locationid'   => $connection['locationid'],
+                'access_token' => $connection['access_token'],
+            );
+            if ( isset( $connection['account_email'] ) ) {
+                $oauth['account_email'] = $connection['account_email'];
+            }
+            $oauth['userid'] = $connection['userid'];
+            static::refresh_pcloud_siblings( $oauth, (int) $merged['id'] );
+            $existing       = $merged['expected'];
+            $identity_field = MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD;
+            if ( null !== $existing && 'pcloud' === $existing->provider && ! empty( $existing->settings[ $identity_field ]['userid'] )
+                && ( (string) $existing->settings[ $identity_field ]['userid'] !== $connection['userid']
+                    || (string) ( $existing->settings['locationid'] ?? '' ) !== (string) $connection['locationid'] ) ) {
+                return static::stash_pcloud_connection( $merged, $oauth );
+            }
+            $replaces = static::pcloud_connected_account( $existing );
+            // pCloud revoked the stored token during the exchange, and a failed save keeps it.
+            $reconnecting_id = null !== $existing && 'pcloud' === $existing->provider ? (int) $merged['id'] : 0;
+        }
+
+        $result = static::save_destination( $input, $oauth, $replaces );
+        // Skip the warning if another admin replaced or deleted the destination mid-request.
+        if ( 0 < $reconnecting_id && isset( $result['error'] )
+            && static::pcloud_connected_account( MainWP_Backup_Storage_Destinations::instance()->get_destination( $reconnecting_id ) ) === $replaces ) {
+            $result['error'] .= ' ' . esc_html__( "Using the code also ended this destination's earlier connection, so backups to it will fail until you click Connect pCloud and paste a new code.", 'mainwp' );
+        }
+        return $result;
+    }
+
+    /**
+     * Keep pCloud's manual revocation instructions consistent across confirmations.
+     *
+     * @return string
+     */
+    public static function pcloud_revoke_guidance(): string {
+        return esc_html__( 'To revoke it, open pCloud and remove MainWP Dashboard under Settings > Linked Accounts > Linked Apps.', 'mainwp' );
+    }
+
+    /**
+     * The code is spent, so confirmation must retain its exchange without exposing the token.
+     *
+     * @param array $merged Validated destination candidate.
+     * @param array $oauth  Server-issued connection.
+     * @return array
+     */
+    private static function stash_pcloud_connection( array $merged, array $oauth ): array {
+        $stash    = array(
+            'user_id'        => get_current_user_id(),
+            'destination_id' => $merged['id'],
+            'replaces'       => static::pcloud_connected_account( $merged['expected'] ),
+            'oauth'          => $oauth,
+            'input'          => array(
+                'id'         => $merged['id'],
+                'provider'   => 'pcloud',
+                'name'       => $merged['name'],
+                'is_default' => $merged['is_default'],
+                'settings'   => array_intersect_key(
+                    $merged['settings'],
+                    array(
+                        'base_path'                     => true,
+                        'minimum_remote_retention_days' => true,
+                    )
+                ),
+            ),
+        );
+        $envelope = MainWP_Credential_Storage::encrypt_credential( (string) wp_json_encode( $stash ), 'storage_destination' );
+        if ( ! is_string( $envelope ) || ! MainWP_Credential_Storage::is_credential_envelope( $envelope ) ) {
+            return array( 'error' => esc_html__( 'The connection could not be prepared. Check that the dashboard can encrypt credentials.', 'mainwp' ) );
+        }
+        $key = bin2hex( random_bytes( 16 ) );
+        set_transient( 'mainwp_pcloud_connect_' . $key, $envelope, 10 * MINUTE_IN_SECONDS );
+        $old_email = (string) ( $merged['expected']->settings['account_email'] ?? esc_html__( 'unknown account', 'mainwp' ) );
+        $new_email = (string) ( $oauth['account_email'] ?? esc_html__( 'unknown account', 'mainwp' ) );
+        return array(
+            'error'             => sprintf(
+                /* translators: %1$s = current account email, %2$s = new account email. */
+                esc_html__( "This code is for a different pCloud account (%2\$s). This destination is connected to %1\$s. Backups already in %1\$s stay there, and this destination can't restore or clean them up after the switch. Switch to %2\$s? Switching doesn't revoke this Dashboard's access to %1\$s in pCloud.", 'mainwp' ),
+                esc_html( $old_email ),
+                esc_html( $new_email )
+            ) . ' ' . static::pcloud_revoke_guidance(),
+            'stash_key'         => $key,
+            'old_account_email' => $old_email,
+            'new_account_email' => $new_email,
+        );
+    }
+
+    /**
+     * Strings only, so the value compares equal after the stash's JSON round trip.
+     *
+     * @param object|null $row Stored destination.
+     * @return array {provider, userid, locationid}
+     */
+    private static function pcloud_connected_account( $row ): array {
+        $settings = is_object( $row ) && is_array( $row->settings ?? null ) ? $row->settings : array();
+        $identity = $settings[ MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD ] ?? array();
+        return array(
+            'provider'   => is_object( $row ) ? (string) ( $row->provider ?? '' ) : '',
+            'userid'     => is_array( $identity ) ? (string) ( $identity['userid'] ?? '' ) : '',
+            'locationid' => (string) ( $settings['locationid'] ?? '' ),
+        );
+    }
+
+    /**
+     * Confirmation cannot be replayed or transferred to another user or destination.
+     *
+     * @param string $stash_key      Single-use confirmation key.
+     * @param int    $destination_id Submitted destination ID.
+     * @return array
+     */
+    private static function consume_pcloud_connection( string $stash_key, int $destination_id ): array {
+        $error = array( 'error' => esc_html__( 'This confirmation expired or was already used. Click Connect pCloud and paste a new code.', 'mainwp' ) );
+        if ( ! preg_match( '/^[a-f0-9]{32}$/D', $stash_key ) ) {
+            return $error;
+        }
+        $key      = 'mainwp_pcloud_connect_' . $stash_key;
+        $envelope = get_transient( $key );
+        delete_transient( $key );
+        if ( ! is_string( $envelope ) || ! MainWP_Credential_Storage::is_credential_envelope( $envelope ) ) {
+            return $error;
+        }
+        $plaintext = MainWP_Credential_Storage::decrypt_credential( $envelope );
+        $data      = json_decode( substr( $envelope, strlen( MainWP_Credential_Storage::ENVELOPE_PREFIX ) ), true );
+        if ( is_array( $data ) && ! empty( $data['file_key'] ) ) {
+            MainWP_Credential_Storage::retire_key_file_if_changed( (string) $data['file_key'], '' );
+        }
+        $stash = json_decode( (string) $plaintext, true );
+        if ( ! is_array( $stash ) || (int) ( $stash['user_id'] ?? 0 ) !== get_current_user_id()
+            || (int) ( $stash['destination_id'] ?? 0 ) !== $destination_id || empty( $stash['input'] ) || empty( $stash['oauth']['access_token'] ) ) {
+            return $error;
+        }
+        if ( ! isset( $stash['replaces'] ) || ! is_array( $stash['replaces'] ) ) {
+            return $error;
+        }
+        return $stash;
+    }
+
+    /**
+     * Refresh sibling credentials only after re-proving their stored account and folder.
+     *
+     * @param array $oauth       Server-issued app, region, token and account ID.
+     * @param int   $excluded_id Destination being edited, or zero for a new destination.
+     * @return void
+     */
+    private static function refresh_pcloud_siblings( array $oauth, int $excluded_id ): void {
+        $store = MainWP_Backup_Storage_Destinations::instance();
+        $field = MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD;
+        // pCloud revokes earlier tokens of the same app and account on every new authorization.
+        foreach ( $store->list_destinations() as $row ) {
+            if ( (int) $row->id === $excluded_id || 'pcloud' !== $row->provider ) {
+                continue;
+            }
+            $sibling  = $store->get_destination( (int) $row->id );
+            $settings = $sibling->settings ?? null;
+            if ( ! is_array( $settings ) || empty( $settings[ $field ]['userid'] ) || ! isset( $settings[ $field ]['folderid'] )
+                || (string) ( $settings['client_id'] ?? '' ) !== (string) $oauth['client_id']
+                || (string) ( $settings['locationid'] ?? '' ) !== (string) $oauth['locationid']
+                || (string) $settings[ $field ]['userid'] !== (string) $oauth['userid'] ) {
+                continue;
+            }
+            $settings['access_token'] = $oauth['access_token'];
+            try {
+                $candidate           = clone $sibling;
+                $candidate->settings = $settings;
+                $provider            = $store->make_provider( $candidate );
+                if ( ! $provider instanceof MainWP_Backup_Storage_PCloud ) {
+                    continue;
+                }
+                $userid = $provider->account_userid();
+                if ( $userid !== (string) $settings[ $field ]['userid'] ) {
+                    continue;
+                }
+                $folderid = $provider->base_folder_id();
+                if ( $folderid !== (string) $settings[ $field ]['folderid'] ) {
+                    continue;
+                }
+                $settings = MainWP_Backup_Retention_Protection::with_pcloud_identity( $settings, $userid, $folderid );
+                $store->update_destination( (int) $sibling->id, array( 'settings' => $settings ), $sibling );
+            } catch ( \RuntimeException $e ) {
+                // A stale sibling must not block saving the new connection or refreshing other siblings.
+                continue;
+            }
+        }
+    }
+
+    /**
      * Permission gate shared by every storage endpoint.
      *
      * @return void
@@ -501,14 +745,51 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     /**
      * Validate, connection-test, and persist a destination.
      *
-     * @param array $input Destination fields: id, provider, name, is_default, settings.
+     * @param array      $input          Destination fields: id, provider, name, is_default, settings.
+     * @param array      $pcloud_oauth   Server-only app, region, token and optional account email from the pCloud code exchange.
+     * @param array|null $pcloud_account Connected account the exchange was checked against, from pcloud_connected_account().
      *
      * @return array {id, notice?} on success, {error} on failure.
      */
-    public static function save_destination( array $input ) {
+    public static function save_destination( array $input, array $pcloud_oauth = array(), ?array $pcloud_account = null ) {
         $merged = static::merge_candidate( $input );
         if ( isset( $merged['error'] ) ) {
             return $merged;
+        }
+        // The exchange and sibling refresh take several requests; another admin may have reconnected this destination meanwhile.
+        if ( null !== $pcloud_account && static::pcloud_connected_account( $merged['expected'] ) !== $pcloud_account ) {
+            return array( 'error' => esc_html__( 'This destination changed before your connection was saved. Click Connect pCloud and paste a new code.', 'mainwp' ) );
+        }
+
+        // Browser saves never supply this argument; merge_candidate strips their region.
+        if ( 'pcloud' === $merged['provider'] ) {
+            if ( ! empty( $pcloud_oauth ) ) {
+                // A reconnect may belong to a different account even when userinfo omits its email.
+                unset( $merged['settings']['account_email'] );
+            }
+            $merged['settings'] = array_merge(
+                $merged['settings'],
+                array_intersect_key(
+                    $pcloud_oauth,
+                    array(
+                        'client_id'     => true,
+                        'locationid'    => true,
+                        'access_token'  => true,
+                        'account_email' => true,
+                    )
+                )
+            );
+            if ( ! in_array( $merged['settings']['locationid'] ?? null, array( 1, 2, '1', '2' ), true ) ) {
+                if ( empty( $pcloud_oauth ) && ( null === $merged['expected'] || 'pcloud' !== $merged['expected']->provider ) ) {
+                    return array( 'error' => esc_html__( 'Click Connect pCloud and paste the authorization code to finish adding this destination.', 'mainwp' ) );
+                }
+                // An undecryptable row has no stored region to copy; the fix is a reconnect, not a region problem.
+                if ( null !== $merged['expected'] && ! empty( $merged['expected']->credentials_invalid ) ) {
+                    return array( 'error' => esc_html__( 'Click Connect pCloud and paste the authorization code to reconnect this destination.', 'mainwp' ) );
+                }
+                return array( 'error' => esc_html__( 'Invalid pCloud storage region. Reconnect this destination.', 'mainwp' ) );
+            }
+            $merged['settings']['locationid'] = (int) $merged['settings']['locationid'];
         }
 
         $test_connection = true;
@@ -523,6 +804,21 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
                     $candidate = trim( $candidate, '/' );
                     $stored    = trim( $stored, '/' );
                 }
+                if ( $candidate !== $stored ) {
+                    $test_connection = true;
+                    break;
+                }
+            }
+        }
+        if ( 'pcloud' === $merged['provider'] && empty( $pcloud_oauth ) && null !== $existing && 'pcloud' === $existing->provider
+            && empty( $existing->credentials_invalid ) && is_array( $existing->settings ) ) {
+            // Sibling: Dropbox's metadata-only branch above also keeps proof without HTTP.
+            $test_connection = false;
+            foreach ( array( 'client_id', 'access_token', 'locationid', 'base_path' ) as $field ) {
+                $default   = 'base_path' === $field ? 'MainWP Backups' : '';
+                $candidate = (string) ( $merged['settings'][ $field ] ?? $default );
+                $stored    = (string) ( $existing->settings[ $field ] ?? $default );
+                $stored    = 'base_path' === $field ? trim( $stored, '/' ) : trim( $stored );
                 if ( $candidate !== $stored ) {
                     $test_connection = true;
                     break;
@@ -549,6 +845,19 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
                     return array( 'error' => esc_html__( 'Dropbox storage identity could not be verified.', 'mainwp' ) );
                 }
                 $merged['settings'] = MainWP_Backup_Retention_Protection::with_dropbox_identity( $merged['settings'], $provider->retention_marker_id( $merged['settings'][ $identity_field ]['key'] ) );
+            } catch ( \RuntimeException $e ) {
+                return array( 'error' => $e->getMessage() );
+            }
+        }
+
+        if ( $test_connection && 'pcloud' === $merged['provider'] ) {
+            // Sibling: Dropbox's save re-proof above must also refuse an unverified target.
+            try {
+                $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( (object) $merged );
+                if ( ! $provider instanceof MainWP_Backup_Storage_PCloud ) {
+                    return array( 'error' => esc_html__( 'pCloud storage identity could not be verified.', 'mainwp' ) );
+                }
+                $merged['settings'] = MainWP_Backup_Retention_Protection::with_pcloud_identity( $merged['settings'], $provider->account_userid(), $provider->base_folder_id() );
             } catch ( \RuntimeException $e ) {
                 return array( 'error' => $e->getMessage() );
             }
@@ -606,7 +915,11 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $submitted      = isset( $input['settings'] ) && is_array( $input['settings'] );
         $settings       = $submitted ? $input['settings'] : array();
         $identity_field = MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD;
-        unset( $settings[ $identity_field ] );
+        unset( $settings[ $identity_field ], $settings['authorization_code'] );
+        if ( 'pcloud' === $provider ) {
+            // The app, region, token and account email come only from the server-side code exchange.
+            unset( $settings['client_id'], $settings['locationid'], $settings['access_token'], $settings['client_secret'], $settings['account_email'] );
+        }
 
         if ( $id > 0 ) {
             $existing = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
@@ -614,6 +927,17 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
                 return array( 'error' => esc_html__( 'The storage destination no longer exists.', 'mainwp' ) );
             }
             if ( $provider === (string) $existing->provider && is_array( $existing->settings ) ) {
+                if ( 'pcloud' === $provider ) {
+                    // Sibling: Dropbox's identity preservation below; app and region must precede the target comparison.
+                    foreach ( array( 'client_id', 'locationid', 'account_email' ) as $field ) {
+                        if ( isset( $existing->settings[ $field ] ) ) {
+                            $settings[ $field ] = $existing->settings[ $field ];
+                        }
+                    }
+                    if ( isset( $existing->settings[ $identity_field ] ) ) {
+                        $settings[ $identity_field ] = $existing->settings[ $identity_field ];
+                    }
+                }
                 if ( ! $submitted ) {
                     // No settings posted at all (the list row's Test): use
                     // the stored settings wholesale.
@@ -629,6 +953,13 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
                     $settings[ $identity_field ] = $existing->settings[ $identity_field ];
                 }
             }
+        }
+
+        if ( 'pcloud' === $provider ) {
+            unset( $settings['client_secret'] );
+            $settings['client_id']    = trim( sanitize_text_field( (string) ( $settings['client_id'] ?? '' ) ) );
+            $settings['access_token'] = trim( (string) ( $settings['access_token'] ?? '' ) );
+            $settings['base_path']    = trim( sanitize_text_field( (string) ( $settings['base_path'] ?? 'MainWP Backups' ) ), '/' );
         }
 
         // The form lists None as 'none' (Fomantic hides an empty-value
@@ -692,11 +1023,19 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             's3'      => array( 'endpoint', 'bucket', 'region', 'path_style', 'access_key' ),
             'gcs'     => array( 'bucket', 'region', 'access_key' ),
             'dropbox' => array( 'app_key' ),
+            'pcloud'  => array( 'client_id', 'locationid' ),
             'sftp'    => array( 'username' ),
             'local'   => array(),
         );
+        if ( ! isset( $identity_fields[ $provider ] ) ) {
+            return false;
+        }
         if ( 'sftp' === $provider && 0 === static::pin_enforcement_id( 1, $settings, $stored ) ) {
             return false;
+        }
+        if ( 'pcloud' === $provider ) {
+            $settings['client_id'] = trim( (string) ( $settings['client_id'] ?? '' ) );
+            $stored['client_id']   = trim( (string) ( $stored['client_id'] ?? '' ) );
         }
         foreach ( $identity_fields[ $provider ] as $field ) {
             if ( (string) ( $settings[ $field ] ?? '' ) !== (string) ( $stored[ $field ] ?? '' ) ) {
@@ -816,11 +1155,26 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             's3'      => array( 'secret_key' ),
             'gcs'     => array( 'secret_key' ),
             'dropbox' => array( 'app_secret', 'refresh_token' ),
+            'pcloud'  => array( 'access_token' ),
             'sftp'    => '' === trim( (string) ( $settings['private_key'] ?? '' ) ) ? array( 'password' ) : array(),
             'local'   => array(),
         );
+        if ( ! isset( $required_secrets[ $candidate['provider'] ] ) ) {
+            return array(
+                'ok'    => false,
+                'error' => esc_html__( 'Unknown storage provider.', 'mainwp' ),
+            );
+        }
         foreach ( $required_secrets[ $candidate['provider'] ] as $field ) {
             if ( ! isset( $settings[ $field ] ) || '' === (string) $settings[ $field ] ) {
+                // pCloud tokens come only from Connect pCloud; the form has no field that could supply one.
+                if ( 'pcloud' === $candidate['provider'] ) {
+                    $is_new = empty( $candidate['expected'] ) || 'pcloud' !== $candidate['expected']->provider;
+                    return array(
+                        'ok'    => false,
+                        'error' => $is_new ? esc_html__( 'Click Connect pCloud and paste the authorization code to finish adding this destination.', 'mainwp' ) : esc_html__( 'Click Connect pCloud and paste the authorization code to reconnect this destination.', 'mainwp' ),
+                    );
+                }
                 return array(
                     'ok'    => false,
                     'error' => esc_html__( 'Re-enter the required credentials for this storage destination.', 'mainwp' ),

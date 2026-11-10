@@ -305,6 +305,33 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 	use Backup_Private_Root_Fixture;
 
+	/** The Woo preflight bounds its request and removes the filter after either outcome. */
+	public function test_woo_preflight_timeout_clamp_is_removed() {
+		$site = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		foreach ( array( false, true ) as $throws ) {
+			$observed = array();
+			$observe  = static function ( $pre, $website, $what ) use ( &$observed, $throws ) {
+				if ( 'restore_preflight' === $what ) {
+					$observed[] = apply_filters( 'mainwp_fetch_url_site_timeout', 72000, $what );
+					$observed[] = apply_filters( 'mainwp_fetch_url_site_timeout', 10, $what );
+					$observed[] = apply_filters( 'mainwp_fetch_url_site_timeout', 72000, 'ordinary_request' );
+					if ( $throws ) {
+						throw new \Error( 'Preflight unavailable' );
+					}
+				}
+				return $pre;
+			};
+			add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 3 );
+			try {
+				$this->orchestrator->woo_preserve_refusal( $site, null );
+				$this->assertSame( array( 30, 10, 72000 ), $observed );
+				$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000, 'restore_preflight' ) );
+			} finally {
+				remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
+			}
+		}
+	}
+
 	/**
 	 * Test site id.
 	 *
@@ -3531,6 +3558,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertNotNull( $job );
 		$token = new \ReflectionProperty( MainWP_Backup_Restore_Orchestrator::class, 'lock_token' );
 		$token->setValue( $this->orchestrator, 'verifying-holder' );
+		// Each lease check renews the lease for lease_seconds. Left at 0, the
+		// first tick's renewal ends the lease within the current second, so a
+		// second tick that starts in a later second no longer holds it.
+		$lease = new \ReflectionProperty( MainWP_Backup_Restore_Orchestrator::class, 'lease_seconds' );
+		$lease->setValue( $this->orchestrator, 90 );
 		$driver  = MainWP_Backup_Restore_Transfer_Driver::instance();
 		$staging = $driver->staging_dir( (int) $job->id );
 		wp_mkdir_p( $staging );
@@ -3567,6 +3599,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			remove_filter( 'query', $refuse );
 			remove_action( 'mainwp_backup_restored', $record );
 			$token->setValue( $this->orchestrator, null );
+			$lease->setValue( $this->orchestrator, 0 );
 			$driver->cleanup_staging( (int) $job->id );
 		}
 	}
@@ -8802,6 +8835,309 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * A rollback job builds an adopt-only plan from the pre-restore
 	 * safety backup.
 	 */
+	public function test_mwp2259_rollback_dispatch_uses_safety_inventory() {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$walk   = array(
+			'excludes'     => array( 'wp-content/uploads', 'private' ),
+			'excludenonwp' => 1,
+			'excludezip'   => 0,
+		);
+		$hash   = str_repeat( 'a', 64 );
+		$failed = $this->make_job(
+			array(
+				'pre_snapshot_artifacts' => array(
+					array(
+						'file'   => 'safety.tar.gz',
+						'size'   => 1234,
+						'role'   => 'full',
+						'sha256' => str_repeat( 'b', 64 ),
+					),
+					array(
+						'file'   => 'safety-files.list',
+						'size'   => 100,
+						'role'   => 'manifest',
+						'sha256' => $hash,
+						'walk'   => $walk,
+					),
+				),
+				'plan'                   => array(
+					array(
+						'role'        => 'manifest',
+						'file'        => 'original-files.list',
+						'walk'        => array( 'excludes' => array() ),
+						'snapshot_id' => 5,
+					),
+				),
+			),
+			$store::STATUS_FAILED_PERMANENT
+		);
+		$id     = $this->orchestrator->initiate_rollback( $failed );
+		$job    = $store->get_job( $id );
+		$this->assertSame( $hash, $job->checkpoint['plan'][1]['sha256'] );
+		$this->assertSame( $walk, $job->checkpoint['plan'][1]['walk'] );
+		$this->assertTrue( $store->set_status( $id, $store::STATUS_STAGING ) );
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'mwp2259-rollback',
+			'phase'   => 'queued',
+		);
+		$job                                    = $this->tick( $store->get_job( $id ) );
+		$this->assertSame( $store::STATUS_TRANSFERRING, $job->status );
+		$calls     = array_column( $this->calls, null, 'what' );
+		$options   = json_decode( $calls['restore_task_create']['params']['options_json'], true );
+		$artifacts = json_decode( $calls['restore_task_create']['params']['artifacts_json'], true );
+		$this->assertSame(
+			array(
+				'manifest' => 'safety-files.list',
+				'walk'     => $walk,
+			),
+			$options['reconcile']
+		);
+		$this->assertSame( $hash, $artifacts[1]['sha256'] );
+		$this->assertSame( str_repeat( 'b', 64 ), $artifacts[0]['sha256'] );
+		$this->assertTrue( $store->set_status( $id, $store::STATUS_RUNNING, array( 'child_task_id' => 'mwp2259-rollback' ) ) );
+		$this->responses['restore_task_run'] = array(
+			'task_id'   => 'mwp2259-rollback',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array() ),
+		);
+		$job                                 = $this->tick( $store->get_job( $id ) );
+		$this->assertSame(
+			array(
+				'status' => 'skipped',
+				'reason' => 'manifest_unverified',
+			),
+			$job->checkpoint['verification']['reconcile']
+		);
+	}
+
+	/**
+	 * Missing safety metadata must never borrow the restored snapshot's inventory.
+	 *
+	 * @dataProvider mwp2259_missing_safety_inventory
+	 * @param string $missing Missing or invalid safety metadata.
+	 */
+	public function test_mwp2259_legacy_rollback_reports_overlay( $missing ) {
+		$store    = MainWP_Backup_Restore_Job_Store::instance();
+		$manifest = array(
+			'file'   => 'safety-files.list',
+			'size'   => 100,
+			'role'   => 'manifest',
+			'sha256' => str_repeat( 'a', 64 ),
+			'walk'   => array(
+				'excludes'     => array( 'private' ),
+				'excludenonwp' => 0,
+				'excludezip'   => 0,
+			),
+		);
+		if ( 'invalid_hash' === $missing ) {
+			$manifest['sha256'] = 'invalid';
+		} elseif ( 'newline_hash' === $missing ) {
+			$manifest['sha256'] .= "\n";
+		} else {
+			unset( $manifest[ $missing ] );
+		}
+		$failed   = $this->make_job(
+			array(
+				'pre_snapshot_artifacts' => array(
+					array(
+						'file' => 'safety.tar.gz',
+						'size' => 1234,
+						'role' => 'full',
+					),
+					$manifest,
+				),
+			),
+			$store::STATUS_FAILED_PERMANENT
+		);
+		$id       = $this->orchestrator->initiate_rollback( $failed );
+		$admitted = $store->get_job( $id );
+		$this->assertSame( 'walk' === $missing ? str_repeat( 'a', 64 ) : '', $admitted->checkpoint['plan'][1]['sha256'] );
+		$this->assertTrue( $store->set_status( $id, $store::STATUS_STAGING ) );
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'mwp2259-overlay',
+			'phase'   => 'queued',
+		);
+		$job                                    = $this->tick( $store->get_job( $id ) );
+		$calls                                  = array_column( $this->calls, null, 'what' );
+		$options                                = json_decode( $calls['restore_task_create']['params']['options_json'], true );
+		$this->assertArrayNotHasKey( 'reconcile', $options );
+		$this->assertSame( 'no_manifest', $job->checkpoint['reconcile_withheld'] ?? null );
+		$this->assertTrue( $store->set_status( $id, $store::STATUS_RUNNING, array( 'child_task_id' => 'mwp2259-overlay' ) ) );
+		$this->responses['restore_task_run'] = array(
+			'task_id'   => 'mwp2259-overlay',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array() ),
+		);
+		$job                                 = $this->tick( $store->get_job( $id ) );
+		$this->assertSame(
+			array(
+				'status' => 'skipped',
+				'reason' => 'no_manifest',
+			),
+			$job->checkpoint['verification']['reconcile']
+		);
+	}
+
+	/**
+	 * A replaced shared inventory permits overlay without suppressing archive errors.
+	 *
+	 * @dataProvider mwp2259_manifest_fallback_write_cases
+	 * @param bool $refuse_write Whether the first checkpoint write is refused.
+	 * @return void
+	 */
+	public function test_mwp2259_missing_shared_manifest_retries_overlay_once( $refuse_write ) {
+		$store                               = MainWP_Backup_Restore_Job_Store::instance();
+		$plan                                = array(
+			array(
+				'role'        => 'full',
+				'file'        => 'safety.tar.gz',
+				'size'        => 10,
+				'sha256'      => str_repeat( 'b', 64 ),
+				'adopt_only'  => true,
+				'snapshot_id' => 0,
+				'source'      => 'adopt',
+				'local_path'  => '',
+				'remote_key'  => '',
+			),
+			array(
+				'role'        => 'manifest',
+				'file'        => 'files.list',
+				'size'        => 20,
+				'sha256'      => str_repeat( 'a', 64 ),
+				'adopt_only'  => true,
+				'snapshot_id' => 0,
+				'source'      => 'adopt',
+				'local_path'  => '',
+				'remote_key'  => '',
+				'walk'        => array(
+					'excludes'     => array(),
+					'excludezip'   => 0,
+					'excludenonwp' => 0,
+				),
+			),
+		);
+		$job                                 = $this->make_job(
+			array(
+				'is_rollback'            => true,
+				'plan'                   => $plan,
+				'child_create_attempted' => true,
+			),
+			$store::STATUS_RUNNING,
+			array( 'child_task_id' => 'old-rollback' )
+		);
+		$this->responses['restore_task_run'] = array(
+			'task_id'   => 'old-rollback',
+			'phase'     => 'failed',
+			'sub_state' => array(
+				'error' => array(
+					'code'    => MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND,
+					'message' => 'Rollback artifact not found on this site: files.list',
+				),
+			),
+		);
+		if ( $refuse_write ) {
+			global $wpdb;
+			$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+			$refuse   = static function ( $sql ) use ( $table ) {
+				return str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint' ) && str_contains( $sql, 'rollback_manifest_fallback' ) ? 'SELECT mainwp_test_refused_checkpoint_write' : $sql;
+			};
+			$suppress = $wpdb->suppress_errors();
+			add_filter( 'query', $refuse );
+			try {
+				$job = $this->tick( $job );
+			} finally {
+				remove_filter( 'query', $refuse );
+				$wpdb->suppress_errors( $suppress );
+			}
+			$this->assertSame( $store::STATUS_STAGING, $job->status );
+			$this->assertSame( 'orch01test', $job->checkpoint['restore_id'] );
+			$this->assertSame( $plan, $job->checkpoint['plan'] );
+			$this->responses['restore_task_create'] = array_merge( $this->responses['restore_task_run'], array( 'reused' => true ) );
+		}
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', $job->child_task_id );
+		$this->assertNotSame( 'orch01test', $job->checkpoint['restore_id'] );
+		$this->assertArrayNotHasKey( 'child_create_attempted', $job->checkpoint );
+		$this->assertSame( array( $plan[0] ), $job->checkpoint['plan'] );
+		$this->assertSame( 'manifest_unverified', $job->checkpoint['reconcile_withheld'] );
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'overlay-rollback',
+			'phase'   => 'receiving',
+		);
+		$job                                    = $this->tick( $job );
+		$creates                                = array_values( array_filter( $this->calls, static fn( $call ) => 'restore_task_create' === $call['what'] ) );
+		$this->assertCount( $refuse_write ? 2 : 1, $creates );
+		$last = end( $creates );
+		$this->assertCount( 1, json_decode( $last['params']['artifacts_json'], true ) );
+		$this->assertArrayNotHasKey( 'reconcile', json_decode( $last['params']['options_json'], true ) );
+		$this->assertTrue( $store->set_status( (int) $job->id, $store::STATUS_RUNNING ) );
+		$this->responses['restore_task_run'] = array(
+			'task_id'    => 'overlay-rollback',
+			'phase'      => 'failed',
+			'error_code' => MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND,
+			'error'      => 'Rollback artifact not found on this site: safety.tar.gz',
+		);
+		$job                                 = $this->tick( $store->get_job( (int) $job->id ) );
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $job->status );
+	}
+
+	/**
+	 * Normal and refused-write recovery paths.
+	 *
+	 * @return array Cases.
+	 */
+	public static function mwp2259_manifest_fallback_write_cases() {
+		return array(
+			'normal'             => array( false ),
+			'refused checkpoint' => array( true ),
+		);
+	}
+
+	/**
+	 * Replacing the warning reason retains the Child's preservation evidence.
+	 *
+	 * @return void
+	 */
+	public function test_mwp2259_withheld_reason_preserves_kept_evidence() {
+		$method = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'apply_withheld_reconcile_reason' );
+		$method->setAccessible( true );
+		$kept           = array(
+			'status'            => 'skipped',
+			'reason'            => 'no_manifest',
+			'kept'              => 2,
+			'kept_by_reason'    => array( 'symlink' => 2 ),
+			'kept_paths'        => array( 'a', 'b' ),
+			'mu_plugins_reason' => 'symlink',
+		);
+		$result         = $method->invoke( $this->orchestrator, array( 'reconcile' => $kept ), array( 'reconcile_withheld' => 'unarchived_unsupported' ) );
+		$kept['reason'] = 'unarchived_unsupported';
+		$this->assertSame( $kept, $result['reconcile'] );
+		$legacy = array(
+			'is_rollback' => true,
+			'plan'        => array(),
+		);
+		$result = $method->invoke( $this->orchestrator, array(), $legacy );
+		$this->assertSame( 'no_manifest', $result['reconcile']['reason'] );
+	}
+
+	/**
+	 * Safety metadata omissions that retain overlay behavior.
+	 *
+	 * @return array Missing safety metadata cases.
+	 */
+	public static function mwp2259_missing_safety_inventory() {
+		return array(
+			'no hash'      => array( 'sha256' ),
+			'bad hash'     => array( 'invalid_hash' ),
+			'newline hash' => array( 'newline_hash' ),
+			'no walk'      => array( 'walk' ),
+		);
+	}
+
+	/**
+	 * A rollback job builds an adopt-only plan from its safety backup.
+	 */
 	public function test_rollback_builds_adopt_only_plan() {
 		$failed = $this->make_job(
 			array(
@@ -10503,6 +10839,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @return array|null Decoded response.
 	 */
 	private function invoke_ajax_handler( $method ) {
+		if ( in_array( $method, array( 'mainwp_restore_initiate', 'mainwp_restore_rollback' ), true ) ) {
+			$_POST['admission_token'] = bin2hex( random_bytes( 16 ) );
+		}
 		$throw = static function () {
 			return static function () {
 				throw new \RuntimeException( 'wp_die' );
@@ -10521,6 +10860,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$raw = ob_get_clean();
 			remove_filter( 'wp_die_ajax_handler', $throw );
 			remove_filter( 'wp_doing_ajax', '__return_true' );
+			unset( $_POST['admission_token'] );
 		}
 
 		return json_decode( $raw, true );
@@ -10741,15 +11081,23 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertCount( 2, $uploads, 'Delete jobs must not appear as uploads.' );
 		$this->assertSame(
 			array(
-				'destination_id' => $dest_a,
-				'name'           => 'Archive & storage',
-				'provider'       => 'local',
-				'status'         => 'pending',
-				'updated'        => (int) $store->get_job( (int) $jobs[0]->id )->updated,
-				'last_error'     => '',
-				'error_code'     => '',
-				'error_message'  => '',
-				'error_detail'   => '',
+				'destination_id'  => $dest_a,
+				'name'            => 'Archive & storage',
+				'provider'        => 'local',
+				'status'          => 'pending',
+				'updated'         => (int) $store->get_job( (int) $jobs[0]->id )->updated,
+				'upload_progress' => array(
+					'bytes_done'    => 0,
+					'bytes_total'   => 23,
+					'state'         => 'waiting',
+					'destination'   => 'Archive & storage',
+					'updated'       => (int) $store->get_job( (int) $jobs[0]->id )->updated,
+					'next_retry_at' => 0,
+				),
+				'last_error'      => '',
+				'error_code'      => '',
+				'error_message'   => '',
+				'error_detail'    => '',
 			),
 			$uploads[0]
 		);

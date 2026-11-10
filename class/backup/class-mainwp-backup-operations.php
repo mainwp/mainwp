@@ -695,6 +695,20 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $scope ) ) {
             return $scope;
         }
+        $saved_sites = $task ? array_map( 'intval', explode( ',', (string) $task->sites ) ) : array();
+        foreach ( array_diff( $values['site_ids'], $saved_sites ) as $site_id ) {
+            $site = MainWP_DB::instance()->get_website_by_id( $site_id );
+            if ( $site && MainWP_Backup_Monitor::child_version_requires_task_spine_update( $site ) ) {
+                return new \WP_Error(
+                    MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED,
+                    MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ),
+                    array(
+                        'status'  => 409,
+                        'site_id' => (int) $site_id,
+                    )
+                );
+            }
+        }
         // Both current scopes must be reachable before saving a partial edit.
         $scope_error = $task ? MainWP_Manage_Backups_Handler::authorize_task_update_scope( implode( ',', MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) ), '', implode( ',', $values['site_ids'] ), implode( ',', $values['group_ids'] ) ) : '';
         if ( '' !== $scope_error ) {
@@ -807,7 +821,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'max_chain_length'               => $values['retention']['max_chain_length'],
         );
         $calculator        = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
-        $write['next_run'] = empty( $task->paused ) ? $calculator->compute_next_run( (object) $write, empty( $task->last_run ) ? null : (int) $task->last_run ) : (int) $task->next_run;
+        $write['next_run'] = empty( $task->paused ) ? $calculator->compute_next_run( (object) ( $write + array( 'id' => $task ? (int) $task->id : 0 ) ), empty( $task->last_run ) ? null : (int) $task->last_run ) : (int) $task->next_run;
         $id                = $task ? (int) $task->id : 0;
         $before            = array();
         $option_before     = null;
@@ -842,7 +856,13 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( false === $saved ) {
                 return $error;
             }
-            $id            = (int) $wpdb->insert_id;
+            $id = (int) $wpdb->insert_id;
+            // The start delay derives from the task id, which only exists now.
+            $next_run = $calculator->compute_next_run( (object) ( $write + array( 'id' => $id ) ) );
+            if ( $next_run !== (int) $write['next_run'] ) {
+                $write['next_run'] = $next_run;
+                $saved             = $wpdb->update( $table, array( 'next_run' => $next_run ), array( 'id' => $id ) );
+            }
             $key           = MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $id;
             $option_before = $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $key ), ARRAY_A );
             if ( '' !== $wpdb->last_error ) {
@@ -1787,6 +1807,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $codes = array(
                 's3'      => MainWP_Backup_Error_Codes::ERR_S3_FAILED,
                 'gcs'     => MainWP_Backup_Error_Codes::ERR_GCS_FAILED,
+                'pcloud'  => MainWP_Backup_Error_Codes::ERR_PCLOUD_FAILED,
                 'dropbox' => MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED,
                 'sftp'    => MainWP_Backup_Error_Codes::ERR_FTP_FAILED,
                 'local'   => MainWP_Backup_Error_Codes::ERR_LOCAL_FAILED,
@@ -2883,7 +2904,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return (int) $task->next_run > 0 ? (int) $task->next_run : null;
         }
         $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
-        $next       = $calculator->compute_next_run( (object) $values, empty( $task->last_run ) ? null : (int) $task->last_run );
+        $next       = $calculator->compute_next_run( (object) ( $values + array( 'id' => $task ? (int) $task->id : 0 ) ), empty( $task->last_run ) ? null : (int) $task->last_run );
         return $next > 0 ? $next : null;
     }
 

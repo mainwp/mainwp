@@ -124,6 +124,10 @@ class MainWP_Backup_Retention_Protection {
             if ( 'dropbox' === $destination->provider && ! self::dropbox_identity_valid( $destination->settings ) ) {
                 return false;
             }
+            // Sibling: Dropbox's cached proof check above; pruning must not contact either provider.
+            if ( 'pcloud' === $destination->provider && ! self::pcloud_identity_valid( $destination->settings ) ) {
+                return false;
+            }
             if ( empty( $job->checkpoint['destination_binding'] ) || ! self::destination_binding_matches( $destination, (string) $job->checkpoint['destination_binding'] ) ) {
                 return false;
             }
@@ -177,6 +181,19 @@ class MainWP_Backup_Retention_Protection {
                 } else {
                     // A missing namespace proof must never reuse a verified location binding.
                     $location['credentials'] = self::dropbox_connection_settings( $settings );
+                }
+                break;
+            case 'pcloud':
+                // Keep this location proof aligned with the Dropbox case above.
+                $location = array(
+                    'locationid' => (string) ( $settings['locationid'] ?? '' ),
+                    'base_path'  => trim( (string) ( $settings['base_path'] ?? 'MainWP Backups' ), '/' ),
+                );
+                if ( self::pcloud_identity_valid( $settings ) ) {
+                    $location['userid']   = $settings[ self::DROPBOX_IDENTITY_FIELD ]['userid'];
+                    $location['folderid'] = $settings[ self::DROPBOX_IDENTITY_FIELD ]['folderid'];
+                } else {
+                    $location['credentials'] = self::pcloud_connection_settings( $settings );
                 }
                 break;
             default:
@@ -283,6 +300,64 @@ class MainWP_Backup_Retention_Protection {
             'app_secret'    => (string) ( $settings['app_secret'] ?? '' ),
             'refresh_token' => (string) ( $settings['refresh_token'] ?? '' ),
             'base_path'     => trim( (string) ( $settings['base_path'] ?? '' ), '/' ),
+        );
+    }
+
+    /**
+     * Authenticate the pCloud account and base folder for these credentials.
+     *
+     * @param array  $settings Provider settings.
+     * @param string $userid Server-issued account ID.
+     * @param string $folderid Server-issued folder ID.
+     * @return array
+     */
+    public static function with_pcloud_identity( array $settings, string $userid, string $folderid ): array {
+        // Sibling: with_dropbox_identity; review both receipt paths when changing either.
+        $settings[ self::DROPBOX_IDENTITY_FIELD ] = array(
+            'userid'   => $userid,
+            'folderid' => $folderid,
+            'receipt'  => self::identity_hmac(
+                array(
+                    'pcloud_userid' => $userid,
+                    'folderid'      => $folderid,
+                    'connection'    => self::pcloud_connection_settings( $settings ),
+                )
+            ),
+        );
+        return $settings;
+    }
+
+    /**
+     * Verify the cached receipt without HTTP during pruning.
+     *
+     * @param array $settings Decrypted settings.
+     * @return bool
+     */
+    public static function pcloud_identity_valid( array $settings ): bool {
+        // Sibling: dropbox_identity_valid; retention must use only cached proof.
+        $identity = $settings[ self::DROPBOX_IDENTITY_FIELD ] ?? null;
+        if ( ! is_array( $identity ) || ! is_string( $identity['userid'] ?? null ) || ! preg_match( '/^[0-9]+$/D', $identity['userid'] )
+            || ! is_string( $identity['folderid'] ?? null ) || ! preg_match( '/^[0-9]+$/D', $identity['folderid'] )
+            || ! is_string( $identity['receipt'] ?? null ) || ! in_array( $settings['locationid'] ?? null, array( 1, 2, '1', '2' ), true ) ) {
+            return false;
+        }
+        $verified = self::with_pcloud_identity( $settings, $identity['userid'], $identity['folderid'] );
+        return hash_equals( $verified[ self::DROPBOX_IDENTITY_FIELD ]['receipt'], $identity['receipt'] );
+    }
+
+    /**
+     * Inputs requiring fresh account and folder proof.
+     *
+     * @param array $settings Provider settings.
+     * @return array
+     */
+    private static function pcloud_connection_settings( array $settings ): array {
+        // Sibling: dropbox_connection_settings; keep receipt inputs consistent with saves.
+        return array(
+            'client_id'    => trim( (string) ( $settings['client_id'] ?? '' ) ),
+            'access_token' => trim( (string) ( $settings['access_token'] ?? '' ) ),
+            'locationid'   => (string) ( $settings['locationid'] ?? '' ),
+            'base_path'    => trim( (string) ( $settings['base_path'] ?? 'MainWP Backups' ), '/' ),
         );
     }
 

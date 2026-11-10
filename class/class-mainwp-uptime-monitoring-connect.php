@@ -228,6 +228,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             curl_setopt( $ch, CURLOPT_NOBODY, true ); // We only care about the response code, not the content.
         }
 
+        // Preserve the raw headers and body exposed by the public result filter.
         curl_setopt( $ch, CURLOPT_HEADER, true );
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
@@ -307,7 +308,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $data = curl_exec( $ch );
 
         // Get the HTTP response code.
-        $http_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+        $http_code   = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+        $header_size = (int) curl_getinfo( $ch, CURLINFO_HEADER_SIZE );
 
         $http_error = '';
         $http_errno = (int) curl_errno( $ch );
@@ -383,7 +385,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 ++$down_count;
                 $set_retry = true;
             }
-        } elseif ( ! $is_notallowed && empty( $data ) && 'ping' !== $mo_apply_type && ! $second_try ) {
+        } elseif ( ! $is_notallowed && false === $data && 'ping' !== $mo_apply_type && ! $second_try ) {
+            // Retry only when no response arrived. An empty body is a response, and HEAD never has one.
             usleep( 200000 );
             // Process only the second-try response.
             return $this->fetch_uptime_monitor( $monitor, $global_settings, true, $params );
@@ -394,6 +397,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $resp_info = array(
             'http_code'        => $http_code,
+            'header_size'      => $header_size,
             'http_error'       => $http_error,
             'http_errno'       => $http_errno,
             'down_count'       => $down_count,
@@ -980,6 +984,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $keywordFound = true; // set it as found.
 
         if ( 'keyword' === $mo_apply_type ) {
+            // Manual checks retain headers for filter consumers; scheduled checks
+            // already supply only the body and have no header_size metadata.
+            if ( is_string( $data ) && ! empty( $resp_info['header_size'] ) ) {
+                $data = substr( $data, (int) $resp_info['header_size'] );
+            }
             if ( ! is_string( $data ) ) {
                 $data = wp_json_encode( $data );
             }

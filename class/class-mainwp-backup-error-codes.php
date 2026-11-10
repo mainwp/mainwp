@@ -31,6 +31,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_SSL_FAILED        = 'mainwp_backup_ssl_failed';
     const ERR_CONNECT_FAILED    = 'mainwp_backup_connect_failed';
     const ERR_CHILD_UNREACHABLE = 'mainwp_backup_child_unreachable';
+    // Users only see the registry text for a code, so a download 413 needs its own.
+    const ERR_DOWNLOAD_TOO_LARGE = 'mainwp_backup_download_too_large';
 
     // Child environment.
     const ERR_DISK_FULL                 = 'mainwp_backup_disk_full';
@@ -133,6 +135,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     // Upload.
     const ERR_FTP_FAILED          = 'mainwp_backup_ftp_failed';
+    const ERR_PCLOUD_FAILED       = 'mainwp_backup_pcloud_failed';
     const ERR_SFTP_FAILED         = 'mainwp_backup_sftp_failed';
     const ERR_DROPBOX_FAILED      = 'mainwp_backup_dropbox_failed';
     const ERR_S3_FAILED           = 'mainwp_backup_s3_failed';
@@ -349,13 +352,14 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
         return array(
             self::ERR_TIMEOUT                       => esc_html__( 'The connection to the child site timed out during the backup. The child site may be overloaded or behind a server that limits long requests. Try again during low-traffic hours.', 'mainwp' ),
             self::ERR_HTTP_ERROR                    => esc_html__( 'The child site returned an unexpected response during the backup transfer. Check that the child site is reachable and the MainWP Child plugin is active, then try again.', 'mainwp' ),
+            self::ERR_DOWNLOAD_TOO_LARGE            => esc_html__( 'The child site\'s server refused the backup download because the response was too large (HTTP 413). MainWP downloads large backups in parts when the child site runs a current MainWP Child, so update MainWP Child if it is out of date and try again. If the error continues, ask the host whether a limit on response size applies to the site.', 'mainwp' ),
             self::ERR_SSL_FAILED                    => esc_html__( 'The secure connection to the child site could not be established. The SSL certificate may be invalid or expired. Check the child site SSL configuration.', 'mainwp' ),
             self::ERR_CONNECT_FAILED                => esc_html__( 'Could not connect to the child site. The site may be down or a firewall may be blocking the dashboard. Check the child site status and try again.', 'mainwp' ),
             self::ERR_CHILD_UNREACHABLE             => esc_html__( 'The child site did not respond. The site may be down, suspended by the host, or blocking dashboard requests. Verify the site loads in a browser and try again.', 'mainwp' ),
             self::ERR_DISK_FULL                     => esc_html__( 'Could not write backup data. The server may be out of disk space. Free up disk space and try again.', 'mainwp' ),
             self::ERR_MEMORY_LIMIT                  => esc_html__( 'The backup is approaching the PHP memory limit. Increase the PHP memory limit or exclude large folders from the backup.', 'mainwp' ),
-            self::ERR_PERMISSIONS                   => esc_html__( 'Could not create a file or directory for the backup. Check that the web server has write permission on the backup directory.', 'mainwp' ),
-            self::ERR_DIR_NOT_WRITABLE              => esc_html__( 'The backup directory is not writable. Set the directory permissions to allow the web server to write, or contact your hosting provider.', 'mainwp' ),
+            self::ERR_PERMISSIONS                   => esc_html__( 'Could not create a backup file or folder. Check that the web server can write to the MainWP backup folder on the child site and to the private backup folder on the Dashboard server.', 'mainwp' ),
+            self::ERR_DIR_NOT_WRITABLE              => esc_html__( 'The MainWP backup folder in the uploads folder on the child site is not writable. Allow the web server on that site to write to it, or contact the hosting provider for that site.', 'mainwp' ),
             self::ERR_PRIVATE_ROOT_UNAVAILABLE      => esc_html__( 'Private backup storage could not be set up. The Dashboard needs a writable directory outside the web root for backup archives. Set MAINWP_BACKUP_PRIVATE_DIR in wp-config.php to such a directory and try again.', 'mainwp' ),
             self::ERR_MISSING_EXTENSION             => esc_html__( 'A required PHP extension is not available. Ask your host to enable the missing extension, such as cURL, OpenSSL, or ZipArchive.', 'mainwp' ),
             self::ERR_UNSUPPORTED_BACKUP_FORMAT     => esc_html__( 'This backup format is not supported. Update the backup reader before restoring it. Nothing was restored.', 'mainwp' ),
@@ -369,8 +373,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_FILE_CORRUPT                  => esc_html__( 'Full site backup did not complete. The child site may have run out of disk space or encountered a file permission issue. Check the child site disk space and error log.', 'mainwp' ),
             self::ERR_FILE_TOO_SMALL                => esc_html__( 'The downloaded backup file is smaller than expected and is likely incomplete. The transfer may have been interrupted. Try running the backup again.', 'mainwp' ),
             self::ERR_HEADER_INVALID                => esc_html__( 'The downloaded backup file does not look like a valid archive. The child site may have returned an error page instead of the backup. Check the child site error log and try again.', 'mainwp' ),
-            self::ERR_ZIP_FAILED                    => esc_html__( 'Could not create the ZIP archive. The ZipArchive PHP extension may not be available or the backup directory is not writable. Check the PHP configuration and directory permissions.', 'mainwp' ),
-            self::ERR_TAR_WRITE_FAILED              => esc_html__( 'Could not write to the backup archive. The server may be out of disk space or the backup directory permissions may have changed. Free up disk space or check directory permissions.', 'mainwp' ),
+            self::ERR_ZIP_FAILED                    => esc_html__( 'Could not create the ZIP archive on the child site. The ZipArchive PHP extension may not be available there, or the backup folder is not writable. Check the PHP configuration and folder permissions on the child site.', 'mainwp' ),
+            self::ERR_TAR_WRITE_FAILED              => esc_html__( 'Could not write to the backup archive on the child site. The child site may be out of disk space, or the backup folder permissions may have changed. Free up disk space or check folder permissions on the child site.', 'mainwp' ),
             self::ERR_FILE_SKIPPED                  => esc_html__( 'A file could not be added to the backup archive. Check the file permissions; the file was skipped and the backup continued.', 'mainwp' ),
             self::ERR_TOO_MANY_SKIPPED              => esc_html__( 'Too many files could not be added to the backup. Check disk space and file permissions on the child site, then try again.', 'mainwp' ),
             self::ERR_RUN_CANCELLED                 => esc_html__( 'The backup run was cancelled before it completed.', 'mainwp' ),
@@ -406,6 +410,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_RESTORE_CHILD_UPDATE_REQUIRED => esc_html__( 'The MainWP Child plugin on this site is too old to restore a backup safely. Update MainWP Child on the site, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_SCHEMA_REPAIR_PENDING => esc_html__( 'The Dashboard database is missing an update that restores need, and MainWP could not add it. Check the MainWP log for the database error and that the database user has permission to alter tables. MainWP retries the update on a later Dashboard request, no more than once an hour, and restores stay paused until it succeeds.', 'mainwp' ),
             self::ERR_FTP_FAILED                    => esc_html__( 'Could not upload the backup to the FTP server. Check the FTP credentials and that the server is reachable, then try again.', 'mainwp' ),
+            self::ERR_PCLOUD_FAILED                 => esc_html__( 'Could not upload the backup to pCloud. Check the pCloud connection settings and available storage space, then try again.', 'mainwp' ),
             self::ERR_SFTP_FAILED                   => esc_html__( 'Could not upload the backup to the SFTP server. Check the SFTP credentials, that the server is reachable, and that the remote folder is writable, then try again.', 'mainwp' ),
             self::ERR_DROPBOX_FAILED                => esc_html__( 'Could not upload the backup to Dropbox. Check the Dropbox connection settings and available storage space, then try again.', 'mainwp' ),
             self::ERR_S3_FAILED                     => esc_html__( 'Could not upload the backup to Amazon S3. Check the S3 credentials, bucket name, and permissions, then try again.', 'mainwp' ),

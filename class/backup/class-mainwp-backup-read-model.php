@@ -94,8 +94,9 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( ! $owns_run || $queued || ( $snapshot && (int) $snapshot->created < $cutoff ) ) {
                 $snapshot = null;
             }
-            $status  = $progress ? 'running' : 'pending';
-            $uploads = null;
+            $status          = $progress ? 'running' : 'pending';
+            $uploads         = null;
+            $upload_progress = array();
             if ( $snapshot ) {
                 ++$complete;
                 $status  = 'completed';
@@ -109,33 +110,35 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     ++$uploads['total'];
                     if ( 'complete' === $job->status ) {
                         $bucket = 'complete';
-                    } elseif ( in_array( $job->status, array( 'failed_retryable', 'failed_permanent', 'credentials_invalid' ), true ) ) {
+                    } elseif ( in_array( $job->status, array( 'failed_permanent', 'credentials_invalid' ), true ) ) {
                         $bucket = 'failed';
                     } else {
                         $bucket = 'pending';
                     }
                     ++$uploads[ $bucket ];
+                    $upload_progress[] = self::upload_job_progress( $job, $snapshot );
                 }
             } elseif ( ( ! $open && ! $queued ) || 'failed' === ( $detail['status'] ?? '' ) ) {
                 $status = 'failed';
             }
             $sites[] = array(
-                'id'           => (int) $site_id,
-                'name'         => $website ? (string) $website->name : '',
-                'url'          => $website ? (string) $website->url : '',
-                'status'       => $status,
-                'phase'        => $detail['phase'] ?? '',
-                'label'        => $detail['label'] ?? '',
-                'percent'      => $detail['percent'] ?? null,
-                'current_file' => $detail['current_file'] ?? '',
-                'error'        => self::error_value( 'failed' === $status && $progress ? self::progress_error_text( (string) $progress->last_error ) : '', 'failed' === $status && $progress ? (string) ( $progress->fetchResult['error_code'] ?? '' ) : '' ),
-                'snapshot'     => $snapshot ? array(
+                'id'              => (int) $site_id,
+                'name'            => $website ? (string) $website->name : '',
+                'url'             => $website ? (string) $website->url : '',
+                'status'          => $status,
+                'phase'           => $detail['phase'] ?? '',
+                'label'           => $detail['label'] ?? '',
+                'percent'         => $detail['percent'] ?? null,
+                'current_file'    => $detail['current_file'] ?? '',
+                'error'           => self::error_value( 'failed' === $status && $progress ? self::progress_error_text( (string) $progress->last_error ) : '', 'failed' === $status && $progress ? (string) ( $progress->fetchResult['error_code'] ?? '' ) : '' ),
+                'snapshot'        => $snapshot ? array(
                     'id'        => (int) $snapshot->id,
                     'type'      => $snapshot->type,
                     'parent_id' => null === $snapshot->parent_id ? null : (int) $snapshot->parent_id,
                     'created'   => (int) $snapshot->created,
                 ) : null,
-                'uploads'      => $uploads,
+                'uploads'         => $uploads,
+                'upload_progress' => $upload_progress,
             );
         }
         $status = 'failed';
@@ -156,6 +159,52 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'errors'      => $errors,
             'notices'     => $notices,
             'sites'       => $sites,
+        );
+    }
+
+    /**
+     * Read confirmed bytes without counting completed chunks twice.
+     *
+     * @param object $job      Upload job.
+     * @param object $snapshot Snapshot metadata for jobs not yet checkpointed.
+     * @return array Upload progress.
+     */
+    private static function upload_job_progress( object $job, object $snapshot ): array {
+        $artifacts = $job->checkpoint['artifacts'] ?? $snapshot->archives;
+        $total     = 0;
+        $done      = 0;
+        foreach ( $artifacts as $artifact ) {
+            $size   = max( 0, (int) ( $artifact['size'] ?? 0 ) );
+            $total += $size;
+            $bytes  = 0;
+            if ( ! empty( $artifact['done'] ) || 'complete' === $job->status ) {
+                $bytes = $size;
+            } else {
+                foreach ( $artifact['chunks'] ?? array() as $chunk ) {
+                    if ( ! empty( $chunk['remote_present'] ) ) {
+                        $bytes += max( 0, (int) ( $chunk['length'] ?? 0 ) );
+                    }
+                }
+            }
+            $done += min( $size, $bytes );
+        }
+        $states      = array(
+            'pending'          => 'waiting',
+            'chunking'         => 'uploading',
+            'uploading'        => 'uploading',
+            'submitting'       => 'verifying',
+            'failed_retryable' => 'retrying',
+            'complete'         => 'done',
+        );
+        $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+        return array(
+            'bytes_done'    => $done,
+            'bytes_total'   => $total,
+            'state'         => $states[ $job->status ] ?? 'failed',
+            /* translators: %d: storage destination ID. */
+            'destination'   => $destination ? (string) $destination->name : sprintf( __( 'Destination #%d (removed)', 'mainwp' ), (int) $job->destination_id ),
+            'updated'       => (int) $job->updated,
+            'next_retry_at' => (int) $job->next_retry_at,
         );
     }
 
@@ -354,9 +403,10 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array[] Snapshot evidence.
      */
     public static function list_backup_snapshots( int $site_id, bool $with_admission = true ): array {
-        $entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+        $entries      = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+        $test_restore = MainWP_Backup_Restore_Job_Store::instance()->get_live_test_restore_for_site( $site_id );
         foreach ( $entries as &$entry ) {
-            $entry = self::snapshot_evidence( $entry, $site_id, $with_admission );
+            $entry = self::snapshot_evidence( $entry, $site_id, $with_admission, $test_restore );
         }
         unset( $entry );
         return $entries;
@@ -375,7 +425,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         foreach ( MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( (int) $snapshot->site_id ) as $entry ) {
             if ( (int) $entry['snapshot']->id === $snapshot_id ) {
-                return self::snapshot_evidence( $entry, (int) $snapshot->site_id );
+                return self::snapshot_evidence( $entry, (int) $snapshot->site_id, true, MainWP_Backup_Restore_Job_Store::instance()->get_live_test_restore_for_site( (int) $snapshot->site_id ) );
             }
         }
         // The row was deleted between the two reads.
@@ -385,12 +435,13 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Keep the existing list flag separate from full restore admission.
      *
-     * @param array $entry Catalog row.
-     * @param int   $site_id Expected owner site.
-     * @param bool  $with_admission Whether the caller needs full restore admission.
+     * @param array       $entry Catalog row.
+     * @param int         $site_id Expected owner site.
+     * @param bool        $with_admission Whether the caller needs full restore admission.
+     * @param object|null $test_restore Live test restore for this site.
      * @return array Neutral evidence with the existing UI admission preserved.
      */
-    private static function snapshot_evidence( array $entry, int $site_id, bool $with_admission = true ): array {
+    private static function snapshot_evidence( array $entry, int $site_id, bool $with_admission, ?object $test_restore ): array {
         $entry['catalog_restorable']     = $entry['restorable'];
         $entry['catalog_restore_reason'] = $entry['restore_reason'];
         if ( $with_admission ) {
@@ -399,10 +450,24 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $entry['restore_reason'] = $admission['ok'] ? null : self::error_value( $admission['error'], $admission['code'] );
             $entry['restore']        = $admission;
         }
-        $entry['test_restore'] = self::snapshot_test_restore( $entry['snapshot'] );
-        $entry['uploads']      = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $entry['snapshot']->id );
+        return array_merge( $entry, self::snapshot_activity_evidence( $entry['snapshot'], $test_restore ) );
+    }
+
+    /**
+     * Activity polling needs stored state without resolving restore chains.
+     *
+     * @param object      $snapshot Stored snapshot.
+     * @param object|null $test_restore Live test reservation.
+     * @return array
+     */
+    public static function snapshot_activity_evidence( object $snapshot, ?object $test_restore ): array {
+        $entry                         = array( 'snapshot' => $snapshot );
+        $entry['test_restore_running'] = null !== $test_restore && (int) $test_restore->snapshot_id === (int) $entry['snapshot']->id;
+        $entry['test_restore']         = self::snapshot_test_restore( $entry['snapshot'] );
+        $entry['uploads']              = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $entry['snapshot']->id );
         foreach ( $entry['uploads'] as $job ) {
-            $job->last_error = self::error_value( (string) $job->last_error );
+            $job->upload_progress = self::upload_job_progress( $job, $entry['snapshot'] );
+            $job->last_error      = self::error_value( (string) $job->last_error );
         }
         return $entry;
     }
@@ -414,7 +479,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array
      */
     private static function snapshot_test_restore( object $snapshot ): array {
-        $checks = array( 'files_extracted', 'db_imported', 'db_has_rows' );
+        $details = MainWP_Backup_Snapshots::instance()->get_test_restore_details( $snapshot );
+        $checks  = array( 'files_extracted', 'db_imported', 'db_has_rows' );
         if ( 'files' === $snapshot->type ) {
             $checks = array( 'files_extracted' );
         } elseif ( 'db' === $snapshot->type ) {
@@ -426,6 +492,9 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'result_at'    => empty( $snapshot->test_restore_result_at ) ? null : (int) $snapshot->test_restore_result_at,
             'checks'       => $checks,
             'scope'        => 'dashboard_sandbox',
+            'error_code'   => $details['error_code'],
+            'error'        => $details['error'],
+            'assertions'   => $details['assertions'],
         );
     }
 

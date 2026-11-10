@@ -3306,6 +3306,44 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	/** A queued claim serves a schedule that became due after the click. */
+	public function test_queued_manual_claim_advances_due_schedule() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$due                    = time() - MINUTE_IN_SECONDS;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'next_run'    => $due,
+				'time_of_day' => gmdate( 'H:i', $due ),
+				'schedule'    => 'daily',
+			)
+		);
+		$task   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$claim  = new \ReflectionMethod( MainWP_Manage_Backups_Handler::class, 'claim_manual_task_run' );
+		$result = $claim->invokeArgs( null, array( &$task, $due - MINUTE_IN_SECONDS, (int) $task->last_run ) );
+		$this->assertArrayNotHasKey( 'error', $result );
+		$this->assertGreaterThan( $due, (int) $task->next_run );
+	}
+
+	/** Run Now preserves a pending delayed scheduled occurrence. */
+	public function test_manual_run_preserves_pending_delayed_schedule() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$pending                = time() + 20 * MINUTE_IN_SECONDS;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'next_run'    => $pending,
+				'time_of_day' => gmdate( 'H:i', time() - 10 * MINUTE_IN_SECONDS ),
+				'schedule'    => 'daily',
+			)
+		);
+		$result = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$this->assertArrayNotHasKey( 'error', $result );
+		$current = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThan( (int) $task->last_run, (int) $current->last_run );
+		$this->assertSame( $pending, (int) $current->next_run );
+	}
+
 	/**
 	 * Zero settle time must not let a stale manual caller recover an open run.
 	 *
@@ -5759,9 +5797,15 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
-		// Stands in for a snapshot table whose run_key column the repair has not added yet.
-		$missing = static function ( $sql ) use ( $snapshot_table ) {
-			return str_contains( $sql, '`' . $snapshot_table . '` WHERE' ) ? str_replace( 'run_key =', 'run_key_missing =', $sql ) : $sql;
+		// The guard must skip the snapshot read entirely; if it ran, the rewrite makes it fail
+		// the way a not-yet-repaired run_key column would.
+		$snapshot_reads = 0;
+		$missing        = static function ( $sql ) use ( $snapshot_table, &$snapshot_reads ) {
+			if ( ! str_contains( $sql, '`' . $snapshot_table . '` WHERE' ) ) {
+				return $sql;
+			}
+			++$snapshot_reads;
+			return str_replace( 'run_key =', 'run_key_missing =', $sql );
 		};
 		update_site_option( \MainWP\Dashboard\MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() );
 		add_filter( 'query', $missing );
@@ -5788,6 +5832,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFalse( $idle, 'A site with nothing in flight must not read as held.' );
 		$this->assertTrue( $creating, 'A mid-create site is still held.' );
 		$this->assertTrue( $state, 'A pending repair holds as a running backup, not as a failed check.' );
+		$this->assertSame( 0, $snapshot_reads, 'A pending repair must not read the snapshot table.' );
 	}
 
 	/**

@@ -824,7 +824,18 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             $db_params['include']     = $allowed;
             $count_filters['include'] = $allowed;
         }
-        $total = $db->get_websites_count_for_current_user( $count_filters );
+        if ( 'available_update' === $status ) {
+            // The COUNT(*) helper has no available_update filter and would count every
+            // site, so count the IDs the page query matches without its LIMIT.
+            $count_params                = $db_params;
+            $count_params['select_data'] = array( 'id' );
+            $count_params['fields']      = array();
+            unset( $count_params['paged'], $count_params['items_per_page'] );
+            $matching = $db->get_websites_for_current_user( $count_params );
+            $total    = is_array( $matching ) ? count( $matching ) : 0;
+        } else {
+            $total = $db->get_websites_count_for_current_user( $count_filters );
+        }
 
         // Now get the paginated subset.
         $websites = $db->get_websites_for_current_user( $db_params );

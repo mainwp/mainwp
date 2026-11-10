@@ -1349,9 +1349,9 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
                             <?php } ?>
                             <?php if ( ! $is_demo ) : ?>
-                            <a class="item" href="<?php MainWP_Site_Open::get_open_site_admin_link( $website->id, true ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+                            <a class="item" href="<?php MainWP_Site_Open::get_open_site_admin_link( $website->id, true ); ?>" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
                             <?php else : ?>
-                                <a class="item" href="<?php echo esc_url( $website->url ) . 'wp-admin.html'; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+                                <a class="item" href="<?php echo esc_url( $website->url ) . 'wp-admin.html'; ?>" data-tooltip="<?php esc_attr_e( 'Go to WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
                             <?php endif; ?>
                             <?php
                             /**
@@ -1467,11 +1467,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $websiteId = isset( $_POST['websiteId'] ) ? sanitize_text_field( wp_unslash( $_POST['websiteId'] ) ) : false;
         $pass      = isset( $_POST['update_password'] ) ? rawurldecode( wp_unslash( $_POST['update_password'] ) ) : '';
 
-        if ( function_exists( '\mb_convert_encoding' ) ) {
-            $pass = \mb_convert_encoding( $pass, 'ISO-8859-1', 'UTF-8' );
-        } else {
-            $pass = utf8_decode( $pass ); // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- PHP 7.4 fallback when mbstring is unavailable.
-        }
+        $pass = MainWP_Utility::utf8_to_latin1( $pass );
 
         if ( empty( $userId ) || empty( $websiteId ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Site ID or user ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
@@ -1794,7 +1790,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                          */
                         do_action( 'mainwp_add_new_user_before_submit_button' );
                         ?>
-                        <input type="button" name="createuser" id="bulk_add_createuser" class="ui big green fluid button" value="<?php esc_attr_e( 'Add New User', 'mainwp' ); ?> "/>
+                        <input type="button" name="createuser" id="bulk_add_createuser" class="ui big green fluid button" value="<?php esc_attr_e( 'Add New User', 'mainwp' ); ?>"/>
                         <?php
                         /**
                          * Action: mainwp_add_new_user_after_submit_button
@@ -1875,7 +1871,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-users-info-message' ) ) : ?>
                 <div class="ui info message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-users-info-message"></i>
-                    <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/users/manage-users#import-users-via-csv/" target="_blank">', '</a>' ); ?>
+                    <?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Use the form to bulk import users.  You can download the sample CSV file to see how to format the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/users/manage-users#import-users-via-csv" target="_blank">', '</a>' ); ?>
                 </div>
             <?php endif; ?>
 
@@ -2524,7 +2520,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 <div class="item"><i class="external alternate icon"></i> <a href="https://docs.mainwp.com/sites/users/manage-users" target="_blank">Manage Users</a></div>
                 <div class="item"><i class="external alternate icon"></i> <a href="https://docs.mainwp.com/sites/users/manage-users#create-a-new-user" target="_blank">Create a New User</a></div>
                 <div class="item"><i class="external alternate icon"></i> <a href="https://docs.mainwp.com/sites/users/manage-users#edit-existing-users" target="_blank">Edit an Existing User</a></div>
-                <div class="item"><i class="external alternate icon"></i> <a href="https://docs.mainwp.com/sites/users/manage-users#bulk-update-admin-passwords" target="_blank">Bulk Update Administrator Passwords</a></div>
+                <div class="item"><i class="external alternate icon"></i> <a href="https://docs.mainwp.com/sites/users/admin-passwords" target="_blank">Bulk Update Administrator Passwords</a></div>
                 <div class="item"><i class="external alternate icon"></i> <a href="https://docs.mainwp.com/sites/users/manage-users#delete-users" target="_blank">Delete User(s)</a></div>
                 <?php
                 /**

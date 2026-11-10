@@ -742,6 +742,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Use the synced version because negotiated flags survive Child upgrades.
+     *
+     * @param object $website Website with wp_sync.version.
+     * Values that aren't a version number (some staging copies sync '0') count as unknown,
+     * and the run-time capability check still covers those sites.
+     *
+     * @return bool Whether the known version predates native backups.
+     */
+    public static function child_version_requires_task_spine_update( object $website ): bool {
+        $version = trim( (string) ( $website->version ?? '' ) );
+        return 1 === preg_match( '/^\d+\.\d+/', $version ) && version_compare( $version, '6.4-dev', '<' );
+    }
+
+    /**
      * Method child_supports_task_spine()
      *
      * Whether the child site advertised the resumable backup task machine

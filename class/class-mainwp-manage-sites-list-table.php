@@ -233,6 +233,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @return mixed preview content.
      */
     public function column_site_preview( $item ) {
+        if ( ! MainWP_UI::is_site_preview_enabled() ) {
+            return '';
+        }
         $site_mshot = MainWP_UI::get_mshots_image_sources( $item['url'], 900 );
 
         return '<span class="mainwp-preview-item ui mini grey icon basic button" data-position="left center" data-inverted="" data-tooltip="' . esc_html__( 'Click to see the site homepage screenshot.', 'mainwp' ) . '" preview-site-url="' . esc_url( $item['url'] ) . '" data-mainwp-mshot-src="' . esc_url( $site_mshot['src'] ) . '" data-mainwp-mshot-requeue-src="' . esc_url( $site_mshot['requeue_src'] ) . '" ><i class="camera icon"></i></span>';
@@ -278,6 +281,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             case 'wpcore_update':
             case 'plugin_update':
             case 'theme_update':
+            case 'abandoned':
             case 'backup':
             case 'backup_health':
             case 'wpcore_version':
@@ -356,6 +360,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'wpcore_update'  => '<i class="icon wordpress"></i>', // phpcs:ignore -- Prevent modify WP icon.
             'plugin_update'  => '<i class="plug icon"></i>',
             'theme_update'   => '<i class="tint icon"></i>',
+            'abandoned'      => esc_html__( 'Abandoned', 'mainwp' ),
             'wpcore_version' => esc_html__( 'Core', 'mainwp' ),
             'security'       => esc_html__( 'Security', 'mainwp' ),
             'language'       => esc_html__( 'Language', 'mainwp' ),
@@ -547,7 +552,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'className' => 'center aligned collapsing',
         );
         $defines[] = array(
-            'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column' ),
+            'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column', 'manage-abandoned-column' ),
             'className' => 'center aligned collapsing',
         );
         $defines[] = array(
@@ -677,18 +682,18 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_onetime_selected_siteids', $selected_one_time_siteids );
         }
 
-        if ( ! $reset_filter && empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) && '' === $selected_group_logic && ! isset( $_REQUEST['backup_health'] ) ) {
+        if ( ! $reset_filter && empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) && '' === $selected_group_logic && ! isset( $_REQUEST['backup_health'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reads a list filter to decide whether to load saved display preferences.
             $selected_backup_health = get_user_option( 'mainwp_managesites_filter_backup_health' );
-            $selected_status      = get_user_option( 'mainwp_managesites_filter_status' );
-            $selected_group       = get_user_option( 'mainwp_managesites_filter_group' );
-            $selected_client      = get_user_option( 'mainwp_managesites_filter_client' );
-            $is_not               = get_user_option( 'mainwp_managesites_filter_is_not' );
-            $selected_group_logic = get_user_option( 'mainwp_managesites_filter_group_logic' );
+            $selected_status        = get_user_option( 'mainwp_managesites_filter_status' );
+            $selected_group         = get_user_option( 'mainwp_managesites_filter_group' );
+            $selected_client        = get_user_option( 'mainwp_managesites_filter_client' );
+            $is_not                 = get_user_option( 'mainwp_managesites_filter_is_not' );
+            $selected_group_logic   = get_user_option( 'mainwp_managesites_filter_group_logic' );
         }
         // Keep existing widget links and saved status selections compatible.
         if ( 0 === strpos( (string) $selected_status, 'backup_health_' ) ) {
             $selected_backup_health = substr( $selected_status, strlen( 'backup_health_' ) );
-            $selected_status = 'all';
+            $selected_status        = 'all';
         }
         if ( ! static::backup_health_visible() ) {
             $selected_backup_health = '';
@@ -904,7 +909,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $req_orderby = null;
         $req_order   = null;
 
-        $extra_view = apply_filters( 'mainwp_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status' ) );
+        // premium_upgrades: sync stores it as a site option; the wp table column of the same name stays empty.
+        $extra_view = apply_filters( 'mainwp_sitestable_prepare_extra_view', array( 'favi_icon', 'health_site_status', 'premium_upgrades' ) );
         $extra_view = array_unique( $extra_view );
 
         if ( $optimize ) {
@@ -925,6 +931,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 } elseif ( 'tags' === $req_orderby ) {
                     $orderby = 'GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
                 } elseif ( 'update' === $req_orderby ) {
+                    // Count premium updates by type from the premium_upgrades option, as the Updates cell does.
+                    // Qualified: the wp table has an empty premium_upgrades column of the same name.
                     $orderby = 'CASE true
                                             WHEN (offline_check_result = -1)
                                                 THEN 2
@@ -934,7 +942,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                                 + (CASE wp_upgrades WHEN "[]" THEN 0 ELSE 1 END)
                                                 + (CASE plugin_upgrades WHEN "[]" THEN 0 ELSE LENGTH(plugin_upgrades) - LENGTH(REPLACE(plugin_upgrades, "\"Name\":", "\"Name\"")) END)
                                                 + (CASE theme_upgrades WHEN "[]" THEN 0 ELSE LENGTH(theme_upgrades) - LENGTH(REPLACE(theme_upgrades, "\"Name\":", "\"Name\"")) END)
+                                                + LENGTH(COALESCE(owp_premium_upgrades.value, "")) - LENGTH(REPLACE(COALESCE(owp_premium_upgrades.value, ""), "\"type\":\"plugin\"", "\"type\":\"plugin"))
+                                                + LENGTH(COALESCE(owp_premium_upgrades.value, "")) - LENGTH(REPLACE(COALESCE(owp_premium_upgrades.value, ""), "\"type\":\"theme\"", "\"type\":\"theme"))
                                             END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+                    if ( ! in_array( 'premium_upgrades', $extra_view ) ) {
+                        $extra_view[] = 'premium_upgrades';
+                    }
                 } elseif ( 'phpversion' === $req_orderby ) {
                     $orderby = " INET_ATON(
                         SUBSTRING_INDEX(
@@ -1040,7 +1053,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $backup_health = isset( $_REQUEST['backup_health'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['backup_health'] ) ) : ( $get_saved_state ? get_user_option( 'mainwp_managesites_filter_backup_health' ) : '' );
         if ( 0 === strpos( (string) $site_status, 'backup_health_' ) ) {
             $backup_health = substr( $site_status, strlen( 'backup_health_' ) );
-            $site_status = 'all';
+            $site_status   = 'all';
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_status', 'all' );
         }
         if ( ! static::backup_health_visible() || ! in_array( $backup_health, array( 'protected', 'at_risk', 'critical', 'unknown' ), true ) ) {
@@ -1165,7 +1178,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $health_ids = static::get_backup_health_site_ids_for_bucket( $backup_health );
             if ( null !== $health_ids ) {
                 $health_where = empty( $health_ids ) ? ( $is_not ? 'wp.id != -1' : 'wp.id = -1' ) : 'wp.id ' . ( $is_not ? 'NOT IN' : 'IN' ) . ' (' . implode( ',', $health_ids ) . ')';
-                $where = empty( $where ) ? $health_where : '(' . $where . ') AND (' . $health_where . ')';
+                $where        = empty( $where ) ? $health_where : '(' . $where . ') AND (' . $health_where . ')';
             }
         }
 
@@ -2003,6 +2016,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $decodedIgnoredCores = array();
         }
 
+        $decodedDismissedPlugins = ! empty( $userExtension->dismissed_plugins ) ? json_decode( $userExtension->dismissed_plugins, true ) : array();
+        $decodedDismissedThemes  = ! empty( $userExtension->dismissed_themes ) ? json_decode( $userExtension->dismissed_themes, true ) : array();
+
         $last24_time = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( time() - DAY_IN_SECONDS );
 
         if ( $this->items ) {
@@ -2027,9 +2043,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
                 $total_ignored_updates = 0;
 
-                $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
+                $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup', 'plugins_outdate_info', 'themes_outdate_info', 'plugins_outdate_dismissed', 'themes_outdate_dismissed' ) );
                 $wp_upgrades           = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
                 $ignored_core_upgrades = isset( $site_options['ignored_wp_upgrades'] ) ? json_decode( $site_options['ignored_wp_upgrades'], true ) : array();
+
+                $abandoned       = $this->get_abandoned_counts( $site_options, $decodedDismissedPlugins, $decodedDismissedThemes );
+                $total_abandoned = $abandoned['plugins'] + $abandoned['themes'];
 
                 if ( $website['is_ignoreCoreUpdates'] || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core', $total_ignored_updates ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core', $total_ignored_updates ) ) {
                     $wp_upgrades = array();
@@ -2230,6 +2249,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <a class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_theme_upgrades ) ); ?> button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates">
                             <i class="sync alternate icon"></i> <?php echo intval( $total_theme_upgrades ); ?>
                         </a>
+                    <?php } elseif ( 'abandoned' === $column_name ) { ?>
+                        <span data-tooltip="<?php echo esc_attr( $this->get_abandoned_tooltip( $abandoned ) ); ?>" data-position="left center" data-inverted="" class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_abandoned ) ); ?> button">
+                            <i class="clock outline icon"></i> <?php echo intval( $total_abandoned ); ?>
+                        </span>
                     <?php } elseif ( 'wpcore_version' === $column_name ) { ?>
                         <?php if ( ! empty( $website_info['wpversion'] ) ) : ?>
                             <?php if ( $total_wp_upgrades > 0 && is_array( $wp_upgrades ) && ! empty( $wp_upgrades['new'] ) ) : ?>
@@ -2314,7 +2337,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 <a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
                                 <?php else : ?>
                                     <?php if ( \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
-                                        <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin item" target="_blank"><?php esc_html_e( 'Go To WP Admin', 'mainwp' ); ?></a>
+                                        <a href="<?php MainWP_Site_Open::get_open_site_url( $website['id'] ); ?>" class="open_newwindow_wpadmin item" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
                                     <?php endif; ?>
                                 <a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
                                 <?php endif; ?>
@@ -2388,6 +2411,59 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
     }
 
     /**
+     * Get abandoned plugins and themes counts, excluding per-site and global dismissed items.
+     *
+     * @param array $site_options      Site options with outdate info and dismissed lists.
+     * @param array $dismissed_plugins Globally dismissed abandoned plugins.
+     * @param array $dismissed_themes  Globally dismissed abandoned themes.
+     *
+     * @return array Array with 'plugins' and 'themes' counts.
+     */
+    private function get_abandoned_counts( $site_options, $dismissed_plugins, $dismissed_themes ) {
+        $counts = array(
+            'plugins' => 0,
+            'themes'  => 0,
+        );
+
+        $types = array(
+            'plugins' => $dismissed_plugins,
+            'themes'  => $dismissed_themes,
+        );
+
+        foreach ( $types as $type => $global_dismissed ) {
+            $outdate = ! empty( $site_options[ $type . '_outdate_info' ] ) ? json_decode( $site_options[ $type . '_outdate_info' ], true ) : array();
+            if ( ! is_array( $outdate ) || empty( $outdate ) ) {
+                continue;
+            }
+
+            $site_dismissed = ! empty( $site_options[ $type . '_outdate_dismissed' ] ) ? json_decode( $site_options[ $type . '_outdate_dismissed' ], true ) : array();
+            if ( is_array( $site_dismissed ) ) {
+                $outdate = array_diff_key( $outdate, $site_dismissed );
+            }
+
+            if ( is_array( $global_dismissed ) ) {
+                $outdate = array_diff_key( $outdate, $global_dismissed );
+            }
+
+            $counts[ $type ] = count( $outdate );
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Get abandoned plugins/themes column tooltip.
+     *
+     * @param array $abandoned Array with 'plugins' and 'themes' counts.
+     *
+     * @return string Tooltip text.
+     */
+    private function get_abandoned_tooltip( $abandoned ) {
+        /* translators: 1: abandoned plugins count, 2: abandoned themes count. */
+        return sprintf( esc_html__( '%1$d plugins, %2$d themes', 'mainwp' ), intval( $abandoned['plugins'] ), intval( $abandoned['themes'] ) );
+    }
+
+    /**
      * Fetch single row item.
      *
      * @return mixed Single Row Item.
@@ -2453,9 +2529,14 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $decodedIgnoredCores = array();
         }
 
-        $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
+        $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup', 'plugins_outdate_info', 'themes_outdate_info', 'plugins_outdate_dismissed', 'themes_outdate_dismissed' ) );
         $wp_upgrades           = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
         $ignored_core_upgrades = isset( $site_options['ignored_wp_upgrades'] ) ? json_decode( $site_options['ignored_wp_upgrades'], true ) : array();
+
+        $decodedDismissedPlugins = ! empty( $userExtension->dismissed_plugins ) ? json_decode( $userExtension->dismissed_plugins, true ) : array();
+        $decodedDismissedThemes  = ! empty( $userExtension->dismissed_themes ) ? json_decode( $userExtension->dismissed_themes, true ) : array();
+        $abandoned               = $this->get_abandoned_counts( $site_options, $decodedDismissedPlugins, $decodedDismissedThemes );
+        $total_abandoned         = $abandoned['plugins'] + $abandoned['themes'];
 
         if ( $website['is_ignoreCoreUpdates'] || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core', $total_ignored_updates ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core', $total_ignored_updates ) ) {
             $wp_upgrades = array();
@@ -2689,6 +2770,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 <td class="collapsing mainwp-plugin-update-cell center aligned"><a class="ui basic mini compact button <?php echo esc_attr( $p_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_plugin_upgrades ); ?></a></td>
             <?php } elseif ( 'theme_update' === $column_name ) { ?>
                 <td class="collapsing mainwp-theme-update-cell center aligned"><a class="ui basic mini compact button <?php echo esc_attr( $t_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates"><?php echo intval( $total_theme_upgrades ); ?></a></td>
+            <?php } elseif ( 'abandoned' === $column_name ) { ?>
+                <td class="collapsing center aligned mainwp-abandoned-cell"><span data-tooltip="<?php echo esc_attr( $this->get_abandoned_tooltip( $abandoned ) ); ?>" data-position="left center" data-inverted="" class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_abandoned ) ); ?> button"><i class="clock outline icon"></i> <?php echo intval( $total_abandoned ); ?></span></td>
             <?php } elseif ( 'last_sync' === $column_name ) { ?>
                 <td class="collapsing mainwp-last-sync-cell"><?php echo ! empty( $website['dtsSync'] ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
             <?php } elseif ( 'last_post' === $column_name ) { ?>

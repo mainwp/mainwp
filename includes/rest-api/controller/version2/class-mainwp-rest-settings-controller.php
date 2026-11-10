@@ -2230,6 +2230,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 }
 
                 $result = MainWP_Connect::fetch_url_authed( $website, 'renew' );
+                // The error text comes from the Child; cap and clean it before it is stored and served back.
+                $child_error = is_array( $result ) && isset( $result['error'] ) && is_string( $result['error'] ) ? self::sanitize_batch_error_message( $result['error'] ) : '';
                 if ( is_array( $result ) && isset( $result['result'] ) && 'success' === $result['result'] ) {
                     // reconnect immediately, to renew.
                     if ( MainWP_Manage_Sites_View::m_reconnect_site( $website, false ) ) {
@@ -2240,7 +2242,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                         ++$renew_data['processed'];
                         $renew_data['errors'][] = array(
                             'site_id' => $website_id,
-                            'error'   => $result['error'] ?? __( 'Try to reconnect site failed', 'mainwp' ),
+                            'error'   => '' !== $child_error ? $child_error : __( 'Try to reconnect site failed', 'mainwp' ),
                         );
                     }
                 } else {
@@ -2248,16 +2250,18 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     ++$renew_data['processed'];
                     $renew_data['errors'][] = array(
                         'site_id' => $website_id,
-                        'error'   => $result['error'] ?? __( 'Try to disconnect site failed', 'mainwp' ),
+                        'error'   => '' !== $child_error ? $child_error : __( 'Try to disconnect site failed', 'mainwp' ),
                     );
                     MainWP_Logger::instance()->info_for_website( $website, 'renew', 'Try to disconnect site failed.' );
                 }
             } catch ( \Exception $e ) {
                 ++$renew_data['failed'];
                 ++$renew_data['processed'];
+                // Same cap and cleaning as the Child error above; the NOMAINWP text carries an anchor tag.
+                $error_message          = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage();
                 $renew_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
+                    'error'   => self::sanitize_batch_error_message( $error_message ),
                 );
             }
         }
@@ -2382,19 +2386,23 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 if ( is_array( $result ) && isset( $result['result'] ) && 'success' === $result['result'] ) {
                     ++$disconnect_data['processed'];
                 } else {
+                    // The error text comes from the Child; cap and clean it before it is stored and served back.
+                    $child_error = is_array( $result ) && isset( $result['error'] ) && is_string( $result['error'] ) ? self::sanitize_batch_error_message( $result['error'] ) : '';
                     ++$disconnect_data['failed'];
                     ++$disconnect_data['processed'];
                     $disconnect_data['errors'][] = array(
                         'site_id' => $website_id,
-                        'error'   => $result['error'] ?? __( 'Unknown error', 'mainwp' ),
+                        'error'   => '' !== $child_error ? $child_error : __( 'Unknown error', 'mainwp' ),
                     );
                 }
             } catch ( \Exception $e ) {
                 ++$disconnect_data['failed'];
                 ++$disconnect_data['processed'];
+                // Same cap and cleaning as the Child error above; the NOMAINWP text carries an anchor tag.
+                $error_message               = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage();
                 $disconnect_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => ( $e instanceof \MainWP\Dashboard\MainWP_Exception ? \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( $e, false, true ) : $e->getMessage() ),
+                    'error'   => self::sanitize_batch_error_message( $error_message ),
                 );
             }
         }

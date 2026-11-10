@@ -135,16 +135,16 @@ class MainWP_Backup_Private_Root {
     private static function path_availability_reason( string $path ): string {
         if ( is_dir( $path ) ) {
             // An existing root still wins the ladder so snapshots are never abandoned, but the write probe would fail here.
-            return is_writable( $path ) ? '' : 'directory is not writable'; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
+            return is_writable( $path ) ? '' : __( 'directory is not writable', 'mainwp' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
         }
         while ( ! file_exists( $path ) && ! is_link( $path ) ) {
             $parent = dirname( $path );
             if ( $parent === $path ) {
-                return 'could not create directory';
+                return __( 'could not create directory', 'mainwp' );
             }
             $path = $parent;
         }
-        return is_dir( $path ) && is_writable( $path ) ? '' : 'could not create directory'; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
+        return is_dir( $path ) && is_writable( $path ) ? '' : __( 'could not create directory', 'mainwp' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
     }
 
     /**
@@ -261,7 +261,7 @@ class MainWP_Backup_Private_Root {
         }
         return sprintf(
             /* translators: 1: Directory path, 2: Failure reason. */
-            __( 'Backup directory "%1$s" cannot be used (%2$s). Choose a folder outside the WordPress and wp-content folders that the web server can write to.', 'mainwp' ),
+            __( 'Backup directory "%1$s" on the Dashboard server cannot be used (%2$s). Choose a folder outside the WordPress and wp-content folders that the web server can write to.', 'mainwp' ),
             str_replace( "\0", '[NUL]', $path ),
             $reason
         );
@@ -270,48 +270,61 @@ class MainWP_Backup_Private_Root {
     /**
      * Refuse invalid paths and paths inside WordPress or its content directory.
      *
-     * @param mixed $candidate     Selected directory.
-     * @param bool  $allow_symlink Accept a symlinked directory that resolves outside both trees.
+     * @param mixed         $candidate     Selected directory.
+     * @param bool          $allow_symlink Accept a symlinked directory that resolves outside both trees.
+     * @param string        $os_family     Host OS family.
+     * @param string[]|null $boundaries    Served directories; defaults to WordPress and its content directory.
      * @return string Empty when accepted.
      */
-    private static function refusal_reason( $candidate, bool $allow_symlink = false ): string {
+    private static function refusal_reason( $candidate, bool $allow_symlink = false, string $os_family = PHP_OS_FAMILY, ?array $boundaries = null ): string {
         if ( ! is_string( $candidate ) || '' === trim( $candidate ) || false !== strpos( $candidate, "\0" ) ) {
-            return 'expected a non-empty path without NUL bytes';
+            return __( 'expected a non-empty path without NUL bytes', 'mainwp' );
         }
-        if ( ! path_is_absolute( $candidate ) ) {
-            return 'expected an absolute path';
+        if ( ! self::is_absolute_path( $candidate, $os_family ) ) {
+            return __( 'expected an absolute path', 'mainwp' );
         }
         $candidate = untrailingslashit( wp_normalize_path( $candidate ) );
         if ( in_array( '..', explode( '/', $candidate ), true ) ) {
-            return "expected a path without '..' segments";
+            return __( "expected a path without '..' segments", 'mainwp' );
         }
         if ( ! $allow_symlink && is_link( $candidate ) ) {
-            return 'directory is a symlink';
+            return __( 'directory is a symlink', 'mainwp' );
         }
         $canonical = self::canonical_path( $candidate );
         if ( null === $canonical ) {
-            return 'directory path is too deep';
+            return __( 'directory path is too deep', 'mainwp' );
         }
-        foreach ( array( ABSPATH, WP_CONTENT_DIR ) as $boundary ) {
+        foreach ( $boundaries ?? array( ABSPATH, WP_CONTENT_DIR ) as $boundary ) {
             $boundary    = untrailingslashit( wp_normalize_path( $boundary ) );
             $served_path = self::canonical_path( $boundary );
             if ( null === $served_path ) {
-                return 'served directory path is too deep';
+                return __( 'served directory path is too deep', 'mainwp' );
             }
             foreach ( array( $boundary, $served_path ) as $served ) {
                 foreach ( array( $candidate, $canonical ) as $private ) {
                     // These platforms can resolve case variants to the same served directory.
-                    if ( 'Darwin' === PHP_OS_FAMILY || 'Windows' === PHP_OS_FAMILY ) {
+                    if ( 'Darwin' === $os_family || 'Windows' === $os_family ) {
                         $private = strtolower( $private );
                         $served  = strtolower( $served );
                     }
                     if ( $private === $served || str_starts_with( $private, $served . '/' ) ) {
-                        return 'directory is inside WordPress or its content directory';
+                        return __( 'directory is inside WordPress or its content directory', 'mainwp' );
                     }
                 }
             }
         }
         return '';
+    }
+
+    /**
+     * Recognize normalized drive roots on Windows as well as native absolute paths.
+     *
+     * @param string $path Path.
+     * @param string $os_family Host OS family.
+     * @return bool
+     */
+    private static function is_absolute_path( string $path, string $os_family = PHP_OS_FAMILY ): bool {
+        return ( 'Windows' === $os_family && 1 === preg_match( '#^[a-zA-Z]:/#', wp_normalize_path( $path ) ) ) || path_is_absolute( $path );
     }
 
     /**
@@ -419,9 +432,10 @@ class MainWP_Backup_Private_Root {
      * @param string   $site_url WordPress URL, which serves ABSPATH.
      * @param string   $abspath WordPress directory as configured.
      * @param string   $document_root Web server document root, served at the host root; empty outside web requests.
+     * @param string   $os_family Host OS family.
      * @return string[] Root URLs with a trailing slash; empty when no base maps the root.
      */
-    private static function probe_urls( array $roots, string $site_url, string $abspath, string $document_root ): array {
+    private static function probe_urls( array $roots, string $site_url, string $abspath, string $document_root, string $os_family = PHP_OS_FAMILY ): array {
         $parts = wp_parse_url( $site_url );
         if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
             return array();
@@ -430,7 +444,7 @@ class MainWP_Backup_Private_Root {
         $segments = array_values( array_filter( explode( '/', trim( $parts['path'] ?? '', '/' ) ), 'strlen' ) );
         $bases    = array();
         foreach ( array( array( $abspath, $segments ), array( $document_root, array() ) ) as list( $base, $base_segments ) ) {
-            if ( '' === $base || ! path_is_absolute( $base ) ) {
+            if ( '' === $base || ! self::is_absolute_path( $base, $os_family ) ) {
                 continue;
             }
             $bases[] = array( self::canonical_path( $base ), $base_segments );
@@ -443,7 +457,7 @@ class MainWP_Backup_Private_Root {
                 continue;
             }
             foreach ( $bases as list( $base, $base_segments ) ) {
-                $mapped = null === $base ? null : self::probe_url_segments( $root, $base, $base_segments );
+                $mapped = null === $base ? null : self::probe_url_segments( $root, $base, $base_segments, $os_family );
                 if ( null !== $mapped ) {
                     $urls[] = $origin . '/' . ( array() === $mapped ? '' : implode( '/', $mapped ) . '/' );
                 }
@@ -458,13 +472,14 @@ class MainWP_Backup_Private_Root {
      * @param string $root Normalized root.
      * @param string $ancestor Filesystem base served at the URL segments.
      * @param array  $segments URL path segments for the base.
+     * @param string $os_family Host OS family.
      * @return array|null Null when the root is outside the base's URL ancestry.
      */
-    private static function probe_url_segments( string $root, string $ancestor, array $segments ): ?array {
+    private static function probe_url_segments( string $root, string $ancestor, array $segments, string $os_family = PHP_OS_FAMILY ): ?array {
         $levels = 0;
         $path   = untrailingslashit( $root );
         // These platforms can resolve case variants to the same served directory, as refusal_reason() assumes.
-        $fold = 'Darwin' === PHP_OS_FAMILY || 'Windows' === PHP_OS_FAMILY ? 'strtolower' : static fn( string $value ): string => $value;
+        $fold = 'Darwin' === $os_family || 'Windows' === $os_family ? 'strtolower' : static fn( string $value ): string => $value;
         while ( $fold( $path ) !== $fold( $ancestor ) && ! str_starts_with( $fold( $path ), $fold( trailingslashit( $ancestor ) ) ) ) {
             $parent = dirname( $ancestor );
             if ( $parent === $ancestor ) {
@@ -570,19 +585,19 @@ class MainWP_Backup_Private_Root {
         $dir       = untrailingslashit( wp_normalize_path( $dir ) );
         $candidate = self::canonical_path( $dir );
         if ( null === $candidate ) {
-            return self::unavailable( $dir, 'directory path is too deep' );
+            return self::unavailable( $dir, __( 'directory path is too deep', 'mainwp' ) );
         }
         $parent = null === $required_parent ? null : self::canonical_path( $required_parent );
         if ( null !== $required_parent && ( null === $parent || is_link( untrailingslashit( $required_parent ) ) || 0 !== strpos( $candidate . '/', trailingslashit( $parent ) ) ) ) {
-            return self::unavailable( $dir, 'directory escapes its private parent' );
+            return self::unavailable( $dir, __( 'directory escapes its private parent', 'mainwp' ) );
         }
         $existed = is_dir( $dir );
         if ( ! wp_mkdir_p( $dir ) ) {
-            return self::unavailable( $dir, 'could not create directory' );
+            return self::unavailable( $dir, __( 'could not create directory', 'mainwp' ) );
         }
         $real = realpath( $dir );
         if ( false === $real || is_link( $dir ) || wp_normalize_path( $real ) !== $candidate ) {
-            return self::unavailable( $dir, 'directory changed during creation' );
+            return self::unavailable( $dir, __( 'directory changed during creation', 'mainwp' ) );
         }
         $probe   = $real . '/.write-' . wp_generate_password( 24, false );
         $handle  = @fopen( $probe, 'x' );
@@ -593,7 +608,7 @@ class MainWP_Backup_Private_Root {
             $written = @unlink( $probe ) && $written;
         }
         if ( ! $written ) {
-            return self::unavailable( $dir, 'could not create and remove a write probe' );
+            return self::unavailable( $dir, __( 'could not create and remove a write probe', 'mainwp' ) );
         }
         if ( ! $existed ) {
             @chmod( $real, 0700 );

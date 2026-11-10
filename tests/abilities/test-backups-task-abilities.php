@@ -47,7 +47,7 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->set_current_user_as_admin();
 		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		update_option( 'mainwp_enableNativeBackups', 1 );
-		$this->site_id = $this->create_test_site();
+		$this->site_id = $this->create_test_site( array( 'version' => '6.4' ) );
 		$task          = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'Test backup action', 'daily', 'full', '', (string) $this->site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertIsObject( $task );
 		$this->task_id     = (int) $task->id;
@@ -882,6 +882,39 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		} else {
 			$this->assertSame( $preview['would_affect']['next_run_at'], $output['task']['next_run_at'] );
 		}
+	}
+
+	/** A saved task gains its own offset after insert; edits preview the same slot they save. */
+	public function test_mwp_2166_create_and_edit_offset_preview_parity() {
+		update_option( 'timezone_string', 'UTC' );
+		update_option( 'mainwp_backup_start_offset_minutes', 60 );
+		$input   = $this->input( 'create-backup-task' ) + array( 'time_of_day' => gmdate( 'H:i', time() + 2 * HOUR_IN_SECONDS ) );
+		$preview = $this->execute( 'create-backup-task', $input + array( 'dry_run' => true ) );
+		$this->assert_output( 'create-backup-task', $preview );
+		do {
+			$output = $this->execute( 'create-backup-task', $input + array( 'confirm' => true ) );
+			$this->assert_output( 'create-backup-task', $output );
+			$id   = $output['task']['id'];
+			$hash = (int) sprintf( '%u', crc32( 'mainwp_backup_start_offset_' . $id ) );
+		} while ( 0 === $hash % 61 );
+		$this->assertGreaterThan( 0, $hash % 61, 'The fixture must exercise a nonzero offset.' );
+		$base = strtotime( $preview['would_affect']['next_run_at'] );
+		$this->assertSame( $base + ( $hash % 61 ) * MINUTE_IN_SECONDS, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->next_run );
+		$this->assertSame( $base + ( $hash % 61 ) * MINUTE_IN_SECONDS, strtotime( $output['task']['next_run_at'] ) );
+		$edit    = array(
+			'task_id'     => $id,
+			'time_of_day' => gmdate( 'H:i', time() + 3 * HOUR_IN_SECONDS ),
+		);
+		$preview = $this->execute( 'update-backup-task', $edit + array( 'dry_run' => true ) );
+		$this->assert_output( 'update-backup-task', $preview );
+		$output = $this->execute( 'update-backup-task', $edit + array( 'confirm' => true ) );
+		$this->assert_output( 'update-backup-task', $output );
+		$base = strtotime( gmdate( 'Y-m-d' ) . ' ' . $edit['time_of_day'] . ' UTC' );
+		if ( $base + ( $hash % 61 ) * MINUTE_IN_SECONDS <= time() ) {
+			$base += DAY_IN_SECONDS;
+		}
+		$this->assertSame( $base + ( $hash % 61 ) * MINUTE_IN_SECONDS, strtotime( $output['task']['next_run_at'] ) );
+		$this->assertSame( $output['task']['next_run_at'], $preview['would_affect']['next_run_at'] );
 	}
 
 	/**

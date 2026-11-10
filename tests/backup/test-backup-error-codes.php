@@ -160,6 +160,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	private $dashboard_codes = array(
 		'mainwp_backup_timeout',
 		'mainwp_backup_http_error',
+		'mainwp_backup_download_too_large',
 		'mainwp_backup_ssl_failed',
 		'mainwp_backup_connect_failed',
 		'mainwp_backup_child_unreachable',

@@ -173,6 +173,18 @@ class Test_REST_V2_Site_Operations extends \WP_Test_REST_TestCase {
 		}
 	}
 
+	/** Stored response dumps stay private before the one-off upgrade completes. */
+	public function test_site_routes_remove_stored_sync_response_dumps(): void {
+		$id = $this->create_test_site( array( 'sync_errors' => "<pre>Status: 403\n\nBody: SYNTHETIC_RESPONSE_MARKER\nExcerpt: SYNTHETIC_EXCERPT</pre>" ) );
+		foreach ( array( '/mainwp/v2/sites/' . $id, '/mainwp/v2/sites' ) as $route ) {
+			$response = $this->request( 'GET', $route, array( '_fields' => 'id,sync_errors' ) );
+			$this->assertSame( 200, $response->get_status() );
+			$json = wp_json_encode( $response->get_data() );
+			$this->assertStringContainsString( 'Status: 403', $json );
+			$this->assertStringNotContainsString( 'SYNTHETIC_', $json );
+		}
+	}
+
 	/** A healthy first or intervening site must not stop later reconnects. */
 	public function test_reconnect_skips_healthy_sites_and_attempts_every_broken_site(): void {
 		$this->create_test_site(

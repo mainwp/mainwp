@@ -219,6 +219,9 @@ class Log_Changes_Logs_Helper {
 
         if ( ! empty( $update_sync_last_created ) ) {
             MainWP_DB::instance()->update_website_option( $site_id, 'changes_logs_sync_last_created', $update_sync_last_created );
+            // A later sync of this site in the same request (WP-Cron runs reconnect and the
+            // scheduled sync together) must not re-fetch and re-store these events.
+            static::$last_log_created[ $site_id ] = $update_sync_last_created;
         }
 
         return true;
@@ -234,7 +237,7 @@ class Log_Changes_Logs_Helper {
     public function map_changes_action( $event ) {
 
         $map_actions = array(
-            'installed'   => 'install',
+            'installed'   => 'installed',
             'deleted'     => 'delete',
             'activated'   => 'activate',
             'deactivated' => 'deactivate',

@@ -360,6 +360,8 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                 return MainWP_Backup_Error_Codes::ERR_S3_FAILED;
             case 'gcs':
                 return MainWP_Backup_Error_Codes::ERR_GCS_FAILED;
+            case 'pcloud':
+                return MainWP_Backup_Error_Codes::ERR_PCLOUD_FAILED;
             case 'dropbox':
                 return MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED;
             case 'ftp':

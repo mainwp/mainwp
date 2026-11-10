@@ -891,11 +891,36 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
      * @param int    $snapshot_id Snapshot id.
      * @param string $state       '', pass, fail, or unsupported.
      * @param int    $tested_at   Epoch when the test-restore ran; 0 to clear.
+     * @param array  $result      Failure details and assertion outcomes.
      *
+     * @throws MainWP_Exception When the result cannot be persisted.
      * @return void
      */
-    public function set_test_restore_result( int $snapshot_id, string $state, int $tested_at = 0 ): void {
-        $this->wpdb->update(
+    public function set_test_restore_result( int $snapshot_id, string $state, int $tested_at = 0, array $result = array() ): void {
+        if ( $snapshot_id <= 0 || null === $this->get_snapshot_by_id( $snapshot_id ) ) {
+            return;
+        }
+        $details = array(
+            'state'      => $state,
+            'result_at'  => $tested_at,
+            'error_code' => substr( sanitize_key( (string) ( $result['error_code'] ?? '' ) ), 0, 100 ),
+            'error'      => $this->test_restore_message( (string) ( $result['error'] ?? '' ) ),
+            'assertions' => array(),
+        );
+        foreach ( array_slice( (array) ( $result['checks'] ?? array() ), 0, 4 ) as $check ) {
+            if ( is_array( $check ) && in_array( $check['name'] ?? '', array( 'files_extracted', 'db_imported', 'db_has_rows', 'sentinel_checksum' ), true ) ) {
+                $details['assertions'][] = array(
+                    'name'   => $check['name'],
+                    'ok'     => ! empty( $check['ok'] ),
+                    'detail' => $this->test_restore_message( (string) ( $check['detail'] ?? '' ) ),
+                );
+            }
+        }
+        $option = 'mainwp_testrestore_result_' . $snapshot_id;
+        if ( ! update_option( $option, $details, false ) && get_option( $option ) !== $details ) {
+            throw new MainWP_Exception( esc_html__( 'The test restore result could not be saved.', 'mainwp' ), '', 'mainwp_testrestore_save_failed' );
+        }
+        $saved = $this->wpdb->update(
             $this->table_name( 'wp_backup_snapshot' ),
             array(
                 'test_restore_state'     => $state,
@@ -906,6 +931,49 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
             array( '%s', '%d', '%d' ),
             array( '%d' )
         );
+        if ( false === $saved ) {
+            throw new MainWP_Exception( esc_html__( 'The test restore result could not be saved.', 'mainwp' ), '', 'mainwp_testrestore_save_failed' );
+        }
+    }
+
+    /**
+     * Read details only when they belong to the snapshot's recorded verdict.
+     *
+     * @param object $snapshot Snapshot row.
+     * @return array Sanitized failure and assertion outcomes.
+     */
+    public function get_test_restore_details( object $snapshot ): array {
+        $empty = array(
+            'error_code' => '',
+            'error'      => '',
+            'assertions' => array(),
+        );
+        $saved = get_option( 'mainwp_testrestore_result_' . (int) $snapshot->id );
+        if ( ! is_array( $saved ) || ( $saved['state'] ?? '' ) !== $snapshot->test_restore_state || (int) ( $saved['result_at'] ?? 0 ) !== (int) ( $snapshot->test_restore_result_at ?? 0 ) ) {
+            return $empty;
+        }
+        return array_merge( $empty, array_intersect_key( $saved, $empty ) );
+    }
+
+    /**
+     * Bound persisted text and remove markup, SQL and host paths.
+     *
+     * @param string $message Failure or assertion detail.
+     * @return string Plain text.
+     */
+    private function test_restore_message( string $message ): string {
+        $message = html_entity_decode( $message, ENT_QUOTES, 'UTF-8' );
+        $message = MainWP_Backup_Error_Codes::sanitize_message( $message );
+        $message = preg_replace( '~(?<![^\s"\'(=])(?:[A-Za-z]:)?[/\\\\](?:[^\s/\\\\]+[/\\\\])+([^\s/\\\\]+)~', '$1', $message );
+        $message = sanitize_text_field( $message );
+        if ( function_exists( 'mb_strcut' ) ) {
+            return mb_strcut( $message, 0, 1000, 'UTF-8' );
+        }
+        $message = substr( $message, 0, 1000 );
+        while ( '' !== $message && 1 !== preg_match( '//u', $message ) ) {
+            $message = substr( $message, 0, -1 );
+        }
+        return $message;
     }
 
     /**

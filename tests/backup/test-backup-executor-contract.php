@@ -435,6 +435,66 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Only restore-owned full safety captures need rollback inventory.
+	 *
+	 * @dataProvider mwp2259_safety_capture_cases
+	 * @param string $type Backup type.
+	 * @param string $owner Restore job owner, or empty for an update backup.
+	 * @param bool   $expected Whether the Child must emit a manifest.
+	 */
+	public function test_mwp2259_safety_capture_requests_inventory( $type, $owner, $expected ) {
+		$site_id = $this->create_test_site();
+		MainWP_DB::instance()->update_website_option( $site_id, 'native_manifest_snapshot', '2259' );
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'mwp2259-safety',
+				'phase'   => 'queued',
+			)
+		);
+		$sent    = null;
+		$capture = static function ( $pre, $website, $what, $params ) use ( &$sent, $expected ) {
+			if ( 'backup_task_create' === $what ) {
+				$sent   = $params;
+				$writer = MainWP_DB::instance()->get_website_option( (int) $website->id, 'native_manifest_snapshot' );
+				if ( $expected ) {
+					self::assertNotSame( '2259', $writer );
+					self::assertStringStartsWith( 'pending:', $writer );
+				} else {
+					self::assertSame( '2259', $writer );
+				}
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $capture, 30, 4 );
+		try {
+			$this->assertSame( 'mwp2259-safety', MainWP_Backup_Executor::trigger_backup( $site_id, $type, $owner ) );
+			$this->assertIsArray( $sent );
+			if ( $expected ) {
+				$this->assertSame( '1', $sent['emit_manifest'] ?? null );
+			} else {
+				$this->assertArrayNotHasKey( 'emit_manifest', $sent );
+			}
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $capture, 30 );
+		}
+	}
+
+	/**
+	 * Safety captures and unrelated ad-hoc backup types.
+	 *
+	 * @return array Capture cases.
+	 */
+	public static function mwp2259_safety_capture_cases() {
+		return array(
+			'safety full' => array( 'full', '9', true ),
+			'update full' => array( 'full', '', false ),
+			'database'    => array( 'db', '9', false ),
+		);
+	}
+
+	/**
 	 * A one-task prune counts as confirmed only when a clean answer accounts
 	 * for exactly that task as pruned or missing.
 	 *

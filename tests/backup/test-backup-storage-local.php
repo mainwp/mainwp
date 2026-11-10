@@ -499,4 +499,96 @@ class MainWP_Backup_Storage_Local_Test extends \WP_UnitTestCase {
 		$this->assertFalse( $bad['ok'] );
 		$this->assertIsString( $bad['error'] );
 	}
+
+	/**
+	 * A missing folder is named, and the Dashboard server is named as its location.
+	 *
+	 * @return void
+	 */
+	public function test_connection_test_requires_a_folder() {
+		foreach ( array( '', '/' ) as $path ) {
+			$result = ( new MainWP_Backup_Storage_Local( array( 'base_path' => $path ) ) )->connection_test();
+			$this->assertFalse( $result['ok'] );
+			$this->assertSame( 'Enter a folder on the Dashboard server.', $result['error'] );
+		}
+	}
+
+	/**
+	 * Missing folders are identified with their Dashboard path.
+	 *
+	 * @return void
+	 */
+	public function test_connection_test_names_missing_folder_on_dashboard_server() {
+		$path   = get_temp_dir() . 'mainwp-storage-local-missing-' . uniqid();
+		$result = ( new MainWP_Backup_Storage_Local( array( 'base_path' => $path ) ) )->connection_test();
+		$this->assertFalse( $result['ok'] );
+		$this->assertSame( 'The folder ' . $path . ' does not exist on the Dashboard server.', $result['error'] );
+
+		$translate = static function ( $translation, $text, $domain ) {
+			return 'mainwp' === $domain && 'The folder %s does not exist on the Dashboard server.' === $text ? 'Translated missing %s.' : $translation;
+		};
+		add_filter( 'gettext', $translate, 10, 3 );
+		try {
+			$result = ( new MainWP_Backup_Storage_Local( array( 'base_path' => $path ) ) )->connection_test();
+		} finally {
+			remove_filter( 'gettext', $translate, 10 );
+		}
+		$this->assertSame( 'Translated missing ' . $path . '.', $result['error'] );
+	}
+
+	/**
+	 * An unwritable folder is named, and the Dashboard server is named as its location.
+	 *
+	 * @return void
+	 */
+	public function test_connection_test_names_unwritable_folder_on_dashboard_server() {
+		$path = get_temp_dir() . 'mainwp-storage-local-readonly-' . uniqid();
+		mkdir( $path, 0500, true );
+		$this->temp_dirs[] = $path;
+		if ( is_writable( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- fixture precondition.
+			chmod( $path, 0700 );
+			$this->markTestSkipped( 'This user can write to a read-only directory.' );
+		}
+		// The probe write warns before it reports failure.
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- the probe warning is expected here.
+			static function () {
+				return true;
+			},
+			E_WARNING
+		);
+		try {
+			$result = ( new MainWP_Backup_Storage_Local( array( 'base_path' => $path ) ) )->connection_test();
+		} finally {
+			restore_error_handler();
+			chmod( $path, 0700 );
+		}
+		$this->assertFalse( $result['ok'] );
+		$this->assertSame( 'The web server cannot write to the folder ' . $path . ' on the Dashboard server.', $result['error'] );
+	}
+
+	/**
+	 * A served folder refusal names the Dashboard server and passes its reason through translation.
+	 *
+	 * @return void
+	 */
+	public function test_served_folder_refusal_names_dashboard_server_and_localizes_reason() {
+		$base = untrailingslashit( WP_CONTENT_DIR ) . '/mainwp-local-probe-refusal-' . uniqid();
+		mkdir( $base, 0755, true );
+		$this->temp_dirs[] = $base;
+
+		$result = ( new MainWP_Backup_Storage_Local( array( 'base_path' => $base ) ) )->connection_test();
+		$this->assertFalse( $result['ok'] );
+		$this->assertSame( 'Backup directory "' . $base . '" on the Dashboard server cannot be used (directory is inside WordPress or its content directory). Choose a folder outside the WordPress and wp-content folders that the web server can write to.', $result['error'] );
+
+		$translate = static function ( $translation, $text, $domain ) {
+			return 'mainwp' === $domain && 'directory is inside WordPress or its content directory' === $text ? 'translated reason' : $translation;
+		};
+		add_filter( 'gettext', $translate, 10, 3 );
+		try {
+			$result = ( new MainWP_Backup_Storage_Local( array( 'base_path' => $base ) ) )->connection_test();
+		} finally {
+			remove_filter( 'gettext', $translate, 10 );
+		}
+		$this->assertStringContainsString( '(translated reason)', $result['error'] );
+	}
 }

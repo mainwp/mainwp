@@ -295,6 +295,99 @@ class MainWP_Backup_Restore_Refusals_Shared_Test extends MainWP_Abilities_Test_C
 		}
 	}
 
+	/** Errors during admission release the slot; the AJAX boundary answers JSON and the service lets the error reach its caller. */
+	public function test_initiate_throwable_releases_reservation() {
+		global $wpdb;
+		foreach ( array( 'ajax', 'service' ) as $caller ) {
+			$reserved  = false;
+			$thrown    = false;
+			$jobs      = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+			$snapshots = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+			$inject    = static function ( $sql ) use ( &$reserved, &$thrown, $jobs, $snapshots ) {
+				if ( str_starts_with( $sql, 'INSERT INTO ' . $jobs ) && str_contains( $sql, "'reserved'" ) ) {
+					$reserved = true;
+				} elseif ( $reserved && ! $thrown && str_starts_with( $sql, 'SELECT' ) && str_contains( $sql, $snapshots ) ) {
+					$thrown = true;
+					throw new \Error( 'Private admission failure' );
+				}
+				return $sql;
+			};
+			add_filter( 'query', $inject );
+			try {
+				if ( 'ajax' === $caller ) {
+					$result = $this->ajax(
+						'mainwp_restore_initiate',
+						array(
+							'site_id'             => $this->site_id,
+							'snapshot_id'         => $this->snapshot_id,
+							'confirm_destructive' => '1',
+						)
+					);
+					$this->assertSame( 'mainwp_backup_unclassified_error', $result['error_code'] );
+					$this->assertTrue( $result['retryable'] );
+					$this->assertStringNotContainsString( 'Private admission failure', $result['error'] );
+				} else {
+					try {
+						MainWP_Backup_Operations::restore_snapshot( $this->site_id, $this->snapshot_id, array( 'confirm_destructive' => true ), 'ability' );
+						$this->fail( 'The service must not turn an unexpected error into a refusal.' );
+					} catch ( \Error $e ) {
+						$this->assertSame( 'Private admission failure', $e->getMessage() );
+					}
+				}
+			} finally {
+				remove_filter( 'query', $inject );
+			}
+			$this->assertTrue( $thrown, 'The injected Error must run after the reservation insert.' );
+			$this->assertFalse( MainWP_Backup_Restore_Job_Store::instance()->site_is_reserved( $this->site_id ) );
+			$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
+		}
+	}
+
+	/** The AJAX boundary catches errors outside the admission service's try block. */
+	public function test_ajax_initiate_catches_unexpected_throwable() {
+		$inject = static function () {
+			throw new \Error( 'Private authorization failure' );
+		};
+		add_filter( 'mainwp_check_site_access', $inject );
+		try {
+			$result = $this->ajax(
+				'mainwp_restore_initiate',
+				array(
+					'site_id'             => $this->site_id,
+					'snapshot_id'         => $this->snapshot_id,
+					'confirm_destructive' => '1',
+				)
+			);
+			$this->assertSame( 'mainwp_backup_unclassified_error', $result['error_code'] );
+			$this->assertStringNotContainsString( 'Private authorization failure', $result['error'] );
+		} finally {
+			remove_filter( 'mainwp_check_site_access', $inject );
+		}
+	}
+
+	/** A live test restore identifies its owner in the refusal. */
+	public function test_initiate_refusal_reports_test_restore_owner() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$id    = $store->reserve_site( $this->site_id, 'test_restore', $this->snapshot_id );
+		try {
+			$this->assertTrue( $store->renew_reservation( $id ) );
+			$result = $this->ajax(
+				'mainwp_restore_initiate',
+				array(
+					'site_id'             => $this->site_id,
+					'snapshot_id'         => $this->snapshot_id,
+					'confirm_destructive' => '1',
+				)
+			);
+			$this->assertSame( 'mainwp_backup_already_running', $result['error_code'] );
+			$this->assertTrue( $result['test_restore_running'] );
+			$this->assertSame( $this->snapshot_id, $result['snapshot_id'] );
+			$this->assertSame( 'An automatic test restore is running on this site. Try again in about a minute.', $result['error'] );
+		} finally {
+			$store->release_reservation( $id );
+		}
+	}
+
 	/**
 	 * WordPress's termination hook permits inspection of the JSON body.
 	 *
@@ -303,7 +396,7 @@ class MainWP_Backup_Restore_Refusals_Shared_Test extends MainWP_Abilities_Test_C
 	 * @return array
 	 */
 	private function ajax( string $action, array $fields ): array {
-		$_POST                = $fields;
+		$_POST                = $fields + array( 'admission_token' => bin2hex( random_bytes( 16 ) ) );
 		$nonce                = wp_create_nonce( $action );
 		$_POST['security']    = $nonce;
 		$_REQUEST['security'] = $nonce;

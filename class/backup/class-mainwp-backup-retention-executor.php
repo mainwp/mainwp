@@ -1338,11 +1338,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @return bool True when every destination's delete job is queued.
      */
     private function enqueue_cloud_deletes( object $snapshot, MainWP_Backup_Upload_Job_Store $store, array &$queued_deletes, array &$inserted_deletes, bool $manual_override = false ): bool {
-        $prefix     = (int) $snapshot->site_id . '/' . (int) $snapshot->id . '/';
         $all_queued = true;
 
         foreach ( $store->get_jobs_for_snapshot( (int) $snapshot->id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD ) as $upload_job ) {
-            $keys = array();
+            $prefix = MainWP_Backup_Remote_Path::for_upload( $snapshot, (array) $upload_job->checkpoint );
+            $keys   = array();
 
             $artifacts = isset( $upload_job->checkpoint['artifacts'] ) && is_array( $upload_job->checkpoint['artifacts'] ) ? $upload_job->checkpoint['artifacts'] : array();
             foreach ( $artifacts as $artifact ) {

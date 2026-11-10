@@ -1140,6 +1140,11 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         $all_keys = get_option( 'mainwp_rest_api_keys', false );
         $cs       = get_option( 'mainwp_rest_api_consumer_key', false );
 
+        // Migration creates an ownerless key, so it requires the same access as creation.
+        if ( ! self::can_manage_legacy_api_keys() ) {
+            return $all_keys;
+        }
+
         // to compatible.
         if ( false === $all_keys || false !== $cs ) {
             if ( ! is_array( $all_keys ) ) {
@@ -1174,7 +1179,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         if ( isset( $_GET['message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
             $message = sanitize_key( wp_unslash( $_GET['message'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
             if ( 'saved' === $message || 'created' === $message ) {
-                $msg = esc_html__( 'API Key have been saved successfully!', 'mainwp' );
+                $msg = esc_html__( 'API key saved.', 'mainwp' );
             } elseif ( 'create_failed' === $message ) {
                 $msg  = esc_html__( 'Could not save the API key. The credential was generated but the database did not accept the insert, so no key was stored. Please try again or contact MainWP support if the problem persists.', 'mainwp' );
                 $tone = 'red';
@@ -1247,9 +1252,8 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <?php esc_html_e( 'Generate, manage, and revoke API keys to securely connect with the MainWP REST API. Ensure you\'re using the correct version for your integrations.', 'mainwp' ); ?>
                 </div>
             </h2>
-            <div id="api-credentials-created" class="ui green message">
-                <strong><?php esc_html_e( 'API Key Created Successfully!', 'mainwp' ); ?></strong><br />
-                <?php esc_html_e( 'Copy your key and store it securely. It will not be visible again!', 'mainwp' ); ?>
+            <div id="api-credentials-created" class="ui info message">
+                <?php esc_html_e( 'Copy this key now. You won\'t see it again after you save.', 'mainwp' ); ?>
             </div>
 
             <?php static::show_messages(); ?>
@@ -1401,7 +1405,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     ?>
                     <div class="ui divider"></div>
                     <input type="submit" name="submit" id="submit-save-settings-button" class="ui green big button"
-                        value="<?php esc_attr_e( 'Save Key', 'mainwp' ); ?>" />
+                        value="<?php esc_attr_e( 'Save API Key', 'mainwp' ); ?>" />
                     <div style="clear:both"></div>
                 </form>
             </div>
@@ -2639,8 +2643,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      *
      * @return bool
      */
-    private static function can_manage_legacy_api_keys() {
-        return MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff();
+    public static function can_manage_legacy_api_keys() {
+        return MainWP_System_Utility::current_user_has_role( 'administrator' )
+            && 'all' === MainWP_Abilities_Util::get_allowed_site_ids()
+            && 'all' === MainWP_Abilities_Util::get_allowed_group_ids();
     }
 
     /**

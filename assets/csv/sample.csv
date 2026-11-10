@@ -1,7 +1,7 @@
-# It's important if you remove the headerline that the order of the columns remains the same and all colums should be added
+# It's important if you remove the headerline that the order of the columns remains the same and all columns should be added
 # The header fields may not be renamed
 #
-# Url and Admin Name are the only required columns
+# Site Name, Url and Admin Name are required columns
 # Your password is never stored by your Dashboard and never sent to MainWP.com. Once this initial connection is complete,
 # your MainWP Dashboard generates a secure Public and Private key pair (2048 bits) using OpenSSL,
 # allowing future connections without needing your password again. For added security,

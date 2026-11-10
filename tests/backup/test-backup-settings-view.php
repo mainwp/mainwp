@@ -71,17 +71,19 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 	 * Invalid counts stay beside their field without losing other form edits.
 	 *
 	 * @dataProvider mwp_1965_invalid_count_forms
-	 * @param string $server Submitted server count.
-	 * @param string $remote Submitted remote count.
-	 * @param array  $invalid Fields requiring an error.
+	 * @param string      $server Submitted server count.
+	 * @param string      $remote Submitted remote count.
+	 * @param array       $invalid Fields requiring an error.
+	 * @param string|null $offset Submitted start offset.
 	 */
-	public function test_mwp_1965_invalid_count_keeps_form( string $server, string $remote, array $invalid ): void {
+	public function test_mwp_1965_invalid_count_keeps_form( string $server, string $remote, array $invalid, ?string $offset = null ): void {
 		$this->set_current_user_as_admin();
 		$stored = array(
 			'mainwp_backupsOnServer'                  => 3,
 			'mainwp_backupOnExternalSources'          => 4,
 			'mainwp_enableNativeBackups'              => 0,
 			'mainwp_on_demand_retention_count'        => 5,
+			'mainwp_backup_start_offset_minutes'      => 15,
 			'mainwp_archiveFormat'                    => 'tar.gz',
 			'mainwp_maximumFileDescriptors'           => 150,
 			'mainwp_maximumFileDescriptorsAuto'       => 1,
@@ -94,15 +96,15 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		foreach ( $stored as $option => $value ) {
 			update_option( $option, $value );
 		}
-		$saved_post    = $_POST;
-		$saved_get     = $_GET;
-		$_GET          = array(
+		$saved_post = $_POST;
+		$saved_get  = $_GET;
+		$_GET       = array(
 			'page'                                => 'BackupSettings',
 			'message'                             => 'saved',
 			'backup_encryption_forced_off'        => '1',
 			'backup_recovery_passphrase_rejected' => 'short',
 		);
-		$_POST         = array(
+		$_POST      = array(
 			'submit'                                    => '1',
 			'wp_nonce'                                  => wp_create_nonce( 'BackupSettings' ),
 			'mainwp_options_backupOnServer'             => $server,
@@ -115,6 +117,9 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			'mainwp_options_backupDiagnosticsEnabled'   => '1',
 			'mainwp_options_backupEncryptionPassphrase' => 'private recovery input',
 		);
+		if ( null !== $offset ) {
+			$_POST['mainwp_options_backupStartOffset'] = $offset;
+		}
 		$redirect      = '';
 		$stop_redirect = static function ( $location ) use ( &$redirect ) {
 			$redirect = $location;
@@ -162,6 +167,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 				'mainwp_options_backupOnServer'         => $server,
 				'mainwp_options_onDemandRetentionCount' => '11',
 				'mainwp_options_maximumFileDescriptors' => '37',
+				'mainwp_options_backupStartOffset'      => $offset ?? '15',
 			) as $field => $value ) {
 				$this->assertSame( $value, $xpath->evaluate( 'string(//input[@name="' . $field . '"]/@value)' ), $field );
 			}
@@ -174,13 +180,14 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			}
 			// MWP-2031: the retired remote count is no longer an editable field.
 			$this->assertSame( 0, $xpath->query( '//input[@name="mainwp_options_backupOnExternalSources"]' )->length );
-			foreach ( array( 'mainwp_options_backupOnServer' ) as $field ) {
+			foreach ( array( 'mainwp_options_backupOnServer', 'mainwp_options_backupStartOffset' ) as $field ) {
 				$input = $xpath->query( '//input[@name="' . $field . '"]' )->item( 0 );
 				$this->assertSame( in_array( $field, $invalid, true ) ? 'true' : '', $input->getAttribute( 'aria-invalid' ), $field );
 				if ( in_array( $field, $invalid, true ) ) {
 					$error_id = $input->getAttribute( 'aria-describedby' );
 					$this->assertNotEmpty( $error_id );
-					$this->assertSame( 'Enter a whole number of 0 or more.', $xpath->evaluate( 'string(//*[@id="' . $error_id . '"])' ) );
+					$this->assertSame( 'mainwp_options_backupStartOffset' === $field ? 'Enter a whole number from 0 to 60.' : 'Enter a whole number of 0 or more.', $xpath->evaluate( 'string(//*[@id="' . $error_id . '"])' ) );
+					$this->assertSame( 'alert', $xpath->query( '//*[@id="' . $error_id . '"]' )->item( 0 )->getAttribute( 'role' ) );
 				}
 			}
 			foreach ( $stored as $option => $value ) {
@@ -203,13 +210,91 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$server = 'mainwp_options_backupOnServer';
 		$remote = 'mainwp_options_backupOnExternalSources';
 		return array(
-			'server text'     => array( 'abc', '12', array( $server ) ),
-			'server negative' => array( '-1', '12', array( $server ) ),
-			'remote text'     => array( '12', 'abc', array( $remote ) ),
-			'remote negative' => array( '12', '-1', array( $remote ) ),
-			'both invalid'    => array( 'abc', '-1', array( $server, $remote ) ),
-			'escaped text'    => array( '"><script>alert(1)</script>', '12', array( $server ) ),
+			'server text'      => array( 'abc', '12', array( $server ) ),
+			'server negative'  => array( '-1', '12', array( $server ) ),
+			'remote text'      => array( '12', 'abc', array( $remote ) ),
+			'remote negative'  => array( '12', '-1', array( $remote ) ),
+			'both invalid'     => array( 'abc', '-1', array( $server, $remote ) ),
+			'escaped text'     => array( '"><script>alert(1)</script>', '12', array( $server ) ),
+			'offset negative'  => array( '12', '12', array( 'mainwp_options_backupStartOffset' ), '-1' ),
+			'offset too high'  => array( '12', '12', array( 'mainwp_options_backupStartOffset' ), '61' ),
+			'offset text'      => array( '12', '12', array( 'mainwp_options_backupStartOffset' ), 'abc' ),
+			'offset fraction'  => array( '12', '12', array( 'mainwp_options_backupStartOffset' ), '1.5' ),
+			'offset escaped'   => array( '12', '12', array( 'mainwp_options_backupStartOffset' ), '"><script>alert(1)</script>' ),
+			'offset preserved' => array( 'abc', '12', array( $server ), '27' ),
 		);
+	}
+
+	/** Valid offsets save through the form; an absent field preserves the option. */
+	public function test_mwp_2166_offset_settings_save_and_omission(): void {
+		$this->set_current_user_as_admin();
+		$saved_post = $_POST;
+		try {
+			foreach ( array( '0', '30', '60', '005' ) as $value ) {
+				$_POST = array(
+					'submit'                           => '1',
+					'wp_nonce'                         => wp_create_nonce( 'BackupSettings' ),
+					'mainwp_options_backupStartOffset' => $value,
+				);
+				$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+				$this->assertSame( (int) $value, (int) get_option( 'mainwp_backup_start_offset_minutes' ) );
+			}
+			unset( $_POST['mainwp_options_backupStartOffset'] );
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( 5, (int) get_option( 'mainwp_backup_start_offset_minutes' ) );
+		} finally {
+			$_POST = $saved_post;
+		}
+	}
+
+	/** Stored windows are bounded and submitted values must be whole numbers. */
+	public function test_mwp_2166_offset_normalization_and_stored_bounds(): void {
+		foreach ( array( -1, 61, 'abc', '1.5', 1.5, true, null, array(), '', '+1', ' 1', str_repeat( '9', 30 ) ) as $value ) {
+			$this->assertNull( MainWP_Backup_Settings::normalize_start_offset_minutes( $value ), wp_json_encode( $value ) );
+		}
+		foreach ( array( 0, '0', 60, '60', '00030' ) as $value ) {
+			$this->assertSame( (int) $value, MainWP_Backup_Settings::normalize_start_offset_minutes( $value ) );
+		}
+		delete_option( 'mainwp_backup_start_offset_minutes' );
+		$this->assertSame( 0, MainWP_Backup_Settings::get_backup_start_offset_minutes() );
+		foreach ( array(
+			'-8'  => 0,
+			'99'  => 60,
+			'27'  => 27,
+			'abc' => 0,
+		) as $stored => $expected ) {
+			update_option( 'mainwp_backup_start_offset_minutes', $stored );
+			$this->assertSame( $expected, MainWP_Backup_Settings::get_backup_start_offset_minutes() );
+		}
+	}
+
+	/** The offset field uses the count-field indicator and accessible label. */
+	public function test_mwp_2166_offset_field_render(): void {
+		$this->set_current_user_as_admin();
+		update_option( 'mainwp_backup_start_offset_minutes', 25 );
+		ob_start();
+		try {
+			MainWP_Backup_Settings_View::render_settings();
+		} finally {
+			$output = ob_get_clean();
+		}
+		$dom = new \DOMDocument();
+		@$dom->loadHTML( $output, LIBXML_NONET );
+		$xpath = new \DOMXPath( $dom );
+		$this->assertSame( 1, $xpath->query( '//input[@name="mainwp_options_backupStartOffset"]' )->length );
+		$input = $xpath->query( '//input[@name="mainwp_options_backupStartOffset"]' )->item( 0 );
+		foreach ( array(
+			'id'        => 'mainwp-backup-start-offset',
+			'type'      => 'text',
+			'inputmode' => 'numeric',
+			'value'     => '25',
+			'class'     => 'settings-field-value-change-handler',
+		) as $attribute => $expected ) {
+			$this->assertSame( $expected, $input->getAttribute( $attribute ), $attribute );
+		}
+		$this->assertStringContainsString( 'Spread scheduled backup starts', $xpath->evaluate( 'string(//label[@for="mainwp-backup-start-offset"])' ) );
+		$this->assertStringContainsString( "Starts each daily, weekly or monthly backup task up to this many minutes after its scheduled time, so tasks set for the same time don't all start at once. Each task keeps the same delay every run. 0 turns this off. Interval tasks are not affected.", $dom->textContent );
+		$this->assertSame( '0', $xpath->evaluate( 'string(//input[@id="mainwp-backup-start-offset"]/ancestor::div[@default-indi-value]/@default-indi-value)' ) );
 	}
 
 	/**

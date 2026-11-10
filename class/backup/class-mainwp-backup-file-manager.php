@@ -279,14 +279,19 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             $escalated = false;
 
             if ( ! MainWP_Backup_Monitor::child_supports_download_token( $website ) ) {
+                // Each part of a large archive is its own request and needs its own signed nonce.
+                $resign = static function () use ( $website, $remote_filename ) {
+                    return MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl' );
+                };
                 try {
                     MainWP_Connect::download_to_file(
-                        MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl' ),
+                        $resign(),
                         $local_file,
                         $size,
                         $http_user,
                         $http_pass,
-                        $website
+                        $website,
+                        $resign
                     );
                     // Ordering: this check must run BEFORE the downloaded action
                     // fires - a child can serve an empty body while its artifact
@@ -328,12 +333,21 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             // Fail closed: a token failure on a capability-advertising child
             // propagates - downgrading to a token-less download here would
             // defeat the authorization entirely.
-            $token_info = static::fetch_download_token( $website, $remote_filename );
+            $token_info   = static::fetch_download_token( $website, $remote_filename );
+            $initial_hash = (string) $token_info['hash'];
+
+            // Tokens are single-use, so every part of a large archive gets a fresh one.
+            $renew_token = static function () use ( $website, $remote_filename, $local_file, $initial_hash, &$token_info ) {
+                $renewed = static::fetch_download_token( $website, $remote_filename );
+                static::assert_same_archive( $initial_hash, $renewed, $local_file );
+                $token_info = $renewed;
+                return MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl', false, array( 'dltoken' => $renewed['token'] ) );
+            };
 
             for ( $attempt = 0; ; $attempt++ ) {
                 $url = MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl', false, array( 'dltoken' => $token_info['token'] ) );
                 try {
-                    MainWP_Connect::download_to_file( $url, $local_file, $size, $http_user, $http_pass, $website );
+                    MainWP_Connect::download_to_file( $url, $local_file, $size, $http_user, $http_pass, $website, $renew_token );
                     break;
                 } catch ( MainWP_Exception $e ) {
                     $extra          = (string) $e->get_message_extra( false );
@@ -341,7 +355,9 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                     if ( ! $token_rejected || $attempt >= static::MAX_TOKEN_RETRIES ) {
                         throw $e;
                     }
-                    $token_info = static::fetch_download_token( $website, $remote_filename );
+                    $renewed = static::fetch_download_token( $website, $remote_filename );
+                    static::assert_same_archive( $initial_hash, $renewed, $local_file );
+                    $token_info = $renewed;
                 }
             }
 
@@ -556,6 +572,29 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         return $info;
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception.
+    /**
+     * Refuse a renewed token for a different archive than the first part came from.
+     *
+     * The Child hashes the archive at every token issue, so a different digest
+     * means the file was rewritten mid-download; the local bytes mix two archives.
+     *
+     * @param string $initial_hash Digest from the first token of this download.
+     * @param array  $renewed      Renewed token payload.
+     * @param string $local_file   Partial download to discard on a change.
+     *
+     * @return void
+     * @throws MainWP_Exception When the archive changed.
+     */
+    private static function assert_same_archive( string $initial_hash, array $renewed, string $local_file ): void {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        if ( hash_equals( $initial_hash, (string) $renewed['hash'] ) ) {
+            return;
+        }
+        wp_delete_file( $local_file );
+        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH, 'the child site archive changed during the download: expected ' . $initial_hash . ', got ' . $renewed['hash'] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped; hashes are hex digests.
+    }
+
     /**
      * Method fire_downloaded_action()
      *
@@ -645,7 +684,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
-     * Sanitize each folder of a path and drop "." and ".." so it stays inside its destination root.
+     * Sanitize each folder of a path and drop empty, "." and ".." segments so the path stays relative to its destination root.
      *
      * @param string $path Folder path.
      * @return string
@@ -654,7 +693,8 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         $segments = array();
         foreach ( explode( '/', str_replace( '\\', '/', $path ) ) as $segment ) {
             $segment = self::sanitize_path_segment( $segment );
-            if ( '.' !== trim( $segment ) && '..' !== trim( $segment ) ) {
+            $trimmed = trim( $segment );
+            if ( '' !== $trimmed && '.' !== $trimmed && '..' !== $trimmed ) {
                 $segments[] = $segment;
             }
         }

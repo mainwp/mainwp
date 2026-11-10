@@ -988,9 +988,10 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
             $params['name'] = $tag->name;
         }
 
-        // Check for duplicate name if the name is being changed.
+        // Check for duplicate name if the name is being changed. Count only tags the caller can
+        // see, as add-tag does, so the error cannot confirm a hidden tag name.
         if ( $params['name'] !== $tag->name ) {
-            $existing = MainWP_DB_Common::instance()->get_group_by_name( $params['name'] );
+            $existing = MainWP_Manage_Groups::get_visible_group_by_name( $params['name'] );
             if ( ! empty( $existing ) && (int) $existing->id !== $tag_id ) {
                 return new \WP_Error(
                     'mainwp_already_exists',

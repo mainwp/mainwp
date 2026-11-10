@@ -433,15 +433,8 @@ class Remote_MCP_Admin implements Hook_Provider {
         if ( ! $store ) {
             return self::fail( 'insecure_home', 'mint_token' );
         }
-        $revoke_first = self::token_cap_message();
-        if ( count( $store->connection_tokens_for_user( $me ) ) >= OAuth_Store::LIVE_GRANT_CAP ) {
-            return self::fail( 'cap_reached', 'mint_token', $revoke_first );
-        }
         $scope  = 'write' === $access ? OAuth_Store::SCOPE_READ . ' ' . OAuth_Store::SCOPE_WRITE : OAuth_Store::SCOPE_READ;
         $minted = $store->mint_connection_token( $me, $scope, $policy, $label, time() + (int) $expiry * DAY_IN_SECONDS );
-        if ( OAuth_Store::CAP_REACHED === $minted['outcome'] ) {
-            return self::fail( 'cap_reached', 'mint_token', $revoke_first );
-        }
         if ( OAuth_Store::OK !== $minted['outcome'] ) {
             return self::fail( 'failed', 'mint_token' );
         }
@@ -1053,16 +1046,6 @@ class Remote_MCP_Admin implements Hook_Provider {
                 return __( 'Hands-off', 'mainwp' );
         }
         return __( 'Standard', 'mainwp' );
-    }
-
-    /**
-     * The refusal when a user already holds as many connection tokens as they may.
-     *
-     * @return string
-     */
-    public static function token_cap_message(): string {
-        /* translators: %d: most connection tokens one user can have. */
-        return sprintf( __( 'You already have %d tokens, the most one user can hold. Revoke one first.', 'mainwp' ), OAuth_Store::LIVE_GRANT_CAP );
     }
 
     /**

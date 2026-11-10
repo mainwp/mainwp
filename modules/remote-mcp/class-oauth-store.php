@@ -1682,9 +1682,6 @@ class OAuth_Store {
      * `connect` token row, published through the same generation-checked statement as code
      * exchange. Pair 1 is the only pair; it never rotates or refreshes.
      *
-     * The per-user cap matches LIVE_GRANT_CAP, but a sixth mint is refused rather than revoking the
-     * oldest, so the panel can say "Revoke one first".
-     *
      * @param int    $user_id    Owner, who must still hold manage_options.
      * @param string $scope      `mainwp:read` or `mainwp:read mainwp:write`.
      * @param string $policy     One of POLICIES.
@@ -1705,14 +1702,6 @@ class OAuth_Store {
             return $this->result( self::INVALID_REQUEST );
         }
         $scope = implode( ' ', $tokens );
-
-        $live = $this->live_connection_tokens( $user_id );
-        if ( null === $live ) {
-            return $this->result( self::SERVER_ERROR );
-        }
-        if ( $live >= self::LIVE_GRANT_CAP ) {
-            return $this->result( self::CAP_REACHED );
-        }
 
         $generations = $this->current_generations( $user_id );
         $inserted    = $this->db->insert(
@@ -1775,14 +1764,6 @@ class OAuth_Store {
             return $this->result( false === $published ? self::SERVER_ERROR : self::INVALID_GRANT, $event );
         }
 
-        // Two mints racing past the count can both publish; the newer one gives way.
-        $live = $this->live_connection_tokens( $user_id );
-        if ( null === $live || $live > self::LIVE_GRANT_CAP ) {
-            if ( ! $this->revoke_confirmed( $grant_id, 'cap_limit' ) ) {
-                return $this->result( self::SERVER_ERROR, 'cap_limit' );
-            }
-            return $this->result( null === $live ? self::SERVER_ERROR : self::CAP_REACHED, 'cap_limit' );
-        }
         return $this->result(
             self::OK,
             null,
@@ -1792,26 +1773,6 @@ class OAuth_Store {
                 'expires_at' => $expires_at,
             )
         );
-    }
-
-    /**
-     * Unexpired live connection-token grants of one user. An expired one stays `live` until the
-     * purge 30 days later, but it can't authenticate, so it doesn't hold a cap slot.
-     *
-     * @param int $user_id User id.
-     * @return int|null Count, or null on a SQL error.
-     */
-    private function live_connection_tokens( int $user_id ): ?int {
-        $count = $this->db->get_var(
-            $this->db->prepare(
-                'SELECT COUNT(*) FROM %i WHERE user_id = %d AND client_id = %s AND status = \'live\' AND session_expires_at > %d',
-                $this->table( 'grants' ),
-                $user_id,
-                self::CONNECTION_TOKEN_CLIENT_ID,
-                $this->now()
-            )
-        );
-        return null === $count || '' !== $this->db->last_error ? null : (int) $count;
     }
 
     /**

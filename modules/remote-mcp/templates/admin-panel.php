@@ -709,10 +709,7 @@ $mainwp_rmcp_secret = function ( string $section ) use ( $mainwp_rmcp_result, $m
                                 ?>
                             </option><?php endforeach; ?></select></div>
                 </div>
-                <button type="submit" class="ui mini green button"<?php echo $view['token_count'] >= OAuth_Store::LIVE_GRANT_CAP ? ' disabled' : ''; ?>><?php esc_html_e( 'Create token', 'mainwp' ); ?></button>
-                <?php if ( $view['token_count'] >= OAuth_Store::LIVE_GRANT_CAP ) : ?>
-                    <span><?php echo esc_html( Remote_MCP_Admin::token_cap_message() ); ?></span>
-                <?php endif; ?>
+                <button type="submit" class="ui mini green button"><?php esc_html_e( 'Create token', 'mainwp' ); ?></button>
             </form>
         </div>
 

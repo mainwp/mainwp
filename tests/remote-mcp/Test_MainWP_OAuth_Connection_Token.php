@@ -87,17 +87,13 @@ class Test_MainWP_OAuth_Connection_Token extends \WP_UnitTestCase {
 		$this->assertSame( 'token', $check['client_kind'] );
 		$this->assertSame( 'strict', $check['approval_policy'] );
 
-		// Five live tokens per user; the sixth is refused and nothing older is revoked.
-		for ( $i = 2; $i <= 5; $i++ ) {
-			$this->assertSame( OAuth_Store::OK, $this->mint( 'App ' . $i )['outcome'] );
+		for ( $i = 2; $i <= 25; $i++ ) {
+			$this->assertSame( OAuth_Store::OK, $this->mint( 'App ' . $i )['outcome'], 'token ' . $i );
 		}
-		$sixth = $this->mint( 'App 6' );
-		$this->assertSame( OAuth_Store::CAP_REACHED, $sixth['outcome'] );
-		$this->assertArrayNotHasKey( 'token', $sixth );
-		$this->assertCount( 5, $this->rows( 'grants', "status = 'live' AND client_id = 'mainwp-connection-token'" ) );
+		$this->assertCount( 25, $this->rows( 'grants', "status = 'live' AND client_id = 'mainwp-connection-token'" ) );
 		$this->assertTrue( $this->connect_ok( $minted['token'] ), 'the oldest still works' );
 		$other_user = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		$this->assertSame( OAuth_Store::OK, $this->mint( 'Other', 90, 'mainwp:read', $other_user )['outcome'], 'the cap is per user' );
+		$this->assertSame( OAuth_Store::OK, $this->mint( 'Other', 90, 'mainwp:read', $other_user )['outcome'], 'another user can mint tokens' );
 
 		// Publication is the generation-checked statement code exchange uses.
 		$racing = $this->new_store();
@@ -151,15 +147,17 @@ class Test_MainWP_OAuth_Connection_Token extends \WP_UnitTestCase {
 		$this->assertSame( OAuth_Store::OK, $this->mint( 'After', 90, 'mainwp:read', $other_user )['outcome'], 'new tokens work after rotation' );
 	}
 
-	public function test_expired_connection_tokens_free_their_cap_slots() {
-		for ( $i = 1; $i <= 5; $i++ ) {
-			$this->assertSame( OAuth_Store::OK, $this->mint( 'Short ' . $i, 30 )['outcome'] );
+	public function test_connection_tokens_expire_without_a_per_user_cap() {
+		for ( $i = 1; $i <= 25; $i++ ) {
+			$short = $this->mint( 'Short ' . $i, 30 );
+			$this->assertSame( OAuth_Store::OK, $short['outcome'] );
 		}
-		$this->assertSame( OAuth_Store::CAP_REACHED, $this->mint( 'Blocked' )['outcome'] );
+		$this->assertSame( OAuth_Store::OK, $this->mint( 'Another' )['outcome'] );
 
-		// Expired grants stay `live` until the purge, 30 days later, but they no longer count.
+		// Expired grants remain stored until the purge.
 		$this->tick( 30 * self::DAY );
-		$this->assertCount( 5, $this->rows( 'grants', "status = 'live' AND client_id = 'mainwp-connection-token'" ) );
+		$this->assertFalse( $this->connect_ok( $short['token'] ), 'expired tokens cannot authenticate' );
+		$this->assertCount( 26, $this->rows( 'grants', "status = 'live' AND client_id = 'mainwp-connection-token'" ) );
 		$replacement = $this->mint( 'Replacement' );
 		$this->assertSame( OAuth_Store::OK, $replacement['outcome'] );
 		$this->assertTrue( $this->connect_ok( $replacement['token'] ) );

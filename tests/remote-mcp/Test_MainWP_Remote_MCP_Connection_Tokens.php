@@ -47,7 +47,7 @@ class Test_MainWP_Remote_MCP_Connection_Tokens extends \WP_UnitTestCase {
 		);
 	}
 
-	public function test_connection_token_mint_shows_once_and_sixth_is_refused() {
+	public function test_connection_token_mint_shows_once_without_a_per_user_cap() {
 		$first = $this->mint();
 		$this->assertTrue( $first['ok'], $first['code'] );
 		$this->assertMatchesRegularExpression( '/^mwpct_[A-Za-z0-9_-]{43}$/', $first['secret'] );
@@ -62,35 +62,14 @@ class Test_MainWP_Remote_MCP_Connection_Tokens extends \WP_UnitTestCase {
 			$this->assertStringNotContainsString( $first['secret'], wp_json_encode( $row ), 'not stored in clear' );
 		}
 
-		for ( $i = 2; $i <= 5; $i++ ) {
+		for ( $i = 2; $i <= 25; $i++ ) {
 			$this->assertTrue( $this->mint( array( 'label' => 'App ' . $i ) )['ok'], 'token ' . $i );
 		}
-		$sixth = $this->mint( array( 'label' => 'App 6' ) );
-		$this->assertFalse( $sixth['ok'] );
-		$this->assertSame( 'cap_reached', $sixth['code'] );
-		$this->assertStringContainsString( 'Revoke one first', $sixth['message'] );
-		$this->assertArrayNotHasKey( 'secret', $sixth );
-		$this->assertCount( 5, $this->store->connection_tokens_for_user( $this->user_id ), 'nothing was revoked to make room' );
-		$this->assertCount( 5, $this->rows( 'grants', "client_kind = 'token'" ), 'the store was never asked' );
-	}
-
-	public function test_connection_token_cap_message_counts_from_live_grant_cap() {
-		// Translated, the count can only come from the placeholder the code fills.
-		$translate = function ( $translation, $text ) {
-			return 'You already have %d tokens, the most one user can hold. Revoke one first.' === $text ? 'Token limit: %d.' : $translation;
-		};
-		add_filter( 'gettext', $translate, 10, 2 );
-		for ( $i = 1; $i <= OAuth_Store::LIVE_GRANT_CAP; $i++ ) {
-			$this->assertTrue( $this->mint( array( 'label' => 'App ' . $i ) )['ok'], 'token ' . $i );
-		}
-		$refused = $this->mint( array( 'label' => 'One too many' ) );
-		$html    = $this->admin()->render();
-		remove_filter( 'gettext', $translate, 10 );
-
-		$expected = 'Token limit: ' . OAuth_Store::LIVE_GRANT_CAP . '.';
-		$this->assertSame( 'cap_reached', $refused['code'] );
-		$this->assertSame( $expected, $refused['message'] );
-		$this->assertStringContainsString( $expected, $html );
+		$this->assertCount( 25, $this->store->connection_tokens_for_user( $this->user_id ) );
+		$this->assertSame( OAuth_Store::OK, $this->store->check_connect_token( $first['secret'] )['outcome'], 'the oldest still works' );
+		$html = $admin->render();
+		$this->assertMatchesRegularExpression( '#<button type="submit" class="ui mini green button">Create token</button>#', $html );
+		$this->assertStringNotContainsString( 'Revoke one first', $html );
 	}
 
 	public function test_connection_token_expiry_choices_have_no_never() {

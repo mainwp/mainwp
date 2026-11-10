@@ -72,6 +72,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             return;
         }
         wp_enqueue_script( 'mainwp-backup-cancel-result', MAINWP_PLUGIN_URL . 'assets/js/mainwp-backup-cancel-result.js', array(), MainWP_System::instance()->get_version(), true );
+        wp_enqueue_script( 'mainwp-backup-bulk-delete', MAINWP_PLUGIN_URL . 'assets/js/mainwp-backup-bulk-delete.js', array(), MainWP_System::instance()->get_version(), true );
         wp_localize_script(
             'mainwp-backup-cancel-result',
             'mainwpBackupCancelMessages',
@@ -224,7 +225,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <thead>
                         <tr>
                             <?php foreach ( $snapshot_columns as $column_key => $column_label ) : ?>
-                            <th scope="col" class="<?php echo esc_attr( 'backup' === $column_key ? 'collapsing' : ( 'actions' === $column_key ? 'collapsing right aligned' : '' ) ); ?>"><?php echo esc_html( $column_label ); ?></th>
+                                <?php
+                                $selection = '';
+                                if ( 'backup' === $column_key && MainWP_Backup_Operations::current_user_can_delete() ) {
+                                    $selection = '<input type="checkbox" id="mainwp-backup-select-all" aria-label="' . esc_attr__( 'Select all backups on this page', 'mainwp' ) . '"> ';
+                                }
+                                ?>
+                            <th scope="col" class="<?php echo esc_attr( 'backup' === $column_key ? 'collapsing' : ( 'actions' === $column_key ? 'collapsing right aligned' : '' ) ); ?>"><?php echo $selection . esc_html( $column_label ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Constant checkbox markup with escaped accessible label. ?></th>
                             <?php endforeach; ?>
                         </tr>
                     </thead>
@@ -252,6 +259,29 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 </div>
             </div>
             <?php endif; ?>
+        </div>
+
+        <div class="ui small modal" id="mainwp-backup-bulk-delete-modal" role="dialog" aria-modal="true" aria-labelledby="mainwp-backup-bulk-delete-title">
+            <div class="header" id="mainwp-backup-bulk-delete-title"><?php esc_html_e( 'Delete Selected Backups', 'mainwp' ); ?></div>
+            <div class="content">
+                <p id="mainwp-backup-bulk-delete-count"></p>
+                <div class="ui yellow message"><?php esc_html_e( 'The selected backups and their files on this Dashboard will be deleted. This cannot be undone.', 'mainwp' ); ?></div>
+                <?php if ( MainWP_Backup_Settings::is_native_backups_enabled() && 1 === (int) get_option( 'mainwp_backup_before_upgrade', 0 ) ) : ?>
+                <div class="ui yellow message" id="mainwp-backup-bulk-update-warning"><?php esc_html_e( 'If "Require a backup before an update" is enabled for this site and this selection removes its last qualifying backups, updates will be held until a new qualifying backup is available.', 'mainwp' ); ?></div>
+                <?php endif; ?>
+                <label for="mainwp-backup-bulk-cloud"><?php esc_html_e( 'Cloud copies', 'mainwp' ); ?></label>
+                <select id="mainwp-backup-bulk-cloud" class="ui dropdown">
+                    <option value="default"><?php esc_html_e( 'Use each backup task’s setting', 'mainwp' ); ?></option>
+                    <option value="1"><?php esc_html_e( 'Also delete cloud copies', 'mainwp' ); ?></option>
+                    <option value="0"><?php esc_html_e( 'Keep cloud copies', 'mainwp' ); ?></option>
+                </select>
+                <div id="mainwp-backup-bulk-preview" class="ui divided list" aria-live="polite"></div>
+                <div id="mainwp-backup-bulk-results" class="ui message" aria-live="polite" tabindex="-1" style="display:none;"></div>
+            </div>
+            <div class="actions">
+                <button type="button" class="ui cancel button" id="mainwp-backup-bulk-close"><?php esc_html_e( 'Close', 'mainwp' ); ?></button>
+                <button type="button" class="ui red disabled button" id="mainwp-backup-bulk-confirm" disabled><?php esc_html_e( 'Delete', 'mainwp' ); ?></button>
+            </div>
         </div>
 
         <div class="ui small modal" id="mainwp-snapshot-delete-modal">
@@ -382,6 +412,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                                 <input type="checkbox" id="mainwp-snapshots-show-removed">
                                 <label for="mainwp-snapshots-show-removed"><?php esc_html_e( 'Show removed backups', 'mainwp' ); ?></label>
                             </div>
+                            <?php if ( MainWP_Backup_Operations::current_user_can_delete() ) : ?>
+                            <select class="ui mini dropdown" id="mainwp-backup-bulk-action" aria-label="<?php esc_attr_e( 'Bulk actions', 'mainwp' ); ?>">
+                                <option value=""><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></option>
+                                <option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
+                            </select>
+                            <button type="button" class="ui mini basic button" id="mainwp-backup-bulk-apply"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+                            <span id="mainwp-backup-bulk-selection" role="status" aria-live="polite"></span>
+                            <?php endif; ?>
                         </div>
                         <div class="right aligned middle aligned column">
                             <?php if ( $native_enabled ) : ?>
@@ -898,7 +936,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         "data": "id",
                         "className": "collapsing",
                         "render": function ( data, type ) {
-                            return 'display' === type ? '#' + data : ( parseInt( data, 10 ) || 0 );
+                            var id = parseInt( data, 10 ) || 0;
+                            var checkbox = canDelete ? '<input type="checkbox" class="mainwp-backup-select" data-snapshot="' + id + '" aria-label="' + escAttr( '<?php echo esc_js( __( 'Select backup #%d', 'mainwp' ) ); ?>'.replace( '%d', id ) ) + '"> ' : '';
+                            return 'display' === type ? checkbox + '#' + id : id;
                         }
                     },
                     {
@@ -1298,6 +1338,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function loadSnapshots( siteId ) {
+                if ( typeof bulkDialogOpen !== 'undefined' && bulkDialogOpen ) { bulkReloadSite = siteId; return; }
+                if ( typeof bulkDelete !== 'undefined' && bulkDelete ) {
+                    if ( bulkDelete.busy() ) { bulkReloadSite = siteId; return; }
+                    bulkDelete.setSite( siteId );
+                    updateBulkSelection();
+                }
                 window.clearTimeout( snapshotPollTimer );
                 snapshotPollTimer = 0;
                 snapshotPollFailures = 0;
@@ -1326,6 +1372,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( siteId !== currentSite || requestId !== snapshotListRequest ) {
                         return; // A site switch superseded this request; its response must not repaint the newer site's list.
                     }
+                    if ( typeof bulkDialogOpen !== 'undefined' && bulkDialogOpen ) { bulkReloadSite = siteId; return; }
                     serverClockOffset = response.server_time > 0 ? response.server_time - Date.now() / 1000 : null;
                     showDisconnected( response.site_disconnected, response.reconnect_url );
                     enableSnapshotControls( siteId > 0 );
@@ -1347,6 +1394,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     setBackupInProgress( !! response.manual_backup_running );
                     setSnapshotsPlaceholder( snapshotsPlaceholders.empty );
                     snapshotDeleteBusy = !! response.snapshot_delete_busy;
+                    if ( ! response.error && Array.isArray( response.snapshots ) ) {
+                        bulkDelete.retain( response.snapshots.filter( function ( snap ) { return snap && 'pruned' !== snap.status; } ).map( function ( snap ) { return snap.id; } ) );
+                    }
                     snapshotsTable.clear();
                     snapshotsTable.rows.add( response.snapshots || [] );
                     snapshotsTable.draw();
@@ -1906,6 +1956,163 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // so a change handler chained off .dropdown() binds to the div,
             // where val() reads empty and the selection goes nowhere. Bind
             // the handler to the select itself; Fomantic fires change on it.
+            var bulkLabels = {
+                failed: '<?php echo esc_js( __( 'The delete result could not be confirmed. The row was kept; reload the list before trying again.', 'mainwp' ) ); ?>',
+                refused: '<?php echo esc_js( __( 'This backup cannot be deleted right now. Review the selection and try again.', 'mainwp' ) ); ?>',
+                selectedOne: '<?php echo esc_js( __( '%d backup selected.', 'mainwp' ) ); ?>',
+                selectedMany: '<?php echo esc_js( __( '%d backups selected.', 'mainwp' ) ); ?>',
+                confirmOne: '<?php echo esc_js( __( 'Delete %d selected backup?', 'mainwp' ) ); ?>',
+                confirmMany: '<?php echo esc_js( __( 'Delete %d selected backups?', 'mainwp' ) ); ?>',
+                affected: '<?php echo esc_js( __( 'Affected backups: %s.', 'mainwp' ) ); ?>',
+                cloudDelete: '<?php echo esc_js( __( 'Cloud copies: queue deletion if present.', 'mainwp' ) ); ?>',
+                cloudKeep: '<?php echo esc_js( __( 'Cloud copies: keep in storage.', 'mainwp' ) ); ?>',
+                chain: '<?php echo esc_js( __( 'Select every backup in this incremental chain before using bulk delete.', 'mainwp' ) ); ?>',
+                changed: '<?php echo esc_js( __( 'The backup changed. Review the selection again before deleting.', 'mainwp' ) ); ?>',
+                skipped: '<?php echo esc_js( __( 'Already deleted with another selected backup.', 'mainwp' ) ); ?>',
+                deleted: '<?php echo esc_js( __( 'Deleted', 'mainwp' ) ); ?>',
+                failedItem: '<?php echo esc_js( __( 'Failed', 'mainwp' ) ); ?>',
+                skippedItem: '<?php echo esc_js( __( 'Skipped', 'mainwp' ) ); ?>'
+            };
+            function bulkResultLines( results ) {
+                var lines = [];
+                results.forEach( function ( result ) {
+                    var label = 'deleted' === result.status ? bulkLabels.deleted : ( 'skipped' === result.status ? bulkLabels.skippedItem : bulkLabels.failedItem );
+                    var hasDetails = result.details && Array.isArray( result.details.deleted_ids );
+                    var hasErrorDetails = hasDetails && ( result.details.errors || [] ).some( function ( error ) { return error && error.message; } );
+                    lines.push( '#' + result.id + ': ' + label + ( result.message && ! hasErrorDetails ? ': ' + result.message : '' ) );
+                    if ( hasDetails ) { lines = lines.concat( deleteResultLines( result.details ) ); }
+                } );
+                return lines;
+            }
+            function bulkPreviewLines( plan ) {
+                var lines = [ '#' + plan.id + ( plan.error ? ': ' + plan.error : '' ) ];
+                if ( plan.effect ) {
+                    lines.push( bulkLabels.affected.replace( '%s', snapshotIdList( plan.effect.snapshot_ids ) ) );
+                    lines.push( plan.effect.delete_cloud_copies ? bulkLabels.cloudDelete : bulkLabels.cloudKeep );
+                }
+                return lines.concat( plan.warnings );
+            }
+            var bulkDialogOpen = false, bulkUiLocked = false, bulkReloadSite = 0;
+            var bulkDelete = window.mainwpBackupBulkDelete( {
+                labels: bulkLabels,
+                request: function ( action, data ) {
+                    return $.ajax( { url: ajaxurl, type: 'POST', dataType: 'json', data: $.extend( {}, data, {
+                        action: 'preview' === action ? 'mainwp_backup_snapshot_delete_preview' : 'mainwp_backup_snapshot_delete',
+                        security: 'preview' === action ? nonces.deletePreview : nonces.deleteConfirm
+                    } ) } );
+                },
+                remove: function ( ids ) {
+                    snapshotsTable.rows( function ( index, snap ) { return ids.indexOf( Number( snap.id ) ) !== -1; } ).remove().draw( false );
+                    updateBulkSelection();
+                },
+                changed: function ( results ) {
+                    setDeleteMessages( '#mainwp-backup-bulk-results', bulkResultLines( results ) ).toggleClass( 'red', results.some( function ( result ) { return 'failed' === result.status || result.details && 'complete' !== result.details.status; } ) );
+                }
+            } );
+            bulkDelete.reset( currentSite );
+            function flushBulkReload() {
+                var siteId = bulkReloadSite;
+                bulkReloadSite = 0;
+                if ( siteId > 0 && siteId === currentSite ) { loadSnapshots( siteId ); }
+            }
+            function updateBulkSelection() {
+                var ids = bulkDelete.ids(), eligible = [];
+                snapshotsTable.rows( { page: 'current' } ).every( function () {
+                    var snap = this.data();
+                    var allowed = 'pruned' !== snap.status;
+                    if ( allowed ) { eligible.push( Number( snap.id ) ); }
+                    $( this.node() ).find( '.mainwp-backup-select' ).prop( 'disabled', ! allowed || bulkUiLocked ).prop( 'checked', ids.indexOf( Number( snap.id ) ) !== -1 );
+                } );
+                var count = eligible.filter( function ( id ) { return ids.indexOf( id ) !== -1; } ).length;
+                $( '#mainwp-backup-select-all' ).prop( 'checked', eligible.length > 0 && count === eligible.length ).prop( 'indeterminate', count > 0 && count < eligible.length ).prop( 'disabled', ! eligible.length || bulkUiLocked );
+                var label = ( 1 === ids.length ? bulkLabels.selectedOne : bulkLabels.selectedMany ).replace( '%d', ids.length );
+                var $selection = $( '#mainwp-backup-bulk-selection' );
+                if ( $selection.text() !== label ) { $selection.text( label ); }
+            }
+            var bulkControlStates = [];
+            function bulkControls( disabled ) {
+                bulkUiLocked = disabled;
+                var $controls = $( '#mainwp-backup-bulk-close, #mainwp-backup-bulk-cloud, #mainwp-backup-bulk-apply, #mainwp-backup-bulk-action, #mainwp-native-backup-now-btn, #mainwp-snapshots-cleanup-btn' );
+                if ( disabled ) {
+                    bulkControlStates = [];
+                    $controls.each( function () {
+                        bulkControlStates.push( [ this, this.disabled ] );
+                        this.disabled = true;
+                        if ( 'SELECT' === this.tagName ) { $( this ).closest( '.ui.dropdown' ).addClass( 'disabled' ); }
+                    } );
+                } else {
+                    bulkControlStates.forEach( function ( state ) {
+                        state[0].disabled = state[1];
+                        if ( 'SELECT' === state[0].tagName ) { $( state[0] ).closest( '.ui.dropdown' ).toggleClass( 'disabled', !! state[1] ); }
+                    } );
+                    bulkControlStates = [];
+                    enableSnapshotControls( currentSite > 0 );
+                }
+                $( '#mainwp-backup-bulk-close' ).toggleClass( 'disabled', disabled );
+                updateBulkSelection();
+            }
+            async function previewBulkDelete() {
+                if ( bulkDelete.busy() || bulkUiLocked ) { return; }
+                $( '#mainwp-backup-bulk-confirm' ).prop( 'disabled', true ).addClass( 'disabled' );
+                var cloud = $( '#mainwp-backup-bulk-cloud' ).val();
+                bulkControls( true );
+                var plans = await bulkDelete.preview( 'default' === cloud ? undefined : '1' === cloud );
+                var $preview = $( '#mainwp-backup-bulk-preview' ).empty();
+                plans.forEach( function ( plan ) {
+                    bulkPreviewLines( plan ).forEach( function ( line ) { $( '<div class="item"></div>' ).text( line ).appendTo( $preview ); } );
+                } );
+                bulkControls( false );
+                var allowed = plans.some( function ( plan ) { return ! plan.error; } );
+                $( '#mainwp-backup-bulk-confirm' ).prop( 'disabled', ! allowed ).toggleClass( 'disabled', ! allowed );
+            }
+            snapshotsTable.on( 'draw', updateBulkSelection );
+            $( '#mainwp-restore-snapshots-table' ).on( 'change', '.mainwp-backup-select', function () {
+                bulkDelete.select( $( this ).attr( 'data-snapshot' ), this.checked );
+                updateBulkSelection();
+            } );
+            $( '#mainwp-backup-select-all' ).on( 'click', function ( event ) { event.stopPropagation(); } ).on( 'change', function () {
+                var checked = this.checked;
+                snapshotsTable.rows( { page: 'current' } ).every( function () {
+                    var snap = this.data();
+                    if ( 'pruned' !== snap.status ) { bulkDelete.select( snap.id, checked ); }
+                } );
+                updateBulkSelection();
+            } );
+            $( '#mainwp-backup-bulk-delete-modal' ).modal( {
+                closable: false, onHide: function () { return ! bulkDelete.busy(); },
+                onHidden: function () {
+                    bulkDialogOpen = false;
+                    $( '#mainwp-restore-site-selector' ).prop( 'disabled', false ).closest( '.ui.dropdown' ).removeClass( 'disabled' );
+                    $( '#mainwp-backup-bulk-apply' ).trigger( 'focus' );
+                    flushBulkReload();
+                }
+            } );
+            $( '#mainwp-backup-bulk-apply' ).on( 'click', function () {
+                if ( 'delete' !== $( '#mainwp-backup-bulk-action' ).val() || bulkDelete.busy() ) { return; }
+                var ids = bulkDelete.ids();
+                if ( ! ids.length ) {
+                    $( '#mainwp-backup-bulk-selection' ).text( '<?php echo esc_js( __( 'No backups selected.', 'mainwp' ) ); ?>' );
+                    return;
+                }
+                $( '#mainwp-backup-bulk-delete-count' ).text( ( 1 === ids.length ? bulkLabels.confirmOne : bulkLabels.confirmMany ).replace( '%d', ids.length ) );
+                $( '#mainwp-backup-bulk-results' ).empty().hide();
+                bulkDialogOpen = true;
+                $( '#mainwp-restore-site-selector' ).prop( 'disabled', true ).closest( '.ui.dropdown' ).addClass( 'disabled' );
+                $( '#mainwp-backup-bulk-delete-modal' ).modal( 'show' );
+                previewBulkDelete();
+            } );
+            $( '#mainwp-backup-bulk-cloud' ).on( 'change', previewBulkDelete );
+            $( '#mainwp-backup-bulk-confirm' ).on( 'click', async function () {
+                if ( this.disabled || bulkDelete.busy() ) { return; }
+                $( this ).prop( 'disabled', true ).addClass( 'disabled' );
+                bulkControls( true );
+                var siteId = currentSite;
+                var results = await bulkDelete.confirm();
+                if ( results.length > 0 && siteId === currentSite ) { bulkReloadSite = siteId; }
+                bulkControls( false );
+                $( '#mainwp-backup-bulk-results' ).trigger( 'focus' );
+            } );
+
             $( '#mainwp-restore-site-selector' ).dropdown();
             $( '#mainwp-restore-site-selector' ).on( 'change', function () {
                 var siteId = parseInt( $( this ).val(), 10 );

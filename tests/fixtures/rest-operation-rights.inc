@@ -34,8 +34,9 @@ namespace MainWP\Dashboard {
 		public static function instance() { return new self(); }
 		public function get_sites() { throw new \Rest_Rights_Boundary( 'site list' ); }
 		public function get_website_by_id( $id, $groups = false ) {
-			return (object) array( 'id' => (int) $id, 'url' => 'https://example.test/', 'translation_upgrades' => '[{"slug":"example/example.php"}]' );
+			return (object) array( 'id' => (int) $id, 'url' => 'https://example.test/', 'client_id' => $GLOBALS['fixture']['client_id'] ?? 0, 'translation_upgrades' => '[{"slug":"example/example.php"}]' );
 		}
+		public function get_table_name( $table ) { return 'mainwp_' . $table; }
 		public function get_website_option( $site, $option ) { return $site->{$option} ?? null; }
 		public function get_rest_api_key_by( $id ) { return (object) array( 'key_id' => $id, 'user_id' => 99 ); }
 		public function remove_rest_api_key( $id ) { throw new \Rest_Rights_Boundary( 'key deletion' ); }
@@ -46,6 +47,9 @@ namespace MainWP\Dashboard {
 	}
 	class MainWP_DB_Client {
 		public static function instance() { return new self(); }
+		public function get_wp_client_by( $by, $id ) {
+			return (object) array( 'client_id' => $id, 'name' => 'Fixture client', 'note' => 'Internal note', 'contact_role' => 'Private role' );
+		}
 		public function get_client_fields_by_params( $params ) { throw new \Rest_Rights_Boundary( 'client fields read' ); }
 	}
 	class MainWP_Uptime_Monitoring_Handle {
@@ -123,6 +127,9 @@ namespace {
 		if ( 'mainwp_currentuserallowedaccesssites' === $hook ) {
 			return $fixture['sites'];
 		}
+		if ( 'mainwp_is_single_user' === $hook && ! empty( $fixture['ownership_scope'] ) ) {
+			return false;
+		}
 		$callbacks = $GLOBALS['fixture_hooks'][ $hook ] ?? array();
 		ksort( $callbacks );
 		foreach ( $callbacks as $priority_callbacks ) {
@@ -137,6 +144,12 @@ namespace {
 		array( 'user' => 42, 'rights' => array(), 'checks' => array(), 'sites' => 'all' ),
 		$input
 	);
+	if ( ! empty( $input['ownership_scope'] ) ) {
+		$GLOBALS['wpdb'] = new class {
+			public function prepare( $sql, ...$args ) { return $sql; }
+			public function get_col( $sql ) { return array( 1 ); }
+		};
+	}
 	$root = dirname( __DIR__, 2 );
 	require $root . '/class/class-mainwp-common-handler.php';
 	require $root . '/includes/rest-api/class-mainwp-rest-authentication.php';

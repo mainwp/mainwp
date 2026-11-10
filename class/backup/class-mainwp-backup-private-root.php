@@ -13,6 +13,16 @@ namespace MainWP\Dashboard;
 class MainWP_Backup_Private_Root {
 
     /**
+     * Dashboard administrator's confirmation of the resolved backup path.
+     */
+    private const CONFIRMATION_OPTION = 'mainwp_backup_private_root_confirmation';
+
+    /**
+     * Error reported when a backup or staging write cannot use private storage.
+     */
+    private const ERROR_CODE = 'mainwp_backup_private_root_unavailable';
+
+    /**
      * Request-local resolution result.
      *
      * @var string|\WP_Error|null
@@ -48,6 +58,13 @@ class MainWP_Backup_Private_Root {
     private static $configured_root = '';
 
     /**
+     * Whether the root was chosen without a constant or filter override.
+     *
+     * @var bool
+     */
+    private static $automatic_root = false;
+
+    /**
      * Reset request-local state for tests.
      *
      * @return void
@@ -58,6 +75,7 @@ class MainWP_Backup_Private_Root {
         self::$used_ladder         = false;
         self::$probe_verdicts      = array();
         self::$configured_root     = '';
+        self::$automatic_root      = false;
     }
 
     /**
@@ -67,7 +85,7 @@ class MainWP_Backup_Private_Root {
      * For a WordPress directory named mainwp-private, the sibling container is mainwp-private-dashboard to keep the root outside WordPress.
      * Changing MAINWP_BACKUP_PRIVATE_DIR, or renaming the WordPress directory, after backups exist means moving the sites/ folder to the new root, or the older snapshots leave retention and the Backups tab; restore still works from the recorded paths.
      * Hosts that deploy through an atomic symlink (current -> releases/<id>: Capistrano, Deployer, Envoyer) must set MAINWP_BACKUP_PRIVATE_DIR: WordPress resolves ABSPATH through the release directory, so the default folder name changes with every release and the earlier snapshots drop out of retention and the Backups tab.
-     * Without a constant or filter override, a refused default stays refused and an existing default always wins. Otherwise, existing sibling backup roots take precedence over creating the default, followed by creating a sibling backup root if the default cannot be created. Siblings are considered in private_html, private order and only within real directories already provided by the host.
+     * Without an override, preserve existing backup roots for reads. Only the host's real private directory can serve as a new fallback when the default cannot be created.
      *
      * @return string|\WP_Error
      */
@@ -81,11 +99,11 @@ class MainWP_Backup_Private_Root {
         $suffix    = '/' . $container . '/' . $folder . '/backups';
         $default   = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : $parent . $suffix;
         $candidate = apply_filters( 'mainwp_backup_private_root', $default );
-        if ( ! defined( 'MAINWP_BACKUP_PRIVATE_DIR' )
+
+        self::$automatic_root = ! defined( 'MAINWP_BACKUP_PRIVATE_DIR' )
             && is_string( $candidate ) && is_string( $default )
-            && untrailingslashit( wp_normalize_path( $candidate ) ) === untrailingslashit( wp_normalize_path( $default ) )
-            && '' === self::refusal_reason( $default )
-            && ! is_dir( $default ) ) {
+            && untrailingslashit( wp_normalize_path( $candidate ) ) === untrailingslashit( wp_normalize_path( $default ) );
+        if ( self::$automatic_root && '' === self::refusal_reason( $default ) && ! is_dir( $default ) ) {
             $existing  = null;
             $creatable = '' === self::path_availability_reason( $default ) ? $default : null;
             foreach ( array( $parent . '/private_html', $parent . '/private' ) as $base ) {
@@ -102,7 +120,7 @@ class MainWP_Backup_Private_Root {
                     $existing = $path;
                     break;
                 }
-                if ( null === $creatable && '' === self::path_availability_reason( $path ) ) {
+                if ( $base === $parent . '/private' && null === $creatable && '' === self::path_availability_reason( $path ) ) {
                     $creatable = $path;
                 }
             }
@@ -340,12 +358,23 @@ class MainWP_Backup_Private_Root {
             return $root;
         }
         $existed = is_dir( $root );
-        $root    = self::ensure_private_dir( $root );
+        if ( ! $existed ) {
+            $error = self::verification_error( $root, self::exposure_verdict( $root, true ) );
+            if ( is_wp_error( $error ) ) {
+                return $error;
+            }
+        }
+        $resolved_root = $root;
+        $root          = self::ensure_private_dir( $root );
         if ( is_wp_error( $root ) ) {
             return $root;
         }
-        if ( 'served' === self::exposure_verdict( $root, ! $existed ) ) {
-            return self::unavailable( $root, __( 'the web server serves this directory, so backups already stored in it can be downloaded over the web until they are moved or deleted', 'mainwp' ) );
+        if ( wp_normalize_path( $root ) !== $resolved_root ) {
+            return self::unavailable( $resolved_root, __( 'directory changed during creation', 'mainwp' ) );
+        }
+        $error = self::verification_error( $root, self::exposure_verdict( $root, ! $existed ) );
+        if ( is_wp_error( $error ) ) {
+            return $error;
         }
         $parent = self::ensure_private_dir( $root . $kind, $root );
         if ( is_wp_error( $parent ) ) {
@@ -355,18 +384,125 @@ class MainWP_Backup_Private_Root {
     }
 
     /**
+     * Read the storage status for the settings page without creating directories.
+     *
+     * @param bool $refresh Recheck exposure even if a safe result is cached.
+     * @return array{path: string, status: string, key: string}|null Storage status, or null for an invalid or unwritable path.
+     */
+    public static function storage_status( bool $refresh = false ): ?array {
+        $root = self::resolve();
+        if ( is_wp_error( $root ) || '' !== self::availability_reason() ) {
+            return null;
+        }
+        return array(
+            'path'   => $root,
+            'status' => self::verification_status( $root, self::exposure_verdict( $root, $refresh ) ),
+            'key'    => self::confirmation_key( $root ),
+        );
+    }
+
+    /**
+     * Save confirmation for the exact path shown on the authorized settings form.
+     *
+     * @param string $key Submitted path fingerprint.
+     * @return bool Whether the confirmation was saved or already exists.
+     */
+    public static function confirm_storage( string $key ): bool {
+        $root = self::resolve();
+        if ( is_wp_error( $root ) || self::confirmation_key( $root ) !== $key ) {
+            return false;
+        }
+        $storage = self::storage_status( true );
+        if ( null === $storage || ! in_array( $storage['status'], array( 'confirmation_required', 'confirmed' ), true ) ) {
+            return false;
+        }
+        return update_option( self::CONFIRMATION_OPTION, $key, false ) || get_option( self::CONFIRMATION_OPTION ) === $key;
+    }
+
+    /**
+     * Fingerprint the canonical path without storing a filesystem path in settings.
+     *
+     * @param string $root Canonical backup root.
+     * @return string
+     */
+    private static function confirmation_key( string $root ): string {
+        return hash( 'sha256', untrailingslashit( wp_normalize_path( $root ) ) );
+    }
+
+    /**
+     * Apply the same verification policy to settings and all backup writers.
+     *
+     * @param string $root Canonical backup root.
+     * @param string $exposure Loopback verdict.
+     * @return string
+     */
+    private static function verification_status( string $root, string $exposure ): string {
+        if ( 'served' === $exposure ) {
+            return 'public';
+        }
+        $path = untrailingslashit( wp_normalize_path( $root ) );
+        // A guessed URL's response cannot rule out aliases for custom or legacy roots.
+        if ( 'unknown' !== $exposure && self::$automatic_root && $path === self::$configured_root && ! preg_match( '~(?:^|/)private_html(?:/|$)~i', $path ) ) {
+            return 'automatic';
+        }
+        if ( get_option( self::CONFIRMATION_OPTION ) === self::confirmation_key( $root ) ) {
+            return 'confirmed';
+        }
+
+        /**
+         * Filter the canonical backup directory verified by the hosting administrator.
+         *
+         * Return an exact path only after confirming that no web server serves the
+         * directory, including through aliases and other virtual hosts.
+         *
+         * @param string $verified The verified path or an empty string by default.
+         */
+        $verified = apply_filters( 'mainwp_backup_verified_private_root', defined( 'MAINWP_BACKUP_VERIFIED_PRIVATE_DIR' ) ? MAINWP_BACKUP_VERIFIED_PRIVATE_DIR : '' );
+        if ( 'unknown' !== $exposure && '' !== $path && is_string( $verified ) && untrailingslashit( wp_normalize_path( $verified ) ) === $path ) {
+            return 'confirmed';
+        }
+        return 'confirmation_required';
+    }
+
+    /**
+     * Explain why archive writes cannot proceed.
+     *
+     * @param string $root Canonical backup root.
+     * @param string $exposure Loopback verdict.
+     * @return \WP_Error|null
+     */
+    private static function verification_error( string $root, string $exposure ): ?\WP_Error {
+        $status = self::verification_status( $root, $exposure );
+        if ( 'public' === $status ) {
+            return self::unavailable( $root, __( 'the web server serves this directory, so backups already stored in it can be downloaded over the web until they are moved or deleted', 'mainwp' ) );
+        }
+        if ( 'confirmation_required' === $status ) {
+            return new \WP_Error(
+                self::ERROR_CODE,
+                sprintf(
+                    /* translators: %s: resolved backup directory. */
+                    __( 'MainWP could not verify that the backup directory "%s" is private. Ask your host to verify that no domain or alias serves it, then confirm the directory in Built-In Backups settings.', 'mainwp' ),
+                    $root
+                )
+            );
+        }
+        return null;
+    }
+
+    /**
      * Cache loopback evidence without keeping a repaired host refused across requests.
      *
      * @param string $root Canonical root.
-     * @param bool   $created Whether this writer created the root.
+     * @param bool   $refresh Whether to bypass a cached allow.
      * @return string
      */
-    private static function exposure_verdict( string $root, bool $created ): string {
+    private static function exposure_verdict( string $root, bool $refresh ): string {
         // realpath() keeps backslashes on Windows, while every mapping base is normalized.
         $root     = trailingslashit( wp_normalize_path( $root ) );
         $site_url = site_url();
         $key      = hash( 'sha256', untrailingslashit( $root ) . "\n" . $site_url );
-        if ( ! $created && isset( self::$probe_verdicts[ $key ] ) ) {
+        $exists   = is_dir( $root );
+        if ( $exists && ! $refresh && isset( self::$probe_verdicts[ $key ] ) ) {
             return self::$probe_verdicts[ $key ];
         }
 
@@ -377,28 +513,40 @@ class MainWP_Backup_Private_Root {
         }
         $urls = self::probe_urls( array( $root, self::$configured_root ), $site_url, ABSPATH, $document_root );
 
-        $cached = get_option( 'mainwp_backup_private_root_probe' );
-        $cached = is_array( $cached ) && ( $cached['key'] ?? '' ) === $key ? $cached : array();
-        $probed = isset( $cached['urls'] ) && is_array( $cached['urls'] ) ? array_values( array_filter( $cached['urls'], 'is_string' ) ) : array();
+        $cached       = get_option( 'mainwp_backup_private_root_probe' );
+        $root_key     = self::confirmation_key( $root );
+        $same_mapping = is_array( $cached ) && ( $cached['key'] ?? '' ) === $key;
+        $was_public   = is_array( $cached ) && 'served' === ( $cached['verdict'] ?? '' ) && ( $same_mapping || ( $cached['root'] ?? '' ) === $root_key );
+        $cached       = $same_mapping ? $cached : array();
+        $probed       = isset( $cached['urls'] ) && is_array( $cached['urls'] ) ? array_values( array_filter( $cached['urls'], 'is_string' ) ) : array();
         // A web request can see a document-root URL that the cron request behind the cached allow could not.
-        if ( ! $created && time() < (int) ( $cached['expires'] ?? 0 )
-            && in_array( $cached['verdict'] ?? '', array( 'not_served', 'unknown' ), true )
+        if ( $exists && ! $refresh && time() < (int) ( $cached['expires'] ?? 0 )
+            && 'not_served' === ( $cached['verdict'] ?? '' )
             && array() === array_diff( $urls, $probed ) ) {
             self::$probe_verdicts[ $key ] = $cached['verdict'];
             return $cached['verdict'];
         }
 
         // Cron and CLI requests have no document root, so they also probe what a web request mapped.
-        $urls                         = array_slice( array_values( array_unique( array_merge( $urls, $probed ) ) ), 0, 8 );
-        $reason                       = '';
-        $verdict                      = array() === $urls ? 'unmapped' : self::probe_exposure( $root, $urls, $reason );
+        $urls    = array_slice( array_values( array_unique( array_merge( $urls, $probed ) ) ), 0, 8 );
+        $reason  = '';
+        $verdict = ! $exists || array() === $urls ? 'unmapped' : self::probe_exposure( $root, $urls, $reason );
+        // An inconclusive retry or a different origin cannot clear known exposure.
+        if ( $was_public && ( ! $same_mapping || in_array( $verdict, array( 'unknown', 'unmapped' ), true ) ) ) {
+            self::$probe_verdicts[ $key ] = 'served';
+            return 'served';
+        }
         self::$probe_verdicts[ $key ] = $verdict;
+        if ( 'served' === $verdict && get_option( self::CONFIRMATION_OPTION ) === $root_key ) {
+            delete_option( self::CONFIRMATION_OPTION );
+        }
         // Mapping costs no request, and a request without a document root must not hide one that has it.
         if ( 'unmapped' !== $verdict ) {
             update_option(
                 'mainwp_backup_private_root_probe',
                 array(
                     'key'     => $key,
+                    'root'    => $root_key,
                     'verdict' => $verdict,
                     'expires' => 'served' === $verdict ? 0 : time() + ( 'unknown' === $verdict ? DAY_IN_SECONDS : 7 * DAY_IN_SECONDS ),
                     'urls'    => $urls,
@@ -667,9 +815,9 @@ class MainWP_Backup_Private_Root {
      * @return \WP_Error
      */
     private static function unavailable( string $path, string $reason ): \WP_Error {
-        $searched = self::$used_ladder ? __( ' Sibling directories tried: private_html, private.', 'mainwp' ) : '';
+        $searched = self::$used_ladder ? __( ' Sibling directory tried for new backups: private.', 'mainwp' ) : '';
         return new \WP_Error(
-            'mainwp_backup_private_root_unavailable',
+            self::ERROR_CODE,
             sprintf(
                 /* translators: 1: Directory path, 2: Failure reason, 3: Sibling directories tried, when applicable. */
                 __( "Private backup directory \"%1\$s\" on the Dashboard server is unavailable: %2\$s.%3\$s\n\nBackups downloaded from the Child site and restore working files are stored on the Dashboard server. Check write access on the Dashboard server.\n\nConfigure MAINWP_BACKUP_PRIVATE_DIR in the Dashboard wp-config.php outside ABSPATH and WP_CONTENT_DIR. On an addon domain, when WordPress sits in its own subdirectory of the site, or when the Dashboard is served from a folder inside another site, choose a directory no web server serves.", 'mainwp' ),

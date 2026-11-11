@@ -315,7 +315,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
         $user_data = $this->prepare_edit_user_data( $body, $user_info );
 
         // Execute user update.
-        $result = $this->execute_user_update( $website, $user_data, $request );
+        $result = $this->execute_user_update( $website, $user_data, $request, $user_info );
         if ( is_wp_error( $result ) ) {
             return $result;
         }
@@ -360,7 +360,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
         }
 
         // Execute user deletion.
-        $result = $this->execute_user_deletion( $website, $request );
+        $result = $this->execute_user_deletion( $website, $request, $user_info );
         if ( is_wp_error( $result ) ) {
             return $result;
         }
@@ -909,17 +909,62 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
     }
 
     /**
+     * Resolve the target login from authenticated Child responses.
+     *
+     * @param object $website Website object.
+     * @param array  $user_info User lookup result.
+     * @param int    $user_id Target Child user ID.
+     * @return string|null Login, or null when identity could not be resolved.
+     */
+    private function get_target_user_login( $website, $user_info, $user_id ) {
+        $data    = is_array( $user_info['user_data'] ?? null ) ? $user_info['user_data'] : array();
+        $display = is_array( $data['public_display'] ?? null ) ? $data['public_display'] : array();
+        $login   = $display['display_username'] ?? null;
+        if ( is_string( $login ) && '' !== $login ) {
+            return $login;
+        }
+
+        // Child deduplicates display choices, which can remove the login field.
+        try {
+            $users = MainWP_Connect::fetch_url_authed(
+                $website,
+                'search_users',
+                array(
+                    'search'         => '*',
+                    'search_columns' => 'user_login',
+                )
+            );
+            if ( ! is_array( $users ) || isset( $users['error'] ) ) {
+                return null;
+            }
+            foreach ( $users as $user ) {
+                if ( is_array( $user ) && filter_var( $user['id'] ?? null, FILTER_VALIDATE_INT ) === $user_id ) {
+                    return is_string( $user['login'] ?? null ) && '' !== $user['login'] ? $user['login'] : null;
+                }
+            }
+        } catch ( MainWP_Exception $e ) {
+            return null;
+        }
+        return null;
+    }
+
+    /**
      * Execute user deletion on child site.
      *
      * @param object          $website Website object.
      * @param WP_REST_Request $request Full details about the request.
+     * @param array           $user_info Authenticated Child lookup result.
      * @return true|WP_Error True on success, WP_Error on failure.
      */
-    private function execute_user_deletion( $website, $request ) { // phpcs:ignore -- NOSONAR - complex.
+    private function execute_user_deletion( $website, $request, $user_info ) { // phpcs:ignore -- NOSONAR - complex.
         // Check if the user is the same user currently connecting to mainwp.
         $user_id = (int) $request->get_param( 'user_id' );
-        if ( (int) $website->userid === $user_id ) {
-            return new WP_Error( 'user_not_found', __( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ) );
+        $login   = $this->get_target_user_login( $website, $user_info, $user_id );
+        if ( ! is_string( $login ) || '' === $login ) {
+            return new WP_Error( 'user_protected', __( 'The secure-link user could not be identified. This user can not be deleted.', 'mainwp' ), array( 'status' => 403 ) );
+        }
+        if ( 0 === strcasecmp( (string) $website->adminname, $login ) ) {
+            return new WP_Error( 'user_protected', __( 'This user is used for our secure link, it can not be deleted.', 'mainwp' ), array( 'status' => 403 ) );
         }
         try {
 
@@ -1015,15 +1060,22 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @param object          $website Website object.
      * @param array           $user_data User data to update.
      * @param WP_REST_Request $request Full details about the request.
+     * @param array           $user_info Authenticated Child lookup result.
      * @return true|WP_Error True on success, WP_Error on failure.
      */
-    private function execute_user_update( $website, $user_data, $request ) { // phpcs:ignore -- NOSONAR - complex.
+    private function execute_user_update( $website, $user_data, $request, $user_info ) { // phpcs:ignore -- NOSONAR - complex.
         $user_id   = (int) $request->get_param( 'user_id' );
         $user_pass = isset( $user_data['user_pass'] ) ? $user_data['user_pass'] : '';
 
         // Check if the user is the same user currently connecting to mainwp.
-        if ( ! empty( $user_data['role'] ) && (int) $user_id === (int) $website->userid ) {
-            return new WP_Error( 'user_update_error', __( 'This user is used for our secure link, it can not be changed.', 'mainwp' ) );
+        if ( ! empty( $user_data['role'] ) && 'donotupdate' !== $user_data['role'] ) {
+            $login = $this->get_target_user_login( $website, $user_info, $user_id );
+            if ( ! is_string( $login ) || '' === $login ) {
+                return new WP_Error( 'user_update_error', __( 'The secure-link user could not be identified. This user role can not be changed.', 'mainwp' ), array( 'status' => 403 ) );
+            }
+            if ( 0 === strcasecmp( (string) $website->adminname, $login ) ) {
+                return new WP_Error( 'user_update_error', __( 'This user is used for our secure link, it can not be changed.', 'mainwp' ), array( 'status' => 403 ) );
+            }
         }
         /**
          * Action: mainwp_before_user_action

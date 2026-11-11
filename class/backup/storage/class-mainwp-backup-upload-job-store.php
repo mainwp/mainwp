@@ -620,14 +620,35 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      *              checkpoint, a lost lease or an unconfirmed write.
      */
     public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
-        $row = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT kind, checkpoint FROM %i WHERE id = %d', $this->table(), $job_id ) );
+        $row = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT kind, checkpoint, attempt_count FROM %i WHERE id = %d', $this->table(), $job_id ) );
         if ( null === $row ) {
             return false;
         }
         if ( self::KIND_UPLOAD !== $row->kind ) {
             return $this->update_job( $job_id, array( 'checkpoint' => (string) wp_json_encode( $checkpoint ) ), array( '%s' ), $lock_token );
         }
-        $current = json_decode( (string) $row->checkpoint, true );
+        $current  = json_decode( (string) $row->checkpoint, true );
+        $progress = static function ( array $value ): int {
+            $count = 0;
+            foreach ( $value['artifacts'] ?? array() as $artifact ) {
+                if ( 'whole' === ( $artifact['mode'] ?? '' ) ) {
+                    $count += empty( $artifact['done'] ) ? 0 : 1;
+                    continue;
+                }
+                $chunks = is_array( $artifact['chunks'] ?? null ) ? $artifact['chunks'] : array();
+                foreach ( $chunks as $chunk ) {
+                    $count += empty( $chunk['remote_present'] ) ? 0 : 1;
+                }
+            }
+            return $count;
+        };
+        // Rebase only with confirmed remote progress in this fenced checkpoint.
+        $retry_floor = $progress( $checkpoint ) > $progress( is_array( $current ) ? $current : array() )
+            ? (int) $row->attempt_count : (int) ( $current['retry_attempt_floor'] ?? 0 );
+        unset( $checkpoint['retry_attempt_floor'] );
+        if ( $retry_floor > 0 ) {
+            $checkpoint['retry_attempt_floor'] = $retry_floor;
+        }
         if ( (int) ( $current['storage_age_floor'] ?? 0 ) > 0 ) {
             $checkpoint['storage_age_floor'] = (int) $current['storage_age_floor'];
         }
@@ -641,7 +662,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         }
         $now = time();
         // Compare a digest so the UPDATE only sends one copy of a large checkpoint.
-        $binds = array( $this->table(), $encoded, $now, $job_id, md5( (string) $row->checkpoint ) );
+        $binds = array( $this->table(), $encoded, $now, $job_id, md5( (string) $row->checkpoint ), (int) $row->attempt_count );
         $fence = '';
         if ( null !== $lock_token ) {
             $fence   = ' AND locked_by = %s AND locked_until >= %d';
@@ -650,7 +671,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         }
         $changed = $this->wpdb->query(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- optional fence and bind array grow together.
-                "UPDATE %i SET `checkpoint` = %s, `updated` = %d WHERE id = %d AND MD5(checkpoint) = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence, placeholder values.
+                "UPDATE %i SET `checkpoint` = %s, `updated` = %d WHERE id = %d AND MD5(checkpoint) = %s AND attempt_count = %d{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence, placeholder values.
                 $binds
             )
         );

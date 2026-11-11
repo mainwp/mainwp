@@ -20,6 +20,99 @@ use MainWP\Dashboard\MainWP_DB;
  */
 class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 
+	/** A scalar chunk plan is not confirmed remote progress. */
+	public function test_scalar_chunk_plan_does_not_grant_retry_progress() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98211, array( 7 ) );
+		$job = $store->acquire_next_job( 'scalar-chunks', 300 );
+		$this->assertNotNull( $job );
+		$checkpoint = array(
+			'artifacts' => array(
+				array(
+					'mode'   => 'chunked',
+					'chunks' => 'malformed-chunks',
+				),
+			),
+		);
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint, 'scalar-chunks' ) );
+		$this->assertSame( $checkpoint['artifacts'], $store->get_job( (int) $job->id )->checkpoint['artifacts'] );
+		$this->assertSame( 0, $store->get_job( (int) $job->id )->checkpoint['retry_attempt_floor'] ?? 0 );
+	}
+
+	/** A concurrent failure cannot be absorbed into a progress rebase. */
+	public function test_retry_floor_refuses_a_racing_failure_count() {
+		global $wpdb;
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98210, array( 7 ) );
+		$job = $store->acquire_next_job( 'racing-progress', 300 );
+		$this->assertNotNull( $job );
+		$id = (int) $job->id;
+		$this->assertTrue( $store->fail_retryable( $id, 'first lane', 0 ) );
+		$this->assertNotNull( $store->acquire_next_job( 'racing-progress-next', 300 ) );
+		$checkpoint = array(
+			'artifacts' => array(
+				array(
+					'mode'   => 'chunked',
+					'chunks' => array( array( 'remote_present' => true ) ),
+				),
+			),
+		);
+		$raced      = false;
+		$table      = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$race       = static function ( $sql ) use ( &$raced, $wpdb, $table, $id ) {
+			if ( ! $raced && false !== strpos( $sql, 'AND MD5(checkpoint)' ) && false !== strpos( $sql, 'attempt_count = ' ) ) {
+				$raced = true;
+				$wpdb->query( $wpdb->prepare( 'UPDATE %i SET attempt_count = attempt_count + 1 WHERE id = %d', $table, $id ) );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$this->assertFalse( $store->save_checkpoint( $id, $checkpoint, 'racing-progress-next' ) );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$this->assertTrue( $raced );
+		$this->assertSame( 'racing-progress-next', $store->get_job( $id )->locked_by );
+		$this->assertSame( 2, (int) $store->get_job( $id )->attempt_count );
+		$this->assertSame( 0, $store->get_job( $id )->checkpoint['retry_attempt_floor'] ?? 0 );
+	}
+
+	/** Only a persisted remote unit can rebase the consecutive retry budget. */
+	public function test_retry_floor_requires_persisted_remote_progress() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98209, array( 7 ) );
+		$job = $store->acquire_next_job( 'progress-holder', 300 );
+		$this->assertNotNull( $job );
+		$id         = (int) $job->id;
+		$checkpoint = array(
+			'artifacts' => array(
+				array(
+					'mode'   => 'chunked',
+					'chunks' => array( array( 'remote_present' => false ) ),
+				),
+			),
+		);
+		$this->assertTrue( $store->save_checkpoint( $id, $checkpoint, 'progress-holder' ) );
+		$this->assertTrue( $store->fail_retryable( $id, 'first failure', 0, 'progress-holder' ) );
+		$this->assertNotNull( $store->acquire_next_job( 'next-holder', 300 ) );
+		$checkpoint['retry_attempt_floor'] = 999;
+		$checkpoint['last_attempt_at']     = time();
+		$this->assertTrue( $store->save_checkpoint( $id, $checkpoint, 'next-holder' ) );
+		$this->assertSame( 0, $store->get_job( $id )->checkpoint['retry_attempt_floor'] ?? 0 );
+		$checkpoint['artifacts'][0]['chunks'][0]['remote_present'] = true;
+		$this->assertFalse( $store->save_checkpoint( $id, $checkpoint, 'progress-holder' ) );
+		$this->assertSame( 0, $store->get_job( $id )->checkpoint['retry_attempt_floor'] ?? 0 );
+		$this->assertTrue( $store->save_checkpoint( $id, $checkpoint, 'next-holder' ) );
+		$this->assertSame( 1, $store->get_job( $id )->checkpoint['retry_attempt_floor'] );
+		$this->assertSame( 1, (int) $store->get_job( $id )->attempt_count );
+		$this->assertTrue( $store->fail_retryable( $id, 'next chunk failed', 0, 'next-holder' ) );
+		$this->assertNotNull( $store->acquire_next_job( 'final-holder', 300 ) );
+		$this->assertTrue( $store->save_checkpoint( $id, $checkpoint, 'final-holder' ) );
+		$this->assertSame( 1, $store->get_job( $id )->checkpoint['retry_attempt_floor'] );
+		$this->assertSame( 2, (int) $store->get_job( $id )->attempt_count );
+	}
+
 	/**
 	 * Equality belongs to the holder; one second past expiry belongs to the next worker.
 	 *

@@ -1089,8 +1089,33 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             return;
         }
 
-        $attempts = (int) $job->attempt_count + 1;
-        if ( $encryption_refused || 410 === $code || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
+        $persisted = $store->get_job( (int) $job->id );
+        if ( null === $persisted ) {
+            return;
+        }
+        $total_attempts   = (int) $persisted->attempt_count + 1;
+        $attempts         = max( 1, $total_attempts - (int) ( $persisted->checkpoint['retry_attempt_floor'] ?? 0 ) );
+        $units            = 0;
+        $pending_artifact = null;
+        foreach ( $persisted->checkpoint['artifacts'] ?? array() as $artifact ) {
+            $chunks = is_array( $artifact['chunks'] ?? null ) ? $artifact['chunks'] : array();
+            $units += 'whole' === ( $artifact['mode'] ?? '' ) ? 1 : count( $chunks );
+            if ( null === $pending_artifact && empty( $artifact['done'] ) ) {
+                $pending_artifact = $artifact;
+            }
+        }
+        if ( ! $chunking && is_array( $pending_artifact['chunks'] ?? null ) && ! empty( $pending_artifact['chunks'] ) && (int) ( $pending_artifact['chunks_cursor'] ?? 0 ) < count( $pending_artifact['chunks'] ) ) {
+            $error .= sprintf( ' (chunk %d of %d)', (int) ( $pending_artifact['chunks_cursor'] ?? 0 ) + 1, count( $pending_artifact['chunks'] ) );
+        }
+        // Allow scattered failures while bounding the job to two per unit.
+        $job_ceiling = max( MainWP_Backup_Backoff::MAX_ATTEMPTS, 2 * $units );
+        // Progress must not extend retrying a failing upload over multiple days.
+        $retry_deadline   = (int) $persisted->created > 0 ? (int) $persisted->created + DAY_IN_SECONDS : 0;
+        $deadline_reached = $retry_deadline > 0 && $now >= $retry_deadline;
+        if ( $deadline_reached ) {
+            $error .= ' The 24-hour upload retry deadline has been reached.';
+        }
+        if ( $encryption_refused || 410 === $code || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) || $total_attempts >= $job_ceiling || $deadline_reached ) {
             if ( $store->fail_permanent( (int) $job->id, $error, $this->lock_token ) ) {
                 $this->cleanup_staging( $job );
                 $this->fire_upload_failed( $job, $destination, $error );
@@ -1105,7 +1130,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             }
             $this->cleanup_staging( $job );
         }
-        $store->fail_retryable( (int) $job->id, $error, $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts ), $this->lock_token );
+        $next_retry_at = $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
+        if ( $retry_deadline > 0 ) {
+            $next_retry_at = min( $next_retry_at, $retry_deadline );
+        }
+        $store->fail_retryable( (int) $job->id, $error, $next_retry_at, $this->lock_token );
     }
 
     /**

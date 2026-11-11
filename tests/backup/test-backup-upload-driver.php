@@ -1898,11 +1898,218 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$now = time();
 		for ( $i = 0; $i < 7; $i++ ) {
 			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
-			$now += 20000;
+			$now = max( $now, (int) $store->get_jobs_for_snapshot( $snapshot_id )[0]->next_retry_at );
 		}
 
 		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 6, (int) $job->attempt_count );
+	}
+
+	/**
+	 * Each transient chunk failure recovers before the next chunk fails.
+	 *
+	 * @dataProvider chunk_retry_budgets
+	 * @param int    $failures Failures per chunk.
+	 * @param string $status Expected final status.
+	 * @param int    $attempts Expected recorded retryable failures.
+	 */
+	public function test_scattered_chunk_failures_do_not_exhaust_upload( $failures, $status, $attempts ) {
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Scattered failures',
+				'settings' => array(
+					'bucket'     => 'fixture',
+					'region'     => 'us-east-1',
+					'access_key' => 'fixture-key',
+					'secret_key' => 'fixture-secret',
+				),
+			)
+		);
+		$id      = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 16384,
+					'role' => 'full',
+				),
+			)
+		);
+		$store   = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$objects = array();
+		$failed  = array();
+		add_filter(
+			'pre_http_request',
+			static function ( $pre, $args, $url ) use ( &$objects, &$failed, $failures ) {
+				$key    = (string) wp_parse_url( $url, PHP_URL_PATH );
+				$method = strtoupper( $args['method'] ?? 'GET' );
+				$code   = 200;
+				if ( 'PUT' === $method ) {
+					if ( false !== strpos( $key, '/chunks/' ) && ( $failed[ $key ] ?? 0 ) < $failures ) {
+						$failed[ $key ] = ( $failed[ $key ] ?? 0 ) + 1;
+						$code           = count( $failed ) % 2 ? 503 : 500;
+					} else {
+						$objects[ $key ] = strlen( $args['body'] );
+					}
+				} elseif ( 'HEAD' === $method && ! isset( $objects[ $key ] ) ) {
+					$code = 404;
+				}
+				return array(
+					'headers'  => array( 'content-length' => (string) ( $objects[ $key ] ?? 0 ) ),
+					'body'     => '',
+					'response' => array( 'code' => $code ),
+				);
+			},
+			10,
+			3
+		);
+		$now = time();
+		for ( $i = 0; $i < 60; ++$i ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+			$now = max( $now, (int) $store->get_jobs_for_snapshot( $id )[0]->next_retry_at );
+		}
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( $attempts + ( 'failed_permanent' === $status ? 1 : 0 ), array_sum( $failed ) );
+		$this->assertSame( $status, $job->status );
+		$this->assertSame( $attempts, (int) $job->attempt_count );
+		if ( 'failed_permanent' === $status ) {
+			$this->assertStringContainsString( 'HTTP 503', $job->last_error );
+			$this->assertStringContainsString( '(chunk ', $job->last_error );
+			$this->assertStringNotContainsString( 'fixture-secret', $job->last_error );
+		}
+	}
+
+	/**
+	 * Scattered recovery, a stuck first chunk and the scaled whole-job ceiling.
+	 *
+	 * @return array
+	 */
+	public static function chunk_retry_budgets(): array {
+		return array(
+			'scattered recovery' => array( 1, 'complete', 16 ),
+			'stuck chunk'        => array( 7, 'failed_permanent', 6 ),
+			'whole-job ceiling'  => array( 3, 'failed_permanent', 31 ),
+		);
+	}
+
+	/**
+	 * Progress cannot keep a failing upload retrying beyond one day.
+	 *
+	 * @dataProvider upload_retry_deadline_ages
+	 * @param int  $age Age at the failure, seconds.
+	 * @param bool $expired Whether the retry deadline has passed.
+	 */
+	public function test_upload_retry_deadline( int $age, bool $expired ) {
+		global $wpdb;
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Deadline fixture',
+				'settings' => array(
+					'bucket'     => 'fixture',
+					'region'     => 'us-east-1',
+					'access_key' => 'fixture-key',
+					'secret_key' => 'fixture-secret',
+				),
+			)
+		);
+		$id      = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 16384,
+					'role' => 'full',
+				),
+			)
+		);
+		$store   = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$now = time();
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'created' => $now - $age ), array( 'id' => $job->id ) );
+		add_filter(
+			'pre_http_request',
+			static function () {
+				return array(
+					'headers'  => array(),
+					'body'     => '',
+					'response' => array( 'code' => 503 ),
+				);
+			}
+		);
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( $expired ? 'failed_permanent' : 'failed_retryable', $job->status );
+		$this->assertStringContainsString( 'HTTP 503', $job->last_error );
+		if ( $expired ) {
+			$this->assertStringContainsString( '24-hour upload retry deadline', $job->last_error );
+		} else {
+			$this->assertLessThanOrEqual( $now - $age + DAY_IN_SECONDS, (int) $job->next_retry_at );
+			$this->assertGreaterThan( $now, (int) $job->next_retry_at );
+		}
+	}
+
+	/**
+	 * A malformed chunk list must not hide the original permanent error.
+	 *
+	 * @dataProvider scalar_chunk_failure_phases
+	 * @param bool $during_chunking Whether planning encounters the failure.
+	 */
+	public function test_scalar_chunk_checkpoint_preserves_failure_handling( bool $during_chunking ) {
+		global $wpdb;
+		list( $dest_id ) = $this->make_local_destination();
+		$id              = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$job                                  = $store->get_jobs_for_snapshot( $id )[0];
+		$build                                = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+		$checkpoint                           = $build->invoke( MainWP_Backup_Upload_Driver::instance(), $snapshot );
+		$checkpoint['artifacts'][0]['chunks'] = 'malformed-chunks';
+		if ( ! $during_chunking ) {
+			$checkpoint['destination_binding'] = 'mismatched-destination';
+		}
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'checkpoint' => wp_json_encode( $checkpoint ) ), array( 'id' => $job->id ) );
+		if ( $during_chunking ) {
+			unlink( $checkpoint['artifacts'][0]['path'] );
+		}
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( 'failed_permanent', $job->status );
+		$this->assertStringContainsString( $during_chunking ? 'Backup file is missing' : 'storage destination settings changed', $job->last_error );
+		$this->assertSame( 0, (int) $job->attempt_count );
+	}
+
+	/**
+	 * Failures before and during planning exercise both retry and error context.
+	 *
+	 * @return array
+	 */
+	public static function scalar_chunk_failure_phases(): array {
+		return array(
+			'before planning' => array( false ),
+			'during planning' => array( true ),
+		);
+	}
+
+	/**
+	 * Deadline boundary ages.
+	 *
+	 * @return array
+	 */
+	public static function upload_retry_deadline_ages(): array {
+		return array(
+			'before deadline' => array( DAY_IN_SECONDS - 1, false ),
+			'at deadline'     => array( DAY_IN_SECONDS, true ),
+			'after deadline'  => array( DAY_IN_SECONDS + 1, true ),
+		);
 	}
 
 	/**

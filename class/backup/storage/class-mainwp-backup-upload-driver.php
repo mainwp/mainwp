@@ -58,6 +58,9 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      */
     const MAX_JOBS_PER_TICK = 10;
 
+    /** Cooperative upload slice, checked between verified transfer units. */
+    const JOB_BUDGET_SECONDS = 30;
+
     /**
      * Instance variable class.
      *
@@ -81,6 +84,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @var int
      */
     private int $lease_seconds = 300;
+
+    /**
+     * A refused checkpoint parks this run until the periodic retry.
+     *
+     * @var bool
+     */
+    private bool $checkpoint_refused = false;
 
     /**
      * Method instance()
@@ -208,8 +218,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     /**
      * Run pending uploads within one shared time budget on the
      * backups-continue cron lane. Stop after MAX_JOBS_PER_TICK attempts
-     * or a repeated acquisition, so a parked job cannot spin within the tick.
-     * A repeated acquisition ends the tick; jobs behind it wait for the next one.
+     * with each job attempted once, so a parked job cannot block other sites.
+     * Each upload gets a short cooperative slice. A transfer and its remote
+     * verification finish together before yielding; activity ordering lets
+     * waiting sites precede an unfinished upload on the next tick.
      * A zero budget still allows one attempt to checkpoint. Stopping on the
      * attempt limit or the deadline with uploads still due schedules a
      * continuation, so they do not wait for the periodic cron tick.
@@ -225,33 +237,64 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $lease_seconds = max( 300, $budget_seconds + 60 );
         $attempted     = array();
         $job_count     = 0;
+        $yielded       = array();
+        $defer_failed  = false;
 
         do {
             $iteration_now = null === $now ? time() : $now;
             $token         = uniqid( 'upload_', true );
-            $job           = $store->acquire_next_job( $token, $lease_seconds, $iteration_now );
+            $job           = $store->acquire_next_job( $token, $lease_seconds, $iteration_now, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD, array_keys( $attempted ) );
             if ( null === $job ) {
-                return;
+                if ( empty( $yielded ) ) {
+                    return;
+                }
+                break;
             }
 
-            $this->lock_token    = $token;
-            $this->lease_seconds = $lease_seconds;
+            $this->lock_token         = $token;
+            $this->lease_seconds      = $lease_seconds;
+            $this->checkpoint_refused = false;
             try {
                 if ( isset( $attempted[ (int) $job->id ] ) ) {
                     return;
                 }
                 $attempted[ (int) $job->id ] = true;
                 ++$job_count;
-                $this->run_job( $job, $deadline, $iteration_now );
+                $job_deadline = min( $deadline, microtime( true ) + self::JOB_BUDGET_SECONDS );
+                $this->run_job( $job, $job_deadline, $iteration_now );
+                if ( $this->checkpoint_refused ) {
+                    // Keep refusals parked across requests, not just this tick.
+                    if ( ! $store->defer_checkpoint_retry( (int) $job->id, max( $iteration_now, time() ) + 5 * MINUTE_IN_SECONDS, $token ) ) {
+                        $defer_failed = true;
+                    }
+                } elseif ( microtime( true ) >= $job_deadline ) {
+                    $yielded[ (int) $job->id ] = true;
+                }
             } finally {
-                $this->lock_token = null;
+                $this->lock_token         = null;
+                $this->checkpoint_refused = false;
                 $store->release_lock( (int) $job->id, $token );
             }
         } while ( $job_count < self::MAX_JOBS_PER_TICK && microtime( true ) < $deadline );
 
-        if ( $store->has_runnable_job( null === $now ? time() : $now ) ) {
+        if ( ! $defer_failed && $store->has_runnable_job( null === $now ? time() : $now, array_keys( array_diff_key( $attempted, $yielded ) ) ) ) {
             MainWP_Post_Backup_Handler::kick_backup_continuation();
         }
+    }
+
+    /**
+     * Save a checkpoint and retain any refusal for this job's continuation decision.
+     *
+     * @param object $job Job holding the lease.
+     * @param array  $checkpoint Checkpoint data.
+     * @return bool Whether the store confirmed the save.
+     */
+    private function save_upload_checkpoint( object $job, array $checkpoint ): bool {
+        $saved = MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+        if ( ! $saved ) {
+            $this->checkpoint_refused = true;
+        }
+        return $saved;
     }
 
     /**
@@ -360,7 +403,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                     }
                     return;
                 }
-                if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                if ( ! $this->save_upload_checkpoint( $job, $checkpoint ) ) {
                     // The artifact index is what a later restore reads to locate
                     // the offsite copies. A refused fenced write - transient DB
                     // error or a lost lease - means it did not land, so park and
@@ -530,14 +573,12 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @throws \RuntimeException When a source artifact disappeared or could not be read or staged.
      */
     private function phase_chunking( object $job, array &$checkpoint, float $deadline ): bool {
-        $store = MainWP_Backup_Upload_Job_Store::instance();
-
         foreach ( $checkpoint['artifacts'] as $index => $artifact ) {
             if ( 'chunked' !== $artifact['mode'] || is_array( $artifact['chunks'] ) ) {
                 continue;
             }
             if ( microtime( true ) >= $deadline ) {
-                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                $this->save_upload_checkpoint( $job, $checkpoint );
                 return false;
             }
             // Planning hashes multi-GB artifacts; renew so a slow-but-alive
@@ -568,11 +609,12 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             unset( $chunk );
 
             $checkpoint['artifacts'][ $index ]['chunks'] = $chunks;
-            $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+            if ( ! $this->save_upload_checkpoint( $job, $checkpoint ) ) {
+                return false;
+            }
         }
 
-        $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
-        return true;
+        return $this->save_upload_checkpoint( $job, $checkpoint );
     }
 
     /**
@@ -590,7 +632,6 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @throws \RuntimeException When a source artifact disappeared.
      */
     private function phase_uploading( object $job, array &$checkpoint, MainWP_Backup_Storage_Provider $provider, float $deadline, array $enc ): bool {
-        $store  = MainWP_Backup_Upload_Job_Store::instance();
         $prefix = $this->remote_prefix( $job );
 
         foreach ( $checkpoint['artifacts'] as $index => $artifact ) {
@@ -603,7 +644,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             // no matter how they travel.
             if ( empty( $artifact['sha256'] ) ) {
                 if ( microtime( true ) >= $deadline ) {
-                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                    $this->save_upload_checkpoint( $job, $checkpoint );
                     return false;
                 }
                 if ( ! $this->lease_still_held( $job ) ) {
@@ -615,12 +656,14 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 $hash                                        = hash_file( 'sha256', $artifact['path'] );
                 $artifact['sha256']                          = is_string( $hash ) ? $hash : '';
                 $checkpoint['artifacts'][ $index ]['sha256'] = $artifact['sha256'];
-                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                if ( ! $this->save_upload_checkpoint( $job, $checkpoint ) ) {
+                    return false;
+                }
             }
 
             if ( 'whole' === $artifact['mode'] ) {
                 if ( microtime( true ) >= $deadline ) {
-                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                    $this->save_upload_checkpoint( $job, $checkpoint );
                     return false;
                 }
                 // Renew across the blocking provider round trips (head,
@@ -631,7 +674,9 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 }
                 $this->upload_whole_artifact( $artifact, $prefix, $provider, $enc );
                 $checkpoint['artifacts'][ $index ]['done'] = true;
-                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                if ( ! $this->save_upload_checkpoint( $job, $checkpoint ) ) {
+                    return false;
+                }
                 continue;
             }
 
@@ -641,7 +686,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             $total = count( $chunks );
             for ( $i = $cursor; $i < $total; $i++ ) {
                 if ( microtime( true ) >= $deadline ) {
-                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                    $this->save_upload_checkpoint( $job, $checkpoint );
                     return false;
                 }
                 if ( ! $this->lease_still_held( $job ) ) {
@@ -652,11 +697,15 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 $checkpoint['artifacts'][ $index ]['chunks'][ $i ]['remote_present'] = true;
                 $checkpoint['artifacts'][ $index ]['chunks_cursor']                  = $i + 1;
-                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                if ( ! $this->save_upload_checkpoint( $job, $checkpoint ) ) {
+                    return false;
+                }
             }
 
             $checkpoint['artifacts'][ $index ]['done'] = true;
-            $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+            if ( ! $this->save_upload_checkpoint( $job, $checkpoint ) ) {
+                return false;
+            }
         }
 
         return true;
@@ -769,7 +818,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $checkpoint['manifest_submitted'] = true;
         $checkpoint['uploaded_at']        = time();
-        return MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+        return $this->save_upload_checkpoint( $job, $checkpoint );
     }
 
     /**

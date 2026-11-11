@@ -20,6 +20,82 @@ use MainWP\Dashboard\MainWP_DB;
  */
 class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 
+	/** A checkpoint deferral preserves progress and requires the current lease. */
+	public function test_checkpoint_deferral_preserves_state_and_lease_fence() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98226, array( 7 ) );
+		$now = time();
+		$job = $store->acquire_next_job( 'checkpoint-holder', 300, $now );
+		$this->assertNotNull( $job );
+		$this->assertFalse( $store->defer_checkpoint_retry( (int) $job->id, $now + 300, 'foreign-holder' ) );
+		$this->assertSame( 0, (int) $store->get_job( (int) $job->id )->next_retry_at );
+		$this->assertTrue( $store->defer_checkpoint_retry( (int) $job->id, $now + 300, 'checkpoint-holder' ) );
+		$this->assertTrue( $store->defer_checkpoint_retry( (int) $job->id, $now + 300, 'checkpoint-holder' ), 'An unchanged confirmed deferral still succeeds.' );
+		$saved = $store->get_job( (int) $job->id );
+		$this->assertSame( $now + 300, (int) $saved->next_retry_at );
+		$this->assertSame( $job->status, $saved->status );
+		$this->assertSame( $job->checkpoint, $saved->checkpoint );
+		$this->assertSame( (int) $job->attempt_count, (int) $saved->attempt_count );
+		$this->assertSame( (int) $job->locked_until, (int) $saved->locked_until );
+		$this->assertSame( 'checkpoint-holder', $saved->locked_by, 'The driver still owns its lease until finally.' );
+		$store->release_lock( (int) $job->id, 'checkpoint-holder' );
+		$this->assertNull( $store->acquire_next_job( 'before-retry', 300, $now + 299 ) );
+		$this->assertNotNull( $store->acquire_next_job( 'at-retry', 300, $now + 300 ) );
+	}
+
+	/** A released upload slice gives an older waiting job the next turn. */
+	public function test_upload_acquisition_rotates_released_slices() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98220, array( 7 ) );
+		$store->enqueue_for_snapshot( 98221, array( 7 ) );
+		$first = $store->acquire_next_job( 'first-slice', 300, time() + 1 );
+		$this->assertNotNull( $first );
+		$this->assertSame( 98220, (int) $first->snapshot_id );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = time() + 2;
+		try {
+			$store->release_lock( (int) $first->id, 'first-slice' );
+			$next = $store->acquire_next_job( 'next-slice', 300, MainWP_Backup_Incremental_Sender_Test::$fixed_time );
+		} finally {
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+		}
+		$this->assertNotNull( $next );
+		$this->assertSame( 98221, (int) $next->snapshot_id, 'A yielding upload must not keep selecting itself ahead of another site.' );
+	}
+
+	/** Same-second ties still exclude uploads already attempted by this tick. */
+	public function test_upload_acquisition_excludes_attempted_jobs() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98222, array( 7 ) );
+		$store->enqueue_for_snapshot( 98223, array( 7 ) );
+		$now   = time();
+		$first = $store->acquire_next_job( 'first-tied-slice', 300, $now );
+		$this->assertNotNull( $first );
+		$store->release_lock( (int) $first->id, 'first-tied-slice' );
+		$next = $store->acquire_next_job( 'next-tied-slice', 300, $now, $store::KIND_UPLOAD, array( (int) $first->id ) );
+		$this->assertNotNull( $next );
+		$this->assertNotSame( (int) $first->id, (int) $next->id );
+		$this->assertSame( '', $store->get_job( (int) $first->id )->locked_by, 'Exclusion must leave the parked job unleased.' );
+		$this->assertNull( $store->acquire_next_job( 'all-attempted', 300, $now, $store::KIND_UPLOAD, array( (int) $first->id, (int) $next->id ) ) );
+	}
+
+	/** Upload rotation does not reorder cloud delete jobs. */
+	public function test_delete_acquisition_keeps_oldest_id_order() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertTrue( $store->enqueue_delete_job( 98224, 7, array() ) );
+		$this->assertTrue( $store->enqueue_delete_job( 98225, 7, array() ) );
+		$first = $store->acquire_next_job( 'first-delete', 300, time(), $store::KIND_DELETE );
+		$this->assertNotNull( $first );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = time() + 2;
+		try {
+			$store->release_lock( (int) $first->id, 'first-delete' );
+			$next = $store->acquire_next_job( 'next-delete', 300, MainWP_Backup_Incremental_Sender_Test::$fixed_time, $store::KIND_DELETE );
+		} finally {
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+		}
+		$this->assertNotNull( $next );
+		$this->assertSame( (int) $first->id, (int) $next->id );
+	}
+
 	/** A scalar chunk plan is not confirmed remote progress. */
 	public function test_scalar_chunk_plan_does_not_grant_retry_progress() {
 		$store = MainWP_Backup_Upload_Job_Store::instance();

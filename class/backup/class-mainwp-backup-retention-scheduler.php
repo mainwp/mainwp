@@ -133,23 +133,18 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
             return;
         }
 
-        $queue = get_option( static::QUEUE_OPTION, array() );
-        if ( ! is_array( $queue ) ) {
-            $queue = array();
-        }
-
         $key = (int) $task_id . '-' . (int) $site_id;
-        // A pair waiting out a held eviction starts over: the new event may have cleared the hold.
-        if ( isset( $queue[ $key ] ) && ! isset( $queue[ $key ]['attempts'] ) ) {
-            return;
-        }
-
-        $queue[ $key ] = array(
-            'task_id' => (int) $task_id,
-            'site_id' => (int) $site_id,
+        $this->update_queue(
+            static function ( $queue ) use ( $key, $task_id, $site_id ) {
+                if ( ! isset( $queue[ $key ] ) || isset( $queue[ $key ]['attempts'] ) ) {
+                    $queue[ $key ] = array(
+                        'task_id' => (int) $task_id,
+                        'site_id' => (int) $site_id,
+                    );
+                }
+                return $queue;
+            }
         );
-
-        update_option( static::QUEUE_OPTION, $queue, false );
     }
 
     /**
@@ -175,26 +170,27 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
      * @return void
      */
     public function process_post_snapshot_queue( int $budget_seconds = self::PAIR_BUDGET_SECONDS, ?int $now = null ): void {
-        $queue = get_option( static::QUEUE_OPTION, array() );
-        if ( ! is_array( $queue ) || empty( $queue ) ) {
-            return;
-        }
-
         $clock = null === $now ? time() : $now;
         $key   = null;
-        foreach ( $queue as $queued_key => $queued_pair ) {
-            if ( (int) ( $queued_pair['retry_at'] ?? 0 ) <= $clock ) {
-                $key = $queued_key;
-                break;
+        $pair  = null;
+        $saved = $this->update_queue(
+            static function ( $queue ) use ( $clock, &$key, &$pair ) {
+                $key  = null;
+                $pair = null;
+                foreach ( $queue as $queued_key => $queued_pair ) {
+                    if ( (int) ( $queued_pair['retry_at'] ?? 0 ) <= $clock ) {
+                        $key  = $queued_key;
+                        $pair = $queued_pair;
+                        unset( $queue[ $key ] );
+                        break;
+                    }
+                }
+                return $queue;
             }
-        }
-        if ( null === $key ) {
+        );
+        if ( ! $saved || null === $key ) {
             return;
         }
-
-        $pair = $queue[ $key ];
-        unset( $queue[ $key ] );
-        update_option( static::QUEUE_OPTION, $queue, false );
 
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $pair['task_id'] );
         if ( empty( $task ) ) {
@@ -234,14 +230,55 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
      * @return void
      */
     private function requeue_pair( string $key, array $pair ): void {
-        $queue = get_option( static::QUEUE_OPTION, array() );
-        if ( ! is_array( $queue ) ) {
-            $queue = array();
+        $this->update_queue(
+            static function ( $queue ) use ( $key, $pair ) {
+                if ( ! isset( $queue[ $key ] ) ) {
+                    $queue[ $key ] = $pair;
+                }
+                return $queue;
+            }
+        );
+    }
+
+    /**
+     * Preserve other workers' events when changing the shared queue.
+     *
+     * @param callable $change Queue transformation, repeated after contention.
+     * @return bool Whether the change was persisted.
+     */
+    private function update_queue( callable $change ): bool {
+        global $wpdb;
+
+        $inserted = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- initialization must not overwrite a concurrent first enqueue.
+            $wpdb->prepare( 'INSERT IGNORE INTO %i (option_name, option_value, autoload) VALUES (%s, %s, %s)', $wpdb->options, static::QUEUE_OPTION, maybe_serialize( array() ), 'off' )
+        );
+        if ( false === $inserted ) {
+            return false;
         }
-        if ( ! isset( $queue[ $key ] ) ) {
-            $queue[ $key ] = $pair;
-            update_option( static::QUEUE_OPTION, $queue, false );
+        for ( $attempt = 0; $attempt < 8; ++$attempt ) {
+            $raw = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $wpdb->options, static::QUEUE_OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- fresh reads are required for atomic queue updates.
+            if ( null === $raw || '' !== $wpdb->last_error ) {
+                return false;
+            }
+            $queue = maybe_unserialize( $raw );
+            $next  = maybe_serialize( $change( is_array( $queue ) ? $queue : array() ) );
+            if ( $next === $raw ) {
+                return true;
+            }
+            $saved = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap prevents concurrent queue writes from losing events.
+                $wpdb->prepare( 'UPDATE %i SET option_value = %s WHERE option_name = %s AND BINARY option_value = BINARY %s', $wpdb->options, $next, static::QUEUE_OPTION, $raw )
+            );
+            if ( false === $saved ) {
+                return false;
+            }
+            if ( 1 === $saved ) {
+                wp_cache_delete( static::QUEUE_OPTION, 'options' );
+                wp_cache_delete( 'alloptions', 'options' );
+                wp_cache_delete( 'notoptions', 'options' );
+                return true;
+            }
         }
+        return false;
     }
 
     /**

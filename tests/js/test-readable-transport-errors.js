@@ -99,6 +99,34 @@ test('Error tooltips decode entities as attribute text and preserve the returned
     assert.equal(sandbox.getErrorMessageInfo(error), error.message);
 });
 
+test('Bulk sync places decoded errors only in the tooltip attribute', () => {
+    const attributes = new Map();
+    const status = {
+        attr(name, value) { attributes.set(name, value); return this; },
+        append(markup) { assert.equal(markup, '<i class="exclamation red icon"></i>'); return this; },
+        prop(name) { assert.equal(name, 'outerHTML'); return 'serialized fixture status'; },
+    };
+    let updated;
+    const jQuery = markup => {
+        assert.equal(markup, '<span data-inverted="" data-position="bottom right">');
+        return status;
+    };
+    jQuery.ajax = options => options.success({ error: '&quot; onmouseover=&quot;alert(1) &lt;img&gt;' });
+    const sandbox = vm.createContext({
+        document, jQuery, ajaxurl: '/admin-ajax.php',
+        dashboard_update_site_status: (...args) => { updated = args; },
+        dashboard_update_done: () => {},
+    });
+    loadSiteNameHelper(vm, main, sandbox);
+    const start = main.indexOf('let dashboard_update_next_int = ');
+    const end = main.indexOf('\n};', start);
+    assert.ok(start >= 0 && end > start);
+    vm.runInContext(main.slice(start, end + 3), sandbox);
+    vm.runInContext("dashboard_update_next_int(7, {}, 0, 'sync');", sandbox);
+    assert.deepEqual(updated, [7, 'serialized fixture status']);
+    assert.deepEqual([...attributes], [['data-tooltip', '" onmouseover="alert(1) <img>']]);
+});
+
 function addStepContext(result) {
     const { sandbox, nodes, panelMarker } = context(result);
     sandbox.response = 'ERROR HTTP error - escaped';

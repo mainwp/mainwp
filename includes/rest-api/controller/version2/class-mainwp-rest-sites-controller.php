@@ -2514,7 +2514,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         if ( empty( $client ) ) {
             $resp_data['error'] = esc_html__( 'Client is not set or not found.', 'mainwp' );
         } else {
-            $resp_data['data'] = $client;
+            $controller = MainWP_REST_Server::instance()->get_rest_controller( $this->namespace, 'clients' );
+            if ( ! $controller instanceof MainWP_Rest_Clients_Controller ) {
+                $controller = MainWP_Rest_Clients_Controller::instance();
+            }
+            $fields            = $controller->get_allowed_fields_by_context( 'simple_view' );
+            $resp_data['data'] = array_intersect_key( (array) $client, array_fill_keys( $fields, true ) );
         }
 
         return rest_ensure_response( $resp_data );

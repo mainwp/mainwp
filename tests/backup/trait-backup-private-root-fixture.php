@@ -29,6 +29,7 @@ trait Backup_Private_Root_Fixture {
 	private function set_up_private_root() {
 		$this->private_root = realpath( sys_get_temp_dir() ) . '/mainwp-private-test-' . uniqid();
 		add_filter( 'mainwp_backup_private_root', array( $this, 'filter_private_root' ) );
+		add_filter( 'mainwp_backup_verified_private_root', array( $this, 'filter_private_root' ) );
 		MainWP_Backup_Private_Root::reset();
 	}
 
@@ -48,6 +49,7 @@ trait Backup_Private_Root_Fixture {
 	 */
 	private function tear_down_private_root() {
 		remove_filter( 'mainwp_backup_private_root', array( $this, 'filter_private_root' ) );
+		remove_filter( 'mainwp_backup_verified_private_root', array( $this, 'filter_private_root' ) );
 		MainWP_Backup_Private_Root::reset();
 		$this->remove_private_fixture( $this->private_root );
 	}

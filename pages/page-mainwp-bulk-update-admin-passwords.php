@@ -40,7 +40,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
             'mainwp_tab',
             __( 'Admin Passwords', 'mainwp' ),
             '<div class="mainwp-hidden">' . esc_html__( 'Admin Passwords', 'mainwp' ) . '</div>',
-            'read',
+            'manage_options',
             'UpdateAdminPasswords',
             array(
                 static::get_class_name(),
@@ -73,6 +73,10 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
     public static function render() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+        if ( ! current_user_can( 'manage_options' ) || ! \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+            wp_die( esc_html__( 'You do not have permission to update administrator passwords.', 'mainwp' ), '', array( 'response' => 403 ) );
+        }
+
         $show_form      = true;
         $dbwebsites     = array();
         $errors         = array();
@@ -82,34 +86,33 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
             $form_submitted = true;
             check_admin_referer( 'mainwp_updateadminpassword', 'security' );
 
-            if ( isset( $_POST['select_by'] ) ) {
+            $select_by = isset( $_POST['select_by'] ) && is_string( $_POST['select_by'] ) ? sanitize_key( wp_unslash( $_POST['select_by'] ) ) : '';
+            if ( in_array( $select_by, array( 'site', 'group', 'client' ), true ) ) {
                 $selected_sites   = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
                 $selected_groups  = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
                 $selected_clients = ( isset( $_POST['selected_clients'] ) && is_array( $_POST['selected_clients'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_clients'] ) ) : array();
 
-                if ( ( 'group' === $_POST['select_by'] && empty( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && empty( $selected_sites ) ) || ( 'client' === $_POST['select_by'] && empty( $selected_clients ) ) ) {
+                if ( ( 'group' === $select_by && empty( $selected_groups ) ) || ( 'site' === $select_by && empty( $selected_sites ) ) || ( 'client' === $select_by && empty( $selected_clients ) ) ) {
                     $errors[] = esc_html__( 'Please select the sites or groups or clients where you want to change the administrator password.', 'mainwp' );
                 }
             } else {
                 $errors[] = esc_html__( 'Please select whether you want to change the administrator password for specific sites, tags or clients.', 'mainwp' );
             }
 
-            if ( ! isset( $_POST['password'] ) || '' === trim( wp_unslash( $_POST['password'] ) ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
+            if ( ! isset( $_POST['password'] ) || ! is_string( $_POST['password'] ) || '' === trim( wp_unslash( $_POST['password'] ) ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
                 $errors[] = esc_html__( 'Please enter the password.', 'mainwp' );
             }
 
             $data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
             if ( empty( $errors ) ) {
-                $show_form = false;
-
                 $new_password = wp_unslash( $_POST['password'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
 
-                if ( 'site' === $_POST['select_by'] ) { // Get all selected websites.
+                if ( 'site' === $select_by ) { // Get all selected websites.
                     foreach ( $selected_sites as $k ) {
                         if ( MainWP_Utility::ctype_digit( $k ) ) {
                             $website = MainWP_DB::instance()->get_website_by_id( $k );
-                            if ( ! MainWP_System_Utility::can_edit_website( $website ) || '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                            if ( ! static::can_update_site_password( $website ) ) {
                                 continue;
                             }
                             $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -118,16 +121,16 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                             );
                         }
                     }
-                } elseif ( 'client' === $_POST['select_by'] ) { // Get all selected websites.
+                } elseif ( 'client' === $select_by ) { // Get all selected websites.
                     $websites = MainWP_DB_Client::instance()->get_websites_by_client_ids(
                         $selected_clients,
                         array(
-                            'select_data' => $data_fields,
+                            'select_data' => array_merge( $data_fields, array( 'userid' ) ),
                         )
                     );
                     if ( $websites ) {
                         foreach ( $websites as $website ) {
-                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                            if ( ! static::can_update_site_password( $website ) ) {
                                 continue;
                             }
                             $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -141,7 +144,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                         if ( MainWP_Utility::ctype_digit( $k ) ) {
                             $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
                             while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                                if ( ! MainWP_System_Utility::can_edit_website( $website ) || '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                                if ( ! static::can_update_site_password( $website ) ) {
                                     continue;
                                 }
                                 $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -154,12 +157,14 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                     }
                 }
 
-                $output         = new \stdClass();
-                $output->ok     = array();
-                $output->errors = array();
-
-                if ( ! empty( $dbwebsites ) ) {
-                    $post_data = array( 'new_password' => base64_encode( $new_password ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                if ( empty( $dbwebsites ) ) {
+                    $errors[] = esc_html__( 'No eligible child sites matched the selection.', 'mainwp' );
+                } else {
+                    $show_form      = false;
+                    $output         = new \stdClass();
+                    $output->ok     = array();
+                    $output->errors = array();
+                    $post_data      = array( 'new_password' => base64_encode( $new_password ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
                     MainWP_Connect::fetch_urls_authed(
                         $dbwebsites,
@@ -186,12 +191,32 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Check the caller's access and the site's connection status.
+     *
+     * @param object|null $website Child site.
+     * @return bool
+     */
+    private static function can_update_site_password( $website ) {
+        return MainWP_System_Utility::can_edit_website( $website )
+            && \mainwp_current_user_can( 'site', $website->id )
+            && '' === $website->sync_errors
+            && ! MainWP_System_Utility::is_suspended_site( $website );
+    }
+
+    /**
      * Renders update password results.
      *
      * @param object $dbwebsites The websites object.
      * @param object $output Result of update password.
      */
     public static function render_modal( $dbwebsites, $output ) {
+        $allowed_error_html = array(
+            'a' => array(
+                'href'   => true,
+                'target' => true,
+                'rel'    => true,
+            ),
+        );
         ?>
         <div class="ui modal" id="mainwp-reset-admin-passwords-modal">
         <i class="close icon"></i>
@@ -212,7 +237,12 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                         <div class="item">
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) ); ?>"><?php echo esc_html( stripslashes( $website->name ) ); ?></a>
                             <span class="right floated content">
-                                <?php echo isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ]; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                                <?php if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) : ?>
+                                    <i class="green check icon"></i>
+                                <?php else : ?>
+                                    <i class="red times icon"></i>
+                                    <?php echo wp_kses( $output->errors[ $website->id ] ?? '', $allowed_error_html ); ?>
+                                <?php endif; ?>
                             </span>
                         </div>
                     <?php endforeach; ?>

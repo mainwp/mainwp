@@ -336,6 +336,54 @@ class Test_REST_Operation_Rights extends TestCase {
 		}
 	}
 
+	/** Scoped credentials are refused before reading or mutating a field definition. */
+	public function test_scoped_client_field_writes_are_denied(): void {
+		$scopes = array(
+			array( 'sites' => array( 1 ) ),
+			array( 'sites' => array( 1 ), 'route_check' => true, 'unrestricted' => true ),
+			array( 'ownership_scope' => true, 'route_check' => true, 'unrestricted' => true ),
+		);
+		foreach ( array( 'create_client_fields' => 'POST', 'edit_client_fields' => 'PATCH', 'delete_client_fields' => 'DELETE' ) as $method => $http_method ) {
+			foreach ( $scopes as $scope ) {
+				$result = $this->probe(
+					array_merge(
+						array(
+							'controller'  => 'MainWP_Rest_Clients_Controller',
+							'method'      => $method,
+							'http_method' => $http_method,
+							'rights'      => array( 'dashboard' => array( 'manage_clients' => true ) ),
+							'params'      => array( 'id_name' => '7' ),
+						),
+						$scope
+					)
+				);
+				$this->assertSame( 'mainwp_restricted_account', $result['error']['code'] );
+				$this->assertSame( 403, $result['error']['data']['status'] );
+				$this->assertNull( $result['boundary'] );
+			}
+		}
+	}
+
+	/** The linked client uses the public client fields and preserves its ID. */
+	public function test_site_client_projects_the_client_schema(): void {
+		$result = $this->probe(
+			array(
+				'controller'  => 'MainWP_Rest_Sites_Controller',
+				'method'      => 'get_client_site',
+				'params'      => array( 'id_domain' => '1' ),
+				'http_method' => 'GET',
+				'route_check' => true,
+				'sites'       => array( 1 ),
+				'client_id'   => 7,
+			)
+		);
+		$this->assertNull( $result['error'] );
+		$this->assertSame(
+			array( 'success' => 1, 'data' => array( 'client_id' => 7, 'name' => 'Fixture client' ) ),
+			$result['result']
+		);
+	}
+
 	/** Client field reads require both manage_clients and the key's read scope. */
 	public function test_client_field_reads_require_right_and_read_scope(): void {
 		$cases = array(

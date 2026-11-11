@@ -442,13 +442,30 @@ class Test_Legacy_Bulk_Widget_Ownership extends \WP_UnitTestCase {
         $this->assertSame( array(), Legacy_Bulk_Transport::$requests );
     }
 
+    /** A Subscriber with a valid form nonce cannot dispatch a password reset. */
+    public function test_password_subscriber_cannot_submit(): void {
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+        $body = $this->password_form( 'client', array() );
+        $this->assertStringContainsString( 'You do not have permission to update administrator passwords.', $body );
+        $this->assertSame( array(), Legacy_Bulk_Transport::$requests );
+    }
+
+    /** A client selection with no valid IDs cannot become an all-sites reset. */
+    public function test_password_invalid_client_selection_sends_nothing(): void {
+        $body = $this->password_form( 'client', array(), array( 'invalid', '0', '-1', '2.5' ) );
+        $this->assertStringContainsString( 'No eligible child sites matched the selection.', $body );
+        $this->assertSame( array(), Legacy_Bulk_Transport::$requests );
+    }
+
     /**
      * Submit the nonce-checked password form.
      *
      * @param string $selection Selection type.
      * @param array  $sites Selected site IDs.
+     * @param array|null $clients Override selected client IDs.
+     * @return string Form output.
      */
-    private function password_form( string $selection, array $sites ): void {
+    private function password_form( string $selection, array $sites, ?array $clients = null ): string {
         $this->request(
             'mainwp_updateadminpassword',
             array(
@@ -456,11 +473,11 @@ class Test_Legacy_Bulk_Widget_Ownership extends \WP_UnitTestCase {
                 'select_by'                => $selection,
                 'selected_sites'           => array_map( 'strval', $sites ),
                 'selected_groups'          => array( (string) $this->group ),
-                'selected_clients'         => array( (string) $this->client ),
+                'selected_clients'         => $clients ?? array( (string) $this->client ),
                 'password'                 => 'fixture-only-not-a-real-child-password',
             )
         );
-        $this->response( array( '\\MainWP\\Dashboard\\Legacy_Ownership_Admin_Passwords', 'render' ) );
+        return $this->response( array( '\\MainWP\\Dashboard\\Legacy_Ownership_Admin_Passwords', 'render' ) );
     }
 
     /** Rows and counts use identical ownership restrictions for every tab. */

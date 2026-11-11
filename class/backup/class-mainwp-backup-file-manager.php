@@ -269,6 +269,11 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         if ( ! MainWP_Backup_Private_Root::is_within_private_site_dir( $local_file, (int) $website->id ) ) {
             throw new MainWP_Exception( esc_html__( 'Invalid backup file location.', 'mainwp' ) );
         }
+        // Resumed jobs can reuse a recorded path without going through directory creation.
+        $dir = MainWP_Backup_Private_Root::site_dir( (int) $website->id );
+        if ( is_wp_error( $dir ) ) {
+            throw new MainWP_Exception( esc_html( $dir->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the final argument is an error code.
+        }
         $progress = static function ( $file ) use ( $local_file ) {
             if ( $file === $local_file ) {
                 static::refresh_download_lock( $local_file );

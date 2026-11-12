@@ -191,7 +191,7 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Sync Test Sites. Asked by An AI app, ', $approval, 'a missing grant' );
 		$this->assertSame( 5, substr_count( $approval, '>Review</a>' ) );
 		$this->assertStringContainsString( esc_url( $this->panel_services()->urls()->approval_url( $gone ) ), $approval );
-		$this->assertMatchesRegularExpression( '#id="connections".*id="approvals"#s', $html, 'under the connections table' );
+		$this->assertMatchesRegularExpression( '#id="approvals".*id="connections"#s', $html, 'pending approvals appear before the connections section' );
 	}
 
 	public function test_no_pending_approvals_render_nothing() {

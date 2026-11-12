@@ -69,7 +69,7 @@ class Test_MainWP_Remote_MCP_Connection_Tokens extends \WP_UnitTestCase {
 		$this->assertCount( 25, $this->store->connection_tokens_for_user( $this->user_id ) );
 		$this->assertSame( OAuth_Store::OK, $this->store->check_connect_token( $first['secret'] )['outcome'], 'the oldest still works' );
 		$html = $admin->render();
-		$this->assertMatchesRegularExpression( '#<button type="submit" class="ui mini green button">Create token</button>#', $html );
+		$this->assertMatchesRegularExpression( '#<button type="submit"(?![^>]*\bdisabled\b)[^>]*>Create Token</button>#', $html );
 		$this->assertStringNotContainsString( 'Revoke one first', $html );
 	}
 

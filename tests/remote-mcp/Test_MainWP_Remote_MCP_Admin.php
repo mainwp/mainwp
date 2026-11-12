@@ -166,6 +166,7 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 	public function test_limited_panel_shows_site_wide_states_without_action_forms() {
 		$this->site_wide_catalog();
 		$limited = $this->limited_admin();
+		$site_wide_forms = array( 'toggle', 'registration_switch', 'static_client_switch', 'save_tools' );
 		foreach ( array( false, true ) as $on ) {
 			update_option( Remote_MCP_Settings::OPTION_ENABLED, $on ? '1' : '0' );
 			Remote_MCP_Settings::set_registration_enabled( $on );
@@ -175,7 +176,7 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			Remote_MCP_Settings::set_unaudited_extension_tools_enabled( $on );
 			wp_set_current_user( $limited );
 			$html = $this->admin()->render();
-			foreach ( self::site_wide_actions() as list( $action ) ) {
+			foreach ( $site_wide_forms as $action ) {
 				$this->assertStringNotContainsString( 'value="' . $action . '"', $html );
 			}
 			$this->assertStringContainsString( $on ? 'Apps you approve can reach this Dashboard' : 'Off. No AI app', $html );
@@ -188,7 +189,7 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			}
 			wp_set_current_user( $this->user_id );
 			$html = $this->admin()->render();
-			foreach ( self::site_wide_actions() as list( $action ) ) {
+			foreach ( $site_wide_forms as $action ) {
 				$this->assertStringContainsString( 'value="' . $action . '"', $html );
 			}
 		}
@@ -632,7 +633,7 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			remove_filter( 'query', $count );
 		}
 		$this->assertSame( array(), $queries, 'First-use panel must not query uninstalled module tables.' );
-		$this->assertStringContainsString( 'None yet.', $html );
+		$this->assertStringContainsString( 'No AI app is connected yet.', $html );
 		$this->assertStringNotContainsString( 'mwpws_', $html );
 	}
 

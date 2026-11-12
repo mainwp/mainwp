@@ -1890,13 +1890,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'href'    => array(),
                     'title'   => array(),
                     'class'   => array(),
-                    'onclick' => array(),
                 ),
                 'img'    => array(
                     'src'     => array(),
                     'title'   => array(),
                     'class'   => array(),
-                    'onclick' => array(),
                     'alt'     => array(),
                     'width'   => array(),
                     'height'  => array(),
@@ -1939,7 +1937,6 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'id'       => array(),
                     'method'   => array(),
                     'action'   => array(),
-                    'onsubmit' => array(),
                 ),
                 'table'  => array(
                     'class' => array(),
@@ -1966,7 +1963,6 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'name'    => array(),
                     'class'   => array(),
                     'value'   => array(),
-                    'onclick' => array(),
                 ),
                 'button' => array(
                     'type'    => array(),
@@ -1974,7 +1970,6 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'value'   => array(),
                     'class'   => array(),
                     'title'   => array(),
-                    'onclick' => array(),
                 ),
             );
 

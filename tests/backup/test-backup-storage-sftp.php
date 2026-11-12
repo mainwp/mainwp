@@ -41,6 +41,9 @@ class Fake_SFTP_Connection {
 	 */
 	public $dirs = array();
 
+	/** @var string[] Directory removal requests. */
+	public $rmdir_calls = array();
+
 	/**
 	 * Constructor.
 	 *
@@ -135,6 +138,22 @@ class Fake_SFTP_Connection {
 		}
 		$this->files[ $to ] = $this->files[ $from ];
 		unset( $this->files[ $from ] );
+		return true;
+	}
+
+	/**
+	 * Remove only an empty directory, as SFTP rmdir does.
+	 *
+	 * @param string $dir Remote directory.
+	 * @return bool
+	 */
+	public function rmdir( $dir ) {
+		$this->rmdir_calls[] = $dir;
+		$entries = $this->rawlist( $dir );
+		if ( false === $entries || count( $entries ) > 2 ) {
+			return false;
+		}
+		unset( $this->dirs[ $dir ] );
 		return true;
 	}
 
@@ -457,6 +476,67 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $provider->delete_object( 'k.bin' ) );
 		$this->assertSame( array(), $connection->files );
 		$this->assertTrue( $provider->delete_object( 'k.bin' ), 'Deleting a missing object must succeed.' );
+	}
+
+	/**
+	 * Cleanup removes empty snapshot folders while preserving shared contents.
+	 *
+	 * @return void
+	 */
+	public function test_delete_object_removes_empty_backup_directories() {
+		$connection = new Fake_SFTP_Connection();
+		$provider   = $this->make_provider( $connection );
+		$connection->mkdir( '/backups/4/44', -1, true );
+		$provider->put_object( '4/42/chunks/a.bin', 'a' );
+		$provider->put_object( '4/42/manifest.json', 'manifest' );
+		$provider->put_object( '4/43/manifest.json', 'other snapshot' );
+
+		$this->assertTrue( $provider->delete_object( '4/42/chunks/a.bin' ) );
+		$this->assertTrue( $connection->is_dir( '/backups/4/42/chunks' ) );
+		$this->assertTrue( $connection->is_dir( '/backups/4/42' ) );
+		$this->assertTrue( $provider->delete_object( '4/42/manifest.json' ) );
+		$this->assertSame( array(), $connection->rmdir_calls );
+		unset( $provider );
+		$this->assertFalse( $connection->is_dir( '/backups/4/42/chunks' ) );
+		$this->assertFalse( $connection->is_dir( '/backups/4/42' ) );
+		$this->assertTrue( $connection->is_dir( '/backups/4/44' ), 'An empty neighboring backup folder must remain untouched.' );
+		$this->assertSame( 'other snapshot', $connection->files['/backups/4/43/manifest.json'] );
+		$this->assertTrue( $connection->is_dir( '/backups/4' ) );
+		$this->assertTrue( $connection->is_dir( '/backups' ) );
+	}
+
+	/**
+	 * Retrying a missing file also cleans up its leftover empty directories.
+	 *
+	 * @return void
+	 */
+	public function test_delete_missing_object_cleans_empty_directories() {
+		$connection = new Fake_SFTP_Connection( array( '/backups', '/backups/4', '/backups/4/42' ) );
+		$provider   = $this->make_provider( $connection );
+
+		$this->assertTrue( $provider->delete_object( '4/42/missing.bin' ) );
+		unset( $provider );
+		$this->assertFalse( $connection->is_dir( '/backups/4/42' ) );
+		$this->assertTrue( $connection->is_dir( '/backups/4' ) );
+	}
+
+	/**
+	 * Chunk batches pay for directory cleanup once, after their objects are gone.
+	 */
+	public function test_chunk_deletion_defers_and_deduplicates_directory_cleanup() {
+		$connection = new Fake_SFTP_Connection();
+		$provider   = $this->make_provider( $connection );
+		for ( $i = 0; $i < 1000; ++$i ) {
+			$provider->put_object( '4/42/chunks/' . $i . '.bin', 'chunk' );
+		}
+		for ( $i = 0; $i < 1000; ++$i ) {
+			$this->assertTrue( $provider->delete_object( '4/42/chunks/' . $i . '.bin' ) );
+		}
+		$this->assertSame( array(), $connection->rmdir_calls );
+		unset( $provider );
+		$this->assertSame( array( '/backups/4/42/chunks', '/backups/4/42' ), $connection->rmdir_calls );
+		$this->assertFalse( $connection->is_dir( '/backups/4/42' ) );
+		$this->assertTrue( $connection->is_dir( '/backups/4' ) );
 	}
 
 	/**

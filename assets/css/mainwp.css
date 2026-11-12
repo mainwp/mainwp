@@ -1572,6 +1572,128 @@ table.mainwp-manage-wpsites-table .error a {
     text-align: right;
 }
 
+.mainwp-ui .mainwp-rmcp-notice-dismiss-form {
+    margin: 0;
+    position: absolute;
+    right: .5em;
+    top: .78575em;
+}
+
+.mainwp-ui .mainwp-rmcp-notice-dismiss {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+    opacity: .7;
+    padding: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-notice-dismiss .icon {
+    margin: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-notice-dismiss:hover {
+    opacity: 1;
+}
+
+.mainwp-ui .mainwp-rmcp-notice-dismiss:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.mainwp-ui #mainwp-rmcp-advanced-menu {
+    flex-wrap: wrap;
+}
+
+.mainwp-ui #mainwp-remote-mcp-panel > .mainwp-rmcp-section {
+    margin-top: 2.5rem;
+}
+
+.mainwp-ui #mainwp-remote-mcp-panel > #mainwp-rmcp-connection-accordion {
+    margin-top: 0;
+}
+
+.mainwp-ui #mainwp-rmcp-advanced > .ui.tab:not(.active) {
+    display: none !important;
+}
+
+.mainwp-ui .mainwp-rmcp-category-summary {
+    margin-left: .75em;
+}
+
+.mainwp-ui #mainwp-rmcp-tool-categories > .title {
+    padding: 1.25rem;
+}
+
+.mainwp-ui #mainwp-rmcp-tool-categories > .content > .ui.divider ~ .ui.grid.field {
+    padding-inline-start: 1rem;
+}
+
+.mainwp-ui .mainwp-rmcp-code {
+    min-width: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-code pre {
+    background: var(--mainwp-element-background-secondary, #fbfbfc);
+    border: 1px solid var(--mainwp-border, #e8e8eb);
+    border-radius: var(--input-radius, 5px);
+    color: var(--mainwp-text, #2f3437);
+    margin: 0 0 .5em;
+    padding: 1em;
+}
+
+.mainwp-ui .mainwp-rmcp-token-app {
+    margin-top: 1em;
+}
+
+.mainwp-ui .mainwp-rmcp-token-app[hidden] {
+    display: none !important;
+}
+
+.mainwp-ui .mainwp-rmcp-app-details {
+    overflow-wrap: anywhere;
+}
+
+.mainwp-ui .mainwp-rmcp-app-details p {
+    margin: 0 0 .5em;
+}
+
+.mainwp-ui .mainwp-rmcp-app-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75em;
+}
+
+.mainwp-ui .mainwp-rmcp-app-setup {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.mainwp-ui .mainwp-rmcp-app-select {
+    flex: 0 1 14rem;
+    min-width: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-app-instructions {
+    flex: 1 1 20rem;
+    min-width: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-app-instructions > .ui.segment {
+    margin: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-app-instructions > [hidden] {
+    display: none !important;
+}
+
 .mainwp-ui #mainwp-mcp-config.mainwp-mcp-config-editor {
     background: var(--mainwp-element-background-secondary, var(--background-color-3, var(--grey-light, #f3f4f5))) !important;
     border: 1px solid var(--mainwp-border, var(--border-color, rgba(34, 36, 38, .15))) !important;

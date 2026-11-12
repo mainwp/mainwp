@@ -62,8 +62,8 @@ class MainWP_MCP {
     /**
      * The "Connect an app" view, which the remote MCP module offers through a filter.
      *
-     * @return array|null `render` callable, `preferred` and `apps`, or null where the module
-     *                    doesn't load (a multisite).
+     * @return array|null `render` callable, optional `render_with_header` callable, `preferred`
+     *                    and `apps`, or null where the module doesn't load (a multisite).
      */
     public static function direct_view() {
         /**
@@ -73,16 +73,19 @@ class MainWP_MCP {
          *
          * @param array|null $view `render` (callable that prints the view and runs its own capability
          *                         and nonce checks), `preferred` (bool, make it the default view)
-         *                         and `apps` (names of the apps it works with).
+         *                         and `apps` (names of the apps it works with). An optional
+         *                         `render_with_header` callable accepts a header callback and
+         *                         runs it after the view's page-level messages.
          */
         $view = apply_filters( 'mainwp_mcp_direct_view', null );
         if ( ! is_array( $view ) || ! isset( $view['render'] ) || ! is_callable( $view['render'] ) ) {
             return null;
         }
         return array(
-            'render'    => $view['render'],
-            'preferred' => ! empty( $view['preferred'] ),
-            'apps'      => isset( $view['apps'] ) && is_array( $view['apps'] ) ? array_values( array_filter( $view['apps'], 'is_string' ) ) : array(),
+            'render'             => $view['render'],
+            'render_with_header' => isset( $view['render_with_header'] ) && is_callable( $view['render_with_header'] ) ? $view['render_with_header'] : null,
+            'preferred'          => ! empty( $view['preferred'] ),
+            'apps'               => isset( $view['apps'] ) && is_array( $view['apps'] ) ? array_values( array_filter( $view['apps'], 'is_string' ) ) : array(),
         );
     }
 
@@ -164,10 +167,42 @@ class MainWP_MCP {
      * @return void
      */
     private static function render_direct( $direct ) {
+        if ( null !== $direct['render_with_header'] ) {
+            call_user_func(
+                $direct['render_with_header'],
+                static function ( $accordion = false ) use ( $direct ) {
+                    static::render_direct_header( $direct, $accordion );
+                }
+            );
+            return;
+        }
+
+        static::render_direct_header( $direct );
+        call_user_func( $direct['render'] );
+    }
+
+    /**
+     * Render the Direct tab's heading and local server tip.
+     *
+     * @param array $direct    The view from direct_view().
+     * @param bool  $accordion Whether the heading controls the connection settings accordion.
+     *
+     * @return void
+     */
+    private static function render_direct_header( $direct, $accordion = false ) {
         ?>
-        <h2 class="ui header">
+        <div class="ui message">
+            <em data-emoji=":bulb:" class="small"></em>
+            <?php esc_html_e( 'Dashboard not reachable from the internet (an office network, your own computer)?', 'mainwp' ); ?>
+            <a href="<?php echo esc_url( 'admin.php?page=mainwp-mcp&tab=local' ); ?>"><?php esc_html_e( 'Use the Local server tab.', 'mainwp' ); ?></a>
+        </div>
+        <h3 class="ui dividing header<?php echo $accordion ? ' title active mainwp-rmcp-section-title' : ''; ?>"<?php echo $accordion ? ' id="mainwp-rmcp-connection-title" role="button" tabindex="0" aria-expanded="true" aria-controls="mainwp-rmcp-connection-content"' : ''; ?>>
+            <?php
+            if ( $accordion ) :
+                ?>
+                <i class="right dropdown icon"></i><?php endif; ?>
             <?php esc_html_e( 'Connect an AI app', 'mainwp' ); ?>
-            <span class="sub header">
+            <div class="sub header">
                 <?php
                 if ( $direct['apps'] ) {
                     printf(
@@ -180,15 +215,9 @@ class MainWP_MCP {
                 }
                 ?>
                 <a href="https://docs.mainwp.com/mcp-server/remote/overview" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Read the setup guide.', 'mainwp' ); ?></a>
-            </span>
-        </h2>
-        <p>
-            <?php esc_html_e( 'Dashboard not reachable from the internet (an office network, your own computer)?', 'mainwp' ); ?>
-            <a href="<?php echo esc_url( 'admin.php?page=mainwp-mcp&tab=local' ); ?>"><?php esc_html_e( 'Use the Local server tab.', 'mainwp' ); ?></a>
-        </p>
-        <div class="ui section divider"></div>
+            </div>
+        </h3>
         <?php
-        call_user_func( $direct['render'] );
     }
 
     /**

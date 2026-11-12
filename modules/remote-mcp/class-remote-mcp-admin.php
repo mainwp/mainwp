@@ -69,6 +69,7 @@ class Remote_MCP_Admin implements Hook_Provider {
         'tool_switch'          => 'full',
         'category_switch'      => 'full',
         'unaudited_switch'     => 'full',
+        'save_tools'           => 'full',
         'self_test'            => 'admin',
         'external_check'       => 'admin',
         'dismiss_home_changed' => 'admin',
@@ -157,10 +158,11 @@ class Remote_MCP_Admin implements Hook_Provider {
             return $view;
         }
         return array(
-            'render'    => array( $this, 'render_page' ),
+            'render'             => array( $this, 'render_page' ),
+            'render_with_header' => array( $this, 'render_page' ),
             // Where the connector can't run, the local server is the better first view.
-            'preferred' => $requirements['ok'] && ( Remote_MCP_Settings::enabled() || $this->services->urls()->is_secure() ),
-            'apps'      => self::known_app_labels(),
+            'preferred'          => $requirements['ok'] && ( Remote_MCP_Settings::enabled() || $this->services->urls()->is_secure() ),
+            'apps'               => self::known_app_labels(),
         );
     }
 
@@ -185,8 +187,10 @@ class Remote_MCP_Admin implements Hook_Provider {
 
     /**
      * View callback: run a posted action, then render.
+     *
+     * @param callable|null $render_header Page heading, rendered after page-level messages.
      */
-    public function render_page(): void {
+    public function render_page( ?callable $render_header = null ): void {
         if ( ! current_user_can( 'manage_options' ) ) {
             echo '<div class="ui message">' . esc_html__( 'Only administrators can manage AI apps.', 'mainwp' ) . '</div>';
             return;
@@ -199,7 +203,7 @@ class Remote_MCP_Admin implements Hook_Provider {
         if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['mainwp_remote_mcp_action'] ) ) {
             $result = $this->handle_post( wp_unslash( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified inside.
         }
-        echo $this->render( $result ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the template escapes.
+        echo $this->render( $result, $render_header ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the template escapes.
     }
 
     /**
@@ -456,7 +460,7 @@ class Remote_MCP_Admin implements Hook_Provider {
                 'grant_id'     => $grant_id,
                 'expires_at'   => (int) $minted['expires_at'],
                 'secret'       => (string) $minted['token'],
-                'secret_label' => __( 'Connection token', 'mainwp' ),
+                'secret_label' => $label,
                 'snippets'     => $this->token_snippets( (string) $minted['token'] ),
             )
         );
@@ -686,6 +690,56 @@ class Remote_MCP_Admin implements Hook_Provider {
     }
 
     /**
+     * Save all visible tool and category switches in one submission.
+     *
+     * @param string $target Unused.
+     * @param array  $post   Complete tool settings form.
+     * @return array
+     */
+    private function action_save_tools( string $target, array $post ): array {
+        unset( $target );
+        $lists     = $this->tool_lists();
+        $expected  = array(
+            'tools'      => array(),
+            'categories' => array(),
+        );
+        $tool_rows = $lists['not_reviewed'];
+        foreach ( $lists['available'] as $category => $rows ) {
+            $expected['categories'][ $category ] = false;
+            $tool_rows                           = array_merge( $tool_rows, $rows );
+        }
+        foreach ( $tool_rows as $row ) {
+            $expected['tools'][ $row['tool_name'] ] = false;
+        }
+        // The last field detects PHP's max_input_vars truncating a large form.
+        if ( '1' !== ( $post['tools_settings_complete'] ?? null ) ) {
+            return self::fail( 'invalid', 'save_tools', __( 'The tool settings form was incomplete. Reload the page and try again.', 'mainwp' ) );
+        }
+        foreach ( $expected as $section => $keys ) {
+            $values = $post[ $section ] ?? array();
+            if ( ! is_array( $values ) || array_diff_key( $keys, $values ) || array_diff_key( $values, $keys ) ) {
+                return self::fail( 'invalid', 'save_tools', __( 'The available tools changed or the form was incomplete. Reload the page and try again.', 'mainwp' ) );
+            }
+            foreach ( $values as $name => $value ) {
+                if ( ! in_array( $value, array( 'on', 'off' ), true ) ) {
+                    return self::fail( 'invalid', 'save_tools' );
+                }
+                $expected[ $section ][ $name ] = 'on' === $value;
+            }
+        }
+        $unaudited = null;
+        if ( $lists['not_reviewed'] ) {
+            $unaudited = self::switch_value( array( 'value' => $post['unaudited'] ?? null ) );
+            if ( null === $unaudited ) {
+                return self::fail( 'invalid', 'save_tools' );
+            }
+        }
+        return Remote_MCP_Settings::set_tool_settings( $expected['tools'], $expected['categories'], $unaudited )
+            ? self::ok( __( 'Tool settings saved.', 'mainwp' ) )
+            : self::fail( 'failed', 'save_tools' );
+    }
+
+    /**
      * Run the self-test.
      *
      * @return array
@@ -732,10 +786,11 @@ class Remote_MCP_Admin implements Hook_Provider {
     /**
      * Render the panel.
      *
-     * @param array $result Result of the action just run, shown once.
+     * @param array         $result        Result of the action just run, shown once.
+     * @param callable|null $render_header Page heading, rendered after page-level messages.
      * @return string HTML.
      */
-    public function render( array $result = array() ): string {
+    public function render( array $result = array(), ?callable $render_header = null ): string {
         $view = $this->view( $result );
         ob_start();
         include __DIR__ . '/templates/admin-panel.php';

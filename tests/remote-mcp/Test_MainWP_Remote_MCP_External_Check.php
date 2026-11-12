@@ -80,6 +80,40 @@ class Test_MainWP_Remote_MCP_External_Check extends \WP_UnitTestCase {
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options}" );
 	}
 
+	public function test_external_check_describes_each_success_and_does_not_call_a_failure_passed() {
+		$checks = array_map(
+			fn( $id ) => array( 'id' => $id, 'status' => 'pass', 'code' => null ),
+			Remote_MCP_Self_Test::EXTERNAL_CHECKS
+		);
+		$success_messages = array(
+			'DNS: Your Dashboard\'s domain resolves to a public IP address.',
+			'TLS: Your Dashboard accepts a secure connection with a valid certificate.',
+			'Discovery: Apps can reach the well-known sign-in discovery address.',
+			'Metadata: The sign-in information contains the required fields and matches your Dashboard\'s address.',
+			'MCP sign-in: The MCP address returns HTTP 401 with a valid sign-in request.',
+		);
+		add_filter(
+			'gettext_mainwp',
+			static fn( $translation, $text ) => 'DNS' === $text || in_array( $text, $success_messages, true ) ? 'Translated ' . $text : $translation,
+			10,
+			2
+		);
+		$this->answer( $this->json( 200, array( 'schema' => 1, 'checks' => $checks ) ) );
+		$self_test = new Remote_MCP_Self_Test( $this->panel_services() );
+		$lines     = $self_test->external_check();
+		$this->assertSame( array_map( static fn( $text ) => 'Translated ' . $text, $success_messages ), array_column( $lines, 'message' ) );
+		$this->assertCount( 5, array_unique( array_column( $lines, 'message' ) ) );
+		foreach ( array( 'warn', 'fail', 'skipped' ) as $status ) {
+			remove_all_filters( 'pre_http_request' );
+			$checks[0]['status'] = $status;
+			$this->answer( $this->json( 200, array( 'schema' => 1, 'checks' => $checks ) ) );
+			$line = $self_test->external_check()[0];
+			$this->assertSame( $status, $line['status'] );
+			$this->assertStringStartsWith( 'Translated DNS:', $line['message'] );
+			$this->assertStringNotContainsString( 'public IP address', $line['message'] );
+		}
+	}
+
 	public function test_external_check_sends_only_dashboard_url_and_maps_contract_codes() {
 		$self_test = new Remote_MCP_Self_Test( $this->panel_services() );
 		$checks    = array(

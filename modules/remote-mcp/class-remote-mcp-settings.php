@@ -306,6 +306,38 @@ class Remote_MCP_Settings {
     }
 
     /**
+     * Save a validated set of tool switches, preserving settings for absent extensions.
+     *
+     * @param array     $tools      Tool names mapped to booleans.
+     * @param array     $categories Category names mapped to booleans.
+     * @param bool|null $unaudited  Unreviewed tools switch, or null when not displayed.
+     * @return bool Whether the settings were stored.
+     */
+    public static function set_tool_settings( array $tools, array $categories, ?bool $unaudited = null ): bool {
+        $stored = get_option( self::OPTION_TOOL_SWITCHES, null );
+        $value  = array();
+        foreach ( array(
+            'tools'      => $tools,
+            'categories' => $categories,
+        ) as $section => $switches ) {
+            foreach ( $switches as $enabled ) {
+                if ( ! is_bool( $enabled ) ) {
+                    return false;
+                }
+            }
+            $existing          = null === $stored ? array() : self::map_section( $stored, $section );
+            $value[ $section ] = array_replace( $existing ?? array(), $switches );
+        }
+        update_option( self::OPTION_TOOL_SWITCHES, $value, false );
+        $saved = get_option( self::OPTION_TOOL_SWITCHES ) === $value;
+        if ( null !== $unaudited ) {
+            $unaudited_saved = self::set_unaudited_extension_tools_enabled( $unaudited );
+            $saved           = $saved && $unaudited_saved;
+        }
+        return $saved;
+    }
+
+    /**
      * Whether the "Not reviewed by MainWP" section is on. Each tool in it also
      * has its own tool switch.
      *

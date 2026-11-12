@@ -58,6 +58,7 @@ class Test_MainWP_Remote_MCP_Panel_Forms extends \WP_UnitTestCase {
 		'tool_switch'          => 'tools',
 		'category_switch'      => 'tools',
 		'unaudited_switch'     => 'tools',
+		'save_tools'           => 'tools',
 		'self_test'            => 'checks',
 		'external_check'       => 'checks',
 	);
@@ -77,6 +78,7 @@ class Test_MainWP_Remote_MCP_Panel_Forms extends \WP_UnitTestCase {
 		'tool_switch'          => array( 'value' ),
 		'category_switch'      => array( 'value' ),
 		'unaudited_switch'     => array( 'value' ),
+		'save_tools'           => array( 'tools', 'categories', 'unaudited', 'tools_settings_complete' ),
 		'dismiss_notices'      => array( 'upto' ),
 	);
 
@@ -183,7 +185,7 @@ class Test_MainWP_Remote_MCP_Panel_Forms extends \WP_UnitTestCase {
 			$expected = array_merge( array( 'mainwp_remote_mcp_action', 'target', '_wpnonce' ), self::EXTRA_FIELDS[ $action ] ?? array() );
 			$this->assertEqualsCanonicalizing( $expected, array_keys( $fields ), $action . ' posts exactly the fields its handler reads' );
 			$anchor = self::ANCHORS[ $action ];
-			$this->assertSame( Remote_MCP_Admin::panel_url() . ( '' === $anchor ? '' : '#' . $anchor ), $form['url'], $action . ' returns to its section' );
+			$this->assertSame( Remote_MCP_Admin::panel_url() . ( '' === $anchor ? '' : '#mainwp-mcp-message-zone' ), $form['url'], $action . ' returns to the page feedback' );
 			$this->assertNotFalse( wp_verify_nonce( $fields['_wpnonce'], Remote_MCP_Admin::nonce_action( $action, $fields['target'] ) ), $action . ' nonce verifies for ' . $fields['target'] );
 		}
 	}
@@ -210,7 +212,8 @@ class Test_MainWP_Remote_MCP_Panel_Forms extends \WP_UnitTestCase {
 		$this->assert_payloads( $forms );
 
 		$actions = array_unique( array_map( fn( $form ) => $form['fields']['mainwp_remote_mcp_action'], $forms ) );
-		$this->assertEqualsCanonicalizing( array_keys( Remote_MCP_Admin::ACTIONS ), array_values( $actions ), 'every action is reachable from the page' );
+		$visible = array_diff( array_keys( Remote_MCP_Admin::ACTIONS ), array( 'tool_switch', 'category_switch', 'unaudited_switch' ) );
+		$this->assertEqualsCanonicalizing( $visible, array_values( $actions ), 'every current action is reachable from the page' );
 
 		$this->assertSame( array( 'off' ), $this->targets( $forms, 'toggle' ) );
 		$this->assertEqualsCanonicalizing( array( (string) $this->made['mine'], (string) $this->made['theirs'], (string) $this->made['token'] ), $this->targets( $forms, 'revoke' ) );
@@ -224,8 +227,10 @@ class Test_MainWP_Remote_MCP_Panel_Forms extends \WP_UnitTestCase {
 			$this->assertSame( array( $this->made['webapp'] ), $this->targets( $forms, $action ), $action );
 		}
 		$this->assertEqualsCanonicalizing( array( 'mainwp-cursor', 'mainwp-gemini-cli' ), $this->targets( $forms, 'static_client_switch' ) );
-		$this->assertEqualsCanonicalizing( array( 'list_sites_v1', 'acme_rebuild_v1' ), $this->targets( $forms, 'tool_switch' ) );
-		$this->assertSame( array( 'mainwp-sites' ), $this->targets( $forms, 'category_switch' ) );
+		$this->assertCount( 1, $this->forms_of( $forms, 'save_tools' ), 'one form saves all tool settings' );
+		$tools = $this->forms_of( $forms, 'save_tools' )[0]['fields'];
+		$this->assertSame( array( 'list_sites_v1' => 'on', 'acme_rebuild_v1' => 'on' ), $tools['tools'] );
+		$this->assertSame( array( 'mainwp-sites' => 'on' ), $tools['categories'] );
 		$this->assertSame( (string) $this->made['notice_at'], $this->forms_of( $forms, 'dismiss_notices' )[0]['fields']['upto'], 'the newest event the page shows' );
 	}
 
@@ -346,8 +351,8 @@ class Test_MainWP_Remote_MCP_Panel_Forms extends \WP_UnitTestCase {
 		$this->assertTrue( $admin->handle_post( $pick( 'revoke', (string) $this->made['theirs'] ) )['ok'] );
 		$this->assertSame( 'revoked', $this->grant( $this->made['theirs'] )['status'] );
 
-		$tool = $pick( 'tool_switch', 'list_sites_v1' );
-		$this->assertSame( 'off', $tool['value'], 'an on switch offers off' );
+		$tool                          = $pick( 'save_tools', '' );
+		$tool['tools']['list_sites_v1'] = 'off';
 		$this->assertTrue( $admin->handle_post( $tool )['ok'] );
 		$this->assertFalse( Remote_MCP_Settings::tool_enabled( 'list_sites_v1' ) );
 

@@ -191,7 +191,7 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Sync Test Sites. Asked by An AI app, ', $approval, 'a missing grant' );
 		$this->assertSame( 5, substr_count( $approval, '>Review</a>' ) );
 		$this->assertStringContainsString( esc_url( $this->panel_services()->urls()->approval_url( $gone ) ), $approval );
-		$this->assertMatchesRegularExpression( '#id="connections".*id="approvals"#s', $html, 'under the connections table' );
+		$this->assertMatchesRegularExpression( '#id="approvals".*id="connections"#s', $html, 'pending approvals appear before the connections section' );
 	}
 
 	public function test_no_pending_approvals_render_nothing() {
@@ -345,7 +345,7 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 		$strip = substr( $html, 0, strpos( $html, 'id="connect"' ) );
 		$this->assertSame( 1, preg_match( '#<form[^>]*id="mainwp-rmcp-toggle-form"[^>]*>(.*?)</form>#s', $strip, $form ) );
 		$this->assertStringContainsString( 'data-confirm="#mainwp-rmcp-confirm-toggle-off"', $form[0] );
-		$this->assertMatchesRegularExpression( '#<div class="ui toggle checkbox[^"]*">\s*<input type="checkbox" id="mainwp-rmcp-toggle" checked>\s*<label for="mainwp-rmcp-toggle">Remote AI connections</label>#', $form[1] );
+		$this->assertMatchesRegularExpression( '#<div class="ui toggle checkbox[^"]*">\s*<input type="checkbox" id="mainwp-rmcp-toggle" checked>\s*<label for="mainwp-rmcp-toggle">Apps you approve can reach this Dashboard over the internet\.</label>#', $form[1] );
 		$this->assertStringContainsString( 'Apps you approve can reach this Dashboard over the internet.', $strip );
 		$this->assertStringNotContainsString( 'Turn off and end every connection', $html );
 		$this->assertStringNotContainsString( 'value="self_test"', $strip, 'the checks are not in the strip' );
@@ -393,7 +393,7 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 		$this->assertSame( 1, substr_count( $html, esc_html( $result['lines'][0]['message'] ) ), 'only in the section' );
 	}
 
-	public function test_new_token_renders_inside_connection_tokens() {
+	public function test_new_token_renders_once_in_a_named_modal() {
 		$result = $this->post(
 			'mint_token',
 			'',
@@ -406,7 +406,10 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 		);
 		$this->assertTrue( $result['ok'], $result['code'] );
 		$html   = $this->admin()->render( $result );
-		$tokens = $this->panel_section( $html, 'tokens' );
+		$tokens = $this->element( $html, '//div[@id="mainwp-rmcp-token-modal"]' );
+		$this->assertStringContainsString( 'id="mainwp-rmcp-token-modal-title">Billing bot</div>', $tokens );
+		$this->assertStringContainsString( 'data-return-url="' . Remote_MCP_Admin::panel_url() . '#tokens"', $tokens );
+		$this->assertStringNotContainsString( $result['secret'], $this->panel_section( $html, 'tokens' ), 'the secret is in the modal, not the token form' );
 		$this->assertStringContainsString( '>' . $result['secret'] . '</pre>', $tokens, 'the token alone' );
 		$this->assertStringContainsString( 'Authorization: Bearer ' . $result['secret'], $tokens );
 		$before = substr( $html, 0, strpos( $html, 'id="tokens"' ) );
@@ -427,9 +430,21 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 		}
 		$continue = $this->element( $html, '//div[@data-app="continue"][@class="mainwp-rmcp-token-app"]' );
 		$this->assertStringContainsString( "    requestOptions:\n      headers:\n        Authorization: Bearer " . $result['secret'], $continue );
+		$this->assertStringNotContainsString( 'id="mainwp-rmcp-token-modal"', $this->admin()->render(), 'a fresh GET has no secret modal' );
 	}
 
-	public function test_advanced_rows_are_closed_with_a_summary_until_a_result_targets_one() {
+	public function test_view_only_requires_a_confirmation_that_explains_the_permanent_change() {
+		$this->connect_write( $this->user_id );
+		$html = $this->admin()->render();
+		$form = $this->element( $html, '//form[.//input[@name="mainwp_remote_mcp_action"][@value="narrow_scope"]]' );
+		$this->assertStringContainsString( 'data-confirm="#mainwp-rmcp-confirm-narrow_scope"', $form );
+		$modal = $this->element( $html, '//div[@id="mainwp-rmcp-confirm-narrow_scope"]' );
+		$this->assertStringContainsString( 'You cannot switch it back to View and change.', $modal );
+		$this->assertStringContainsString( 'create or approve a new connection', $modal );
+		$this->assertStringContainsString( 'ui cancel button', $modal );
+	}
+
+	public function test_advanced_tabs_show_summaries_and_select_the_tab_for_an_action() {
 		Remote_MCP_Settings::set_registration_enabled( false );
 		$this->catalog->rows = array(
 			array(
@@ -446,23 +461,27 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 			),
 		);
 		$html                = $this->admin()->render();
-		$this->assertStringContainsString( '<div class="ui styled fluid accordion" id="mainwp-rmcp-advanced">', $html );
+		$this->assertStringContainsString( 'class="ui basic accordion mainwp-blank-accordion mainwp-rmcp-section" id="mainwp-rmcp-advanced-accordion"', $html );
+		$this->assertStringContainsString( 'aria-expanded="false"', $this->element( $html, '//h3[@id="mainwp-rmcp-advanced-title"]' ) );
+		$this->assertStringContainsString( '<div class="ui secondary pointing fluid menu" id="mainwp-rmcp-advanced-menu" role="tablist"', $html );
 		$summaries = array(
-			'tokens' => array( 'Connection tokens', "For apps that can't sign in. You have 0 tokens." ),
-			'apps'   => array( 'Which apps may connect', 'Cursor on, Gemini CLI on, other apps off' ),
-			'tools'  => array( 'Tools AI apps may use', '2 of 2 on. 1 not reviewed by MainWP.' ),
-			'checks' => array( 'Connection checks', 'Run the self-test or check from the internet.' ),
+			'tokens' => array( 'Connection Tokens', "For apps that can't sign in. You have 0 tokens." ),
+			'apps'   => array( 'Allowed Apps', 'Cursor on, Gemini CLI on, other apps off' ),
+			'tools'  => array( 'Allowed Tools', '2 of 2 on. 1 not reviewed by MainWP.' ),
+			'checks' => array( 'Connection Checks', 'Run the self-test or check from the internet.' ),
 		);
 		foreach ( $summaries as $id => list( $title, $summary ) ) {
-			$row = $this->element( $html, '//div[@id="' . $id . '"]' );
-			$this->assertStringStartsWith( '<div class="title" id="' . $id . '">', $row, $id . ' is closed' );
-			$this->assertStringContainsString( $title, $row );
-			$this->assertStringContainsString( $summary, $row );
+			$tab     = $this->element( $html, '//a[@id="mainwp-rmcp-tab-' . $id . '"]' );
+			$section = $this->element( $html, '//div[@id="' . $id . '"][@role="tabpanel"]' );
+			$this->assertStringContainsString( 'aria-selected="' . ( 'tokens' === $id ? 'true' : 'false' ) . '"', $tab, $id );
+			$this->assertStringContainsString( 'aria-controls="' . $id . '"', $tab );
+			$this->assertStringContainsString( $title, $tab );
+			$this->assertStringContainsString( $summary, $section );
 		}
 		$this->assertMatchesRegularExpression( '#id="tokens".*id="apps".*id="tools".*id="checks"#s', $html );
 
 		$opened = array(
-			'tools'  => array( 'action' => 'tool_switch' ),
+			'tools'  => array( 'action' => 'save_tools' ),
 			'apps'   => array( 'action' => 'static_client_switch' ),
 			'tokens' => array( 'action' => 'mint_token' ),
 			'checks' => array(
@@ -477,8 +496,10 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 					'message' => 'x',
 				)
 			);
-			$this->assertSame( 1, substr_count( $html, 'class="active title"' ), $id );
-			$this->assertStringStartsWith( '<div class="active title" id="' . $id . '">', $this->element( $html, '//div[@id="' . $id . '"]' ), $id );
+			$this->assertSame( 1, substr_count( $html, 'class="ui tab active"' ), $id );
+			$this->assertStringStartsWith( '<div class="ui tab active" id="' . $id . '"', $this->element( $html, '//div[@id="' . $id . '"]' ), $id );
+			$this->assertStringContainsString( 'aria-selected="true"', $this->element( $html, '//a[@id="mainwp-rmcp-tab-' . $id . '"]' ), $id );
+			$this->assertStringContainsString( 'aria-expanded="true"', $this->element( $html, '//h3[@id="mainwp-rmcp-advanced-title"]' ), $id );
 		}
 		$this->assertStringContainsString(
 			'Just ran. 1 check failed.',
@@ -542,22 +563,21 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 		Remote_MCP_Settings::set_tool_enabled( 'list_widgets_v1', false );
 		$tools = $this->panel_section( $this->admin()->render(), 'tools' );
 
-		$this->assertStringContainsString( '<div class="accordion" id="mainwp-rmcp-tool-categories">', $tools, 'categories nest inside the row' );
-		$this->assertMatchesRegularExpression( '#<div class="title">\s*<i class="dropdown icon"></i>Sites\s*<small class="ui grey text"[^>]*>2 tools, 1 off</small>#', $tools, 'the human label and a count' );
-		$this->assertStringNotContainsString( '>mainwp-sites<', $tools );
-		$this->assertMatchesRegularExpression( '#Sync Test Sites\s*<div><small class="ui grey text"><code>sync_test_sites_v1</code></small></div>#', $tools, 'the ability\'s label, the machine name muted' );
-		$this->assertMatchesRegularExpression( '#List widgets\s*<div><small class="ui grey text"><code>list_widgets_v1</code></small></div>#', $tools, 'an unknown ability falls back to the tool name' );
-		$this->assertMatchesRegularExpression( '#Get remote job status\s*<div><small class="ui grey text"><code>get_remote_job_status_v1</code>#', $tools, 'the module tool has no ability' );
-		$this->assertStringContainsString( 'Never available to AI apps', $tools );
-		$this->assertStringContainsString( 'Vault <small class="ui grey text"><code>vault_v1</code></small>', $tools );
-
+		$this->assertStringContainsString( '<div class="ui styled fluid accordion" id="mainwp-rmcp-tool-categories">', $tools );
+		$this->assertStringContainsString( '2 tools, 1 off', $tools );
+		foreach ( array( 'Sync Test Sites', 'List widgets', 'Get remote job status', 'Never available to AI apps', 'vault_v1' ) as $label ) {
+			$this->assertStringContainsString( $label, $tools );
+		}
+		$this->assertStringNotContainsString( '<table', $tools );
 		$forms = $this->panel_forms( $tools );
-		$this->assertSame( array( 'mainwp-sites', 'mainwp-remote-mcp' ), array_map( fn( $form ) => $form['fields']['target'], $this->forms_of( $forms, 'category_switch' ) ) );
-		$switch = $this->element( $tools, '//form[.//input[@name="target"][@value="list_widgets_v1"]]' );
-		$this->assertStringContainsString( 'class="mainwp-remote-mcp-action mainwp-rmcp-switch"', $switch );
-		$this->assertMatchesRegularExpression( '#<div class="ui toggle checkbox not-auto-init"><input type="checkbox" aria-label="List widgets"><label></label></div>#', $switch, 'an off tool shows an unchecked switch' );
-		$this->assertStringContainsString( 'name="value" value="on"', $switch, 'and flips it on' );
-		$this->assertStringNotContainsString( 'Turn off', $tools, 'switches, not buttons' );
+		$this->assertCount( 1, $forms );
+		$this->assertSame( 'save_tools', $forms[0]['fields']['mainwp_remote_mcp_action'] );
+		$this->assertSame( 'off', $forms[0]['fields']['tools']['list_widgets_v1'] );
+		$this->assertSame( 'on', $forms[0]['fields']['tools']['sync_test_sites_v1'] );
+		$this->assertSame( array( 'mainwp-sites' => 'on', 'mainwp-remote-mcp' => 'on' ), $forms[0]['fields']['categories'] );
+		$this->assertStringContainsString( '>Save Settings</button>', $tools );
+		$this->assertStringNotContainsString( 'mainwp-rmcp-switch', $tools, 'no control submits on change' );
+
 	}
 
 	public function test_which_apps_may_connect_groups_and_web_app_row() {
@@ -569,12 +589,15 @@ class Test_MainWP_Remote_MCP_Panel_Sections extends \WP_UnitTestCase {
 			)
 		);
 		$apps   = $this->panel_section( $this->admin()->render(), 'apps' );
-		$this->assertMatchesRegularExpression( '#Known apps</h4>\s*<table class="ui unstackable table">.*Cursor.*Gemini CLI.*</table>\s*<table class="ui unstackable table">.*Let other apps connect#s', $apps, 'known apps first, then the switch for every other app' );
+		$this->assertMatchesRegularExpression( '#Known apps</h4>\s*<div class="ui form">.*Cursor.*Gemini CLI.*Let other apps connect#s', $apps );
 		$this->assertMatchesRegularExpression( '#Let other apps connect.*Apps that registered themselves.*Web apps you added#s', $apps );
-		$row = $this->element( $apps, '//table[@id="mainwp-rmcp-webapps"]//tr' );
-		$this->assertMatchesRegularExpression( '#Chat\s*<div><small class="ui grey text">Client ID <code style="white-space:nowrap;">' . preg_quote( $webapp['client_id'], '#' ) . '</code></small></div>#', $row, 'the client id sits under the name on one line' );
-		$this->assertMatchesRegularExpression( '#<td class="right aligned collapsing" style="white-space:nowrap;">.*webapp_switch.*>New secret<.*>Delete<#s', $row, 'the switch and both buttons stay on one line' );
-		$this->assertMatchesRegularExpression( '#<div style="overflow-x:auto;">\s*<table class="ui unstackable table" id="mainwp-rmcp-webapps">#', $apps );
+		$this->assertStringNotContainsString( '<table', $apps );
+		$row = $this->element( $apps, '//div[@id="mainwp-rmcp-webapps"]/div' );
+		$this->assertStringContainsString( 'class="six wide column">Chat</label>', $row );
+		$this->assertStringContainsString( $webapp['client_id'], $row );
+		$this->assertStringContainsString( 'https://chat.example.com/cb', $row );
+		$this->assertMatchesRegularExpression( '#mainwp-rmcp-app-actions.*webapp_switch.*>New secret<.*>Delete<#s', $row );
+
 	}
 
 	public function test_web_app_secret_renders_inside_which_apps_may_connect() {

@@ -399,7 +399,7 @@ trait Remote_MCP_Panel_Fixtures {
 			$options = array();
 			foreach ( $xpath->query( './/input|.//select|.//textarea', $form ) as $control ) {
 				$name = $control->getAttribute( 'name' );
-				if ( '' === $name ) {
+				if ( '' === $name || $control->hasAttribute( 'disabled' ) ) {
 					continue;
 				}
 				if ( 'select' === $control->nodeName ) {
@@ -418,6 +418,7 @@ trait Remote_MCP_Panel_Fixtures {
 				}
 			}
 			if ( isset( $fields['mainwp_remote_mcp_action'] ) ) {
+				parse_str( http_build_query( $fields ), $fields );
 				$forms[] = array(
 					'url'     => $form->getAttribute( 'action' ),
 					'fields'  => $fields,

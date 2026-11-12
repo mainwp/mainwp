@@ -545,7 +545,21 @@ class Remote_MCP_Self_Test implements Enable_Check {
         if ( null === $checks || array_column( $checks, 'id' ) !== self::EXTERNAL_CHECKS || count( $checks ) !== count( self::EXTERNAL_CHECKS ) ) {
             return array( self::line( 'external', 'fail', self::EXTERNAL_GENERIC ) );
         }
-        $lines = array();
+        $pass_messages = array(
+            'dns'       => __( 'DNS: Your Dashboard\'s domain resolves to a public IP address.', 'mainwp' ),
+            'tls'       => __( 'TLS: Your Dashboard accepts a secure connection with a valid certificate.', 'mainwp' ),
+            'discovery' => __( 'Discovery: Apps can reach the well-known sign-in discovery address.', 'mainwp' ),
+            'metadata'  => __( 'Metadata: The sign-in information contains the required fields and matches your Dashboard\'s address.', 'mainwp' ),
+            'mcp_401'   => __( 'MCP sign-in: The MCP address returns HTTP 401 with a valid sign-in request.', 'mainwp' ),
+        );
+        $check_labels  = array(
+            'dns'       => __( 'DNS', 'mainwp' ),
+            'tls'       => __( 'TLS', 'mainwp' ),
+            'discovery' => __( 'Discovery', 'mainwp' ),
+            'metadata'  => __( 'Metadata', 'mainwp' ),
+            'mcp_401'   => __( 'MCP sign-in', 'mainwp' ),
+        );
+        $lines         = array();
         foreach ( $checks as $check ) {
             $status = $check['status'] ?? null;
             $code   = $check['code'] ?? null;
@@ -553,7 +567,17 @@ class Remote_MCP_Self_Test implements Enable_Check {
                 return array( self::line( 'external', 'fail', self::EXTERNAL_GENERIC ) );
             }
             if ( null === $code ) {
-                $message = __( 'Passed.', 'mainwp' );
+                if ( 'pass' === $status ) {
+                    $message = $pass_messages[ $check['id'] ];
+                } else {
+                    $descriptions = array(
+                        'warn'    => __( 'The check returned a warning without further details.', 'mainwp' ),
+                        'fail'    => __( 'The check failed without further details.', 'mainwp' ),
+                        'skipped' => __( 'The check was skipped.', 'mainwp' ),
+                    );
+                    /* translators: 1: check name, 2: result description. */
+                    $message = sprintf( __( '%1$s: %2$s', 'mainwp' ), $check_labels[ $check['id'] ], $descriptions[ $status ] );
+                }
             } else {
                 $message = self::EXTERNAL_CODES[ $code ] ?? self::EXTERNAL_GENERIC;
             }

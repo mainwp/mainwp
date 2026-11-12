@@ -97,6 +97,7 @@ jQuery(function ($) {
                 title: '.mainwp-rmcp-section-title',
                 trigger: '.mainwp-rmcp-section-title',
                 content: '.mainwp-rmcp-section-content',
+                ignore: '.ui.dropdown, a',
             },
             onOpening: () => saveState(true),
             onClosing: () => saveState(false),
@@ -104,7 +105,7 @@ jQuery(function ($) {
             onClose: () => title.attr('aria-expanded', 'false'),
         });
         title.on('keydown', function (event) {
-            if (event.key === 'Enter' || event.key === ' ') {
+            if (event.target === this && (event.key === 'Enter' || event.key === ' ')) {
                 event.preventDefault();
                 section.accordion('toggle', 0);
             }
@@ -175,21 +176,22 @@ jQuery(function ($) {
         const children = input.closest('.content').find('input[type="checkbox"]').filter(function () {
             return this.name.startsWith('tools[');
         });
-        const syncChildren = (checked, toggleChecks) => {
+        const syncChildren = (enabled) => {
             const controls = children.closest('.ui.checkbox');
-            if (toggleChecks || !checked) {
-                controls.checkbox(checked ? 'set checked' : 'set unchecked');
-            }
-            controls.checkbox(checked ? 'set enabled' : 'set disabled');
-            children.closest('.ui.grid.field').toggleClass('disabled', !checked);
+            // Disabled checkboxes aren't submitted, so their hidden fields carry each tool's choice.
+            children.each(function () {
+                $(this).closest('.ui.checkbox').prev('input[type="hidden"]').val(!enabled && this.checked ? this.value : 'off');
+            });
+            controls.checkbox(enabled ? 'set enabled' : 'set disabled');
+            children.closest('.ui.grid.field').toggleClass('disabled', !enabled);
         };
         input.closest('.ui.checkbox').checkbox({
             onChange: function () {
-                syncChildren(this.checked, true);
+                syncChildren(this.checked);
             },
         });
         if (!input.prop('disabled')) {
-            syncChildren(input.prop('checked'), false);
+            syncChildren(input.prop('checked'));
         }
     });
 

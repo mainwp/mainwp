@@ -180,8 +180,8 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			}
 			$this->assertStringContainsString( $on ? 'Apps you approve can reach this Dashboard' : 'Off. No AI app', $html );
 			$state = ( $on ? ' checked' : '' ) . ' disabled>';
-			$this->assertMatchesRegularExpression( '/Let other apps connect\s*<div>.*?<\/div>\s*<\/td>\s*<td[^>]*><div class="ui toggle checkbox disabled not-auto-init"[^>]*><input type="checkbox" aria-label="Let other apps connect"' . $state . '/s', $html, 'a disabled switch shows the state' );
-			$this->assertMatchesRegularExpression( '/<code>list_sites_v1<\/code><\/small><\/div>\s*<\/td>\s*<td[^>]*><div class="ui toggle checkbox disabled not-auto-init"[^>]*><input type="checkbox" aria-label="[^"]*"' . $state . '/', $html );
+			$this->assertMatchesRegularExpression( '/aria-label="Let other apps connect"' . $state . '/s', $html );
+			$this->assertMatchesRegularExpression( '/name="tools\[list_sites_v1\]" value="on" aria-label="[^"]*"' . $state . '/', $html );
 			$this->assertStringContainsString( 'data-tooltip="Only administrators without Team Control limits can change this."', $html );
 			foreach ( array( 'self_test', 'external_check' ) as $action ) {
 				$this->assertStringContainsString( 'value="' . $action . '"', $html );
@@ -580,10 +580,10 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 		$this->assertStringContainsString( esc_html( 'Work they have already queued keeps running after you revoke a connection.' ), $html );
 		$this->assertStringContainsString( 'Not available yet', $html );
 		$this->assertStringContainsString( 'Never available to AI apps', $html );
-		$this->assertStringContainsString( 'name="target" value="list_sites_v1"', $html );
-		$this->assertStringContainsString( 'name="target" value="acme_rebuild_v1"', $html );
-		$this->assertStringNotContainsString( 'name="target" value="updraft_backup_v1"', $html, 'no switch for an inert tool' );
-		$this->assertStringNotContainsString( 'name="target" value="broken_thing_v1"', $html );
+		$this->assertStringContainsString( 'name="tools[list_sites_v1]"', $html );
+		$this->assertStringContainsString( 'name="tools[acme_rebuild_v1]"', $html );
+		$this->assertStringNotContainsString( 'name="tools[updraft_backup_v1]"', $html, 'no switch for an inert tool' );
+		$this->assertStringNotContainsString( 'name="tools[broken_thing_v1]"', $html );
 
 		$this->assertTrue( $this->post( 'tool_switch', 'list_sites_v1', array( 'value' => 'off' ) )['ok'] );
 		$this->assertFalse( Remote_MCP_Settings::tool_enabled( 'list_sites_v1' ) );
@@ -696,6 +696,40 @@ class Test_MainWP_Remote_MCP_Admin extends \WP_UnitTestCase {
 			$this->catalog->rows[] = array( 'tool_name' => $category, 'ability' => 'mainwp/test-v1', 'category' => $category, 'standard_tier' => 'read', 'availability' => 'available', 'reason' => null );
 		}
 		$this->assertSame( array( 'mainwp-sites', 'mainwp-updates', 'mainwp-backups', 'acme-alpha', 'mainwp-matomo' ), array_keys( $this->admin()->tool_lists()['available'] ) );
+	}
+
+	public function test_save_tools_rejects_incomplete_unknown_or_unauthorized_settings_before_writing() {
+		$this->site_wide_catalog();
+		Remote_MCP_Settings::set_tool_enabled( 'absent_extension_v1', false );
+		$valid = array(
+			'tools'                   => array( 'list_sites_v1' => 'off', 'acme_rebuild_v1' => 'on' ),
+			'categories'              => array( 'mainwp-sites' => 'off' ),
+			'unaudited'               => 'off',
+			'tools_settings_complete' => '1',
+		);
+		$options = array( Remote_MCP_Settings::OPTION_TOOL_SWITCHES, Remote_MCP_Settings::OPTION_UNAUDITED_TOOLS_ENABLED );
+		$before  = array_map( 'get_option', $options );
+		$invalid = array();
+		$invalid[] = array_replace( $valid, array( 'tools_settings_complete' => '0' ) );
+		$invalid[] = array_replace( $valid, array( 'tools' => array( 'list_sites_v1' => 'off' ) ) );
+		$invalid[] = array_replace( $valid, array( 'tools' => $valid['tools'] + array( 'invented_v1' => 'on' ) ) );
+		$invalid[] = array_replace( $valid, array( 'categories' => array( 'mainwp-sites' => array( 'on' ) ) ) );
+		$invalid[] = array_replace( $valid, array( 'unaudited' => array( 'off' ) ) );
+		foreach ( $invalid as $post ) {
+			$this->assertSame( 'invalid', $this->post( 'save_tools', '', $post )['code'] );
+			$this->assertSame( $before, array_map( 'get_option', $options ), 'invalid submissions change nothing' );
+		}
+		$this->assertSame( 'bad_nonce', $this->post( 'save_tools', '', $valid, 'bad' )['code'] );
+		wp_set_current_user( $this->limited_admin() );
+		$this->assertSame( 'forbidden', $this->post( 'save_tools', '', $valid )['code'] );
+		$this->assertSame( $before, array_map( 'get_option', $options ) );
+		wp_set_current_user( $this->user_id );
+		$this->assertTrue( $this->post( 'save_tools', '', $valid )['ok'] );
+		$this->assertFalse( Remote_MCP_Settings::tool_enabled( 'list_sites_v1' ) );
+		$this->assertTrue( Remote_MCP_Settings::tool_enabled( 'acme_rebuild_v1' ) );
+		$this->assertFalse( Remote_MCP_Settings::category_enabled( 'mainwp-sites' ) );
+		$this->assertFalse( Remote_MCP_Settings::unaudited_extension_tools_enabled() );
+		$this->assertFalse( Remote_MCP_Settings::tool_enabled( 'absent_extension_v1' ), 'an absent extension keeps its setting' );
 	}
 
 }

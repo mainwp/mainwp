@@ -50,6 +50,7 @@ class Test_MainWP_Remote_MCP_Connection_Tokens extends \WP_UnitTestCase {
 	public function test_connection_token_mint_shows_once_without_a_per_user_cap() {
 		$first = $this->mint();
 		$this->assertTrue( $first['ok'], $first['code'] );
+		$this->assertSame( 'AnythingLLM', $first['secret_label'], 'the one-time details identify the named token' );
 		$this->assertMatchesRegularExpression( '/^mwpct_[A-Za-z0-9_-]{43}$/', $first['secret'] );
 		$this->assertSame( OAuth_Store::OK, $this->store->check_connect_token( $first['secret'] )['outcome'], 'the shown token works' );
 

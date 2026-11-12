@@ -80,6 +80,27 @@ class Test_MainWP_Remote_MCP_External_Check extends \WP_UnitTestCase {
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options}" );
 	}
 
+	public function test_external_check_describes_each_success_and_does_not_call_a_failure_passed() {
+		$checks = array_map(
+			fn( $id ) => array( 'id' => $id, 'status' => 'pass', 'code' => null ),
+			Remote_MCP_Self_Test::EXTERNAL_CHECKS
+		);
+		$this->answer( $this->json( 200, array( 'schema' => 1, 'checks' => $checks ) ) );
+		$self_test = new Remote_MCP_Self_Test( $this->panel_services() );
+		$lines     = $self_test->external_check();
+		$this->assertSame( array_values( Remote_MCP_Self_Test::EXTERNAL_PASSES ), array_column( $lines, 'message' ) );
+		$this->assertCount( 5, array_unique( array_column( $lines, 'message' ) ) );
+		foreach ( array( 'warn', 'fail', 'skipped' ) as $status ) {
+			remove_all_filters( 'pre_http_request' );
+			$checks[0]['status'] = $status;
+			$this->answer( $this->json( 200, array( 'schema' => 1, 'checks' => $checks ) ) );
+			$line = $self_test->external_check()[0];
+			$this->assertSame( $status, $line['status'] );
+			$this->assertStringStartsWith( 'DNS:', $line['message'] );
+			$this->assertStringNotContainsString( 'public IP address', $line['message'] );
+		}
+	}
+
 	public function test_external_check_sends_only_dashboard_url_and_maps_contract_codes() {
 		$self_test = new Remote_MCP_Self_Test( $this->panel_services() );
 		$checks    = array(
@@ -145,6 +166,8 @@ class Test_MainWP_Remote_MCP_External_Check extends \WP_UnitTestCase {
 		// One line per check, mapped by code; an unknown code reads as the generic line.
 		$this->assertSame( array( 'dns', 'tls', 'discovery', 'metadata', 'mcp_401' ), array_column( $lines, 'id' ) );
 		$this->assertSame( array( 'pass', 'pass', 'fail', 'skipped', 'skipped' ), array_column( $lines, 'status' ) );
+		$this->assertSame( Remote_MCP_Self_Test::EXTERNAL_PASSES['dns'], $lines[0]['message'] );
+		$this->assertSame( Remote_MCP_Self_Test::EXTERNAL_PASSES['tls'], $lines[1]['message'] );
 		$this->assertSame( Remote_MCP_Self_Test::EXTERNAL_CODES['discovery_blocked'], $lines[2]['message'] );
 		$this->assertNotEmpty( $lines[2]['help'] );
 		$this->assertSame( Remote_MCP_Self_Test::EXTERNAL_CODES['skipped_after_failure'], $lines[3]['message'] );

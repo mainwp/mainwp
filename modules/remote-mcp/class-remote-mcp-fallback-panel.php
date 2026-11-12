@@ -36,20 +36,26 @@ final class Remote_MCP_Fallback_Panel {
     public static function direct_view( $view ) {
         unset( $view );
         return array(
-            'render'    => array( __CLASS__, 'render_page' ),
-            'preferred' => false,
-            'apps'      => array(),
+            'render'             => array( __CLASS__, 'render_page' ),
+            'render_with_header' => array( __CLASS__, 'render_page' ),
+            'preferred'          => false,
+            'apps'               => array(),
         );
     }
 
     /**
      * View callback.
+     *
+     * @param callable|null $render_header Page heading, rendered after page-level messages.
      */
-    public static function render_page() {
+    public static function render_page( $render_header = null ) {
         if ( ! current_user_can( 'manage_options' ) ) {
             return;
         }
         echo self::render( PHP_VERSION ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render() escapes.
+        if ( is_callable( $render_header ) ) {
+            call_user_func( $render_header );
+        }
     }
 
     /**

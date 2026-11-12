@@ -168,6 +168,11 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'action="' . esc_url( Remote_MCP_Admin::panel_url() ) . '"', $html, 'forms post back to the direct view' );
 		$this->assertStringNotContainsString( 'id="mainwp-mcp-steps"', $html, 'the local wizard is its own view' );
 		$this->assertStringContainsString( 'Nothing to install.', $html );
+		$this->assertStringContainsString( '<em data-emoji=":bulb:" class="small"></em>', $html );
+		$this->assertSame( 4, substr_count( $html, 'class="ui basic accordion mainwp-blank-accordion mainwp-rmcp-section"' ), 'each main section has its own accordion' );
+		foreach ( array( 'mainwp-rmcp-connection-title', 'connect', 'connections', 'mainwp-rmcp-advanced-title' ) as $heading ) {
+			$this->assertMatchesRegularExpression( '#<h3[^>]*class="[^"]*mainwp-rmcp-section-title[^"]*"[^>]*id="' . $heading . '"[^>]*aria-controls="[^"]+"#', $html );
+		}
 		foreach ( OAuth_Known_Clients::REGISTRY as $entry ) {
 			$this->assertStringContainsString( esc_html( $entry['label'] ), $html, 'the known apps come from the registry' );
 		}
@@ -205,10 +210,14 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 		$html = $this->submit( 'toggle', 'on' );
 		$this->assertTrue( Remote_MCP_Settings::enabled() );
 		$this->assertStringContainsString( 'Remote AI connections are on.', $html );
+		$this->assertSame( 1, substr_count( $html, 'Remote AI connections are on.' ), 'the action runs and reports once' );
+		$this->assertLessThan( strpos( $html, 'Remote AI connections are on.' ), strpos( $html, 'id="mainwp-mcp-message-zone"' ) );
+		$this->assertLessThan( strpos( $html, 'Connect an AI app' ), strpos( $html, 'Remote AI connections are on.' ), 'success appears before the page heading' );
 
 		$html = $this->submit( 'toggle', 'off', array(), 'not-a-nonce' );
 		$this->assertTrue( Remote_MCP_Settings::enabled(), 'a bad nonce changes nothing' );
 		$this->assertStringContainsString( 'This form expired. Reload the page and try again.', $html );
+		$this->assertLessThan( strpos( $html, 'Connect an AI app' ), strpos( $html, 'This form expired. Reload the page and try again.' ), 'errors appear before the page heading' );
 
 		$grant = $this->connect_write( $this->user_id );
 		$this->submit( 'set_policy', (string) $grant['grant_id'], array( 'policy' => 'strict' ) );
@@ -400,7 +409,7 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 	public function test_token_form_selects_use_the_dropdown_class() {
 		$html = $this->panel->render();
 		foreach ( array( 'access', 'policy', 'expiry' ) as $name ) {
-			$this->assertStringContainsString( '<select id="mainwp-rmcp-token-' . $name . '" name="' . $name . '" class="ui mini dropdown">', $html );
+			$this->assertStringContainsString( '<select id="mainwp-rmcp-token-' . $name . '" name="' . $name . '" class="ui fluid dropdown">', $html );
 		}
 	}
 

@@ -336,6 +336,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
     public static function render_tab( $tab ) {
         $sites_per_page = 25;
         $tbl_id         = 'widget-connections-status-details-table-' . $tab;
+        $show_reconnect = 'disconnected' === $tab && MainWP_System_Utility::is_admin();
 
         if ( 'all-sites' === $tab ) {
             $hook_before = 'mainwp_connection_status_before_all_sites_list';
@@ -351,8 +352,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         ?>
 
         <div class="ui tab" data-tab="<?php echo esc_attr( $tab ); ?>" loaded-data="no" current-page="1">
-            <?php if ( 'disconnected' === $tab && MainWP_System_Utility::is_admin() ) { ?>
-                <button type="button" class="ui mini green button" id="mainwp-connection-status-reconnect-all"><?php esc_html_e( 'Reconnect all', 'mainwp' ); ?></button>
+            <?php if ( $show_reconnect ) { ?>
                 <div id="mainwp-connection-status-reconnect-results" role="status" aria-live="polite"></div>
             <?php } ?>
             <div class="ui message widget-connections-status-message-zone" style="display:none;" ></div>
@@ -372,6 +372,9 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     </thead>
                 </table>
             </div>
+            <?php if ( $show_reconnect ) { ?>
+                <button type="button" class="ui mini green button" id="mainwp-connection-status-reconnect-all"><?php esc_html_e( 'Reconnect all', 'mainwp' ); ?></button>
+            <?php } ?>
         <?php
         /**
          * Fires after the list of all sites in the connection status widgets
@@ -442,6 +445,13 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     "layout": {
                         "topStart": null,
                         "topEnd": null,
+                        <?php if ( $show_reconnect ) { ?>
+                        "bottomStart": function() {
+                            return document.getElementById('mainwp-connection-status-reconnect-all');
+                        },
+                        <?php } else { ?>
+                        "bottomStart": null,
+                        <?php } ?>
                         "bottomEnd": {
                             "paging": {
                                 "numbers": <?php echo intval( $table_features['numbers'] ); ?>

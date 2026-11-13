@@ -44,6 +44,7 @@ test('both mode pill tooltips fit inside the default panel width', async ({ page
   await fixture(page);
   for (const mode of ['ask', 'agent']) {
     const pill = page.locator(`[data-mode="${mode}"]`);
+    await page.locator('.mainwp-mode-pill').evaluateAll(elements => elements.forEach(element => element.classList.remove('active')));
     await pill.hover();
     const geometry = await pill.evaluate((element: HTMLElement) => {
       const style = getComputedStyle(element, '::after');
@@ -56,9 +57,14 @@ test('both mode pill tooltips fit inside the default panel width', async ({ page
       const rect = marker.getBoundingClientRect();
       const panel = document.querySelector('#mainwp-assistant-panel')!.getBoundingClientRect();
       marker.remove();
-      return { left: rect.left, right: rect.right, panelLeft: panel.left, panelRight: panel.right };
+      return { display: style.display, maxWidth: style.maxWidth, left: rect.left, right: rect.right, panelLeft: panel.left, panelRight: panel.right };
     });
+    expect(geometry.display).not.toBe('none');
+    expect(geometry.maxWidth).toBe('230px');
     expect(geometry.left).toBeGreaterThanOrEqual(geometry.panelLeft);
     expect(geometry.right).toBeLessThanOrEqual(geometry.panelRight);
+    await pill.evaluate(element => element.classList.add('active'));
+    const activeDisplay = await pill.evaluate(element => ['::before', '::after'].map(pseudo => getComputedStyle(element, pseudo).display));
+    expect(activeDisplay).toEqual(['none', 'none']);
   }
 });

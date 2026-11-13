@@ -1743,7 +1743,7 @@ class MainWP_Assistant_Policies { // phpcs:ignore Generic.Classes.OpeningBraceSa
             <?php if ( ! $assistant_enabled ) : ?>
                 <?php static::render_disabled_state( 'insights' ); ?>
             <?php else : ?>
-                <div class="ui warning message">
+                <div class="ui yellow message">
                     <div class="header"><?php esc_html_e( 'Logs Module Required', 'mainwp' ); ?></div>
                     <p><?php esc_html_e( 'Assistant Insights needs the Logs module. Enable it to see assistant usage metrics.', 'mainwp' ); ?></p>
                 </div>

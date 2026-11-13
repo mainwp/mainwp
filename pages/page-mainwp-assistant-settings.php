@@ -419,8 +419,10 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Sites mode', 'mainwp' ); ?></label>
                     <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Whether the assistant can run actions on your sites. Sites mode needs at least one AI provider with a working API key.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <?php if ( $provider_failure ) : ?>
-                            <div class="ui visible warning message"><?php echo esc_html( $provider_failure['message'] ); ?></div>
+                        <?php if ( $provider_failure && 'google' === $provider_failure['provider'] ) : ?>
+                            <i class="yellow exclamation circle icon"></i><?php esc_html_e( 'Not working. See Google Gemini below.', 'mainwp' ); ?>
+                        <?php elseif ( $provider_failure ) : ?>
+                            <div class="ui visible yellow message"><?php echo esc_html( $provider_failure['message'] ); ?></div>
                         <?php elseif ( $agent_available ) : ?>
                             <i class="green check circle icon"></i><?php esc_html_e( 'Ready. Found a configured AI provider.', 'mainwp' ); ?>
                         <?php else : ?>
@@ -435,7 +437,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Google Gemini', 'mainwp' ); ?></label>
                     <div class="ten wide column">
                         <?php if ( $provider_failure && 'google' === $provider_failure['provider'] ) : ?>
-                            <div class="ui visible warning message"><?php echo esc_html( $provider_failure['message'] ); ?></div>
+                            <div class="ui visible yellow message"><?php echo esc_html( $provider_failure['message'] ); ?></div>
                         <?php endif; ?>
                         <?php if ( ! $has_ai_client ) : ?>
                             <div class="ui visible info blue message">
@@ -456,7 +458,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 <?php esc_html_e( 'Ask an administrator to connect an AI provider.', 'mainwp' ); ?>
                             </div>
                         <?php elseif ( ! $contract_ok ) : ?>
-                            <div class="ui visible warning message">
+                            <div class="ui visible yellow message">
                                 <?php esc_html_e( 'This WordPress version describes AI connectors differently than this dashboard expects, so the wizard cannot store a key for you. Add it on the Connectors screen instead.', 'mainwp' ); ?>
                             </div>
                             <a class="ui basic button" href="<?php echo esc_url( $connectors_url ); ?>">
@@ -481,7 +483,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 <?php esc_html_e( 'Replace key', 'mainwp' ); ?>
                             </button>
                         <?php elseif ( 'database' === $key_source ) : ?>
-                            <div class="ui visible warning message">
+                            <div class="ui visible yellow message">
                                 <?php esc_html_e( 'Key saved, connection not active. WordPress is not serving Sites mode from this key yet.', 'mainwp' ); ?>
                             </div>
                             <button type="button" class="ui basic button mainwp-assistant-connect-cta" data-onboarding-source="replace">
@@ -1017,8 +1019,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
         <div class="ui mini modal" id="mainwp-assistant-clear-history-modal">
             <div class="header"><?php esc_html_e( 'Clear Conversation History', 'mainwp' ); ?></div>
             <div class="content">
-                <div class="ui warning message">
-                    <i class="warning icon"></i>
+                <div class="ui yellow message">
                     <?php esc_html_e( 'This will permanently delete all your conversation history with the AI assistant. This action cannot be undone.', 'mainwp' ); ?>
                 </div>
             </div>
@@ -1037,7 +1038,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <?php esc_html_e( 'Disable Assistant Features', 'mainwp' ); ?>
             </div>
             <div class="content">
-                <div class="ui warning message">
+                <div class="ui yellow message">
                     <p><?php esc_html_e( 'This turns off the assistant for everyone. The consent gate reappears the next time someone opens a feature, and conversation history stays until you clear it on the History & Privacy tab.', 'mainwp' ); ?></p>
                 </div>
             </div>
@@ -1056,7 +1057,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <?php esc_html_e( 'Disable Assistant', 'mainwp' ); ?>
             </div>
             <div class="content">
-                <div class="ui warning message">
+                <div class="ui yellow message">
                     <p><?php esc_html_e( 'This will disable the assistant for all users on this dashboard.', 'mainwp' ); ?></p>
                 </div>
             </div>

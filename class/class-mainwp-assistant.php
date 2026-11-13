@@ -4446,7 +4446,7 @@ Guidelines:
             /* translators: %s: date and time of the failed request. */
             ? sprintf( __( 'Last Sites request failed: the provider rejected the key (%s)', 'mainwp' ), $date )
             /* translators: %s: date and time of the failed request. */
-            : sprintf( __( 'Last Sites request failed: no usable AI provider (%s)', 'mainwp' ), $date );
+            : sprintf( __( 'Last Sites request failed: no AI provider with a working API key (%s)', 'mainwp' ), $date );
         return array(
             'code'     => $code,
             'time'     => absint( $failure['time'] ?? 0 ),

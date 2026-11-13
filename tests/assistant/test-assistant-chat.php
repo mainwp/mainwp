@@ -2986,6 +2986,8 @@ class Test_Assistant_Chat extends MainWP_Assistant_Test_Case {
 		$this->record_provider_failure();
 		$html = $this->render_providers_tab_html();
 		$this->assertStringContainsString( 'Last Sites request failed: the provider rejected the key (', $html );
+		$this->assertSame( 1, substr_count( $html, 'Last Sites request failed: the provider rejected the key (' ) );
+		$this->assertStringContainsString( '<i class="yellow exclamation circle icon"></i>Not working. See Google Gemini below.', $html );
 		$this->assertStringNotContainsString( 'Ready. Found a configured AI provider.', $html );
 		$this->assertStringNotContainsString( 'Connected - Google (Gemini)', $html );
 		$this->assertStringContainsString( 'Replace key', $html );
@@ -3004,6 +3006,25 @@ class Test_Assistant_Chat extends MainWP_Assistant_Test_Case {
 			putenv( false === $previous_env ? 'GOOGLE_API_KEY' : 'GOOGLE_API_KEY=' . $previous_env );
 		}
 
+	}
+
+	public function test_google_no_usable_provider_notice_replaces_ready() {
+		if ( ! function_exists( 'wp_ai_client_prompt' ) ) {
+			$this->markTestSkipped( 'WP AI Client not available in this WordPress version.' );
+		}
+		$user_id = $this->set_current_user_as_admin();
+		$this->set_assistant_enabled( true );
+		$this->set_assistant_consent( true );
+		update_option( 'connectors_ai_google_api_key', 'fixture-google' );
+		$assistant = new Testable_Agent_Assistant();
+		$assistant->canned_results = array( new \WP_Error( 'prompt_invalid_argument', 'No models found for text generation' ) );
+		$this->assertSame( 'no_usable_provider', $this->run_failing_agent_turn( $assistant, $user_id )->get_error_code() );
+		$this->assertSame( 'google', MainWP_Assistant::get_provider_failure()['provider'] );
+		$html = $this->render_providers_tab_html();
+		$this->assertSame( 1, substr_count( $html, 'Last Sites request failed: no AI provider with a working API key (' ) );
+		$this->assertStringContainsString( '<i class="yellow exclamation circle icon"></i>Not working. See Google Gemini below.', $html );
+		$this->assertStringNotContainsString( 'Ready. Found a configured AI provider.', $html );
+		$this->assertStringNotContainsString( 'Connected - Google (Gemini)', $html );
 	}
 
 	public function test_success_clears_provider_failure() {

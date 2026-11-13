@@ -741,7 +741,7 @@ class MainWP_Assistant_Onboarding { // phpcs:ignore Generic.Classes.OpeningBrace
                 </div>
 
                 <div class="mainwp-assistant-onboarding-panel" data-panel="override" hidden>
-                    <div class="ui warning message">
+                    <div class="ui yellow message">
                         <p data-override="env" hidden>
                             <?php
                             printf(
@@ -782,7 +782,7 @@ class MainWP_Assistant_Onboarding { // phpcs:ignore Generic.Classes.OpeningBrace
                 </div>
 
                 <div class="mainwp-assistant-onboarding-panel" data-panel="blocked" hidden>
-                    <div class="ui warning message">
+                    <div class="ui yellow message">
                         <div data-blocked="wp_version_unsupported" hidden>
                             <?php esc_html_e( 'Sites mode needs WordPress 7.0 or newer. Docs mode works on this version.', 'mainwp' ); ?>
                         </div>

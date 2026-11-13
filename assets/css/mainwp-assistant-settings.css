@@ -116,7 +116,7 @@
 }
 
 /* Warning Message in Modals */
-#mainwp-assistant-clear-history-modal .ui.warning.message {
+#mainwp-assistant-clear-history-modal .ui.yellow.message {
     margin-bottom: 0;
 }
 

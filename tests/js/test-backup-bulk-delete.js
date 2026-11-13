@@ -119,16 +119,18 @@ test( 'a reload deferred by the confirmation dialog runs when the dialog closes'
     const focus = [];
     context.$ = selector => ( {
         modal( options ) { context.modal = options; return this; },
-        prop() { return this; }, closest() { return this; }, removeClass() { return this; },
+        prop( key, value ) { return value === undefined ? false : this; }, closest() { return this; }, removeClass() { return this; },
         trigger( event ) { focus.push( [ selector, event ] ); return this; }
     } );
+    context.$bulkDeleteButton = context.$( '#mainwp-backup-bulk-delete-btn' );
+    context.updateBulkSelection = () => {};
     const start = source.indexOf( "$( '#mainwp-backup-bulk-delete-modal' ).modal( {" );
     const end = source.indexOf( '\n            } );', start ) + '\n            } );'.length;
     vm.runInContext( source.slice( start, end ), context );
     context.modal.onHidden();
     assert.deepEqual( calls, [ 7 ] ); assert.equal( context.bulkReloadSite, 0 );
     assert.equal( context.bulkDialogOpen, false );
-    assert.deepEqual( focus, [ [ '#mainwp-backup-bulk-apply', 'focus' ] ] );
+    assert.deepEqual( focus, [ [ '#mainwp-backup-bulk-delete-btn', 'focus' ] ] );
     context.bulkReloadSite = 8;
     context.flushBulkReload();
     assert.deepEqual( calls, [ 7 ], 'A reload for another site must not change the selected site.' );
@@ -185,22 +187,38 @@ test( 'refreshed rows remove missing or pruned selections', () => {
     assert.deepEqual( controller.ids(), [ 12 ] );
     controller.retain( [] ); assert.deepEqual( controller.ids(), [] );
 } );
-test( 'unavailable archives remain selectable and unchanged counts are not announced again', () => {
+test( 'the delete button follows the selection, including unavailable archives', () => {
     const elements = new Map(), textWrites = [];
     const $ = selector => {
         if ( ! elements.has( selector ) ) elements.set( selector, { text: '', props: {} } );
         const state = elements.get( selector );
-        return { find() { return this; }, prop( key, value ) { state.props[key] = value; return this; }, text( value ) {
+        return { find() { return this; }, toggleClass() { return this; }, prop( key, value ) { state.props[key] = value; return this; }, text( value ) {
             if ( value === undefined ) return state.text;
             state.text = value; textWrites.push( value ); return this;
         } };
     };
-    const h = pageHarness( { $, bulkUiLocked: false, bulkLabels: { selectedOne: '%d backup selected.', selectedMany: '%d backups selected.' },
-        bulkDelete: { ids: () => [ 11 ] }, snapshotsTable: { rows: () => ( { every( fn ) { fn.call( { data: () => ( { id: 11, status: 'complete', source: 'unavailable' } ), node: () => '#row' } ); } } ) }
+    const button = '#mainwp-backup-bulk-delete-btn';
+    let selected = [];
+    const h = pageHarness( { $, $bulkDeleteButton: $( button ), bulkUiLocked: false, bulkDialogOpen: false, bulkLabels: { button: 'Delete Selected Backups (%d)' },
+        bulkDelete: { ids: () => selected }, snapshotsTable: { rows: () => ( { every( fn ) { fn.call( { data: () => ( { id: 11, status: 'complete', source: 'unavailable' } ), node: () => '#row' } ); } } ) }
     } );
-    h.load( 'updateBulkSelection' ); h.context.updateBulkSelection(); h.context.updateBulkSelection();
+    h.load( 'updateBulkSelection' );
+    h.context.updateBulkSelection();
+    assert.equal( elements.get( button ).props.disabled, true );
+    selected = [ 11, 12, 13 ];
+    h.context.updateBulkSelection();
+    h.context.updateBulkSelection();
+    assert.equal( elements.get( button ).props.disabled, false );
     assert.equal( elements.get( '#row' ).props.disabled, false, 'Single delete permits this row; bulk must permit it too.' );
-    assert.deepEqual( textWrites, [ '1 backup selected.' ] );
+    assert.deepEqual( textWrites, [ 'Delete Selected Backups (0)', 'Delete Selected Backups (3)' ], 'Unchanged counts are not announced again.' );
+    h.context.bulkDialogOpen = true;
+    h.context.updateBulkSelection();
+    assert.equal( elements.get( button ).props.disabled, true );
+    h.context.bulkDialogOpen = false;
+    selected = [];
+    h.context.updateBulkSelection();
+    assert.equal( elements.get( button ).props.disabled, true );
+    assert.equal( elements.get( button ).text, 'Delete Selected Backups (0)' );
 } );
 test( 'unlock derives backup controls from current state instead of old disabled flags', () => {
     const elements = new Map();

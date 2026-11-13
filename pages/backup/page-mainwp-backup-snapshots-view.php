@@ -90,6 +90,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         $disconnected   = $site_id > 0 && MainWP_Post_Backup_Handler::site_is_disconnected( MainWP_DB::instance()->get_website_by_id( $site_id ) );
         $reconnect_url  = $site_id > 0 ? admin_url( 'admin.php?page=managesites&dashboard=' . $site_id ) : '';
         $controls_off   = 0 === $site_id || $disconnected;
+        $can_delete     = MainWP_Backup_Operations::current_user_can_delete();
         if ( $locked ) :
             ?>
         <div id="mainwp-backup-snapshots" class="ui padded segment">
@@ -100,10 +101,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <div class="sub header"><?php esc_html_e( 'Create a backup, manage saved snapshots, or restore this site to a previous backup.', 'mainwp' ); ?></div>
                 </h2>
                 <div class="active content">
-            <?php self::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
+            <?php self::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off, $can_delete ); ?>
         <?php else : ?>
         <div id="mainwp-backup-snapshots" class="ui padded segment">
-            <?php self::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
+            <?php self::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off, $can_delete ); ?>
             <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-snapshots-info-message', __( 'Pick a site to see its backups. From here you can back the site up right now or restore it to one of its backups.', 'mainwp' ) ); ?>
         <?php endif; ?>
             <?php
@@ -208,6 +209,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     'test_restore' => esc_html__( 'Test Restore', 'mainwp' ),
                     'actions'      => '',
                 );
+                if ( $can_delete ) {
+                    $snapshot_columns = array( 'selection' => '' ) + $snapshot_columns;
+                }
                 ?>
                 <?php if ( $locked ) : ?>
                 <div id="mainwp-snapshots-empty-state" style="display:none; margin-top: 2.5em;">
@@ -225,13 +229,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <thead>
                         <tr>
                             <?php foreach ( $snapshot_columns as $column_key => $column_label ) : ?>
-                                <?php
-                                $selection = '';
-                                if ( 'backup' === $column_key && MainWP_Backup_Operations::current_user_can_delete() ) {
-                                    $selection = '<input type="checkbox" id="mainwp-backup-select-all" aria-label="' . esc_attr__( 'Select all backups on this page', 'mainwp' ) . '"> ';
-                                }
-                                ?>
-                            <th scope="col" class="<?php echo esc_attr( 'backup' === $column_key ? 'collapsing' : ( 'actions' === $column_key ? 'collapsing right aligned' : '' ) ); ?>"><?php echo $selection . esc_html( $column_label ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Constant checkbox markup with escaped accessible label. ?></th>
+                                <?php if ( 'selection' === $column_key ) : ?>
+                            <th scope="col" class="collapsing check-column" data-dt-order="disable">
+                                <div class="ui fitted checkbox not-auto-init">
+                                    <input type="checkbox" id="mainwp-backup-select-all" aria-label="<?php esc_attr_e( 'Select all backups on this page', 'mainwp' ); ?>" disabled>
+                                    <label for="mainwp-backup-select-all"></label>
+                                </div>
+                            </th>
+                                <?php else : ?>
+                            <th scope="col" class="<?php echo esc_attr( 'backup' === $column_key ? 'collapsing' : ( 'actions' === $column_key ? 'collapsing right aligned' : '' ) ); ?>"><?php echo esc_html( $column_label ); ?></th>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         </tr>
                     </thead>
@@ -368,7 +375,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             </div>
         </div>
         <?php
-        static::render_script( $site_id, $disconnected );
+        static::render_script( $site_id, $disconnected, $can_delete );
     }
 
     /**
@@ -379,8 +386,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
      * @param bool $locked         Per-site surface: no site picker.
      * @param bool $native_enabled Whether Back Up Now and Clean Up apply.
      * @param bool $controls_off   Whether Back Up Now starts disabled.
+     * @param bool $can_delete     Whether the user can delete backups.
      */
-    private static function render_actions_bar( int $site_id, bool $locked, bool $native_enabled, bool $controls_off ): void {
+    private static function render_actions_bar( int $site_id, bool $locked, bool $native_enabled, bool $controls_off, bool $can_delete ): void {
         // Clean Up works on the Dashboard's copies, so a disconnected site
         // keeps it; its Child prune just fails and is logged.
         $cleanup_off = 0 === $site_id;
@@ -412,14 +420,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                                 <input type="checkbox" id="mainwp-snapshots-show-removed">
                                 <label for="mainwp-snapshots-show-removed"><?php esc_html_e( 'Show removed backups', 'mainwp' ); ?></label>
                             </div>
-                            <?php if ( MainWP_Backup_Operations::current_user_can_delete() ) : ?>
-                            <select class="ui mini dropdown" id="mainwp-backup-bulk-action" aria-label="<?php esc_attr_e( 'Bulk actions', 'mainwp' ); ?>">
-                                <option value=""><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></option>
-                                <option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
-                            </select>
-                            <button type="button" class="ui mini basic button" id="mainwp-backup-bulk-apply"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
-                            <span id="mainwp-backup-bulk-selection" role="status" aria-live="polite"></span>
-                            <?php endif; ?>
                         </div>
                         <div class="right aligned middle aligned column">
                             <?php if ( $native_enabled ) : ?>
@@ -429,11 +429,21 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             <button type="button" class="ui mini red button" id="mainwp-native-backup-cancel-btn" style="display: none;">
                                 <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
                             </button>
-                                <?php if ( MainWP_Backup_Operations::current_user_can_delete() ) : ?>
+                                <?php if ( $can_delete ) : ?>
                                     <button type="button" class="ui mini basic button<?php echo $cleanup_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $cleanup_off ); ?>>
                                         <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
                                     </button>
                                 <?php endif; ?>
+                            <?php endif; ?>
+                            <?php if ( $can_delete ) : ?>
+                            <button type="button" class="ui mini basic red disabled button" id="mainwp-backup-bulk-delete-btn" disabled>
+                                <span aria-live="polite">
+                                    <?php
+                                    /* translators: %d: number of selected backups. */
+                                    printf( esc_html__( 'Delete Selected Backups (%d)', 'mainwp' ), 0 );
+                                    ?>
+                                </span>
+                            </button>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -449,8 +459,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @param int  $site_id      Preselected site id.
      * @param bool $disconnected Whether the preselected site has sync errors.
+     * @param bool $can_delete   Whether the user can delete backups.
      */
-    private static function render_script( int $site_id, bool $disconnected = false ): void { // phpcs:ignore -- NOSONAR - page script.
+    private static function render_script( int $site_id, bool $disconnected, bool $can_delete ): void { // phpcs:ignore -- NOSONAR - page script.
         $labels = array(
             'pending'          => esc_html__( 'Queued', 'mainwp' ),
             'preflight'        => esc_html__( 'Checking the site is ready', 'mainwp' ),
@@ -535,7 +546,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // restore_backups; an unregistered admin-ajax action answers 400.
             var canDownload = <?php echo MainWP_Abilities_Util::current_user_has_operation_right( 'download_backups' ) ? 'true' : 'false'; ?>;
             var canRestore = <?php echo \mainwp_current_user_can( 'dashboard', 'restore_backups' ) ? 'true' : 'false'; ?>;
-            var canDelete = <?php echo MainWP_Backup_Operations::current_user_can_delete() ? 'true' : 'false'; ?>;
+            var canDelete = <?php echo $can_delete ? 'true' : 'false'; ?>;
             var backupTypeLabels = <?php echo wp_json_encode( $type_labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
             var snapshotDeleteBusy = false;
@@ -932,13 +943,27 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // The snapshot object is the row data, so sorting works off the
                 // raw values while only the display strings are built here.
                 "columns": [
+                    ...( canDelete ? [ {
+                        "data": "id",
+                        "className": "collapsing check-column",
+                        "orderable": false,
+                        "searchable": false,
+                        "render": function ( data, type, snap ) {
+                            if ( 'display' !== type ) {
+                                return '';
+                            }
+                            var id = parseInt( data, 10 ) || 0;
+                            var inputId = 'mainwp-backup-select-' + id;
+                            var label = '<?php /* translators: %d: backup ID. */ echo esc_js( __( 'Select backup #%d', 'mainwp' ) ); ?>'.replace( '%d', id );
+                            return '<div class="ui fitted checkbox not-auto-init"><input type="checkbox" class="mainwp-backup-select" id="' + inputId + '" data-snapshot="' + id + '" aria-label="' + escAttr( label ) + '"' + ( 'pruned' === snap.status ? ' disabled' : '' ) + '><label for="' + inputId + '"></label></div>';
+                        }
+                    } ] : [] ),
                     {
                         "data": "id",
                         "className": "collapsing",
                         "render": function ( data, type ) {
                             var id = parseInt( data, 10 ) || 0;
-                            var checkbox = canDelete ? '<input type="checkbox" class="mainwp-backup-select" data-snapshot="' + id + '" aria-label="' + escAttr( '<?php echo esc_js( __( 'Select backup #%d', 'mainwp' ) ); ?>'.replace( '%d', id ) ) + '"> ' : '';
-                            return 'display' === type ? checkbox + '#' + id : id;
+                            return 'display' === type ? '#' + id : id;
                         }
                     },
                     {
@@ -1061,7 +1086,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         $( row ).attr( 'title', snap.restore_reason );
                     }
                 },
-                "order": [ [ 2, 'desc' ] ],
+                "order": [ [ canDelete ? 3 : 2, 'desc' ] ],
                 // The columns' narrowest layout is wider than the content
                 // area at 768px; scroll inside the page like Manage Sites.
                 // Widths measured at init see an empty table and would clip
@@ -1084,6 +1109,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 "pageLength": 10,
                 "pagingType": "full_numbers",
                 "stateSave": true,
+                "stateLoadParams": function ( settings, data ) {
+                    // Older saved sort indexes predate the selection column.
+                    if ( data.columns && data.columns.length !== settings.aoColumns.length ) {
+                        delete data.order;
+                    }
+                },
                 "language": {
                     "emptyTable": snapshotsPlaceholders.idle,
                     "zeroRecords": '<?php echo esc_js( esc_html__( 'No backups match the current filter.', 'mainwp' ) ); ?>'
@@ -1966,16 +1997,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 } );
             }
 
-            // Fomantic returns the wrapper div for a select it has already
-            // transformed (the admin theme's global init gets there first),
-            // so a change handler chained off .dropdown() binds to the div,
-            // where val() reads empty and the selection goes nowhere. Bind
-            // the handler to the select itself; Fomantic fires change on it.
             var bulkLabels = {
                 failed: '<?php echo esc_js( __( 'The delete result could not be confirmed. The row was kept; reload the list before trying again.', 'mainwp' ) ); ?>',
                 refused: '<?php echo esc_js( __( 'This backup cannot be deleted right now. Review the selection and try again.', 'mainwp' ) ); ?>',
-                selectedOne: '<?php echo esc_js( __( '%d backup selected.', 'mainwp' ) ); ?>',
-                selectedMany: '<?php echo esc_js( __( '%d backups selected.', 'mainwp' ) ); ?>',
+                button: '<?php /* translators: %d: number of selected backups. */ echo esc_js( __( 'Delete Selected Backups (%d)', 'mainwp' ) ); ?>',
                 confirmOne: '<?php echo esc_js( __( 'Delete %d selected backup?', 'mainwp' ) ); ?>',
                 confirmMany: '<?php echo esc_js( __( 'Delete %d selected backups?', 'mainwp' ) ); ?>',
                 affected: '<?php echo esc_js( __( 'Affected backups: %s.', 'mainwp' ) ); ?>',
@@ -2008,6 +2033,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 return lines.concat( plan.warnings );
             }
             var bulkDialogOpen = false, bulkUiLocked = false, bulkReloadSite = 0;
+            var $bulkDeleteButton = $( '#mainwp-backup-bulk-delete-btn' );
             var bulkDelete = window.mainwpBackupBulkDelete( {
                 labels: bulkLabels,
                 request: function ( action, data ) {
@@ -2040,14 +2066,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 } );
                 var count = eligible.filter( function ( id ) { return ids.indexOf( id ) !== -1; } ).length;
                 $( '#mainwp-backup-select-all' ).prop( 'checked', eligible.length > 0 && count === eligible.length ).prop( 'indeterminate', count > 0 && count < eligible.length ).prop( 'disabled', ! eligible.length || bulkUiLocked );
-                var label = ( 1 === ids.length ? bulkLabels.selectedOne : bulkLabels.selectedMany ).replace( '%d', ids.length );
-                var $selection = $( '#mainwp-backup-bulk-selection' );
-                if ( $selection.text() !== label ) { $selection.text( label ); }
+                var disabled = ! ids.length || bulkUiLocked || bulkDialogOpen;
+                $bulkDeleteButton.prop( 'disabled', disabled ).toggleClass( 'disabled', disabled );
+                var label = bulkLabels.button.replace( '%d', ids.length );
+                var $label = $bulkDeleteButton.find( 'span' );
+                if ( $label.text() !== label ) { $label.text( label ); }
             }
             var bulkControlStates = [];
             function bulkControls( disabled ) {
                 bulkUiLocked = disabled;
-                var $controls = $( '#mainwp-backup-bulk-close, #mainwp-backup-bulk-cloud, #mainwp-backup-bulk-apply, #mainwp-backup-bulk-action, #mainwp-native-backup-now-btn, #mainwp-snapshots-cleanup-btn' );
+                var $controls = $( '#mainwp-backup-bulk-close, #mainwp-backup-bulk-cloud, #mainwp-native-backup-now-btn, #mainwp-snapshots-cleanup-btn' );
                 if ( disabled ) {
                     bulkControlStates = [];
                     $controls.each( function () {
@@ -2085,7 +2113,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 bulkDelete.select( $( this ).attr( 'data-snapshot' ), this.checked );
                 updateBulkSelection();
             } );
-            $( '#mainwp-backup-select-all' ).on( 'click', function ( event ) { event.stopPropagation(); } ).on( 'change', function () {
+            $( '#mainwp-backup-select-all' ).on( 'change', function () {
                 var checked = this.checked;
                 snapshotsTable.rows( { page: 'current' } ).every( function () {
                     var snap = this.data();
@@ -2098,17 +2126,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 onHidden: function () {
                     bulkDialogOpen = false;
                     $( '#mainwp-restore-site-selector' ).prop( 'disabled', false ).closest( '.ui.dropdown' ).removeClass( 'disabled' );
-                    $( '#mainwp-backup-bulk-apply' ).trigger( 'focus' );
                     flushBulkReload();
+                    updateBulkSelection();
+                    ( $bulkDeleteButton.prop( 'disabled' ) ? $( '#mainwp-snapshots-show-removed' ) : $bulkDeleteButton ).trigger( 'focus' );
                 }
             } );
-            $( '#mainwp-backup-bulk-apply' ).on( 'click', function () {
-                if ( 'delete' !== $( '#mainwp-backup-bulk-action' ).val() || bulkDelete.busy() ) { return; }
+            $bulkDeleteButton.on( 'click', function () {
                 var ids = bulkDelete.ids();
-                if ( ! ids.length ) {
-                    $( '#mainwp-backup-bulk-selection' ).text( '<?php echo esc_js( __( 'No backups selected.', 'mainwp' ) ); ?>' );
-                    return;
-                }
+                if ( this.disabled || bulkDialogOpen || bulkDelete.busy() || ! ids.length ) { return; }
                 $( '#mainwp-backup-bulk-delete-count' ).text( ( 1 === ids.length ? bulkLabels.confirmOne : bulkLabels.confirmMany ).replace( '%d', ids.length ) );
                 $( '#mainwp-backup-bulk-results' ).empty().hide();
                 bulkDialogOpen = true;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests for creating missing Assistant tables on a current-version install.
+ * Tests for repairing Assistant tables on a current-version install.
  *
  * install() returns early when the stored DB version matches the current one,
  * so a Dashboard that was already on that version when the Assistant tables
@@ -54,12 +54,13 @@ class Test_Assistant_Install_Tables extends MainWP_Assistant_Test_Case {
 	 * transaction, so every table is restored and the result committed before
 	 * returning.
 	 *
-	 * @param string[] $drop  Table suffixes to drop before install().
-	 * @param callable $check Assertions to run after install(), given the captured queries.
+	 * @param string[]      $drop  Table suffixes to drop before install().
+	 * @param callable      $check Assertions to run after install(), given the captured queries.
+	 * @param callable|null $setup Optional fixture setup after dropping the tables.
 	 *
 	 * @return void
 	 */
-	private function with_current_version_install( array $drop, callable $check ) {
+	private function with_current_version_install( array $drop, callable $check, ?callable $setup = null ) {
 		global $wpdb;
 
 		$install = MainWP_Install::instance();
@@ -67,6 +68,9 @@ class Test_Assistant_Install_Tables extends MainWP_Assistant_Test_Case {
 		$version->setAccessible( true );
 		$stored = get_site_option( 'mainwp_db_version' );
 		update_site_option( 'mainwp_db_version', $version->getValue( $install ) );
+		$repair_option = MainWP_Install::ASSISTANT_MESSAGE_METADATA_REPAIR;
+		$repair_status = get_option( $repair_option );
+		delete_option( $repair_option );
 
 		$tables  = $this->assistant_tables();
 		$queries = array();
@@ -87,6 +91,10 @@ class Test_Assistant_Install_Tables extends MainWP_Assistant_Test_Case {
 				$this->assertFalse( $this->table_exists( $tables[ $suffix ] ), "Precondition: {$suffix} is dropped." );
 			}
 
+			if ( null !== $setup ) {
+				$setup();
+			}
+
 			add_filter( 'query', $capture );
 			$install->install();
 			remove_filter( 'query', $capture );
@@ -101,6 +109,11 @@ class Test_Assistant_Install_Tables extends MainWP_Assistant_Test_Case {
 			add_filter( 'query', array( $this, '_create_temporary_tables' ) );
 			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
 			update_site_option( 'mainwp_db_version', $stored );
+			if ( false === $repair_status ) {
+				delete_option( $repair_option );
+			} else {
+				update_option( $repair_option, $repair_status );
+			}
 			self::commit_transaction();
 		}
 	}
@@ -129,8 +142,7 @@ class Test_Assistant_Install_Tables extends MainWP_Assistant_Test_Case {
 	}
 
 	/**
-	 * Only the missing table is created; existing Assistant tables are not
-	 * inspected or altered from the current-version path.
+	 * Only the missing table needs a schema change.
 	 *
 	 * @return void
 	 */
@@ -142,7 +154,7 @@ class Test_Assistant_Install_Tables extends MainWP_Assistant_Test_Case {
 			function ( array $queries ) use ( $tables ) {
 				$this->assertTrue( $this->table_exists( $tables['assistant_spend'] ) );
 				foreach ( $queries as $query ) {
-					if ( 0 === stripos( $query, 'SHOW TABLES' ) ) {
+					if ( 0 === stripos( $query, 'SHOW' ) ) {
 						continue;
 					}
 					$this->assertStringNotContainsString( $tables['assistant_conversations'], $query );
@@ -153,8 +165,7 @@ class Test_Assistant_Install_Tables extends MainWP_Assistant_Test_Case {
 	}
 
 	/**
-	 * When every Assistant table exists, the check is a single SHOW TABLES and
-	 * runs no DDL.
+	 * Once the metadata column is confirmed, the existing table check is enough.
 	 *
 	 * @return void
 	 */
@@ -164,6 +175,55 @@ class Test_Assistant_Install_Tables extends MainWP_Assistant_Test_Case {
 			function ( array $queries ) {
 				$this->assertCount( 1, $queries, 'Only one Assistant table query may run per load: ' . implode( ' | ', $queries ) );
 				$this->assertStringStartsWith( 'SHOW TABLES LIKE', $queries[0] );
+			},
+			static function () {
+				update_option( MainWP_Install::ASSISTANT_MESSAGE_METADATA_REPAIR, 'confirmed' );
+			}
+		);
+	}
+
+	/**
+	 * An existing conversation keeps its history and can store new messages after upgrade.
+	 */
+	public function test_current_version_install_repairs_legacy_assistant_messages() {
+		global $wpdb;
+		$db              = MainWP_DB_Assistant::instance();
+		$table           = $this->assistant_tables()['assistant_messages'];
+		$user_id         = 1;
+		$conversation_id = 0;
+
+		$this->with_current_version_install(
+			array( 'assistant_messages' ),
+			function () use ( $db, $user_id, &$conversation_id ) {
+				$metadata = array( 'route' => 'ask' );
+				$this->assertNotWPError( $db->add_message( $conversation_id, 'assistant', 'New Docs answer', $user_id, $metadata ) );
+				$messages = $db->get_messages( $conversation_id, $user_id );
+				$this->assertIsArray( $messages );
+				$this->assertSame( array( 'Legacy question', 'New Docs answer' ), wp_list_pluck( $messages, 'content' ) );
+				$this->assertSame( $metadata, json_decode( $messages[1]->metadata, true ) );
+				$this->assertSame( 'confirmed', get_option( MainWP_Install::ASSISTANT_MESSAGE_METADATA_REPAIR ) );
+			},
+			function () use ( $wpdb, $db, $table, $user_id, &$conversation_id ) {
+				foreach ( $db->hook_db_install_tables( array(), '', $wpdb->get_charset_collate() ) as $sql ) {
+					if ( str_starts_with( $sql, "CREATE TABLE {$table} (" ) ) {
+						$wpdb->query( str_replace( 'metadata longtext NOT NULL,', '', $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Legacy test fixture from the canonical table definition.
+						break;
+					}
+				}
+
+				$conversation_id = $this->create_test_conversation( $user_id );
+				$this->assertSame(
+					1,
+					$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Legacy test row without metadata.
+						$table,
+						array(
+							'conversation_id' => $conversation_id,
+							'role'            => 'user',
+							'content'         => 'Legacy question',
+						),
+						array( '%d', '%s', '%s' )
+					)
+				);
 			}
 		);
 	}

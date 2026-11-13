@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 7.1.4
+Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 6.4.2-rc.3
+Stable tag: 6.5-rc.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -154,11 +154,39 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 == Changelog ==
 
-= 6.4.2-rc.3 - 11-6-2026 =
+= 6.5-rc.1 - 11-13-2026 =
+
+* Added: Introduced "MainWP Assistant" with "Docs" mode for questions about MainWP documentation and "Sites" mode for working with connected sites through your configured AI provider. Open it from the command palette, revisit past conversations, and track usage in "Assistant Insights".
+* Added: Enabled supported AI apps such as Claude and ChatGPT to connect directly to MainWP Dashboard over remote MCP. Manage app access, tool permissions, and approval settings on the "MainWP MCP" page.
+* Added: Introduced a "MainWP MCP" filter in "Network Activity" that can also be saved in a segment.
+* Added: Enabled bulk deletion of selected backups in "Built-In Backups".
+* Added: Enabled deletion of safety backups from "Restore History" after you verify the restored site. Deleting a safety backup removes the "Roll Back" option for that restore. Requires MainWP Child 6.5.
+* Added: Enabled nightly updates and changelogs for add-ons through "MainWP Early Access".
+* Fixed: Corrected REST API user management so regular users can be edited or deleted while the account used to connect the site stays protected from deletion and role changes.
+* Fixed: Resolved a recovery passphrase setup failure for administrators whose WordPress passwords contain an apostrophe.
+* Fixed: Prevented empty backup files from being uploaded to S3-compatible storage.
+* Fixed: Resolved an issue where deleting backups over SFTP left empty snapshot folders behind.
+* Fixed: Corrected older saved "Operations" layouts that squeezed widgets into a narrow column.
+* Updated: Improved cloud backup reliability when uploads encounter temporary errors or backup tasks run across multiple sites.
+* Updated: Increased upload speeds during backup restores.
+* Updated: Recorded the server response code in run history when a backup download fails.
+* Updated: Simplified saving "Help" settings and clarified when a page reload is required.
+* Updated: Moved "Reconnect all" next to the pagination controls in the "Connection Status" widget.
+* Updated: Clarified the notice shown when an older scheduled task still uses a URL without its security key.
+
+= 6.4.2.1 - 11-10-2026 =
+
+* Security: Strengthened Dashboard permissions, private backup storage, and communication with connected sites.
+
+= 6.4.2 - 11-10-2026 =
 
 * Added: pCloud as a storage destination for Built-In Backups, with support for US and EU accounts.
 * Added: System appearance mode that follows device preferences, alongside per-user Light and Dark settings.
 * Added: Reconnect all accessible disconnected sites from the Connection Status widget, with per-site results.
+* Added: Optional delays to spread scheduled Built-In Backups task starts over a configurable time window.
+* Added: Optional Manage Sites column showing abandoned plugin and theme counts.
+* Added: Support for disabling site screenshot previews across the Dashboard.
+* Added: Support for custom Dashboard download URLs when wp-admin access is restricted.
 * Fixed: TAR Test Restore failures involving filenames containing literal question marks and mixed filename spellings.
 * Fixed: Test Restore failure details are now retained and displayed in snapshot tooltips, including after automatic status refreshes.
 * Fixed: Backup upload progress and retry reporting, with more reliable background upload continuation.
@@ -166,32 +194,8 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Fixed: Missing premium plugin changelogs are now retrieved from the Child site while preserving existing details.
 * Fixed: Kept the second-level navigation toggle visible when its menu is collapsed.
 * Fixed: Site Hardening visibility for users without the required permission.
-* Updated: Flagged sites running MainWP Child versions older than 6.4 and prevented adding them to Built-In Backups tasks.
-* Updated: Backup task API results now count retrying uploads as pending and permanent upload failures as failed.
-* Updated: Improved API Access labels, API key save messages, and copy-key guidance.
-* Updated: Corrected Site management labels, help links, CSV guidance, and markup.
-* Updated: Improved Network Activity labels, guidance, and event naming.
-* Updated: Identified MainWP MCP activity in Network Activity.
-* Updated: Removed stored sync-response excerpts and sanitized diagnostic output.
-* Updated: Improved the Get MainWP Pro overlay layout and accessibility.
-* Updated: Corrected Password Policy documentation to describe password-change reminders.
-* Updated: Restricted creation, migration, and editing of legacy REST API v1-compatible keys to unrestricted administrators.
-
-= 6.4.2-rc.2 - 11-5-2026 =
-
-* Added: Reconnect all accessible disconnected sites from the Connection Status widget, with per-site results.
-* Added: Optional delays to spread scheduled Built-In Backups task starts over a configurable time window.
-* Added: Optional Manage Sites column showing abandoned plugin and theme counts.
-* Added: Support for disabling site screenshot previews across the Dashboard.
-* Added: Support for custom Dashboard download URLs when wp-admin access is restricted.
 * Fixed: Selected sites are now preserved when switching selection tabs while editing Built-In Backups tasks.
 * Fixed: Large Built-In Backups downloads now use smaller parts to avoid server response-size limits.
-* Updated: Improved Built-In Backups error readability, added requirements guidance, and clarified folder locations in error messages.
-* Updated: New remote backup folders now include site names for easier identification.
-* Updated: Upgraded the Dashboard widget layout library to GridStack 14.1.0.
-
-= 6.4.2-rc.1 - 11-4-2026 =
-
 * Fixed: Corrected premium plugin and theme update counts in Manage Sites and the Client Overview Sites widget, including sorting by available updates.
 * Fixed: Sites with only premium updates are now included in REST API available-update filters, with accurate totals and pagination.
 * Fixed: REST API site requests now return custom field values when including or excluding specific sites.
@@ -207,6 +211,22 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Fixed: Test Restore now correctly records unsupported backup formats.
 * Fixed: Corrected backup subfolder paths containing leading or repeated separators.
 * Fixed: Prevented PHP deprecation warnings when changing user passwords on servers without the mbstring extension.
+* Fixed: Built-In Backups rejecting valid Windows drive-letter paths for the private backup directory.
+* Fixed: Roll Back leaving files from the restore behind. Roll Back now removes leftover files within the safety backup’s captured scope when its file list can be verified.
+* Fixed: Authentication for the first Application Password created in MainWP, including from the MCP page.
+* Updated: Flagged sites running MainWP Child versions older than 6.4 and prevented adding them to Built-In Backups tasks.
+* Updated: Backup task API results now count retrying uploads as pending and permanent upload failures as failed.
+* Updated: Improved API Access labels, API key save messages, and copy-key guidance.
+* Updated: Corrected Site management labels, help links, CSV guidance, and markup.
+* Updated: Improved Network Activity labels, guidance, and event naming.
+* Updated: Identified MainWP MCP activity in Network Activity.
+* Updated: Removed stored sync-response excerpts and sanitized diagnostic output.
+* Updated: Improved the Get MainWP Pro overlay layout and accessibility.
+* Updated: Corrected Password Policy documentation to describe password-change reminders.
+* Updated: Restricted creation, migration, and editing of legacy REST API v1-compatible keys to unrestricted administrators.
+* Updated: Improved Built-In Backups error readability, added requirements guidance, and clarified folder locations in error messages.
+* Updated: New remote backup folders now include site names for easier identification.
+* Updated: Upgraded the Dashboard widget layout library to GridStack 14.1.0.
 * Updated: Corrected WP-CLI help, available options, and command examples.
 * Updated: Improved privacy checks when renaming tags through restricted API access.
 * Updated: Improved handling of connection renewal and disconnection error messages.

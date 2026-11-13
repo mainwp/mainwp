@@ -966,6 +966,8 @@ class MainWP_DB_Assistant extends MainWP_DB_Base {
         // part of the INSERT makes the check and the write one statement, so
         // zero affected rows means the conversation went away and nothing was
         // written.
+        // Keep wpdb from printing the prompt in a SQL error ahead of the AJAX JSON.
+        $suppress = $this->wpdb->suppress_errors();
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MainWP's own table; the insert must stay conditional on the owning row.
         $result = $this->wpdb->query(
             $this->wpdb->prepare(
@@ -982,6 +984,7 @@ class MainWP_DB_Assistant extends MainWP_DB_Base {
                 $user_id
             )
         );
+        $this->wpdb->suppress_errors( $suppress );
 
         if ( false === $result ) {
             return new \WP_Error( 'db_error', __( 'Failed to add message.', 'mainwp' ) );

@@ -4202,6 +4202,9 @@ Guidelines:
             return $schema;
         }
 
+        // Gemini rejects uniqueItems in function declarations. The original ability schema still validates input.
+        unset( $schema['uniqueItems'] );
+
         if ( isset( $schema['type'] ) && is_array( $schema['type'] ) ) {
             $original      = $schema['type'];
             $non_null      = array_values( array_filter( $schema['type'], fn( $t ) => 'null' !== $t ) );

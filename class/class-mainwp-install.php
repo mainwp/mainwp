@@ -154,6 +154,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      */
     const KNOWLEDGE_SCHEMA_REPAIR_PENDING = 'mainwp_knowledge_schema_repair_pending';
 
+    /** Site-specific status of the Assistant message metadata repair. */
+    const ASSISTANT_MESSAGE_METADATA_REPAIR = 'mainwp_assistant_message_metadata_repair';
+
     /**
      * Private static variable to hold the single instance of the class.
      *
@@ -279,6 +282,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_create_knowledge_table( $currentVersion );
             $this->maybe_repair_knowledge_table();
             $this->maybe_create_assistant_tables( $currentVersion );
+            $this->maybe_repair_assistant_message_metadata();
             return;
         }
 
@@ -665,6 +669,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->ensure_backup_restore_job_checkpoint_rev();
 
         do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
+
+        $this->maybe_repair_assistant_message_metadata();
 
         if ( ! is_multisite() ) {
             MainWP_Utility::update_option( $this->option_db_key, $this->mainwp_db_version );
@@ -1159,7 +1165,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * are suppressed while the version is written anyway, so a Dashboard already on
      * the current version would otherwise run every chat and spend read against a
      * missing table. One SHOW TABLES per load covers all three tables, and only the
-     * missing ones are created so an existing table is never altered from here.
+     * missing ones are created.
      *
      * @param string|false $currentVersion Stored DB version.
      *
@@ -1190,6 +1196,40 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->wpdb->suppress_errors( $suppress );
 
         return true;
+    }
+
+    /**
+     * Add the metadata column to pre-release message tables without replacing their rows.
+     *
+     * The stored DB version can already be current. Remember a verified column
+     * and retry failed repairs at most hourly for databases that disallow ALTER.
+     *
+     * @return bool Whether a missing column was repaired.
+     */
+    private function maybe_repair_assistant_message_metadata() {
+        $status = get_option( self::ASSISTANT_MESSAGE_METADATA_REPAIR );
+        if ( 'confirmed' === $status || ( $status && time() - (int) $status < HOUR_IN_SECONDS ) ) {
+            return false;
+        }
+
+        $table    = $this->table_name( 'assistant_messages' );
+        $probe    = $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'metadata' );
+        $repaired = false;
+        $suppress = $this->wpdb->suppress_errors();
+
+        try {
+            $has_column = 'metadata' === $this->wpdb->get_var( $probe ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above and reused after ALTER.
+            if ( ! $has_column && '' === $this->wpdb->last_error ) {
+                $this->wpdb->query( $this->wpdb->prepare( 'ALTER TABLE %i ADD COLUMN metadata longtext NOT NULL', $table ) );
+                $has_column = 'metadata' === $this->wpdb->get_var( $probe ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Recheck after ALTER, including a concurrent repair.
+                $repaired   = $has_column;
+            }
+        } finally {
+            $this->wpdb->suppress_errors( $suppress );
+        }
+
+        update_option( self::ASSISTANT_MESSAGE_METADATA_REPAIR, $has_column ? 'confirmed' : time(), false );
+        return $repaired;
     }
 
     /**

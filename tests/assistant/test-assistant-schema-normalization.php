@@ -352,6 +352,36 @@ class Test_Assistant_Schema_Normalization extends MainWP_Assistant_Test_Case {
 		$this->assertSame( 'int32', $count['format'] );
 	}
 
+	/**
+	 * Gemini tool declarations must omit array uniqueness at every schema level.
+	 */
+	public function test_tool_schema_omits_unique_items_and_preserves_other_constraints() {
+		$array_schema = array(
+			'type'        => 'array',
+			'uniqueItems' => true,
+			'maxItems'    => 100,
+			'items'       => array( 'type' => 'integer' ),
+		);
+		$schema       = array(
+			'type'       => 'object',
+			'properties' => array(
+				'site_ids' => $array_schema,
+				'groups'   => array(
+					'type'  => 'array',
+					'items' => array( 'anyOf' => array( $array_schema, array( 'type' => 'string' ) ) ),
+				),
+			),
+		);
+
+		$result = $this->normalize( $schema );
+
+		$expected = $array_schema;
+		unset( $expected['uniqueItems'] );
+		$this->assertSame( $expected, $result['properties']['site_ids'] );
+		$this->assertSame( $expected, $result['properties']['groups']['items']['anyOf'][0] );
+		$this->assertTrue( $schema['properties']['site_ids']['uniqueItems'] );
+	}
+
 	// =========================================================================
 	// ENUM MEMBER NORMALIZATION
 	// =========================================================================

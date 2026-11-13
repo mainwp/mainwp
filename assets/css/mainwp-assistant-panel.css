@@ -325,11 +325,6 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.mainwp-mode-pill.active[data-tooltip]::before,
-.mainwp-mode-pill.active[data-tooltip]::after {
-    display: none;
-}
-
 .mainwp-mode-pill i.icon {
     font-size: 0.875rem;
     margin: 0;
@@ -338,7 +333,6 @@
 /* The dashboard-wide tooltip rule (mainwp-fomantic.css) allows 500px, which
    is wider than the panel and gets clipped at its edges. Cap the mode
    selector tooltips so they wrap inside the panel. */
-.mainwp-ui .mainwp-mode-pill[data-tooltip][data-inverted]::after,
 .mainwp-ui .mainwp-assistant-mode-selector .mode-label[data-tooltip][data-inverted]::after {
     white-space: normal;
     width: max-content;
@@ -370,6 +364,7 @@
 /* --- Info Bar (mode-specific messaging) --- */
 /* The rgba line is the fallback for engines without color-mix(). */
 .mainwp-assistant-info-bar {
+    display: grid;
     background: rgba(127, 177, 0, 0.1);
     background: color-mix(in srgb, var(--mainwp-accent-color, #7fb100) 10%, transparent);
     border-top: 1px solid var(--mainwp-secondary-border-color, rgba(34, 36, 38, 0.1));
@@ -379,6 +374,11 @@
     font-weight: 500;
     color: var(--mainwp-primary-text-color, #1c1d1b);
     flex-shrink: 0;
+}
+
+.mainwp-assistant-info-bar > span {
+    grid-area: 1 / 1;
+    align-self: center;
 }
 
 /* --- Daily spend cap advisory (above the input) --- */
@@ -745,7 +745,7 @@
     background: linear-gradient(135deg,
         var(--mainwp-assistant-header-background, #1c1d1b) 0%,
         color-mix(in srgb, var(--mainwp-assistant-header-background, #1c1d1b) 85%, #ffffff) 100%);
-    padding: 2rem 1.5rem;
+    padding: 1rem 1.5rem;
     text-align: center;
     color: #ffffff;
 }
@@ -758,7 +758,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .mainwp-assistant-home-logo i.icon {
@@ -793,7 +793,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1rem 0.75rem;
+    padding: 0.75rem;
     border-radius: 8px;
     border: 1px solid var(--mainwp-secondary-border-color, rgba(34, 36, 38, 0.15));
     background: var(--mainwp-primary-background-color, #ffffff);
@@ -806,6 +806,10 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: var(--mainwp-accent-color, #7fb100);
+}
+
+.mainwp-assistant-home-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
 }
 
 .mainwp-assistant-home-card:active {
@@ -829,19 +833,6 @@
     font-size: 0.75rem;
     color: var(--mainwp-secondary-text-color, #666);
     opacity: 0.8;
-}
-
-/* Disabled card state */
-.mainwp-assistant-home-card.disabled {
-    opacity: 0.4;
-    cursor: default;
-    pointer-events: none;
-}
-
-.mainwp-assistant-home-card.disabled:hover {
-    transform: none;
-    box-shadow: none;
-    border-color: var(--mainwp-secondary-border-color, rgba(34, 36, 38, 0.15));
 }
 
 /* Video screen */

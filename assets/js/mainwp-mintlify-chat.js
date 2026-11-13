@@ -2328,7 +2328,16 @@ window.MainWPMintlifyChat = ( function( $ ) {
         }
 
         if ( ! isBatchRendering ) {
-            scrollToBottom();
+            let view = $messages[0];
+            if ( $bubble.outerHeight() > view.clientHeight ) {
+                // Page coordinates alone lose the reply's place in a scrolled conversation.
+                let bubbleOffset = $bubble[0].getBoundingClientRect().top - view.getBoundingClientRect().top + view.scrollTop - view.clientTop;
+                $messages.animate( {
+                    scrollTop: MainWPAssistantChatLogic.assistantReplyScrollTarget( bubbleOffset, $bubble.outerHeight(), view.clientHeight, view.scrollHeight )
+                }, 200 );
+            } else {
+                scrollToBottom();
+            }
         }
 
         // Notify sidebar if panel is minimized.
@@ -3185,14 +3194,8 @@ window.MainWPMintlifyChat = ( function( $ ) {
         var $askMsg = $( '.info-bar-ask' );
         var $agentMsg = $( '.info-bar-agent' );
 
-        $askMsg.hide();
-        $agentMsg.hide();
-
-        if ( mode === 'agent' ) {
-            $agentMsg.show();
-        } else {
-            $askMsg.show();
-        }
+        $askMsg.css( 'visibility', mode === 'agent' ? 'hidden' : 'visible' );
+        $agentMsg.css( 'visibility', mode === 'agent' ? 'visible' : 'hidden' );
     }
 
     /**

@@ -370,7 +370,13 @@
         return { offer: offer, canContinue: offer && data.agent_available === true };
     }
 
+    function assistantReplyScrollTarget( bubbleOffset, bubbleHeight, viewHeight, scrollHeight ) {
+        let bottom = Math.max( 0, scrollHeight - viewHeight );
+        return bubbleHeight > viewHeight ? Math.max( 0, Math.min( bubbleOffset - 8, bottom ) ) : bottom;
+    }
+
     let api = {
+        assistantReplyScrollTarget: assistantReplyScrollTarget,
         resolveDocsHandoffAction: resolveDocsHandoffAction,
         classifyAckLocally: classifyAckLocally,
         classifyKeyFailure: classifyKeyFailure,

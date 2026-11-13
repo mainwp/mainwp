@@ -789,6 +789,38 @@ class Test_Assistant_Access_Gate extends MainWP_Assistant_Test_Case {
         );
     }
 
+    public function test_render_assistant_panel_omits_unavailable_home_cards() {
+        $this->set_current_user_as_admin();
+        $this->set_assistant_enabled( true );
+        $this->set_assistant_consent( true );
+
+        $original_get = $_GET;
+        try {
+            foreach ( array( 0, 1 ) as $enabled ) {
+                update_option( 'mainwp_enable_guided_tours', $enabled );
+                update_option( 'mainwp_enable_guided_video', $enabled );
+
+                foreach ( array( 'mainwp_tab', 'AssistantSettings' ) as $page ) {
+                    $_GET['page'] = $page;
+                    ob_start();
+                    MainWP_UI::render_assistant_panel();
+                    $output = ob_get_clean();
+
+                    foreach ( array( 'tour', 'videos' ) as $card ) {
+                        $markup = 'id="mainwp-home-' . $card . '-card"';
+                        if ( $enabled && 'mainwp_tab' === $page ) {
+                            $this->assertStringContainsString( $markup, $output, $card . ' must render when enabled with page content.' );
+                        } else {
+                            $this->assertStringNotContainsString( $markup, $output, $card . ' must be absent without both the option and page content.' );
+                        }
+                    }
+                }
+            }
+        } finally {
+            $_GET = $original_get;
+        }
+    }
+
     // =========================================================================
     // ASSISTANT INSIGHTS
     // Insights is an assistant surface: its cross-user conversation and

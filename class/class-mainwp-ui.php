@@ -3118,16 +3118,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <span class="mainwp-assistant-home-card-title"><?php esc_html_e( 'Start Chat', 'mainwp' ); ?></span>
                         <span class="mainwp-assistant-home-card-desc"><?php esc_html_e( 'Ask a question', 'mainwp' ); ?></span>
                     </button>
-                    <button type="button" class="mainwp-assistant-home-card <?php echo ! $tour_enabled ? 'disabled' : ''; ?>" id="mainwp-home-tour-card" <?php echo $tour_enabled ? 'data-tour-id="' . esc_attr( $tour_id ) . '"' : ''; ?> <?php echo ! $tour_enabled ? 'disabled aria-disabled="true"' : ''; ?>>
+                    <?php if ( $tour_enabled ) : ?>
+                    <button type="button" class="mainwp-assistant-home-card" id="mainwp-home-tour-card" data-tour-id="<?php echo esc_attr( $tour_id ); ?>">
                         <i class="map signs icon"></i>
                         <span class="mainwp-assistant-home-card-title"><?php esc_html_e( 'Take a Tour', 'mainwp' ); ?></span>
                         <span class="mainwp-assistant-home-card-desc"><?php esc_html_e( 'Guided walkthrough', 'mainwp' ); ?></span>
                     </button>
-                    <button type="button" class="mainwp-assistant-home-card <?php echo ! $video_enabled ? 'disabled' : ''; ?>" id="mainwp-home-videos-card" <?php echo $video_enabled ? 'data-video-id="' . esc_attr( $video_id ) . '"' : ''; ?> <?php echo ! $video_enabled ? 'disabled aria-disabled="true"' : ''; ?>>
+                    <?php endif; ?>
+                    <?php if ( $video_enabled ) : ?>
+                    <button type="button" class="mainwp-assistant-home-card" id="mainwp-home-videos-card" data-video-id="<?php echo esc_attr( $video_id ); ?>">
                         <i class="play circle outline icon"></i>
                         <span class="mainwp-assistant-home-card-title"><?php esc_html_e( 'Watch Videos', 'mainwp' ); ?></span>
                         <span class="mainwp-assistant-home-card-desc"><?php esc_html_e( 'Video tutorials', 'mainwp' ); ?></span>
                     </button>
+                    <?php endif; ?>
                     <button type="button" class="mainwp-assistant-home-card" id="mainwp-home-support-card">
                         <i class="life ring outline icon"></i>
                         <span class="mainwp-assistant-home-card-title"><?php esc_html_e( 'Community Forum', 'mainwp' ); ?></span>
@@ -3250,11 +3254,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <div class="mainwp-assistant-mode-selector">
                             <span class="mode-label" data-tooltip="<?php esc_attr_e( 'Docs answers questions about MainWP from the official documentation. Sites works with your own sites using your AI provider and can take actions with your confirmation.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><?php esc_html_e( 'Mode:', 'mainwp' ); ?></span>
                             <div class="mainwp-mode-toggle-group" role="radiogroup" aria-label="<?php esc_attr_e( 'Assistant mode', 'mainwp' ); ?>">
-                                <button type="button" class="mainwp-mode-pill active" data-mode="ask" role="radio" aria-checked="true" data-tooltip="<?php esc_attr_e( 'Answers from MainWP documentation. Nothing changes on your sites.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <button type="button" class="mainwp-mode-pill active" data-mode="ask" role="radio" aria-checked="true">
                                     <i class="book icon"></i>
                                     <?php esc_html_e( 'Docs', 'mainwp' ); ?>
                                 </button>
-                                <button type="button" class="mainwp-mode-pill" data-mode="agent" role="radio" aria-checked="false" data-tooltip="<?php esc_attr_e( 'Works with your sites through your AI provider. Actions run only after you confirm them.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <button type="button" class="mainwp-mode-pill" data-mode="agent" role="radio" aria-checked="false">
                                     <i class="globe icon"></i>
                                     <?php esc_html_e( 'Sites', 'mainwp' ); ?>
                                 </button>
@@ -3265,7 +3269,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         <!-- Info bar with mode-specific messaging -->
                         <div class="mainwp-assistant-info-bar" id="mainwp-assistant-info-bar">
                             <span class="info-bar-ask"><?php esc_html_e( 'Answers from MainWP documentation. Your question, this dashboard\'s address, the page you\'re on and your Assistant access settings are sent to MainWP\'s documentation service.', 'mainwp' ); ?></span>
-                            <span class="info-bar-agent" style="display:none;"><?php esc_html_e( 'Works with your sites through your configured AI provider. Actions run only after you confirm them. Responses can take 1-3 minutes.', 'mainwp' ); ?></span>
+                            <span class="info-bar-agent" style="visibility:hidden;"><?php esc_html_e( 'Works with your sites through your configured AI provider. Actions run only after you confirm them. Responses can take 1-3 minutes.', 'mainwp' ); ?></span>
                         </div>
 
                     </div>

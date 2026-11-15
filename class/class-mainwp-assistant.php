@@ -781,7 +781,9 @@ Guidelines:
      * @return string 'agent' or 'ask'.
      */
     protected function resolve_chat_route( $mode, $agent_available ) {
-        if ( 'agent' === $mode && $agent_available ) {
+        $plan = MainWP_Assistant_ChatGPT_Plan::get_status( get_current_user_id() );
+        // A saved personal connection must report its failure rather than route a Sites request to Docs.
+        if ( 'agent' === $mode && ( $agent_available || in_array( $plan['status'], array( 'needs_reconnect', 'plan_disabled' ), true ) ) ) {
             return 'agent';
         }
         return 'ask';
@@ -1871,6 +1873,11 @@ Guidelines:
             return new \WP_Error( 'invalid_tool_calls', __( 'Invalid tool call data.', 'mainwp' ) );
         }
 
+        $plan = MainWP_Assistant_ChatGPT_Plan::get_status( $user_id );
+        if ( in_array( $plan['status'], array( 'needs_reconnect', 'plan_disabled' ), true ) ) {
+            return $this->map_provider_wp_error( new \WP_Error( 'prompt_client_error', $plan['status'], array( 'status' => 401 ) ), 'mainwp-chatgpt-plan', $user_id );
+        }
+
         if ( ! self::agent_mode_available() ) {
             return new \WP_Error( 'no_provider', __( 'No AI connection is configured.', 'mainwp' ) );
         }
@@ -2034,7 +2041,7 @@ Guidelines:
         // confirmation-request turn so the bubble shows the interaction's
         // true combined spend.
         $own_usage       = is_array( $parsed['usage'] ?? null ) ? $parsed['usage'] : array();
-        $own_cost        = MainWP_Assistant_Pricing::estimate_cost( $own_usage, $model_id, $provider_type );
+        $own_cost        = self::estimate_turn_cost( $own_usage, $model_id, $provider_type );
         $resume_metadata = array();
         if ( ! empty( $executed_abilities ) ) {
             $resume_metadata['executed_abilities'] = $executed_abilities;
@@ -2055,7 +2062,7 @@ Guidelines:
             $prior_provider = (string) ( $prior_meta['provider_id'] ?? $provider_type );
             $prior_cost     = isset( $prior_meta['cost'] ) && is_array( $prior_meta['cost'] )
                 ? $prior_meta['cost']
-                : MainWP_Assistant_Pricing::estimate_cost( $prior_usage, $prior_model, $prior_provider );
+                : self::estimate_turn_cost( $prior_usage, $prior_model, $prior_provider );
             $display_cost   = MainWP_Assistant_Pricing::sum_cost( $prior_cost, $own_cost );
 
             $resume_metadata['display_usage'] = $display_usage;
@@ -2643,6 +2650,27 @@ Guidelines:
     }
 
     /**
+     * Subscription usage never contributes API spend.
+     *
+     * @param array  $usage Token counts.
+     * @param string $model_id Model identifier.
+     * @param string $provider_id Provider identifier.
+     * @return array
+     */
+    private static function estimate_turn_cost( $usage, $model_id, $provider_id = '' ) {
+        if ( 'mainwp-chatgpt-plan' === $provider_id ) {
+            return array(
+                'usd'       => 0.0,
+                'known'     => true,
+                'estimated' => false,
+                'model'     => (string) $model_id,
+                'provider'  => $provider_id,
+            );
+        }
+        return MainWP_Assistant_Pricing::estimate_cost( $usage, $model_id, $provider_id );
+    }
+
+    /**
      * Accrue one completed model round-trip into the daily spend total.
      *
      * Centralized at the chokepoint so every round-trip accrues exactly once;
@@ -2660,7 +2688,7 @@ Guidelines:
      */
     private function accrue_turn_spend( $parsed, $user_id = 0 ) {
         $usage = isset( $parsed['usage'] ) && is_array( $parsed['usage'] ) ? $parsed['usage'] : array();
-        $cost  = MainWP_Assistant_Pricing::estimate_cost( $usage, $parsed['model_id'] ?? '', $parsed['provider_id'] ?? '' );
+        $cost  = self::estimate_turn_cost( $usage, $parsed['model_id'] ?? '', $parsed['provider_id'] ?? '' );
 
         $priced = ! empty( $cost['known'] ) && null !== $cost['usd'];
         if ( $priced ) {
@@ -2684,6 +2712,10 @@ Guidelines:
             $usd = round( $total / 1000000 * $rate, 6 );
         }
 
+        if ( 'mainwp-chatgpt-plan' === ( $parsed['provider_id'] ?? '' ) ) {
+            // Responses includes reasoning in output_tokens; the spend table adds thought_tokens separately.
+            unset( $usage['thought_tokens'] );
+        }
         MainWP_DB_Assistant::instance()->add_spend( $usd, $usage, $priced, $user_id > 0 ? $user_id : get_current_user_id() );
     }
 
@@ -2852,7 +2884,7 @@ Guidelines:
                 'mode'               => 'agent',
                 'model'              => $model_id,
                 'usage'              => $total_usage,
-                'cost'               => MainWP_Assistant_Pricing::estimate_cost( $total_usage, $model_id, $provider_type ),
+                'cost'               => self::estimate_turn_cost( $total_usage, $model_id, $provider_type ),
                 'show_disclosure'    => false,
                 'history_disabled'   => true,
             );
@@ -2941,7 +2973,7 @@ Guidelines:
             'mode'               => 'agent',
             'model'              => $model_id,
             'usage'              => $total_usage,
-            'cost'               => MainWP_Assistant_Pricing::estimate_cost( $total_usage, $model_id, $provider_type ),
+            'cost'               => self::estimate_turn_cost( $total_usage, $model_id, $provider_type ),
             'show_disclosure'    => $show_disclosure,
             'message_id'         => (int) $assistant_msg_result,
             'history_disabled'   => false, // Stateful path = history enabled.
@@ -2997,7 +3029,7 @@ Guidelines:
         return array(
             'model_id'    => $model_id,
             'provider_id' => $provider_type,
-            'cost'        => MainWP_Assistant_Pricing::estimate_cost( $total_usage, $model_id, $provider_type ),
+            'cost'        => self::estimate_turn_cost( $total_usage, $model_id, $provider_type ),
         );
     }
 
@@ -3397,7 +3429,7 @@ Guidelines:
                                     'provider_name'      => $provider_name,
                                     'model'              => $model_id,
                                     'usage'              => $total_usage,
-                                    'cost'               => MainWP_Assistant_Pricing::estimate_cost( $total_usage, (string) $model_id, $provider_type ),
+                                    'cost'               => self::estimate_turn_cost( $total_usage, (string) $model_id, $provider_type ),
                                 ),
                             );
                         }
@@ -3489,7 +3521,7 @@ Guidelines:
                                         'provider_name'    => $provider_name,
                                         'model'            => $model_id,
                                         'usage'            => $total_usage,
-                                        'cost'             => MainWP_Assistant_Pricing::estimate_cost( $total_usage, (string) $model_id, $provider_type ),
+                                        'cost'             => self::estimate_turn_cost( $total_usage, (string) $model_id, $provider_type ),
                                     ),
                                 );
                             }
@@ -3521,7 +3553,7 @@ Guidelines:
                             'provider_name'         => $provider_name,
                             'model'                 => $model_id,
                             'usage'                 => $total_usage,
-                            'cost'                  => MainWP_Assistant_Pricing::estimate_cost( $total_usage, (string) $model_id, $provider_type ),
+                            'cost'                  => self::estimate_turn_cost( $total_usage, (string) $model_id, $provider_type ),
                         ),
                     );
                 }
@@ -3610,7 +3642,7 @@ Guidelines:
                             'provider_name'      => $provider_name,
                             'model'              => $model_id,
                             'usage'              => $total_usage,
-                            'cost'               => MainWP_Assistant_Pricing::estimate_cost( $total_usage, (string) $model_id, $provider_type ),
+                            'cost'               => self::estimate_turn_cost( $total_usage, (string) $model_id, $provider_type ),
                         ),
                     );
                 }
@@ -4300,7 +4332,8 @@ Guidelines:
      * @return bool True when agent mode can be offered.
      */
     public static function agent_mode_available() {
-        $available = '' !== self::first_credentialed_provider_id();
+        $plan      = MainWP_Assistant_ChatGPT_Plan::get_status( get_current_user_id() );
+        $available = '' !== self::first_credentialed_provider_id() || ( $plan['connected'] && function_exists( 'wp_ai_client_prompt' ) && function_exists( 'wp_supports_ai' ) && wp_supports_ai() );
 
         /**
          * Filter whether assistant agent mode is available.
@@ -4472,10 +4505,11 @@ Guidelines:
      * @since 6.0.0
      *
      * @param array $rows Conversation rows (objects with role/content, optionally tool_calls/tool_call_id).
+     * @param bool  $preserve_argument_objects Keep Responses function arguments as JSON objects.
      *
      * @return array Message DTOs.
      */
-    private function history_to_messages( $rows ) {
+    private function history_to_messages( $rows, $preserve_argument_objects = false ) {
         $messages = array();
 
         // Google keys function responses by NAME (its proto rejects an empty
@@ -4512,7 +4546,7 @@ Guidelines:
                             continue;
                         }
 
-                        $args = json_decode( (string) ( $tool_call['function']['arguments'] ?? '' ), true );
+                        $args = json_decode( (string) ( $tool_call['function']['arguments'] ?? '' ), ! $preserve_argument_objects );
 
                         // Empty args must round-trip as null: an empty PHP array
                         // JSON-encodes as a list, and Google's proto rejects a
@@ -4525,7 +4559,7 @@ Guidelines:
                             new \WordPress\AiClient\Tools\DTO\FunctionCall(
                                 (string) ( $tool_call['id'] ?? '' ),
                                 (string) $tool_call['function']['name'],
-                                is_array( $args ) && ! empty( $args ) ? $args : null
+                                $preserve_argument_objects ? $args : ( is_array( $args ) && ! empty( $args ) ? $args : null )
                             ),
                             null,
                             '' !== $signature ? $signature : null
@@ -4635,10 +4669,11 @@ Guidelines:
      * @param array      $messages Message DTOs (must start and end with user-role).
      * @param array      $context  Request context for the system instruction note.
      * @param array|null $resolved Optional resolved pair: provider_id, model_id.
+     * @param int        $user_id Request owner.
      *
      * @return object WP_AI_Client_Prompt_Builder instance.
      */
-    private function build_prompt_builder( $messages, $context = array(), $resolved = null ) {
+    private function build_prompt_builder( $messages, $context = array(), $resolved = null, $user_id = 0 ) {
         $builder = wp_ai_client_prompt()->with_history( ...$messages );
 
         $context_note = $this->get_assistant_context_note( $context );
@@ -4655,6 +4690,15 @@ Guidelines:
                     array( 'timeout' => (float) self::TIMEOUT_AI )
                 )
             );
+
+        $plan = MainWP_Assistant_ChatGPT_Plan::get_status( $user_id );
+        if ( $plan['connected'] ) {
+            $this->turn_provider_id = 'mainwp-chatgpt-plan';
+            return $builder->using_model( MainWP_Assistant_ChatGPT_Provider::for_user( $user_id, $plan['model'] ) );
+        }
+        if ( 'mainwp-chatgpt-plan' === ( $resolved['provider_id'] ?? '' ) ) {
+            $resolved = null;
+        }
 
         if ( is_array( $resolved ) && ! empty( $resolved['provider_id'] ) && ! empty( $resolved['model_id'] ) ) {
             try {
@@ -4728,14 +4772,51 @@ Guidelines:
      *
      * @param \WP_Error $error       Error returned by generate_ai_result().
      * @param string    $provider_id Provider resolved for this turn; '' when unknown.
+     * @param int       $user_id Request owner.
      *
      * @return \WP_Error Mapped error, or the original one.
      */
-    private function map_provider_wp_error( \WP_Error $error, $provider_id = '' ) {
+    private function map_provider_wp_error( \WP_Error $error, $provider_id = '', $user_id = 0 ) {
         $code    = $error->get_error_code();
         $data    = $error->get_error_data();
         $status  = is_array( $data ) ? (int) ( $data['status'] ?? 0 ) : 0;
         $message = (string) $error->get_error_message();
+
+        if ( 'mainwp-chatgpt-plan' === $provider_id ) {
+            $plan_code = $message;
+            $mapped    = 'chatgpt_plan_unavailable';
+            $messages  = array(
+                'chatgpt_plan_limit'            => __( 'Your ChatGPT plan limit for MainWP has been reached. Review usage in ChatGPT settings.', 'mainwp' ),
+                'chatgpt_plan_reconnect'        => __( 'Connect your ChatGPT account again to use your plan.', 'mainwp' ),
+                'chatgpt_plan_not_eligible'     => __( 'This ChatGPT account cannot use its plan in other apps.', 'mainwp' ),
+                'chatgpt_plan_unavailable'      => __( 'ChatGPT is unavailable. Try again in a few minutes.', 'mainwp' ),
+                'chatgpt_plan_rejected_request' => __( 'ChatGPT could not accept this request.', 'mainwp' ),
+            );
+            if ( 429 === $status || 'subscription_sharing_usage_limit_exceeded' === $plan_code ) {
+                $mapped = 'chatgpt_plan_limit';
+            } elseif ( 401 === $status || in_array( $plan_code, array( 'subscription_sharing_invalid_user', 'needs_reconnect', 'plan_disabled', 'forbidden', 'invalid_grant', 'invalid_refresh_token', 'token_expired', 'refresh_token_expired', 'refresh_token_invalidated', 'refresh_token_reused', 'chatpass_v2_scope_not_authorized', 'chatpass_v2_invalid_authorization_context' ), true ) ) {
+                $mapped = 'chatgpt_plan_reconnect';
+            } elseif ( 'subscription_sharing_user_not_eligible' === $plan_code ) {
+                $mapped = 'chatgpt_plan_not_eligible';
+            } elseif ( 'subscription_sharing_unsupported_capability' === $plan_code || ( 400 <= $status && 500 > $status && 'incomplete_response' !== $plan_code ) ) {
+                $mapped = 'chatgpt_plan_rejected_request';
+            }
+            if ( str_ends_with( $plan_code, '_unavailable' ) ) {
+                $mapped = 'chatgpt_plan_unavailable';
+            }
+            $mapped_data = array(
+                'provider'         => $provider_id,
+                'status'           => $status,
+                'manage_usage_url' => 'https://chatgpt.com/settings/usage',
+            );
+            if ( 'chatgpt_plan_limit' === $mapped ) {
+                $seconds = $this->provider_cooldown_seconds( $provider_id );
+                if ( $seconds > 0 ) {
+                    set_transient( 'mainwp_assistant_provider_cooldown_' . $provider_id . '_' . ( $user_id > 0 ? $user_id : get_current_user_id() ), time() + $seconds, $seconds );
+                }
+            }
+            return new \WP_Error( $mapped, $messages[ $mapped ], $mapped_data );
+        }
 
         // Core finds no candidate model when no registered provider passes its
         // availability check, which is what a missing or rejected key looks
@@ -4909,7 +4990,7 @@ Guidelines:
                         'type'     => 'function',
                         'function' => array(
                             'name'      => (string) ( $call->getName() ?? '' ),
-                            'arguments' => (string) wp_json_encode( is_array( $args ) ? $args : array() ),
+                            'arguments' => (string) wp_json_encode( 'mainwp-chatgpt-plan' === $result->getProviderMetadata()->getId() ? $args : ( is_array( $args ) ? $args : array() ) ),
                         ),
                     );
 
@@ -4987,12 +5068,16 @@ Guidelines:
 
         // Hard daily spend caps (site-wide and per-user), enforced at the
         // same chokepoint.
-        $budget_error = $this->daily_budget_gate_error( $user_id );
+        $plan = MainWP_Assistant_ChatGPT_Plan::get_status( $user_id );
+        if ( in_array( $plan['status'], array( 'needs_reconnect', 'plan_disabled' ), true ) ) {
+            return $this->map_provider_wp_error( new \WP_Error( 'prompt_client_error', $plan['status'], array( 'status' => 401 ) ), 'mainwp-chatgpt-plan', $user_id );
+        }
+        $budget_error = $plan['connected'] ? null : $this->daily_budget_gate_error( $user_id );
         if ( $budget_error ) {
             return $budget_error;
         }
 
-        $messages = $this->history_to_messages( $history_rows );
+        $messages = $this->history_to_messages( $history_rows, $plan['connected'] );
 
         if ( '' !== $message ) {
             // A fresh turn must not end history on a function-response-only user
@@ -5025,7 +5110,11 @@ Guidelines:
             return new \WP_Error( 'empty_prompt', __( 'No message content to send.', 'mainwp' ) );
         }
 
-        $builder = $this->build_prompt_builder( $messages, $context, $resolved );
+        try {
+            $builder = $this->build_prompt_builder( $messages, $context, $resolved, $user_id );
+        } catch ( \WordPress\AiClient\Providers\Http\Exception\ClientException $exception ) {
+            return $this->map_provider_wp_error( new \WP_Error( 'prompt_client_error', $exception->getMessage(), array( 'status' => $exception->getCode() ) ), 'mainwp-chatgpt-plan', $user_id );
+        }
 
         if ( $with_tools ) {
             $declarations = $this->build_function_declarations( $user_id, $category_filter );
@@ -5075,7 +5164,7 @@ Guidelines:
         }
 
         if ( is_wp_error( $result ) ) {
-            $mapped = $this->map_provider_wp_error( $result, $this->turn_provider_id );
+            $mapped = $this->map_provider_wp_error( $result, $this->turn_provider_id, $user_id );
             if ( in_array( $mapped->get_error_code(), array( 'provider_key_rejected', 'no_usable_provider' ), true ) ) {
                 update_option(
                     'mainwp_assistant_provider_failure',
@@ -5096,13 +5185,15 @@ Guidelines:
             return $parsed;
         }
 
-        delete_option( 'mainwp_assistant_provider_failure' );
+        if ( 'mainwp-chatgpt-plan' !== $parsed['provider_id'] ) {
+            delete_option( 'mainwp_assistant_provider_failure' );
+        }
 
         // Accrue this round-trip into the daily spend total while the exact
         // token usage and resolved model are in hand.
         $this->accrue_turn_spend( $parsed, $user_id );
 
-        if ( ( ! is_array( $resolved ) || empty( $resolved['provider_id'] ) ) && ! empty( $parsed['provider_id'] ) ) {
+        if ( ( $plan['connected'] || ! is_array( $resolved ) || empty( $resolved['provider_id'] ) || 'mainwp-chatgpt-plan' === $resolved['provider_id'] ) && ! empty( $parsed['provider_id'] ) ) {
             $resolved = array(
                 'provider_id'   => $parsed['provider_id'],
                 'provider_name' => $parsed['provider_name'],
@@ -7542,8 +7633,8 @@ Guidelines:
      *
      * Returns whether agent mode is available via the WordPress core AI Client,
      * along with disclosure and history state for initial UI setup. The
-     * provider_name key is kept for the frontend badge but stays null until a
-     * generation has resolved the serving provider.
+     * provider_name stays null for site connectors until a generation resolves
+     * the serving provider. Personal connections are selected before generation.
      *
      * @return void Outputs JSON response.
      */
@@ -7568,16 +7659,24 @@ Guidelines:
         $disclosure_shown = get_user_meta( $user_id, 'mainwp_assistant_disclosure_shown', true );
         $history_opt_out  = get_user_meta( $user_id, 'mainwp_assistant_history_opt_out', true );
 
+        $plan          = MainWP_Assistant_ChatGPT_Plan::get_status( $user_id );
         $available     = self::agent_mode_available();
         $reason        = '';
         $reason_code   = '';
         $wp_version_ok = function_exists( 'wp_supports_ai' ) && function_exists( 'wp_ai_client_prompt' );
+        $ai_available  = $wp_version_ok && wp_supports_ai();
 
         if ( ! $available ) {
             $reason_code = $wp_version_ok ? 'no_provider' : 'wp_version';
             $reason      = $wp_version_ok
                 ? esc_html__( 'No AI connection is configured. Add a provider API key under Settings > Connectors.', 'mainwp' )
                 : esc_html__( 'Sites mode requires WordPress 7.0 or newer.', 'mainwp' );
+        }
+
+        if ( in_array( $plan['status'], array( 'needs_reconnect', 'plan_disabled' ), true ) ) {
+            $available   = false;
+            $reason_code = 'chatgpt_plan_reconnect';
+            $reason      = __( 'Connect your ChatGPT account again to use your plan.', 'mainwp' );
         }
 
         // Connecting a provider writes a site option, so the onboarding wizard
@@ -7597,6 +7696,10 @@ Guidelines:
         $cooldown_provider = self::first_credentialed_provider_id();
         if ( '' !== $cooldown_provider ) {
             $cooldown_until = (int) get_transient( 'mainwp_assistant_provider_cooldown_' . $cooldown_provider );
+        }
+
+        if ( $plan['connected'] ) {
+            $cooldown_until = (int) get_transient( 'mainwp_assistant_provider_cooldown_mainwp-chatgpt-plan_' . $user_id );
         }
 
         // Daily spend cap state, so the panel can warn before a message is
@@ -7628,7 +7731,8 @@ Guidelines:
                 'reason_code'      => $reason_code,
                 'wizard_available' => $wizard_available,
                 'cooldown_until'   => $cooldown_until,
-                'provider_name'    => null,
+                'provider_name'    => $plan['connected'] && $ai_available ? 'ChatGPT plan' : null,
+                'chatgpt_plan'     => array_merge( array( 'email' => '' ), array_intersect_key( $plan, array_flip( array( 'connected', 'status', 'email', 'model', 'welcome_pending', 'manage_usage_url' ) ) ) ),
                 // Don't show disclosure if user has opted out of history (it's about history storage).
                 'show_disclosure'  => ! $disclosure_shown && ! $history_opt_out,
                 'history_disabled' => (bool) $history_opt_out,
@@ -7639,11 +7743,11 @@ Guidelines:
                     'user_spent_today' => $user_spent_today,
                     // Single flag so the panel notice toggle needs no change;
                     // either cap being hit blocks the caller.
-                    'blocked'          => $global_blocked || $user_blocked || $spend_unavailable,
-                    'unavailable'      => $spend_unavailable,
+                    'blocked'          => ! $plan['connected'] && ( $global_blocked || $user_blocked || $spend_unavailable ),
+                    'unavailable'      => ! $plan['connected'] && $spend_unavailable,
                     // Only this user's own cap is hit, so the panel says so
                     // instead of blaming the whole dashboard.
-                    'user_reached'     => $user_blocked && ! $global_blocked && ! $spend_unavailable,
+                    'user_reached'     => ! $plan['connected'] && $user_blocked && ! $global_blocked && ! $spend_unavailable,
                 ),
             )
         );

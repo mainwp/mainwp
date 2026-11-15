@@ -37,7 +37,7 @@ function harness( preference = 'agent' ) {
         renderSources: () => 'citations', parseUsageFromResponse: () => null, normalizeStoredSources: value => value || [],
         buildErrorDeepLink: () => '',
     };
-    for ( const name of [ 'clearDocsHandoffOffer', 'setInputState', 'resolveActiveConfirmCard', 'resetSessionUsage', 'appendUserMessage', 'appendSystemMessage', 'showRegenerateLink', 'hideRegenerateLinks', 'scrollToBottom', 'setCurrentConversation', 'setAgentPillUnavailable', 'maybeRenderWelcomeConnectCard', 'updateBudgetNotice', 'restoreHistoryControls', 'attemptConversationRestore', 'handleHistoryDisabled', 'updateInfoBar', 'attachAnswerFeedback', 'setSendButtonStop', 'startThinkingIndicator' ] ) { context[name] = () => {}; }
+    for ( const name of [ 'updatePlanIndicator', 'clearDocsHandoffOffer', 'refreshDocsHandoffOffer', 'setInputState', 'resolveActiveConfirmCard', 'resetSessionUsage', 'appendUserMessage', 'appendSystemMessage', 'showRegenerateLink', 'hideRegenerateLinks', 'scrollToBottom', 'setCurrentConversation', 'setAgentPillUnavailable', 'maybeRenderWelcomeConnectCard', 'updateBudgetNotice', 'restoreHistoryControls', 'attemptConversationRestore', 'handleHistoryDisabled', 'updateInfoBar', 'attachAnswerFeedback', 'setSendButtonStop', 'startThinkingIndicator' ] ) { context[name] = () => {}; }
     context.syncPillToggle = mode => { context.pill = mode; };
     vm.createContext( context );
     for ( const name of [ 'updateModeIndicator', 'applyInitialMode', 'checkProviderAvailability', 'loadConversation', 'appendAssistantMessage', 'appendErrorMessage', 'sendToAPI' ] ) { if ( chat.includes( 'function ' + name + '(' ) ) { vm.runInContext( fn( chat, name ), context ); } }

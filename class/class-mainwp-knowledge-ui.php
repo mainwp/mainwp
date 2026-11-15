@@ -893,7 +893,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <?php if ( 'site' === $scope_type ) : ?>
                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-knowledge-site-info-message"></i>
                     <?php endif; ?>
-                <p><?php esc_html_e( 'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.', 'mainwp' ); ?></p>
+                <p><?php esc_html_e( 'Records saved here reach the Assistant and any AI app connected to this Dashboard through MCP. There is no export in this release.', 'mainwp' ); ?></p>
                 <p>
                     <?php if ( 'client' === $scope_type ) : ?>
                         <?php esc_html_e( 'Client records apply to every site assigned to this client. Site records belong to the site and stay with it if the site is moved to another client.', 'mainwp' ); ?>

@@ -237,4 +237,29 @@ for ( const bypass of [ true, false ] ) {
     context.appendErrorMessage( 'Connection failed' );
     assert.ok( context.$messages.nodes.at( -1 ).html.includes( 'data-docs-bypass="' + ( bypass ? '1' : '0' ) + '"' ), 'Retry must retain the failed request bypass choice' );
 }
-console.log( 'PASS Docs handoff: decision, routing, fresh Sites composer, bypass, focus, stale and double clicks' );
+// Connecting a plan from the offer's choices adds Continue in Sites to the same offer.
+vm.runInContext( functionSource( 'refreshDocsHandoffOffer' ), context );
+assert.match( source, /setAgentPillUnavailable\( false \);\s*refreshDocsHandoffOffer\(\);/, 'A confirmed provider must refresh a waiting offer' );
+const waitingBubble = new Element( '<div class="mainwp-mintlify-user-message"></div>' ).text( 'Update plugins on my sites' );
+context.$messages = new Element();
+context.$messages.append( waitingBubble );
+context.messageHistory = [ { role: 'user', content: 'Update plugins on my sites' } ];
+context.$input = new Element();
+buttons = render( false );
+assert.deepEqual( buttons.map( button => button.label ), [ 'Ask Docs instead', 'Dismiss' ] );
+const waitingOffer = context.$activeDocsHandoffOffer;
+context.refreshDocsHandoffOffer();
+assert.notEqual( context.$activeDocsHandoffOffer, waitingOffer );
+assert.equal( waitingOffer.removed, true );
+buttons = context.$activeDocsHandoffOffer.find( 'button' ).buttons;
+assert.deepEqual( buttons.map( button => button.label ), [ 'Continue in Sites', 'Ask Docs instead', 'Dismiss' ] );
+assert.equal( waitingBubble.removed, undefined, 'The refresh keeps the request bubble' );
+assert.deepEqual( context.messageHistory, [ { role: 'user', content: 'Update plugins on my sites' } ] );
+assert.equal( context.$docsHandoffUserBubble, waitingBubble, 'Dismiss still removes the request after the refresh' );
+const continuingOffer = context.$activeDocsHandoffOffer;
+context.refreshDocsHandoffOffer();
+assert.equal( context.$activeDocsHandoffOffer, continuingOffer, 'An offer that can continue is left alone' );
+context.clearDocsHandoffOffer();
+context.refreshDocsHandoffOffer();
+assert.equal( context.$activeDocsHandoffOffer, null, 'A cleared offer is not brought back' );
+console.log( 'PASS Docs handoff: decision, routing, fresh Sites composer, bypass, focus, stale and double clicks, refresh after connecting' );

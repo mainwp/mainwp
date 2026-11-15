@@ -31,6 +31,83 @@ const MAINWP_VIEW_PER_GROUP        = 2;
 class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Both connection surfaces must offer the same per-user actions.
+     *
+     * @return array Localized connection options.
+     */
+    public static function assistant_chatgpt_l10n() {
+        return array(
+            'chatgpt' => array(
+                'can_connect'         => function_exists( 'wp_ai_client_prompt' ) && function_exists( 'wp_supports_ai' ) && wp_supports_ai(),
+                'can_manage_settings' => MainWP_Assistant_Onboarding::user_can_run_wizard(),
+                'connectors_url'      => esc_url_raw( apply_filters( 'mainwp_assistant_connectors_url', admin_url( 'options-connectors.php' ) ) ),
+                'strings'             => array(
+                    'choices'       => __( 'AI Connection', 'mainwp' ),
+                    'plan_title'    => __( 'Use your ChatGPT plan', 'mainwp' ),
+                    'continue'      => __( 'Continue with ChatGPT', 'mainwp' ),
+                    'plan_detail'   => __( 'Uses the ChatGPT plan you already pay for. Each person on this Dashboard connects their own.', 'mainwp' ),
+                    'api_title'     => __( 'Use an API key', 'mainwp' ),
+                    'api_connect'   => __( 'Connect free AI', 'mainwp' ),
+                    'connectors'    => __( 'Manage AI Connectors', 'mainwp' ),
+                    'api_alt'       => __( 'Use OpenAI or Anthropic instead', 'mainwp' ),
+                    'disclosure'    => MainWP_Assistant_Onboarding::free_tier_disclosure(),
+                    'step_signin'   => __( 'Sign in to ChatGPT in the new tab and approve MainWP.', 'mainwp' ),
+                    'step_error'    => __( "ChatGPT then sends that tab to an error page. That's expected, so keep that tab open.", 'mainwp' ),
+                    /* translators: %s: copy keyboard shortcut, such as Ctrl+C. */
+                    'step_paste'    => __( "Click that page's address bar, press %s to copy the full address, and paste it here.", 'mainwp' ),
+                    /* translators: %s: copy keyboard shortcut, such as Ctrl+C. */
+                    'paste_detail'  => __( "When you approve, the ChatGPT tab ends on an error page. That's expected: that page's address is what MainWP needs. Click its address bar and press %s to copy the full address.", 'mainwp' ),
+                    'callback'      => __( 'Paste the address from the error page', 'mainwp' ),
+                    'paste'         => __( 'Paste', 'mainwp' ),
+                    'reopen'        => __( 'Closed the ChatGPT tab? Open it again', 'mainwp' ),
+                    /* translators: %s: the page's usual browser tab title. */
+                    'waiting_title' => __( 'Paste the address · %s', 'mainwp' ),
+                    'finish'        => __( 'Finish connecting', 'mainwp' ),
+                    'start_over'    => __( 'Start over', 'mainwp' ),
+                    'welcome'       => __( "You're using your ChatGPT plan", 'mainwp' ),
+                    'welcome_body'  => __( 'The Assistant will use your ChatGPT plan for its answers. You can see and limit this usage in ChatGPT settings.', 'mainwp' ),
+                    'got_it'        => __( 'Got it', 'mainwp' ),
+                    'using'         => __( 'Using ChatGPT plan', 'mainwp' ),
+                    'manage'        => __( 'Manage usage', 'mainwp' ),
+                    'disconnect'    => __( 'Disconnect', 'mainwp' ),
+                    'different'     => __( 'Connect a different ChatGPT account or workspace', 'mainwp' ),
+                    'reconnect'     => __( 'Your ChatGPT connection stopped working. Connect again to keep using your plan.', 'mainwp' ),
+                    'disabled'      => __( 'ChatGPT plan use is turned off for MainWP.', 'mainwp' ),
+                    'turn_on'       => __( 'Turn on ChatGPT plan use', 'mainwp' ),
+                    'unavailable'   => __( 'AI features are turned off or unavailable on this Dashboard.', 'mainwp' ),
+                    'popup_blocked' => __( 'Your browser blocked the new tab. Open it here:', 'mainwp' ),
+                    'model'         => __( 'Model', 'mainwp' ),
+                    'close'         => __( 'Close', 'mainwp' ),
+                    'loading'       => __( 'Loading...', 'mainwp' ),
+                    'revoke'        => __( 'The old connection could not be removed in ChatGPT. Remove it in ChatGPT settings.', 'mainwp' ),
+                ),
+                'errors'              => array(
+                    'empty_callback'         => __( 'Paste the address from the error page first.', 'mainwp' ),
+                    'clipboard_no_callback'  => __( "Your clipboard doesn't have the error page's address yet. Copy the full address from that tab's address bar, then click Paste again.", 'mainwp' ),
+                    'invalid_callback'       => __( 'This address does not match your sign-in attempt, or the attempt expired. Continue with ChatGPT again and paste the full address from the error page.', 'mainwp' ),
+                    'access_denied'          => __( 'You declined the connection. Continue with ChatGPT again when you are ready.', 'mainwp' ),
+                    'authorization_failed'   => __( 'ChatGPT did not approve the connection. Continue with ChatGPT again.', 'mainwp' ),
+                    'invalid_client'         => __( 'This address belongs to a different app registration. Continue with ChatGPT again and copy the full address from the error page.', 'mainwp' ),
+                    'invalid_id_token'       => __( 'The ChatGPT sign-in could not be verified. Continue with ChatGPT again.', 'mainwp' ),
+                    'unknown_kid'            => __( 'The ChatGPT signing key could not be verified. Try connecting again in a few minutes.', 'mainwp' ),
+                    'invalid_jwks'           => __( 'ChatGPT signing keys could not be loaded. Try connecting again in a few minutes.', 'mainwp' ),
+                    'invalid_token_response' => __( 'ChatGPT returned an incomplete connection. Continue with ChatGPT again.', 'mainwp' ),
+                    'invalid_grant'          => __( 'The sign-in address has expired or was already used. Continue with ChatGPT again.', 'mainwp' ),
+                    'network_error'          => __( 'Could not reach ChatGPT. Check your connection and try again.', 'mainwp' ),
+                    'request_failed'         => __( 'The Dashboard did not respond. Reload the page and try again.', 'mainwp' ),
+                    'connection_busy'        => __( 'Your connection is being updated by another request. Try again in a moment.', 'mainwp' ),
+                    'storage_failed'         => __( 'The connection could not be saved on this Dashboard. Try again.', 'mainwp' ),
+                    'plan_disabled'          => __( 'ChatGPT plan use is turned off for MainWP.', 'mainwp' ),
+                    'needs_reconnect'        => __( 'Your ChatGPT connection stopped working. Connect again to keep using your plan.', 'mainwp' ),
+                    'invalid_model'          => __( 'That model is not available to your ChatGPT account. Choose a listed model.', 'mainwp' ),
+                    'forbidden'              => __( 'Your Dashboard account cannot use the Assistant.', 'mainwp' ),
+                    'generic'                => __( 'ChatGPT could not finish connecting. Continue with ChatGPT again.', 'mainwp' ),
+                ),
+            ),
+        );
+    }
+
+    /**
      * Public static variable to hold the current plugin version.
      *
      * @var string Current plugin version.
@@ -329,6 +406,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         // Always initialize settings (AJAX handlers needed for enable/disable functionality).
         MainWP_Assistant_Settings::init();
+        MainWP_Assistant_ChatGPT_Plan::instance();
+        if ( class_exists( '\WordPress\AiClient\AiClient' ) ) {
+            $registry = \WordPress\AiClient\AiClient::defaultRegistry();
+            if ( ! $registry->hasProvider( MainWP_Assistant_ChatGPT_Provider::ID ) ) {
+                $registry->registerProvider( MainWP_Assistant_ChatGPT_Provider::class );
+            }
+        }
 
         if ( static::is_assistant_enabled() ) {
             MainWP_Assistant::instance();
@@ -1527,7 +1611,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'mode_agent'                  => esc_html__( 'Sites', 'mainwp' ),
                         // translators: %s: AI provider name.
                         'mode_agent_with_provider'    => esc_html__( 'Sites mode (%s)', 'mainwp' ),
-                        'mode_no_provider'            => esc_html__( 'No AI connection configured. Add a provider API key under Settings > Connectors.', 'mainwp' ),
+                        'mode_no_provider'            => esc_html__( 'No AI connection is configured.', 'mainwp' ),
 
                         // Routing receipt.
                         'agent_fallback_notice'       => esc_html__( 'Answered from MainWP docs. Sites mode needs an AI connection with a provider API key under Settings > Connectors.', 'mainwp' ),
@@ -1549,7 +1633,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'connect_card_alt'            => esc_html__( 'Use OpenAI or Anthropic instead', 'mainwp' ),
                         'connect_card_disclosure'     => MainWP_Assistant_Onboarding::free_tier_disclosure(),
                         'connect_card_dismiss'        => esc_html__( 'Dismiss', 'mainwp' ),
-                        'wizard_link_text'            => esc_html__( 'Connect free AI', 'mainwp' ),
+                        'wizard_link_text'            => esc_html__( 'Connect AI', 'mainwp' ),
 
                         // Message attribution and per-message controls.
                         'assistant_name'              => esc_html__( 'MainWP Assistant', 'mainwp' ),
@@ -1687,30 +1771,36 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         // escapes these when it renders them. Escaping here as well
                         // would print entities such as &gt; in the bubble.
                         'error_codes'                 => array(
-                            'bridge_not_configured'   => __( 'The MainWP documentation service is not configured for this dashboard.', 'mainwp' ),
-                            'bridge_no_consent'       => __( 'The Assistant needs privacy consent before it can answer. An administrator can grant it in Assistant settings.', 'mainwp' ),
-                            'bridge_unauthorized'     => __( 'The MainWP documentation service rejected this dashboard\'s credentials. Please try again in a few minutes.', 'mainwp' ),
-                            'bridge_quota_exceeded'   => __( 'This dashboard reached its monthly documentation usage limit. Please try again later.', 'mainwp' ),
-                            'bridge_rate_limited'     => __( 'Too many documentation requests right now. Please try again later.', 'mainwp' ),
-                            'bridge_unavailable'      => __( 'The MainWP documentation service is temporarily unreachable. Please try again in a moment.', 'mainwp' ),
-                            'bridge_error'            => __( 'The MainWP documentation service returned an unexpected response. Please try again.', 'mainwp' ),
-                            'bridge_invalid_response' => __( 'The MainWP documentation service returned an unreadable response. Please try again.', 'mainwp' ),
-                            'bridge_not_registered'   => __( 'This dashboard is not registered with the MainWP documentation service yet. Please try again in a few minutes.', 'mainwp' ),
-                            'no_provider'             => __( 'No AI connection is configured, so Sites mode cannot answer. Add a provider API key under Settings > Connectors.', 'mainwp' ),
-                            'no_usable_provider'      => __( 'Sites mode needs an AI provider with a working API key. Add or check one in Settings > Connectors, then try again.', 'mainwp' ),
-                            'ai_result_parse_failed'  => __( 'Your AI provider returned a response the Assistant could not read. Check the provider under Settings > Connectors.', 'mainwp' ),
-                            'tool_loop_limit'         => __( 'The Assistant reached its action limit for this request. Try a smaller or more specific request.', 'mainwp' ),
+                            'bridge_not_configured'     => __( 'The MainWP documentation service is not configured for this dashboard.', 'mainwp' ),
+                            'bridge_no_consent'         => __( 'The Assistant needs privacy consent before it can answer. An administrator can grant it in Assistant settings.', 'mainwp' ),
+                            'bridge_unauthorized'       => __( 'The MainWP documentation service rejected this dashboard\'s credentials. Please try again in a few minutes.', 'mainwp' ),
+                            'bridge_quota_exceeded'     => __( 'This dashboard reached its monthly documentation usage limit. Please try again later.', 'mainwp' ),
+                            'bridge_rate_limited'       => __( 'Too many documentation requests right now. Please try again later.', 'mainwp' ),
+                            'bridge_unavailable'        => __( 'The MainWP documentation service is temporarily unreachable. Please try again in a moment.', 'mainwp' ),
+                            'bridge_error'              => __( 'The MainWP documentation service returned an unexpected response. Please try again.', 'mainwp' ),
+                            'bridge_invalid_response'   => __( 'The MainWP documentation service returned an unreadable response. Please try again.', 'mainwp' ),
+                            'bridge_not_registered'     => __( 'This dashboard is not registered with the MainWP documentation service yet. Please try again in a few minutes.', 'mainwp' ),
+                            'no_provider'               => __( 'No AI connection is configured, so Sites mode cannot answer.', 'mainwp' ),
+                            'no_usable_provider'        => __( 'Sites mode needs an AI provider with a working API key. Add or check one in Settings > Connectors, then try again.', 'mainwp' ),
+                            'ai_result_parse_failed'    => __( 'Your AI provider returned a response the Assistant could not read. Check the provider under Settings > Connectors.', 'mainwp' ),
+                            'tool_loop_limit'           => __( 'The Assistant reached its action limit for this request. Try a smaller or more specific request.', 'mainwp' ),
                             // These four stay provider-neutral: this map is built
                             // once for the page, before any turn has resolved which
                             // provider answered. The provider's own message rides
                             // along as a second line when there is one. The daily
                             // quota entry is Gemini-specific; the server maps it
                             // only for Google.
-                            'provider_rate_limited'   => __( 'AI provider rate limit reached. Wait a moment and try again.', 'mainwp' ),
+                            'provider_rate_limited'     => __( 'AI provider rate limit reached. Wait a moment and try again.', 'mainwp' ),
                             'provider_daily_quota_exhausted' => __( 'Gemini free-tier quota reached. A per-minute limit clears within a minute; the daily quota resets at midnight Pacific.', 'mainwp' ),
-                            'provider_key_rejected'   => __( 'Your AI provider rejected the API key for this dashboard. Check the key under Settings > Connectors.', 'mainwp' ),
-                            'provider_unreachable'    => __( 'Could not reach your AI provider. Check the connection and try again.', 'mainwp' ),
+                            'provider_key_rejected'     => __( 'Your AI provider rejected the API key for this dashboard. Check the key under Settings > Connectors.', 'mainwp' ),
+                            'provider_unreachable'      => __( 'Could not reach your AI provider. Check the connection and try again.', 'mainwp' ),
                             'provider_unavailable_upstream' => __( 'Your AI provider is having trouble right now. Please try again in a moment.', 'mainwp' ),
+
+                            'chatgpt_plan_limit'        => __( "You've reached your ChatGPT plan limit for MainWP.", 'mainwp' ),
+                            'chatgpt_plan_reconnect'    => __( 'Connect your ChatGPT account again to use your plan.', 'mainwp' ),
+                            'chatgpt_plan_not_eligible' => __( "This ChatGPT account can't use its plan in other apps.", 'mainwp' ),
+                            'chatgpt_plan_unavailable'  => __( 'ChatGPT is not available right now. Try again in a few minutes.', 'mainwp' ),
+                            'chatgpt_plan_rejected_request' => __( 'ChatGPT could not accept this request.', 'mainwp' ),
                         ),
 
                         // Graceful degradation.
@@ -1721,7 +1811,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         // SSE streaming nonce.
                         'sse_nonce'                   => wp_create_nonce( 'mainwp_assistant_sse_stream' ),
                     ),
-                    MainWP_Assistant_Onboarding::wizard_l10n()
+                    MainWP_Assistant_Onboarding::wizard_l10n(),
+                    static::assistant_chatgpt_l10n()
                 )
             );
 

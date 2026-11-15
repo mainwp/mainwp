@@ -45,11 +45,13 @@ window.MainWPMintlifyChat = ( function( $ ) {
         $activeDocsHandoffOffer = null,
         $docsHandoffUserBubble = null,
         docsHandoffMessage = null,
+        docsHandoffAwaitingProvider = null, // Request and receipt of an offer shown without Continue in Sites.
         requestDocsHandoffBypass = false,
         $activeConfirmCard = null,     // Live inline confirmation card; disabled when resolved or superseded.
         budgetState = null,            // Daily spend cap state from the last provider check.
         providerReasonCode = '',       // Why agent mode is unavailable: '' | 'no_provider' | 'wp_version'.
-        wizardAvailable = false;       // Whether this user may run the connect wizard.
+        wizardAvailable = false,       // Whether this user may run the connect wizard.
+        chatgptPlan = {};
 
     // Session cost state: per-bubble unfolded spend keyed by data-usage-key,
     // so the running total is derived (regenerate deletes its entry) rather
@@ -239,6 +241,10 @@ window.MainWPMintlifyChat = ( function( $ ) {
      */
     function init() {
         if ( isInitialized ) {
+            if ( window.MainWPAssistantChatGPT ) {
+                window.MainWPAssistantChatGPT.refreshOnOpen();
+            }
+            checkProviderAvailability();
             return;
         }
 
@@ -295,6 +301,15 @@ window.MainWPMintlifyChat = ( function( $ ) {
             e.preventDefault();
             if ( wizardReady() ) {
                 window.MainWPAssistantOnboarding.open( 'error_bubble' );
+            }
+        } );
+
+        $( document ).off( 'mainwp-assistant-chatgpt-updated.mintlify' ).on( 'mainwp-assistant-chatgpt-updated.mintlify', function( event, status, changed ) {
+            chatgptPlan = status || {};
+            updatePlanIndicator();
+            if ( changed ) {
+                $messages.find( '.mainwp-assistant-connect-card' ).closest( '.mainwp-mintlify-message' ).not( '.mainwp-assistant-handoff-offer' ).remove();
+                checkProviderAvailability();
             }
         } );
 
@@ -478,6 +493,9 @@ window.MainWPMintlifyChat = ( function( $ ) {
         updateInfoBar( requestMode );
 
         checkProviderAvailability();
+        if ( window.MainWPAssistantChatGPT ) {
+            window.MainWPAssistantChatGPT.refreshOnOpen();
+        }
 
         $input.focus();
     }
@@ -2379,10 +2397,11 @@ window.MainWPMintlifyChat = ( function( $ ) {
         let codeMap = ( typeof mainwpMintlifyChatL10n !== 'undefined' && mainwpMintlifyChatL10n.error_codes ) || {};
         let displayText = ( errorCode && codeMap[ errorCode ] ) || errorText;
 
-        let linkHtml = buildErrorDeepLink( errorCode );
+        let link = buildErrorDeepLink( errorCode );
+        let linkHtml = typeof link === 'string' ? link : '';
         // Bind the failed message to this bubble so an old Try again link
         // re-sends the prompt that actually failed, not whatever was sent last.
-        let retryHtml = lastUserMessage
+        let retryHtml = lastUserMessage && errorCode !== 'chatgpt_plan_limit' && errorCode !== 'chatgpt_plan_reconnect' && errorCode !== 'chatgpt_plan_not_eligible'
             ? ' <a href="#" class="mainwp-assistant-error-retry" data-retry-message="' + escapeHtml( lastUserMessage ) + '" data-docs-bypass="' + ( requestDocsHandoffBypass ? '1' : '0' ) + '">' + escapeHtml( l10n( 'try_again', 'Try again' ) ) + '</a>'
             : '';
 
@@ -2393,6 +2412,20 @@ window.MainWPMintlifyChat = ( function( $ ) {
                    '</div>';
 
         let $bubble = $( html );
+        // Button actions sit on their own line: the theme zeroes button margins
+        // with !important, so a margin on the button itself never applies.
+        let appendErrorAction = function( action ) {
+            if ( action && typeof action !== 'string' ) {
+                $bubble.find( '.ui.red.message' ).append( $( '<div class="mainwp-assistant-error-actions"></div>' ).append( action ) );
+            }
+        };
+        appendErrorAction( link );
+        if ( errorCode === 'chatgpt_plan_reconnect' ) {
+            checkProviderAvailability( 0, function() {
+                $bubble.find( '.mainwp-assistant-error-actions, .mainwp-assistant-error-link' ).remove();
+                appendErrorAction( buildErrorDeepLink( errorCode ) );
+            } );
+        }
 
         // The provider wrote this text, so it goes in as a text node and never
         // through innerHTML or string concatenation. It is what separates a
@@ -2453,18 +2486,40 @@ window.MainWPMintlifyChat = ( function( $ ) {
      * registration codes link to the Assistant settings page.
      *
      * @param {string} errorCode Server error code, if any.
-     * @return {string} Anchor HTML, or empty string when the code has no destination.
+     * @return {string|Object} Link element or legacy markup, empty when no action is available.
      */
     function buildErrorDeepLink( errorCode ) {
         if ( ! errorCode ) {
             return '';
         }
 
+        if ( errorCode === 'chatgpt_plan_limit' ) {
+            return $( '<a class="ui mini green button mainwp-assistant-error-link" target="_blank" rel="noopener noreferrer"></a>' )
+                .attr( 'href', chatgptPlan.manage_usage_url || 'https://chatgpt.com/settings/usage' )
+                .text( planText( 'manage' ) );
+        }
+        if ( errorCode === 'chatgpt_plan_reconnect' ) {
+            if ( ! planCanConnect() ) {
+                return '';
+            }
+            return $( '<button type="button" class="ui mini green button mainwp-assistant-error-link" data-oai-siwc-button></button>' )
+                .text( planText( chatgptPlan.status === 'plan_disabled' ? 'turn_on' : 'continue' ) )
+                .on( 'click', function() { window.MainWPAssistantChatGPT.open( false ); } );
+        }
+        if ( errorCode.indexOf( 'chatgpt_plan_' ) === 0 ) {
+            return '';
+        }
+        if ( ( errorCode === 'no_provider' || errorCode === 'no_usable_provider' || errorCode === 'provider_key_rejected' ) && ! wizardReady() && connectionChoicesReady() && providerReasonCode !== 'wp_version' ) {
+            return $( '<button type="button" class="ui mini green button mainwp-assistant-error-link"></button>' )
+                .text( l10n( 'wizard_link_text', 'Connect AI' ) )
+                .on( 'click', function() { window.MainWPAssistantChatGPT.openChoices( 'error_bubble' ); } );
+        }
+
         // The wizard is a shorter route than the Connectors screen for each of
         // these, and it is the only route that ends in a working free key.
         if ( ( errorCode === 'no_provider' || errorCode === 'no_usable_provider' || errorCode === 'provider_key_rejected' ) && wizardReady() ) {
             return ' <a href="#" class="mainwp-assistant-error-link mainwp-assistant-wizard-link">' +
-                escapeHtml( l10n( 'wizard_link_text', 'Connect free AI' ) ) + '</a>';
+                escapeHtml( l10n( 'wizard_link_text', 'Connect AI' ) ) + '</a>';
         }
 
         // Nothing on the Connectors screen helps below WordPress 7.0.
@@ -2877,6 +2932,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
             }
             $docsHandoffUserBubble = null;
             docsHandoffMessage = null;
+            docsHandoffAwaitingProvider = null;
             $activeDocsHandoffOffer.find( 'button' ).prop( 'disabled', true );
             $activeDocsHandoffOffer.remove();
             $activeDocsHandoffOffer = null;
@@ -2929,8 +2985,8 @@ window.MainWPMintlifyChat = ( function( $ ) {
             let prompt = connectPrompt();
             $content.append( $( '<p></p>' ).text( prompt === 'version'
                 ? l10n( 'mode_wp_version', 'Sites mode needs WordPress 7.0 or newer. Docs mode works on this version.' )
-                : l10n( 'mode_no_provider', 'No AI connection configured. Add a provider API key under Settings > Connectors.' ) ) );
-            if ( prompt === 'card' && wizardReady() ) {
+                : l10n( 'mode_no_provider', 'No AI connection is configured.' ) ) );
+            if ( prompt === 'card' && connectionChoicesReady() ) {
                 $content.append( buildConnectCard( 'docs_handoff', false ).children() );
             } else if ( prompt !== 'version' && l10n( 'connectors_settings_url', '' ) ) {
                 $content.append( $( '<a></a>' )
@@ -2957,6 +3013,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
 
         $offer.append( $content.append( $actions ) );
         $activeDocsHandoffOffer = $offer;
+        docsHandoffAwaitingProvider = decision.canContinue ? null : { userMessage: userMessage, data: data };
         let $lastUserBubble = $messages.find( '.mainwp-mintlify-user-message' ).last();
         let isProvisional = $lastUserBubble.length &&
             $lastUserBubble.find( '.message-content' ).clone().find( 'br' ).replaceWith( '\n' ).end().text() === userMessage &&
@@ -2966,6 +3023,19 @@ window.MainWPMintlifyChat = ( function( $ ) {
         $messages.append( $offer );
         scrollToBottom();
         $offer.find( 'button' ).first().focus();
+    }
+
+    /**
+     * A plan connected from the offer's own choices makes the request
+     * sendable in Sites, so the offer gains Continue in Sites in place.
+     */
+    function refreshDocsHandoffOffer() {
+        let pending = docsHandoffAwaitingProvider;
+        if ( ! pending || ! $activeDocsHandoffOffer ) {
+            return;
+        }
+        clearDocsHandoffOffer( true );
+        renderDocsHandoffOffer( pending.userMessage, Object.assign( {}, pending.data, { agent_available: true } ) );
     }
 
     // resolveConnectPrompt() lives in mainwp-assistant-chat-logic.js so the
@@ -2982,6 +3052,9 @@ window.MainWPMintlifyChat = ( function( $ ) {
      * @return {string} 'card', 'version' or 'legacy'.
      */
     function connectPrompt() {
+        if ( connectionChoicesReady() && ( providerReasonCode === 'no_provider' || providerReasonCode === 'chatgpt_plan_reconnect' || chatgptPlan.status === 'needs_reconnect' || chatgptPlan.status === 'plan_disabled' ) ) {
+            return 'card';
+        }
         return resolveConnectPrompt( {
             reason_code: providerReasonCode,
             wizard_available: wizardAvailable
@@ -2991,7 +3064,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
     /**
      * Whether the connect wizard is rendered and openable on this page.
      *
-     * @return {boolean} True when renderConnectCard() produces a working CTA.
+     * @return {boolean} True when the site-key wizard can be opened.
      */
     function wizardReady() {
         return wizardAvailable &&
@@ -2999,8 +3072,35 @@ window.MainWPMintlifyChat = ( function( $ ) {
             window.MainWPAssistantOnboarding.isAvailable();
     }
 
+    function connectionChoicesReady() {
+        return typeof window.MainWPAssistantChatGPT !== 'undefined';
+    }
+
+    function planText( key ) {
+        return ( ( mainwpMintlifyChatL10n.chatgpt || {} ).strings || {} )[ key ] || '';
+    }
+
+    function planCanConnect() {
+        return connectionChoicesReady() && ( mainwpMintlifyChatL10n.chatgpt || {} ).can_connect === true;
+    }
+
+    function updatePlanIndicator() {
+        let $indicator = $( '#mainwp-assistant-plan-indicator' );
+        if ( ! $indicator.length ) {
+            $indicator = $( '<span id="mainwp-assistant-plan-indicator"></span>' );
+            $( '.mainwp-mode-pill[data-mode="agent"]' ).parent().after( $indicator );
+        }
+        let usingPlan = chatgptPlan.connected && planCanConnect();
+        $indicator.empty().prop( 'hidden', ! usingPlan );
+        if ( usingPlan ) {
+            $indicator.append( $( '<span></span>' ).text( planText( 'using' ) ) );
+            $indicator.append( $( '<a target="_blank" rel="noopener noreferrer"></a>' )
+                .attr( 'href', chatgptPlan.manage_usage_url || 'https://chatgpt.com/settings/usage' ).text( planText( 'manage' ) ) );
+        }
+    }
+
     /**
-     * Build the "Connect free AI" card as a chat message.
+     * Build connection choices as a chat message.
      *
      * @param {string}  source      Launch source passed to the wizard.
      * @param {boolean} dismissible Whether to draw the dismiss control.
@@ -3009,38 +3109,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
     function buildConnectCard( source, dismissible ) {
         let $card = $( '<div class="ui segment mainwp-assistant-connect-card"></div>' );
 
-        $card.append(
-            $( '<div class="mainwp-assistant-connect-title"></div>' )
-                .text( l10n( 'connect_card_title', 'Connect free AI' ) )
-        );
-        $card.append(
-            $( '<div class="mainwp-assistant-connect-lead"></div>' )
-                .text( l10n( 'connect_card_lead', 'About two minutes. No credit card. Google\'s Gemini free tier.' ) )
-        );
-
-        let $actions = $( '<div class="mainwp-assistant-connect-actions"></div>' );
-        $actions.append(
-            $( '<button type="button" class="ui mini green button"></button>' )
-                .text( l10n( 'connect_card_cta', 'Connect free AI' ) )
-                .on( 'click', function() {
-                    window.MainWPAssistantOnboarding.open( source );
-                } )
-        );
-
-        let connectorsUrl = l10n( 'connectors_settings_url', '' );
-        if ( connectorsUrl ) {
-            $actions.append(
-                $( '<a class="mainwp-assistant-connect-alt"></a>' )
-                    .attr( 'href', connectorsUrl )
-                    .text( l10n( 'connect_card_alt', 'Use OpenAI or Anthropic instead' ) )
-            );
-        }
-
-        $card.append( $actions );
-        $card.append(
-            $( '<div class="mainwp-assistant-connect-disclosure"></div>' )
-                .text( l10n( 'connect_card_disclosure', 'Google may use free-tier requests, including human review, to improve its products.' ) )
-        );
+        $card.append( window.MainWPAssistantChatGPT.choices( source, true ) );
 
         if ( dismissible ) {
             $card.append(
@@ -3066,11 +3135,11 @@ window.MainWPMintlifyChat = ( function( $ ) {
      *
      * @param {string}  source      Launch source passed to the wizard.
      * @param {boolean} dismissible Whether to draw the dismiss control.
-     * @return {boolean} False when no wizard exists to launch, so the caller
+     * @return {boolean} False when no connection interface is available, so the caller
      *                   can fall back to its own message.
      */
     function renderConnectCard( source, dismissible ) {
-        if ( ! wizardReady() ) {
+        if ( ! connectionChoicesReady() ) {
             return false;
         }
 
@@ -3095,7 +3164,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
      * that actually needed Sites mode.
      */
     function maybeRenderWelcomeConnectCard() {
-        if ( 'card' !== connectPrompt() || ! wizardReady() ) {
+        if ( 'card' !== connectPrompt() || ! connectionChoicesReady() ) {
             return;
         }
 
@@ -3131,6 +3200,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
 
         syncPillToggle( mode );
         updateInfoBar( mode );
+        updatePlanIndicator();
     }
 
     /**
@@ -3217,7 +3287,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
         let isVersionBlock = 'version' === prompt;
         let errorText = isVersionBlock
             ? l10n( 'mode_wp_version', 'Sites mode needs WordPress 7.0 or newer. Docs mode works on this version.' )
-            : l10n( 'mode_no_provider', 'No AI connection configured. Add a provider API key under Settings > Connectors.' );
+            : l10n( 'mode_no_provider', 'No AI connection is configured.' );
         let $error = $( '<div class="mainwp-assistant-mode-error"></div>' ).text( errorText + ' ' );
 
         // Below WordPress 7.0 the Connectors screen does not exist, so the
@@ -4727,7 +4797,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
      *
      * @param {number} retryCount Current retry attempt (0-based).
      */
-    function checkProviderAvailability( retryCount ) {
+    function checkProviderAvailability( retryCount, afterCheck ) {
         retryCount = retryCount || 0;
         const maxRetries = 2; // Total of 3 attempts (initial + 2 retries).
         const retryDelays = [ 1000, 2000 ]; // 1s, then 2s delay.
@@ -4745,6 +4815,13 @@ window.MainWPMintlifyChat = ( function( $ ) {
             timeout: 15000
         } )
             .done( function( response ) {
+                if ( response && response.success && response.data ) {
+                    chatgptPlan = response.data.chatgpt_plan || {};
+                    updatePlanIndicator();
+                    if ( window.MainWPAssistantChatGPT ) {
+                        window.MainWPAssistantChatGPT.updateSummary( chatgptPlan );
+                    }
+                }
                 if ( ! response || ! response.success ) {
                     // Mark complete so the mode toggle is not permanently disabled.
                     // Keep availableProviderName as null (unknown) so the toggle allows
@@ -4787,6 +4864,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
                     providerReasonCode = '';
                     wizardAvailable = false;
                     setAgentPillUnavailable( false );
+                    refreshDocsHandoffOffer();
 
                     // A saved Docs choice stays sticky unless this session already chose a mode.
                     let savedPref = localStorage.getItem( 'mainwp_assistant_mode_preference' );
@@ -4832,12 +4910,13 @@ window.MainWPMintlifyChat = ( function( $ ) {
                 }
 
                 attemptConversationRestore();
+                if ( afterCheck ) { afterCheck(); }
             } )
             .fail( function( jqXHR, textStatus ) {
                 // Retry on timeout or network errors (not on abort).
                 if ( retryCount < maxRetries && textStatus !== 'abort' ) {
                     setTimeout( function() {
-                        checkProviderAvailability( retryCount + 1 );
+                        checkProviderAvailability( retryCount + 1, afterCheck );
                     }, retryDelays[ retryCount ] );
                     return;
                 }

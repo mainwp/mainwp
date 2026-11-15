@@ -1,15 +1,8 @@
 /**
- * MainWP Assistant onboarding wizard
+ * Shared Assistant connection dialogs.
  *
- * Drives #mainwp-assistant-onboarding-modal: reads onboarding state, walks the
- * Get key / Paste / Verify steps, and posts the key to
- * mainwp_assistant_onboarding_save_key. Every string the modal shows is
- * rendered server-side by MainWP_Assistant_Onboarding::render_wizard_modal();
- * this file only toggles panels and fills in the values a request returns.
- *
- * Knows nothing about the chat: a successful connection is announced as a
- * DOM event on the modal, and mainwp-mintlify-chat.js decides what to do
- * with it.
+ * Personal connections and site-wide keys use separate permission gates.
+ * Sharing the dialogs keeps each surface consistent with those gates.
  *
  * @package MainWP/Dashboard
  * @since   6.0.0
@@ -265,7 +258,11 @@
      * @param {string} source Where the wizard was launched from. 'replace'
      *                        skips the Google instructions and opens on Paste.
      */
-    function open( source ) {
+    function open( source, apiOnly ) {
+        if ( ! apiOnly && 'replace' !== source && root.MainWPAssistantChatGPT ) {
+            root.MainWPAssistantChatGPT.openChoices( source );
+            return;
+        }
         if ( ! isAvailable() ) {
             return;
         }
@@ -624,4 +621,491 @@
         }
     };
 
+} )( jQuery, window );
+
+( function( $, root ) {
+    'use strict';
+
+    var status = {}, busy = false, welcomeOpen = false, pageTitle = null;
+    var MODAL = '#mainwp-assistant-chatgpt-modal';
+
+    function config() {
+        return ( root.mainwpAssistantSettings && root.mainwpAssistantSettings.chatgpt ) ||
+            ( root.mainwpMintlifyChatL10n && root.mainwpMintlifyChatL10n.chatgpt ) || {};
+    }
+
+    function text( key ) {
+        return ( config().strings || {} )[ key ] || '';
+    }
+
+    function request( action, fields ) {
+        return $.ajax( {
+            url: root.ajaxurl || ( root.mainwpAssistantSettings || {} ).ajaxurl,
+            type: 'POST',
+            data: root.mainwp_secure_data( $.extend( {}, fields, { action: 'mainwp_assistant_chatgpt_' + action } ) ),
+            timeout: 30000
+        } );
+    }
+
+    function errorText( code ) {
+        var errors = config().errors || {};
+        return errors[ code ] || errors.generic || '';
+    }
+
+    function error( $target, code ) {
+        $target.text( errorText( code ) ).prop( 'hidden', false );
+    }
+
+    function publish( data, changed ) {
+        status = $.extend( {}, status, data );
+        renderSettings();
+        $( document ).trigger( 'mainwp-assistant-chatgpt-updated', [ status, changed === true ] );
+    }
+
+    function button( key, callback, primary, compact ) {
+        return $( '<button type="button"></button>' )
+            .attr( 'class', 'ui ' + ( compact ? 'mini ' : '' ) + ( primary ? 'green ' : 'basic ' ) + 'button' )
+            .text( text( key ) ).on( 'click', callback );
+    }
+
+    function connectButton( compact, newRegistration ) {
+        var key = status.status === 'plan_disabled' ? 'turn_on' : 'continue';
+        return button( key, function() { openConnect( newRegistration ); }, true, compact )
+            .attr( 'data-oai-siwc-button', '' );
+    }
+
+    function manageLink( compact ) {
+        return $( '<a target="_blank" rel="noopener noreferrer"></a>' )
+            .attr( 'class', 'ui ' + ( compact ? 'mini ' : '' ) + ( status.connected ? 'green ' : 'basic ' ) + 'button' )
+            .attr( 'href', status.manage_usage_url || 'https://chatgpt.com/settings/usage' ).text( text( 'manage' ) );
+    }
+
+    // The settings page leaves out the API key choice: its own Google Gemini row
+    // below the card knows whether a key is already connected.
+    function choices( source, compact, includePlan, includeApi ) {
+        var $choices = $( '<div class="mainwp-assistant-connection-choices"></div>' );
+        if ( includePlan !== false ) {
+            var $plan = $( '<section class="mainwp-assistant-connection-choice"></section>' );
+            $plan.append( $( '<h3></h3>' ).text( text( 'plan_title' ) ) );
+            if ( status.status === 'needs_reconnect' || status.status === 'plan_disabled' ) {
+                $plan.append( $( '<p></p>' ).text( text( status.status === 'plan_disabled' ? 'disabled' : 'reconnect' ) ) );
+            }
+            if ( config().can_connect === true ) {
+                $plan.append( connectButton( compact, false ) );
+                if ( status.status === 'disconnected' && ( status.email || status.client_id ) ) {
+                    $plan.append( button( 'different', function() { openConnect( true ); }, false, compact ) );
+                }
+            } else {
+                $plan.append( $( '<p></p>' ).text( text( 'unavailable' ) ) );
+            }
+            $plan.append( $( '<p class="mainwp-assistant-connect-note"></p>' ).text( text( 'plan_detail' ) ) );
+            $choices.append( $plan );
+        }
+
+        if ( includeApi !== false && config().can_manage_settings ) {
+            var $api = $( '<section class="mainwp-assistant-connection-choice"></section>' );
+            $api.append( $( '<h3></h3>' ).text( text( 'api_title' ) ) );
+            var $apiActions = $( '<div class="mainwp-assistant-connect-actions"></div>' );
+            if ( root.MainWPAssistantOnboarding && root.MainWPAssistantOnboarding.isAvailable() ) {
+                $apiActions.append( button( 'api_connect', function() {
+                    $( '#mainwp-assistant-connection-modal' ).modal( 'hide' );
+                    root.MainWPAssistantOnboarding.open( source, true );
+                }, true, compact ) );
+            }
+            $apiActions.append( $( '<a></a>' ).attr( 'href', config().connectors_url ).text( text( 'api_alt' ) ) );
+            $api.append( $apiActions );
+            $api.append( $( '<p class="mainwp-assistant-connect-note"></p>' ).text( text( 'disclosure' ) ) );
+            $choices.append( $api );
+        }
+        return $choices;
+    }
+
+    function openChoices( source ) {
+        var $modal = $( '#mainwp-assistant-connection-modal' );
+        if ( ! $modal.length ) {
+            $modal = $( '<div id="mainwp-assistant-connection-modal" class="ui small modal mainwp-assistant-connection-modal" role="dialog" aria-modal="true" aria-labelledby="mainwp-assistant-connection-title"><div class="header" id="mainwp-assistant-connection-title"></div><div class="content"></div><div class="actions"></div></div>' ).appendTo( 'body' );
+            $modal.find( '.header' ).text( text( 'choices' ) );
+            $modal.find( '.actions' ).append( button( 'close', function() { $modal.modal( 'hide' ); } ) );
+        }
+        $modal.find( '.content' ).empty().append( choices( source, false ) );
+        $modal.modal( 'show' );
+    }
+
+    function connectModal() {
+        var $modal = $( MODAL );
+        if ( $modal.length ) {
+            return $modal;
+        }
+        $modal = $( '<div id="mainwp-assistant-chatgpt-modal" class="ui small modal mainwp-assistant-connection-modal" role="dialog" aria-modal="true" aria-labelledby="mainwp-assistant-chatgpt-title"><div class="header" id="mainwp-assistant-chatgpt-title"></div><div class="content"><div data-step="start"></div><div data-step="paste" hidden><p></p><div class="ui form"><div class="field"><label for="mainwp-assistant-chatgpt-callback"></label><div class="ui fluid action input"><input id="mainwp-assistant-chatgpt-callback" type="text" autocomplete="off" spellcheck="false" autocapitalize="off"><button type="button" class="ui basic button" data-paste hidden></button></div></div></div><p class="mainwp-assistant-chatgpt-reopen" data-reopen hidden><a target="_blank" rel="noopener noreferrer"></a></p></div><div class="ui message" data-notice hidden role="status"></div><div class="ui red message" data-error hidden role="alert"></div></div><div class="actions"></div></div>' ).appendTo( 'body' );
+        $modal.find( '.header' ).text( text( 'plan_title' ) );
+        // The sign-in ends on a loopback error page, so say so before the user leaves.
+        $modal.find( '[data-step="start"]' ).append(
+            $( '<p></p>' ).text( text( 'plan_detail' ) ),
+            $( '<ol class="mainwp-assistant-chatgpt-steps"></ol>' ).append(
+                $( '<li></li>' ).text( text( 'step_signin' ) ),
+                $( '<li></li>' ).text( text( 'step_error' ) ),
+                $( '<li></li>' ).text( text( 'step_paste' ).replace( '%s', copyKeys() ) )
+            )
+        );
+        $modal.find( '[data-step="paste"] > p:first-child' ).text( text( 'paste_detail' ).replace( '%s', copyKeys() ) );
+        $modal.find( 'label' ).text( text( 'callback' ) );
+        $modal.find( '[data-reopen] a' ).text( text( 'reopen' ) );
+        var clipboard = root.navigator && root.navigator.clipboard;
+        var canPaste = !! ( root.isSecureContext && clipboard && typeof clipboard.readText === 'function' );
+        // Fomantic squares off an action input's right edge for the button.
+        $modal.find( '.ui.input' ).toggleClass( 'action', canPaste );
+        $modal.find( '[data-paste]' ).text( text( 'paste' ) ).prop( 'hidden', ! canPaste ).on( 'click', pasteFromClipboard );
+        $modal.find( '.actions' ).append(
+            button( 'continue', start, true ).attr( 'data-start', '' ).attr( 'data-oai-siwc-button', '' ),
+            button( 'finish', complete, true ).attr( 'data-finish', '' ).prop( 'hidden', true ),
+            $( '<a href="#" data-restart hidden></a>' ).text( text( 'start_over' ) ).on( 'click', function( event ) {
+                event.preventDefault();
+                if ( ! busy ) {
+                    openConnect( $modal.data( 'new-registration' ) === true );
+                }
+            } ),
+            button( 'close', function() { $modal.modal( 'hide' ); } )
+        );
+        $modal.find( 'input' ).on( 'keydown', function( event ) {
+            if ( event.key === 'Enter' ) {
+                event.preventDefault();
+                complete();
+            }
+        } ).on( 'paste', function( event ) {
+            var data = ( event.originalEvent || event ).clipboardData;
+            var value = data ? data.getData( 'text' ) : '';
+            if ( isCallback( value ) ) {
+                event.preventDefault();
+                $modal.find( 'input' ).val( value.trim() );
+                complete();
+            }
+        } );
+        $( root ).on( 'focus', focusPaste );
+        $modal.modal( {
+            closable: false,
+            onHidden: function() {
+                // Callback addresses contain single-use credentials.
+                $modal.find( 'input' ).val( '' );
+                waitTitle( false );
+            }
+        } );
+        return $modal;
+    }
+
+    // Name the copy shortcut the reader's keyboard has.
+    function copyKeys() {
+        var nav = root.navigator || {};
+        var platform = ( nav.userAgentData && nav.userAgentData.platform ) || nav.platform || '';
+        return /mac|iphone|ipad/i.test( platform ) ? '⌘C' : 'Ctrl+C';
+    }
+
+    // While MainWP waits for the address, its tab title says so, which makes
+    // the Dashboard easy to find among the tabs the sign-in opened.
+    function waitTitle( on ) {
+        var doc = root.document;
+        if ( ! doc ) {
+            return;
+        }
+        if ( on && pageTitle === null ) {
+            pageTitle = doc.title;
+            doc.title = text( 'waiting_title' ).replace( '%s', pageTitle );
+        } else if ( ! on && pageTitle !== null ) {
+            doc.title = pageTitle;
+            pageTitle = null;
+        }
+    }
+
+    // A refused address has usually used up the sign-in attempt, and the
+    // refusals tell the user to continue with ChatGPT again, so the button
+    // that does that replaces Finish.
+    function offerRetry( $modal ) {
+        $modal.find( '[data-finish], [data-restart], [data-reopen]' ).prop( 'hidden', true );
+        $modal.find( '[data-start]' ).prop( 'hidden', false );
+    }
+
+    // Only a quick shape check so obvious mistakes never auto-submit. The
+    // server validates the address against the pending sign-in.
+    function isCallback( value ) {
+        var url;
+        try { url = new URL( String( value || '' ).trim() ); } catch ( e ) { return false; }
+        return url.protocol === 'http:' && url.hostname === '127.0.0.1' && url.pathname === '/auth/callback' &&
+            url.searchParams.has( 'state' ) && ( url.searchParams.has( 'code' ) || url.searchParams.has( 'error' ) );
+    }
+
+    function pasteFromClipboard() {
+        if ( busy ) {
+            return;
+        }
+        var $modal = connectModal(), $input = $modal.find( 'input' );
+        root.navigator.clipboard.readText().then( function( value ) {
+            // Never copy unrelated clipboard text into the page.
+            if ( isCallback( value ) ) {
+                $input.val( String( value ).trim() );
+                complete();
+            } else {
+                error( $modal.find( '[data-error]' ), 'clipboard_no_callback' );
+                $input.trigger( 'focus' );
+            }
+        }, function() {
+            // Clipboard access was refused; the field still takes a normal paste.
+            $input.trigger( 'focus' );
+        } );
+    }
+
+    // Coming back from the ChatGPT tab, the user's next step is pasting.
+    function focusPaste() {
+        var $modal = $( MODAL );
+        if ( busy || ! $modal.length || ! $modal.is( ':visible' ) || $modal.find( '[data-step="paste"]' ).prop( 'hidden' ) ) {
+            return;
+        }
+        if ( ! $modal.find( 'input' ).val() ) {
+            $modal.find( 'input' ).trigger( 'focus' );
+        }
+    }
+
+    function openConnect( newRegistration ) {
+        if ( config().can_connect !== true || busy ) {
+            return;
+        }
+        $( '#mainwp-assistant-connection-modal' ).modal( 'hide' );
+        var $modal = connectModal();
+        $modal.data( 'new-registration', newRegistration === true );
+        $modal.find( '[data-step="start"], [data-start]' ).prop( 'hidden', false );
+        $modal.find( '[data-step="paste"], [data-finish], [data-restart], [data-error], [data-notice]' ).prop( 'hidden', true );
+        $modal.find( 'input' ).val( '' );
+        waitTitle( false );
+        $modal.modal( 'show' );
+    }
+
+    function setBusy( value ) {
+        busy = value;
+        $( MODAL ).find( 'button, input' ).prop( 'disabled', value );
+    }
+
+    function start() {
+        if ( busy ) {
+            return;
+        }
+        var $modal = connectModal();
+        // Open synchronously so the browser keeps this user-initiated tab.
+        var tab = root.open( 'about:blank', '_blank' );
+        if ( tab ) {
+            tab.opener = null;
+        }
+        setBusy( true );
+        $modal.find( '[data-error], [data-notice]' ).prop( 'hidden', true );
+        request( 'start', { new_registration: $modal.data( 'new-registration' ) ? 1 : 0 } )
+            .done( function( response ) {
+                if ( response && response.data ) {
+                    publish( response.data, true );
+                }
+                if ( ! response || ! response.success || ! response.data || ! response.data.authorize_url ) {
+                    if ( tab ) { tab.close(); }
+                    error( $modal.find( '[data-error]' ), response && response.data && response.data.error_code );
+                    return;
+                }
+                var url;
+                try { url = new URL( response.data.authorize_url ); } catch ( e ) { url = null; }
+                if ( ! url || url.origin !== 'https://auth.openai.com' ) {
+                    if ( tab ) { tab.close(); }
+                    error( $modal.find( '[data-error]' ), 'authorization_failed' );
+                    return;
+                }
+                if ( tab ) {
+                    tab.location.href = url.href;
+                } else {
+                    $modal.find( '[data-error]' ).empty().append(
+                        $( '<span></span>' ).text( text( 'popup_blocked' ) + ' ' ),
+                        $( '<a target="_blank" rel="noopener noreferrer" data-oai-siwc-button></a>' ).attr( 'href', url.href ).text( text( 'continue' ) )
+                    ).prop( 'hidden', false );
+                }
+                $modal.find( '[data-step="start"], [data-start]' ).prop( 'hidden', true );
+                $modal.find( '[data-step="paste"], [data-finish]' ).prop( 'hidden', false );
+                $modal.find( '[data-restart]' ).prop( 'hidden', false );
+                // For a closed tab. The blocked-tab message already carries this link.
+                $modal.find( '[data-reopen] a' ).attr( 'href', url.href );
+                $modal.find( '[data-reopen]' ).prop( 'hidden', ! tab );
+                waitTitle( true );
+                if ( response.data.last_error && response.data.last_error.code === 'revoke_unconfirmed' ) {
+                    $modal.find( '[data-notice]' ).text( text( 'revoke' ) ).prop( 'hidden', false );
+                }
+            } ).fail( function() {
+                if ( tab ) { tab.close(); }
+                error( $modal.find( '[data-error]' ), 'request_failed' );
+            } ).always( function() {
+                setBusy( false );
+                $modal.find( 'input:visible' ).trigger( 'focus' );
+            } );
+    }
+
+    function complete() {
+        if ( busy || $( MODAL ).find( '[data-step="paste"]' ).prop( 'hidden' ) ) {
+            return;
+        }
+        var $modal = connectModal(), callback = $modal.find( 'input' ).val();
+        if ( ! callback || ! callback.trim() ) {
+            error( $modal.find( '[data-error]' ), 'empty_callback' );
+            $modal.find( 'input' ).trigger( 'focus' );
+            return;
+        }
+        setBusy( true );
+        $modal.find( '[data-error]' ).prop( 'hidden', true );
+        request( 'complete', { callback: callback } ).done( function( response ) {
+            $modal.find( 'input' ).val( '' );
+            if ( ! response || ! response.data ) {
+                error( $modal.find( '[data-error]' ) );
+                offerRetry( $modal );
+                return;
+            }
+            publish( response.data, true );
+            if ( ! response.success ) {
+                error( $modal.find( '[data-error]' ), response.data.error_code );
+                offerRetry( $modal );
+                return;
+            }
+            $modal.modal( 'hide' );
+            if ( response.data.welcome_pending ) {
+                welcome( response.data );
+            } else if ( response.data.notice ) {
+                noticeModal( response.data.notice );
+            }
+        } ).fail( function() {
+            $modal.find( 'input' ).val( '' );
+            error( $modal.find( '[data-error]' ), 'request_failed' );
+            offerRetry( $modal );
+        } ).always( function() { setBusy( false ); } );
+    }
+
+    function noticeModal( notice ) {
+        var $modal = $( '<div class="ui small modal mainwp-assistant-connection-modal" role="dialog" aria-modal="true"><div class="header"></div><div class="content"></div><div class="actions"></div></div>' ).appendTo( 'body' );
+        $modal.attr( 'aria-label', text( 'plan_title' ) );
+        $modal.find( '.header' ).text( text( 'plan_title' ) );
+        $modal.find( '.content' ).text( notice );
+        $modal.find( '.actions' ).append( button( 'close', function() { $modal.modal( 'hide' ); } ) );
+        $modal.modal( { onHidden: function() { $modal.remove(); } } ).modal( 'show' );
+    }
+
+    function welcome( data ) {
+        if ( ! data.welcome_pending || welcomeOpen ) {
+            return;
+        }
+        welcomeOpen = true;
+        var $modal = $( '<div class="ui small modal mainwp-assistant-connection-modal" role="dialog" aria-modal="true" aria-labelledby="mainwp-assistant-chatgpt-welcome-title"><div class="header" id="mainwp-assistant-chatgpt-welcome-title"></div><div class="content"><p></p><div class="ui message" data-notice hidden></div><div class="ui red message" data-error hidden role="alert"></div></div><div class="actions"></div></div>' ).appendTo( 'body' );
+        $modal.find( '.header' ).text( text( 'welcome' ) );
+        $modal.find( 'p' ).text( text( 'welcome_body' ) );
+        if ( data.notice ) {
+            $modal.find( '[data-notice]' ).text( data.notice ).prop( 'hidden', false );
+        }
+        var $gotIt = button( 'got_it', function() {
+            $gotIt.prop( 'disabled', true );
+            request( 'welcome_seen' ).done( function( response ) {
+                if ( response && response.success ) {
+                    publish( response.data, false );
+                    $modal.modal( 'hide' );
+                } else {
+                    error( $modal.find( '[data-error]' ), response && response.data && response.data.error_code );
+                }
+            } ).fail( function() { error( $modal.find( '[data-error]' ), 'request_failed' ); } )
+                .always( function() { $gotIt.prop( 'disabled', false ); } );
+        }, true );
+        $modal.find( '.actions' ).append( $gotIt );
+        $modal.modal( { closable: false, onHidden: function() { welcomeOpen = false; $modal.remove(); } } ).modal( 'show' );
+    }
+
+    function refreshOnOpen() {
+        var $card = $( '#mainwp-assistant-chatgpt-card' );
+        return request( 'status' ).done( function( response ) {
+            if ( response && response.success ) {
+                publish( response.data, false );
+                if ( config().can_connect === true ) {
+                    welcome( response.data );
+                }
+            } else {
+                var $error = $card.find( '[data-plan-error]' );
+                error( $error.length ? $error : $card, response && response.data && response.data.error_code );
+            }
+        } ).fail( function() {
+            var $error = $card.find( '[data-plan-error]' );
+            error( $error.length ? $error : $card, 'request_failed' );
+        } );
+    }
+
+    function renderSettings() {
+        var $card = $( '#mainwp-assistant-chatgpt-card' );
+        if ( ! $card.length ) {
+            return;
+        }
+        $card.empty();
+        var hasPlan = status.connected || status.status === 'needs_reconnect' || status.status === 'plan_disabled';
+        if ( hasPlan ) {
+            var $plan = $( '<section class="ui segment mainwp-assistant-plan-card"></section>' );
+            $plan.append( $( '<h3></h3>' ).text( text( 'plan_title' ) ), $( '<p></p>' ).text( status.email || '' ) );
+            if ( status.connected ) {
+                var $form = $( '<div class="ui form"><div class="field"><label for="mainwp-assistant-chatgpt-model"></label></div></div>' );
+                var $models = $( '<select id="mainwp-assistant-chatgpt-model" class="ui dropdown"></select>' );
+                $form.find( 'label' ).text( text( 'model' ) );
+                ( status.models || [] ).forEach( function( model ) {
+                    $models.append( $( '<option></option>' ).val( model.slug ).text( model.display_name || model.slug ) );
+                } );
+                $models.val( status.model ).prop( 'disabled', ! ( status.models || [] ).length );
+                $models.on( 'change', function() {
+                    $models.prop( 'disabled', true );
+                    mutate( 'set_model', { model: $models.val() } );
+                } );
+                $form.find( '.field' ).append( $models );
+                $plan.append( $form );
+            } else {
+                $plan.append( $( '<p></p>' ).text( text( status.status === 'plan_disabled' ? 'disabled' : 'reconnect' ) ) );
+                if ( config().can_connect ) {
+                    $plan.append( connectButton( true, false ) );
+                }
+            }
+            $plan.append( manageLink( true ), button( 'disconnect', function() { mutate( 'disconnect' ); }, false, true ) );
+            if ( config().can_connect ) {
+                $plan.append( button( 'different', function() { openConnect( true ); }, false, true ) );
+            }
+            $card.append( $plan );
+        }
+        $card.append( choices( 'settings', false, ! hasPlan, false ) );
+        $card.append( $( '<div class="ui message" data-plan-notice hidden role="status"></div>' ) );
+        $card.append( $( '<div class="ui red message" data-plan-error hidden role="alert"></div>' ) );
+        $card.find( '.ui.dropdown' ).dropdown();
+    }
+
+    function mutate( action, fields ) {
+        var $card = $( '#mainwp-assistant-chatgpt-card' );
+        $card.find( 'button, select' ).prop( 'disabled', true );
+        request( action, fields ).done( function( response ) {
+            if ( response && response.data ) {
+                publish( response.data, true );
+            } else {
+                renderSettings();
+            }
+            if ( ! response || ! response.success ) {
+                error( $card.find( '[data-plan-error]' ), response && response.data && response.data.error_code );
+            }
+            if ( response && response.data && response.data.notice ) {
+                $card.find( '[data-plan-notice]' ).text( response.data.notice ).prop( 'hidden', false );
+            }
+        } ).fail( function() {
+            renderSettings();
+            error( $card.find( '[data-plan-error]' ), 'request_failed' );
+        } );
+    }
+
+    root.MainWPAssistantChatGPT = {
+        choices: choices,
+        openChoices: openChoices,
+        open: openConnect,
+        refreshOnOpen: refreshOnOpen,
+        updateSummary: function( data ) { status = $.extend( {}, status, data ); },
+        errorText: errorText
+    };
+
+    $( function() {
+        if ( $( '#mainwp-assistant-chatgpt-card' ).length ) {
+            $( '#mainwp-assistant-chatgpt-card' ).text( text( 'loading' ) );
+            refreshOnOpen();
+        }
+    } );
 } )( jQuery, window );

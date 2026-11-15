@@ -20,6 +20,7 @@ class Test_DB_Assistant_Failure_Wpdb_Fake {
 	public $query_result  = 1;
 	public $delete_result = 1;
 	public $last_error    = '';
+	public $suppress      = false;
 	public $get_row_result;
 
 	public function insert( ...$args ) {
@@ -56,6 +57,13 @@ class Test_DB_Assistant_Failure_Wpdb_Fake {
 		unset( $args );
 
 		return $this->get_row_result;
+	}
+
+	public function suppress_errors( $suppress = true ) {
+		$previous       = $this->suppress;
+		$this->suppress = (bool) $suppress;
+
+		return $previous;
 	}
 }
 

@@ -418,14 +418,17 @@ class Test_MainWP_Remote_MCP_MCP_Page extends \WP_UnitTestCase {
 		MainWP_AI::render();
 		$html = (string) ob_get_clean();
 		$this->assertMatchesRegularExpression( '#<a href="[^"]*admin\.php\?page=mainwp-mcp">MainWP MCP</a>#', $html );
-		$this->assertStringContainsString( 'Connect AI apps to your Dashboard directly, with nothing to install, or run the local MCP server for private Dashboards and any MCP-compatible tool.', $html );
+		$this->assertStringContainsString( 'Manage your sites from an AI app you already use, like Claude, ChatGPT or Cursor.', $html );
+		$this->assertStringContainsString( 'Connect with nothing to install if your Dashboard is reachable over https, or run a small local server (it needs Node.js) for a private one.', $html );
 
 		add_filter( 'mainwp_mcp_direct_view', '__return_null', 30 );
 		ob_start();
 		MainWP_AI::render();
 		$html = (string) ob_get_clean();
 		remove_filter( 'mainwp_mcp_direct_view', '__return_null', 30 );
-		$this->assertStringNotContainsString( 'Dashboard directly', $html, 'no claim the Dashboard can\'t keep' );
-		$this->assertStringContainsString( 'Connect Claude, Cursor, OpenAI Codex, VS Code Copilot, and other MCP-compatible AI tools to your Dashboard.', $html );
+		$this->assertStringNotContainsString( 'nothing to install', $html, 'no claim the Dashboard can\'t keep' );
+		$this->assertStringNotContainsString( 'like Claude, ChatGPT', $html, 'ChatGPT cannot run the local server' );
+		$this->assertStringContainsString( 'Manage your sites from an AI app you already use, like Claude, Cursor or VS Code.', $html );
+		$this->assertStringContainsString( 'Runs as a small local server on your computer, which needs Node.js.', $html );
 	}
 }

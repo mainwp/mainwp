@@ -215,3 +215,126 @@
         align-items: flex-start;
     }
 }
+
+.ui.dimmer.modals:has(.mainwp-assistant-connection-modal) {
+    z-index: 10050;
+}
+
+.mainwp-assistant-connection-modal.ui.modal {
+    z-index: 10100;
+    color: var(--mainwp-text);
+    background: var(--mainwp-element-background);
+    border-radius: var(--area-radius);
+}
+
+.mainwp-assistant-connection-modal [hidden],
+#mainwp-assistant-chatgpt-card [hidden],
+#mainwp-assistant-plan-indicator[hidden] {
+    display: none !important;
+}
+
+.mainwp-assistant-connection-choice + .mainwp-assistant-connection-choice {
+    border-top: 1px solid var(--mainwp-border);
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+.mainwp-assistant-connection-choice h3,
+.mainwp-assistant-plan-card h3,
+#mainwp-assistant-connection-tab .mainwp-assistant-site-connection > h3 {
+    color: var(--mainwp-text-header);
+    font-size: 1em;
+    margin: 0 0 0.75rem;
+}
+
+.mainwp-assistant-connection-choice p,
+.mainwp-assistant-plan-card p {
+    overflow-wrap: anywhere;
+}
+
+.mainwp-assistant-connection-choice .mainwp-assistant-connect-note {
+    color: var(--mainwp-text-secondary);
+    margin-top: 0.75rem;
+}
+
+.mainwp-assistant-connection-choice .mainwp-assistant-connect-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#mainwp-assistant-connection-tab .mainwp-assistant-site-connection {
+    margin-top: 1.5rem;
+}
+
+/* Same divider the ChatGPT choice above uses between its own sections. */
+#mainwp-assistant-chatgpt-card + .mainwp-assistant-site-connection {
+    border-top: 1px solid var(--mainwp-border);
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+.mainwp-assistant-connection-modal [data-restart] {
+    margin: 0 0.75rem;
+}
+
+.mainwp-assistant-connection-modal .mainwp-assistant-chatgpt-steps {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+    line-height: 1.7;
+}
+
+.mainwp-assistant-connection-modal .mainwp-assistant-chatgpt-reopen {
+    margin: 0.75rem 0 0;
+    font-size: 0.9em;
+}
+
+@media (max-width: 480px) {
+    .mainwp-assistant-connection-modal .ui.action.input {
+        display: flex;
+        width: 100%;
+    }
+
+    .mainwp-assistant-connection-modal .ui.action.input > input {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* !important: the dashboard's small-screen rules give buttons a 50%
+       min-width, which would split this row in half. */
+    .mainwp-assistant-connection-modal .ui.action.input > .button {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+}
+
+.mainwp-mintlify-error-message .mainwp-assistant-error-actions {
+    margin-top: 0.5rem;
+}
+
+.mainwp-assistant-plan-card .ui.dropdown {
+    max-width: 22rem;
+}
+
+.mainwp-assistant-plan-card .ui.form {
+    margin-bottom: 1rem;
+}
+
+.mainwp-assistant-connection-choice .button,
+.mainwp-assistant-plan-card .button {
+    margin-bottom: 0.5rem;
+}
+
+#mainwp-assistant-plan-indicator {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: var(--mainwp-text-secondary);
+    font-size: 0.85em;
+}
+
+#mainwp-assistant-plan-indicator a {
+    color: var(--mainwp-link-color);
+}

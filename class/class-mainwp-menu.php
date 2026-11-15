@@ -1274,6 +1274,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <div class="item">
                         <div class="title"><a href="<?php echo esc_url( admin_url( 'admin.php?page=ai' ) ); ?>" class="with-sub"><i class="microchip icon"></i> <?php esc_html_e( 'AI', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
+                            <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=AssistantSettings' ) ); ?>"><?php esc_html_e( 'Assistant Settings', 'mainwp' ); ?></a>
                             <?php if ( ! static::is_disable_menu_item( 2, 'Knowledge' ) ) : ?>
                             <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=Knowledge' ) ); ?>"><?php esc_html_e( 'Knowledge', 'mainwp' ); ?></a>
                             <?php endif; ?>

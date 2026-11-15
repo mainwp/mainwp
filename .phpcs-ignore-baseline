@@ -70,7 +70,7 @@
 8 class/class-mainwp-uptime-monitoring-edit.php
 1 class/class-mainwp-uptime-monitoring-handle.php
 3 class/class-mainwp-uptime-monitoring-schedule.php
-13 class/class-mainwp-utility.php
+12 class/class-mainwp-utility.php
 3 class/class-mainwp-wp-cli-command.php
 7 class/class-mainwp-wp-cli-handle.php
 3 includes/abilities/class-mainwp-abilities-batch.php

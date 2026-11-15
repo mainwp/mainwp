@@ -790,6 +790,62 @@ class Test_Assistant_Settings_Ajax extends MainWP_Assistant_Test_Case {
 		);
 	}
 
+
+	/** Personal connections remain available without site-wide settings rights. */
+	public function test_render_personal_connection_for_chat_only_user() {
+		$this->skip_if_capability_checks_bypassed();
+		$this->set_current_user_as_chat_only();
+		wp_get_current_user()->add_cap( 'manage_options' );
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Assistant::current_user_can_use_assistant() );
+		$this->set_assistant_enabled( true );
+		foreach ( array( 'providers', 'policies' ) as $tab ) {
+			$_GET['tab'] = $tab;
+			ob_start();
+			MainWP_Assistant_Settings::render();
+			$output = html_entity_decode( ob_get_clean(), ENT_QUOTES );
+			$this->assertStringContainsString( 'AI Connection', $output );
+			$this->assertStringContainsString( 'mainwp-assistant-chatgpt-card', $output );
+			$this->assertStringContainsString( 'History & Privacy', $output );
+			$this->assertStringNotContainsString( 'AI Access Policies', $output );
+			$this->assertStringNotContainsString( 'mainwp-assistant-model-preference', $output );
+			$this->assertStringNotContainsString( 'Google Gemini', $output );
+			$this->assertStringNotContainsString( 'mainwp-assistant-save-global-toggle', $output );
+		}
+		unset( $_GET['tab'] );
+	}
+
+	/** Site-wide configuration is still available to users with settings rights. */
+	public function test_render_connections_preserves_site_settings_for_admin() {
+		$this->set_current_user_as_admin();
+		$this->set_assistant_enabled( true );
+		$_GET['tab'] = 'providers';
+		ob_start();
+		MainWP_Assistant_Settings::render();
+		$output = html_entity_decode( ob_get_clean(), ENT_QUOTES );
+		unset( $_GET['tab'] );
+		$this->assertStringContainsString( 'mainwp-assistant-chatgpt-card', $output );
+		$this->assertStringContainsString( 'AI Access Policies', $output );
+		$this->assertStringContainsString( 'mainwp-assistant-model-preference', $output );
+		$this->assertStringContainsString( 'Google Gemini', $output );
+		$this->assertSame( 1, preg_match_all( '/<h3>\s*Use an API key\s*<\/h3>/', $output ), 'The API key section should have one heading.' );
+		$this->assertSame( 1, preg_match_all( '/<h2[^>]*>\s*AI Connection\s*<\/h2>/', $output ), 'The connection tab should have one page heading.' );
+	}
+
+	/** The sign-in action cannot offer a connection that core will prevent using. */
+	public function test_chatgpt_ui_requires_ai_support() {
+		$this->set_current_user_as_chat_only();
+		$config = MainWP_System::assistant_chatgpt_l10n()['chatgpt'];
+		$this->assertTrue( $config['can_connect'] );
+		$this->assertFalse( $config['can_manage_settings'] );
+		$this->assertArrayNotHasKey( 'claude_url', $config );
+		add_filter( 'wp_supports_ai', '__return_false' );
+		try {
+			$this->assertFalse( MainWP_System::assistant_chatgpt_l10n()['chatgpt']['can_connect'] );
+		} finally {
+			remove_filter( 'wp_supports_ai', '__return_false' );
+		}
+	}
+
 	/**
 	 * Test render() still denies users without any assistant capability.
 	 */
@@ -1343,6 +1399,25 @@ class Test_Assistant_Settings_Ajax extends MainWP_Assistant_Test_Case {
 		$this->assertStringContainsString( 'Export History (JSON)', $output );
 		$this->assertStringContainsString( 'href="https://docs.mainwp.com/dashboard/overview/mainwp-ai"', $output );
 		$this->assertStringNotContainsString( 'https://kb.mainwp.com/', $output );
+		$this->assertStringNotContainsString( 'AI Assistant Disabled', $output );
+	}
+
+	/**
+	 * History remains the default for chat-only users without Assistant access.
+	 */
+	public function test_history_is_default_for_chat_only_user_when_assistant_is_disabled() {
+		$this->skip_if_capability_checks_bypassed();
+		$this->set_current_user_as_chat_only();
+		$this->assertFalse( \MainWP\Dashboard\MainWP_Assistant::current_user_can_use_assistant() );
+		$this->set_assistant_enabled( false );
+		unset( $_GET['tab'] );
+
+		ob_start();
+		MainWP_Assistant_Settings::render();
+		$output = html_entity_decode( ob_get_clean(), ENT_QUOTES );
+
+		$this->assertStringContainsString( 'History & Privacy', $output );
+		$this->assertStringContainsString( 'Export History (JSON)', $output );
 		$this->assertStringNotContainsString( 'AI Assistant Disabled', $output );
 	}
 

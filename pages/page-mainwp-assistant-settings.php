@@ -105,6 +105,20 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'render',
             )
         );
+
+        // Files the page under the AI nav item, which links to it from its
+        // landing cards. Users who cannot see that item still open the page
+        // from the Assistant panel.
+        MainWP_Menu::add_left_menu(
+            array(
+                'title'                => esc_html__( 'Assistant Settings', 'mainwp' ),
+                'parent_key'           => 'ai',
+                'slug'                 => 'AssistantSettings',
+                'href'                 => 'admin.php?page=AssistantSettings',
+                'leftsub_order_level2' => 0,
+            ),
+            2
+        );
     }
 
     /**
@@ -112,7 +126,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param string $shownPage    The page slug shown at this moment.
      * @param string $current_tab  Currently active tab slug. Defaults to reading from $_GET['tab'].
-     * @param bool   $history_only Whether to show only the History & Privacy tab (chat users without settings rights).
+     * @param bool   $history_only Whether to hide site-wide settings tabs.
      */
     public static function render_header( $shownPage = '', $current_tab = '', $history_only = false ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundBeforeLastUsed -- Standard signature for page headers.
         $params = array(
@@ -126,13 +140,13 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'providers';
         }
 
-        if ( $history_only ) {
-            $current_tab = 'history';
+        if ( $history_only && ! in_array( $current_tab, array( 'providers', 'history' ), true ) ) {
+            $current_tab = 'providers';
         }
 
         $renderItems = array();
 
-        if ( ! $history_only ) {
+        if ( ! $history_only || MainWP_Assistant::current_user_can_use_assistant() ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'AI Connection', 'mainwp' ),
                 'href'   => add_query_arg(
@@ -144,7 +158,9 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 ),
                 'active' => ( 'providers' === $current_tab ) ? true : false,
             );
+        }
 
+        if ( ! $history_only ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'AI Access Policies', 'mainwp' ),
                 'href'   => add_query_arg(
@@ -191,9 +207,8 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return;
         }
 
-        // Chat users without settings rights manage only their own conversation
-        // data, so they are limited to the History & Privacy tab.
-        $history_only = ! $can_manage_settings;
+        // Personal connections must not grant access to site-wide configuration.
+        $personal_only = ! $can_manage_settings;
 
         // Check if assistant is globally disabled.
         // Allow access to Policies tab for admins so they can re-enable the assistant.
@@ -202,20 +217,24 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $current_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'providers';
         $can_manage  = current_user_can( 'manage_options' ) && $can_manage_settings;
 
-        if ( $history_only ) {
+        if ( $personal_only && ! in_array( $current_tab, array( 'providers', 'history' ), true ) ) {
+            $current_tab = 'providers';
+        }
+
+        if ( $personal_only && ! MainWP_Assistant::current_user_can_use_assistant() ) {
             $current_tab = 'history';
         }
 
         $allow_when_disabled = 'history' === $current_tab || ( 'policies' === $current_tab && $can_manage );
 
         if ( ! MainWP_System::is_assistant_enabled() && ! $allow_when_disabled ) {
-            static::render_header( '', $current_tab, $history_only );
+            static::render_header( '', $current_tab, $personal_only );
             MainWP_Assistant_Policies::render_disabled_state( 'settings' );
             static::render_footer();
             return;
         }
 
-        static::render_header( '', $current_tab, $history_only );
+        static::render_header( '', $current_tab, $personal_only );
 
         // Enqueue assets.
         static::enqueue_assets();
@@ -260,7 +279,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
         wp_enqueue_script(
             'mainwp-assistant-settings',
             MAINWP_PLUGIN_URL . 'assets/js/mainwp-assistant-settings.js',
-            array( 'jquery', 'mainwp-assistant-chat-logic' ),
+            array( 'jquery', 'mainwp', 'mainwp-assistant-chat-logic' ),
             MAINWP_VERSION,
             true
         );
@@ -330,7 +349,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     // chat panel puts in mainwpMintlifyChatL10n.
                 ) + MainWP_Assistant_Onboarding::wizard_l10n(),
                 'onboardingNonce' => wp_create_nonce( MainWP_Assistant_Onboarding::NONCE_ACTION ),
-            )
+            ) + MainWP_System::assistant_chatgpt_l10n()
         );
 
         wp_enqueue_style(
@@ -343,7 +362,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
         wp_enqueue_script(
             'mainwp-assistant-onboarding',
             MAINWP_PLUGIN_URL . 'assets/js/mainwp-assistant-onboarding.js',
-            array( 'jquery', 'mainwp-assistant-chat-logic' ),
+            array( 'jquery', 'mainwp', 'mainwp-assistant-chat-logic' ),
             MAINWP_VERSION,
             true
         );
@@ -364,6 +383,18 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * status and the optional site-wide model preference.
      */
     private static function render_providers_tab() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity.TooHigh -- NOSONAR - one state table, evaluated in order.
+        ?>
+        <div id="mainwp-assistant-connection-tab" class="ui padded segment">
+            <h2 class="ui dividing header"><?php esc_html_e( 'AI Connection', 'mainwp' ); ?></h2>
+            <?php if ( MainWP_Assistant::current_user_can_use_assistant() ) : ?>
+                <div id="mainwp-assistant-chatgpt-card" aria-live="polite"></div>
+            <?php endif; ?>
+        <?php
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            echo '</div>';
+            return;
+        }
+
         $wp_version       = get_bloginfo( 'version' );
         $has_ai_client    = function_exists( 'wp_supports_ai' );
         $supports_ai      = $has_ai_client && wp_supports_ai();
@@ -391,11 +422,9 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         $connectors_url = apply_filters( 'mainwp_assistant_connectors_url', admin_url( 'options-connectors.php' ) );
         ?>
-        <div id="mainwp-assistant-connection-tab" class="ui padded segment">
-            <h2 class="ui dividing header">
-                <?php esc_html_e( 'AI Connection', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'Sites mode uses the AI providers configured on this WordPress site. Add your API keys on the Connectors screen and requests run on your own provider accounts.', 'mainwp' ); ?></div>
-            </h2>
+        <div class="mainwp-assistant-site-connection">
+            <h3><?php esc_html_e( 'Use an API key', 'mainwp' ); ?></h3>
+            <p class="mainwp-assistant-connect-note"><?php esc_html_e( 'Connect a free Google Gemini key, or add an OpenAI or Anthropic key on the Connectors screen. Requests run on your own provider account.', 'mainwp' ); ?></p>
 
             <div class="ui form">
                 <div class="ui grid field">
@@ -547,6 +576,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 </button>
                 <div id="mainwp-assistant-model-preference-message" class="ui message" style="display:none;"></div>
             </div>
+        </div>
         </div>
         <?php
     }

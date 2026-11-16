@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 6.5-rc.1
+Stable tag: 6.5-rc.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -154,7 +154,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 == Changelog ==
 
-= 6.5-rc.1 - 11-13-2026 =
+= 6.5 - 11-17-2026 =
 
 * Added: Introduced "MainWP Assistant" with "Docs" mode for questions about MainWP documentation and "Sites" mode for working with connected sites through your configured AI provider. Open it from the command palette, revisit past conversations, and track usage in "Assistant Insights".
 * Added: Enabled supported AI apps such as Claude and ChatGPT to connect directly to MainWP Dashboard over remote MCP. Manage app access, tool permissions, and approval settings on the "MainWP MCP" page.

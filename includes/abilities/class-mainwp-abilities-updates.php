@@ -104,8 +104,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_list_updates' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -133,8 +134,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_run_updates' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/run-updates-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Operations with >200 sites are automatically queued and return a job_id for status polling. Individual update failures do not fail the entire operation. When the pre-update backup setting is on, sites without a qualifying backup are skipped; dry_run lists them. ignore_backup_gate: true updates them anyway.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -162,8 +164,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_list_ignored_updates' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -191,8 +194,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_set_ignored_updates' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/set-ignored-updates-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Use action=ignore to add a hold without confirmation. To remove holds, use mainwp/unignore-site-updates-v1.',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -220,8 +224,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_unignore_site_updates' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/unignore-site-updates-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Removes update holds on the Dashboard. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Removes only the site\'s own holds; global holds and whole-site ignore flags remain in effect.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -249,8 +254,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_site_updates' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -278,8 +284,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_update_site_core' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-core-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates WordPress core on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'core\']. When the pre-update backup setting is on and the site has no qualifying backup, confirm is refused with mainwp_backup_gate_blocked; dry_run shows the items it would hold. ignore_backup_gate: true updates the site anyway.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -307,8 +314,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_update_site_plugins' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-plugins-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates plugins on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'plugins\']. When the pre-update backup setting is on and the site has no qualifying backup, confirm is refused with mainwp_backup_gate_blocked; dry_run shows the items it would hold. ignore_backup_gate: true updates the site anyway.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -336,8 +344,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_update_site_themes' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-themes-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates themes on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'themes\']. When the pre-update backup setting is on and the site has no qualifying backup, confirm is refused with mainwp_backup_gate_blocked; dry_run shows the items it would hold. ignore_backup_gate: true updates the site anyway.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -365,8 +374,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_update_site_translations' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-translations-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates translations on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'translations\']. When the pre-update backup setting is on and the site has no qualifying backup, confirm is refused with mainwp_backup_gate_blocked; dry_run shows the items it would hold. ignore_backup_gate: true updates the site anyway.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -394,8 +404,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_ignore_site_core' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/ignore-site-core-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Use action=add to ignore core updates without confirmation. To remove holds, use mainwp/unignore-site-updates-v1.',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -423,8 +434,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_ignore_site_plugins' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/ignore-site-plugins-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Provide a slugs array of plugins to ignore with action=add, without confirmation. To remove holds, use mainwp/unignore-site-updates-v1.',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -452,8 +464,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_ignore_site_themes' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/ignore-site-themes-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Provide a slugs array of themes to ignore with action=add, without confirmation. To remove holds, use mainwp/unignore-site-updates-v1.',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -481,8 +494,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_update_all' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-all-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Applies all available updates (core, plugins, themes, translations) to specified sites or all sites. Operations with >200 sites are automatically queued and return a job_id for status polling. When the pre-update backup setting is on, sites without a qualifying backup are skipped; dry_run lists them. ignore_backup_gate: true updates them anyway.',
                         'readonly'     => false,
                         'destructive'  => true,

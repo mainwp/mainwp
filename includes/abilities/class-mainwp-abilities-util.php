@@ -19,6 +19,61 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
     /**
+     * Abilities opt in only after their staff rights and scope are audited.
+     *
+     * @var string
+     */
+    public const TEAM_CONTROL_META_KEY = 'mainwp_team_control';
+
+    /**
+     * Allows integrations to retire their compatibility gate.
+     *
+     * @var int
+     */
+    public const STAFF_ABILITY_GATE_VERSION = 1;
+
+    /**
+     * Nested callbacks must not inherit an outer ability's grant.
+     *
+     * @var array
+     */
+    private static $ability_frames = array();
+
+    /**
+     * Keep context through permission checks and authorization repeated by executors.
+     *
+     * @param array  $args Ability registration arguments.
+     * @param string $name Namespaced ability name.
+     * @return array
+     */
+    public static function wrap_ability_callbacks( array $args, string $name ): array {
+        $frame = null;
+        if ( 0 === strpos( $name, 'mainwp/' ) ) {
+            $frame = array(
+                'name'         => $name,
+                'team_control' => isset( $args['meta'][ self::TEAM_CONTROL_META_KEY ] ) && true === $args['meta'][ self::TEAM_CONTROL_META_KEY ],
+            );
+        }
+
+        foreach ( array( 'permission_callback', 'execute_callback' ) as $key ) {
+            if ( ! isset( $args[ $key ] ) || ! is_callable( $args[ $key ] ) ) {
+                continue;
+            }
+            $callback     = $args[ $key ];
+            $args[ $key ] = static function ( ...$arguments ) use ( $callback, $frame ) {
+                self::$ability_frames[] = $frame;
+                try {
+                    return $callback( ...$arguments );
+                } finally {
+                    array_pop( self::$ability_frames );
+                }
+            };
+        }
+
+        return $args;
+    }
+
+    /**
      * Minimum child plugin version required for Abilities API operations.
      *
      * This constant centralizes the version requirement to ensure consistency
@@ -42,7 +97,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * MainWP_Abilities_Backups::READ_RIGHTS, and knowledge reads, which
      * MainWP_DB_Knowledge checks per record (access_individual_dashboard
      * for site records, manage_clients for client records). Every other
-     * family's reads are gated by manage_options plus site scoping only.
+     * family's reads rely on the base ability gate and site scoping.
      *
      * The update family (run-updates / update-all) is intentionally absent
      * here: it needs per-type rights derived from its `types` input, handled
@@ -287,6 +342,10 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Check for manage_options capability.
         if ( ! current_user_can( 'manage_options' ) ) {
+            $frame = end( self::$ability_frames );
+            if ( ! empty( $frame['team_control'] ) && true === apply_filters( 'mainwp_currentusercan', false, 'rest_api', 'use_abilities' ) ) {
+                return true;
+            }
             return new \WP_Error(
                 'mainwp_permission_denied',
                 __( 'You do not have permission to perform this action.', 'mainwp' ),
@@ -650,9 +709,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Check if current user can manage sites (write operations).
      *
-     * Currently a wrapper over check_rest_api_permission() which already verifies
-     * manage_options capability. This method exists as an extension point for future
-     * granular permissions (e.g., a dedicated 'mainwp_manage_sites' capability).
+     * Granular rights belong to the operation wrappers so each write keeps its own right.
      *
      * @param mixed $input The ability input (unused but required by signature).
      * @return true|\WP_Error True on success, WP_Error on failure.
@@ -662,9 +719,6 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         if ( is_wp_error( $base ) ) {
             return $base;
         }
-
-        // Future: Add granular 'mainwp_manage_sites' capability check here.
-        // For now, manage_options is already verified in check_rest_api_permission().
 
         return true;
     }

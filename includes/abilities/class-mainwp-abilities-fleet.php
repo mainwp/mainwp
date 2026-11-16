@@ -89,8 +89,9 @@ class MainWP_Abilities_Fleet { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_sites_segment' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Empty string / 0 / "any" means "no filter" for every property. Filters combine with AND. Sites with an unknown value for a version filter are excluded from matches and reported in unknown_counts.',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -340,8 +341,9 @@ class MainWP_Abilities_Fleet { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_fleet_versions' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Takes no input. Sites whose value is not yet known (never synced) are counted under version "unknown".',
                         'readonly'     => true,
                         'destructive'  => false,

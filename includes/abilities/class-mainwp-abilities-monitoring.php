@@ -137,8 +137,9 @@ class MainWP_Abilities_Monitoring { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_uptime_stats' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'site_id 0 or omitted = all monitors. uptime_percent is null for monitors with no checks in the range.',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -299,8 +300,9 @@ class MainWP_Abilities_Monitoring { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_monitor_incidents' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'site_id 0 or omitted = all monitors. An incident is an up-to-down transition; consecutive down heartbeats belong to the same incident. Paginate with page/per_page.',
                         'readonly'     => true,
                         'destructive'  => false,

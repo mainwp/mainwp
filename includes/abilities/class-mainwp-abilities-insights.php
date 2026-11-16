@@ -54,8 +54,9 @@ class MainWP_Abilities_Insights { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_query_activity' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Omit or pass 0 / empty string for any filter to mean "no filter". Date params are unix seconds; the range defaults to the last 30 days and is capped at 90.',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -320,8 +321,9 @@ class MainWP_Abilities_Insights { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_activity_summary' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Omit or pass 0 for site_id/client_id to mean "no filter". Date params are unix seconds; default window 30 days, capped at 90.',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -592,8 +594,9 @@ class MainWP_Abilities_Insights { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_network_snapshot' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Takes no input. activity_last_24h is null when the Logs module is disabled; monitoring totals are 0 when no monitors exist.',
                         'readonly'     => true,
                         'destructive'  => false,

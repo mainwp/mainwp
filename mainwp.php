@@ -161,6 +161,7 @@ require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' 
 
 // Initialize Abilities API integration (does nothing if Abilities API not available).
 if ( class_exists( '\MainWP\Dashboard\MainWP_Abilities' ) ) {
+    add_filter( 'wp_register_ability_args', array( \MainWP\Dashboard\MainWP_Abilities_Util::class, 'wrap_ability_callbacks' ), 10, 2 );
     \MainWP\Dashboard\MainWP_Abilities::init();
 }
 

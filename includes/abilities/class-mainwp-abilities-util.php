@@ -770,6 +770,11 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
          */
         $can_access = apply_filters( 'mainwp_check_site_access', true, $site_id, $input );
 
+        // Filters may refuse with their own error, such as a protected site that needs confirmation.
+        if ( is_wp_error( $can_access ) ) {
+            return $can_access;
+        }
+
         if ( ! $can_access ) {
             if ( 'all' !== $allowed_sites ) {
                 return new \WP_Error(

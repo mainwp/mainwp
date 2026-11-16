@@ -94,21 +94,18 @@ class Test_Assistant_Backup_Controls extends MainWP_Assistant_Test_Case {
 		$this->set_assistant_enabled( true );
 		$this->set_user_access_mode( $user_id, MainWP_Assistant_Policies::MODE_FULL_ACCESS );
 		MainWP_Assistant_Policies::instance()->set_confirmation_level( MainWP_Assistant_Policies::CONFIRM_DESTRUCTIVE, $user_id );
-		$assistant = MainWP_Assistant::instance();
-		$discovery = new \ReflectionMethod( MainWP_Assistant::class, 'get_ability_schemas' );
-		$discovery->setAccessible( true );
-		$schemas = $discovery->invoke( $assistant );
-		$schemas['mainwp/add-tag-v1']['input_schema']['properties']['confirm'] = array( 'type' => 'boolean', 'default' => false );
-		$key = 'mainwp_assistant_ability_schemas_v' . MainWP_Assistant::ABILITY_SCHEMA_CACHE_REV;
-		set_transient( $key, $schemas, HOUR_IN_SECONDS );
-		try {
-			$method = new \ReflectionMethod( MainWP_Assistant::class, 'execute_tool_call' );
-			$method->setAccessible( true );
-			$result = $method->invoke( $assistant, 'mainwp/add-tag-v1', array( 'name' => 'Native confirmation', 'confirm' => true ), $user_id );
-			$this->assertTrue( $result['requires_confirmation'] ?? false );
-			$this->assertArrayNotHasKey( 'confirm', $result['params'] );
-		} finally {
-			delete_transient( $key );
-		}
+		$method = new \ReflectionMethod( MainWP_Assistant::class, 'execute_tool_call' );
+		$method->setAccessible( true );
+		$result = $method->invoke(
+			MainWP_Assistant::instance(),
+			'mainwp/pause-backup-task-v1',
+			array(
+				'task_id' => 1,
+				'confirm' => true,
+			),
+			$user_id
+		);
+		$this->assertTrue( $result['requires_confirmation'] ?? false );
+		$this->assertArrayNotHasKey( 'confirm', $result['params'] );
 	}
 }

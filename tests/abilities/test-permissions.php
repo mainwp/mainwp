@@ -1023,6 +1023,30 @@ class MainWP_Abilities_Permission_Test extends MainWP_Abilities_Test_Case { //ph
 	}
 
 	/**
+	 * A WP_Error from the site-access filter refuses access instead of allowing it.
+	 *
+	 * @return void
+	 */
+	public function test_check_site_access_returns_filter_error() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site();
+		$filter  = static function () {
+			return new \WP_Error( 'mainwp_assistant_confirmation_required', 'Needs confirmation.' );
+		};
+		add_filter( 'mainwp_check_site_access', $filter, 99 );
+		try {
+			$result = \MainWP\Dashboard\MainWP_Abilities_Util::check_site_access( $site_id, null );
+		} finally {
+			remove_filter( 'mainwp_check_site_access', $filter, 99 );
+		}
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_assistant_confirmation_required', $result->get_error_code() );
+	}
+
+	/**
 	 * Test that can_access_site helper returns boolean.
 	 *
 	 * @return void

@@ -21,17 +21,6 @@ use MainWP\Dashboard\MainWP_Post_Handler;
 class Test_Assistant_Policies extends MainWP_Assistant_Test_Case {
 
 	/**
-	 * Reset cached abilities after registering test abilities.
-	 *
-	 * @return void
-	 */
-	private function reset_policies_ability_cache() {
-		$reflection = new \ReflectionProperty( MainWP_Assistant_Policies::class, 'abilities_cache' );
-		$reflection->setAccessible( true );
-		$reflection->setValue( MainWP_Assistant_Policies::instance(), null );
-	}
-
-	/**
 	 * Register a temporary MainWP ability for policy tests.
 	 *
 	 * @param array $annotations Ability annotations.
@@ -64,8 +53,6 @@ class Test_Assistant_Policies extends MainWP_Assistant_Test_Case {
 				),
 			)
 		);
-
-		$this->reset_policies_ability_cache();
 
 		if ( ! is_object( wp_get_ability( $ability_id ) ) ) {
 			$this->markTestSkipped( 'Temporary ability registration is not available in this test environment.' );

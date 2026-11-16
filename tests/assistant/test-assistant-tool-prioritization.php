@@ -181,6 +181,22 @@ class Test_Assistant_Tool_Prioritization extends MainWP_Assistant_Test_Case {
 		}
 	}
 
+	/** Knowledge tools stay advertised when other categories exceed the cap. */
+	public function test_knowledge_tools_survive_a_full_tool_catalog() {
+		$abilities = array();
+		for ( $i = 0; $i < 96; ++$i ) {
+			$abilities[ 'mainwp/site-' . $i ] = array( 'category' => 'mainwp-sites' );
+		}
+		$abilities['mainwp/get-site-knowledge-v1']   = array( 'category' => 'mainwp-knowledge' );
+		$abilities['mainwp/get-client-knowledge-v1'] = array( 'category' => 'mainwp-knowledge' );
+
+		$result = $this->prioritize_method->invoke( $this->assistant, $abilities, MainWP_Assistant::MAX_TOOL_DECLARATIONS );
+
+		$this->assertCount( 96, $result );
+		$this->assertArrayHasKey( 'mainwp/get-site-knowledge-v1', $result );
+		$this->assertArrayHasKey( 'mainwp/get-client-knowledge-v1', $result );
+	}
+
 	// =========================================================================
 	// DECLARATION CAP SIZING
 	// =========================================================================
@@ -241,6 +257,10 @@ class Test_Assistant_Tool_Prioritization extends MainWP_Assistant_Test_Case {
 			'mainwp/get-uptime-stats-v1',
 			'mainwp/list-monitor-incidents-v1',
 			'mainwp/get-backup-status-v1',
+			'mainwp/get-site-knowledge-v1',
+			'mainwp/get-client-knowledge-v1',
+			'mainwp/get-knowledge-record-v1',
+			'mainwp/list-knowledge-v1',
 		);
 
 		foreach ( $always_on as $ability_id ) {
@@ -271,6 +291,10 @@ class Test_Assistant_Tool_Prioritization extends MainWP_Assistant_Test_Case {
 			'mainwp/get-uptime-stats-v1',
 			'mainwp/list-monitor-incidents-v1',
 			'mainwp/get-backup-status-v1',
+			'mainwp/get-site-knowledge-v1',
+			'mainwp/get-client-knowledge-v1',
+			'mainwp/get-knowledge-record-v1',
+			'mainwp/list-knowledge-v1',
 		);
 
 		foreach ( $expected_present as $ability_id ) {

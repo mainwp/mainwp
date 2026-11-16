@@ -540,22 +540,6 @@ class Test_Assistant_ChatGPT_Provider extends MainWP_Assistant_Test_Case {
 	/** Regression coverage for function call round trip echoes call id and tool output. */
 	public function test_function_call_round_trip_echoes_call_id_and_tool_output() {
 		$this->set_user_access_mode( $this->user_id, Policies::MODE_FULL_ACCESS );
-		$ability = wp_get_ability( 'mainwp/get-sites-basic-v1' );
-		$this->assertNotNull( $ability );
-		set_transient(
-			'mainwp_assistant_ability_schemas_v' . MainWP_Assistant::ABILITY_SCHEMA_CACHE_REV,
-			array(
-				'mainwp/get-sites-basic-v1' => array(
-					'label'        => 'Get Sites',
-					'description'  => 'Get sites',
-					'input_schema' => $ability->get_input_schema(),
-					'methods'      => array( 'GET', 'POST' ),
-					'annotations'  => array( 'readonly' => true ),
-					'category'     => 'mainwp-sites',
-				),
-			),
-			HOUR_IN_SECONDS
-		);
 		$call          = array(
 			'type'      => 'function_call',
 			'call_id'   => 'round_trip',

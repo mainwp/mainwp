@@ -188,16 +188,6 @@ class MainWP_Assistant_Policies { // phpcs:ignore Generic.Classes.OpeningBraceSa
     private static $instance = null;
 
     /**
-     * Cached list of all abilities with their annotations.
-     *
-     * Filled once per request and never invalidated, so an ability registered after
-     * the first get_all_registered_abilities() call is missed for the rest of it.
-     *
-     * @var array|null
-     */
-    private $abilities_cache = null;
-
-    /**
      * Method instance()
      *
      * Create or return the single instance of the class.
@@ -741,7 +731,10 @@ class MainWP_Assistant_Policies { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array Array of allowed ability IDs.
      */
     public function get_allowed_abilities( $user_id = null ) {
-        $mode   = $this->get_access_mode( $user_id );
+        $mode = $this->get_access_mode( $user_id );
+        if ( self::MODE_FULL_ACCESS === $mode ) {
+            return $this->get_all_registered_abilities();
+        }
         $groups = $this->get_ability_groups();
 
         switch ( $mode ) {
@@ -765,10 +758,6 @@ class MainWP_Assistant_Policies { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         'mainwp/activate-site-theme-v1',
                     )
                 );
-
-            case self::MODE_FULL_ACCESS:
-                // Read the registry so extension and later core abilities are covered.
-                return $this->get_all_registered_abilities();
 
             default:
                 return $groups['readonly'];
@@ -1272,34 +1261,8 @@ class MainWP_Assistant_Policies { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array Array of ability IDs (e.g., 'mainwp/list-sites-v1').
      */
     public function get_all_registered_abilities() {
-        if ( null !== $this->abilities_cache ) {
-            return $this->abilities_cache;
-        }
-
-        $all_abilities = array();
-
-        if ( ! function_exists( 'wp_get_abilities' ) ) {
-            // Fallback to hardcoded list if API not available.
-            $all_abilities = $this->get_fallback_abilities();
-        } else {
-            $abilities = wp_get_abilities();
-
-            if ( is_array( $abilities ) ) {
-                foreach ( $abilities as $ability_id => $ability ) {
-                    // Only include MainWP abilities (those starting with 'mainwp/').
-                    if ( 0 === strpos( $ability_id, 'mainwp/' ) ) {
-                        $all_abilities[] = $ability_id;
-                    }
-                }
-            }
-
-            if ( empty( $all_abilities ) ) {
-                $all_abilities = $this->get_fallback_abilities();
-            }
-        }
-
-        $this->abilities_cache = $all_abilities;
-        return $all_abilities;
+        $abilities = function_exists( 'wp_get_abilities' ) ? wp_get_abilities() : array();
+        return empty( $abilities ) ? $this->get_fallback_abilities() : array_keys( $abilities );
     }
 
     /**
@@ -1375,16 +1338,26 @@ class MainWP_Assistant_Policies { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @since 6.0.0
      *
-     * The hardcoded groups win over the registry annotations, deliberately: an ability
-     * this file lists as destructive stays destructive even if its own annotations say
-     * readonly, so a third-party registration cannot annotate its way past confirmation.
-     * Only abilities absent from every group fall through to the annotations.
+     * For mainwp/* names the hardcoded groups win over the registry annotations,
+     * deliberately: an ability this file lists as destructive stays destructive even if
+     * its own annotations say readonly. Abilities in other namespaces are classified by
+     * their own annotations, and anything not marked readonly or non-destructive is
+     * treated as destructive.
      *
      * @param string $ability_id Ability ID.
      * @param array  $fallback   Fallback ability groups.
      * @return string|null Group name or null when unknown.
      */
     private function classify_ability( $ability_id, $fallback ) {
+        if ( 0 !== strpos( $ability_id, 'mainwp/' ) ) {
+            $annotations = $this->get_raw_ability_annotations( $ability_id );
+            if ( true === ( $annotations['readonly'] ?? null ) ) {
+                return 'readonly';
+            }
+
+            return false === ( $annotations['destructive'] ?? null ) ? 'non_destructive' : 'destructive';
+        }
+
         foreach ( $fallback as $group => $ability_ids ) {
             if ( in_array( $ability_id, $ability_ids, true ) ) {
                 return $group;
@@ -1560,6 +1533,25 @@ class MainWP_Assistant_Policies { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array|null Null when annotations are unavailable.
      */
     private function get_registered_ability_annotations( $ability_id ) {
+        $annotations = $this->get_raw_ability_annotations( $ability_id );
+        if ( ! is_array( $annotations ) ) {
+            return null;
+        }
+
+        return array(
+            'readonly'    => ! empty( $annotations['readonly'] ),
+            'destructive' => ! empty( $annotations['destructive'] ),
+            'idempotent'  => ! empty( $annotations['idempotent'] ),
+        );
+    }
+
+    /**
+     * Read annotations without collapsing WordPress's unknown values to false.
+     *
+     * @param string $ability_id Ability ID.
+     * @return array|null Registered annotations, or null when unavailable.
+     */
+    public function get_raw_ability_annotations( $ability_id ) {
         if ( ! function_exists( 'wp_get_ability' ) ) {
             return null;
         }
@@ -1594,11 +1586,17 @@ class MainWP_Assistant_Policies { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return null;
         }
 
-        return array(
-            'readonly'    => ! empty( $annotations['readonly'] ),
-            'destructive' => ! empty( $annotations['destructive'] ),
-            'idempotent'  => ! empty( $annotations['idempotent'] ),
-        );
+        return $annotations;
+    }
+
+    /**
+     * Whether an ability belongs to the established policy lists.
+     *
+     * @param string $ability_id Ability ID.
+     * @return bool
+     */
+    public function is_listed_ability( $ability_id ) {
+        return in_array( $ability_id, $this->get_fallback_abilities(), true );
     }
 
     /**

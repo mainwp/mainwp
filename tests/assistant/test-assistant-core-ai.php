@@ -533,9 +533,6 @@ class Test_Assistant_Core_AI extends MainWP_Assistant_Test_Case {
 	/**
 	 * Declarations use the core resolver naming and normalized schemas.
 	 *
-	 * Seeds the ability-schema transient with a union-typed property to prove
-	 * normalize_schema_for_ai() is applied (core's own using_abilities() skips it).
-	 *
 	 * @return void
 	 */
 	public function test_build_function_declarations_naming_and_schema_normalization() {
@@ -543,43 +540,13 @@ class Test_Assistant_Core_AI extends MainWP_Assistant_Test_Case {
 
 		$user_id = $this->set_current_user_as_admin();
 
-		set_transient(
-			'mainwp_assistant_ability_schemas_v' . MainWP_Assistant::ABILITY_SCHEMA_CACHE_REV,
-			array(
-				'mainwp/list-sites-v1' => array(
-					'label'        => 'List Sites',
-					'description'  => 'List all managed sites',
-					'input_schema' => array(
-						'type'       => 'object',
-						'properties' => array(
-							'site_id_or_domain' => array( 'type' => array( 'integer', 'string' ) ),
-						),
-					),
-					'methods'      => array( 'GET', 'POST' ),
-					'annotations'  => array( 'readonly' => true ),
-					'category'     => 'mainwp-sites',
-				),
-			),
-			HOUR_IN_SECONDS
-		);
+		$declarations = $this->invoke_assistant( 'build_function_declarations', array( $user_id, array( 'mainwp-sites' ), false ) );
+		$name         = \WP_AI_Client_Ability_Function_Resolver::ability_name_to_function_name( 'mainwp/get-site-v1' );
+		$index        = array_search( $name, array_map( static fn( $tool ) => $tool->getName(), $declarations ), true );
+		$this->assertSame( 'wpab__mainwp__get-site-v1', $name );
+		$this->assertNotFalse( $index );
 
-		try {
-			$declarations = $this->invoke_assistant( 'build_function_declarations', array( $user_id ) );
-		} finally {
-			delete_transient( 'mainwp_assistant_ability_schemas_v' . MainWP_Assistant::ABILITY_SCHEMA_CACHE_REV );
-		}
-
-		$this->assertNotEmpty( $declarations, 'Expected at least one function declaration for a readonly ability.' );
-
-		$declaration = $declarations[0];
-		$this->assertInstanceOf( \WordPress\AiClient\Tools\DTO\FunctionDeclaration::class, $declaration );
-		$this->assertSame(
-			\WP_AI_Client_Ability_Function_Resolver::ability_name_to_function_name( 'mainwp/list-sites-v1' ),
-			$declaration->getName()
-		);
-		$this->assertSame( 'wpab__mainwp__list-sites-v1', $declaration->getName() );
-
-		$parameters = $declaration->getParameters();
+		$parameters = $declarations[ $index ]->getParameters();
 		$this->assertIsArray( $parameters );
 		$this->assertIsString(
 			$parameters['properties']['site_id_or_domain']['type'],

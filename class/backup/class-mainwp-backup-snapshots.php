@@ -424,6 +424,37 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Find a published snapshot using the Child task that produced it.
+     *
+     * @param int    $site_id Child site identity.
+     * @param int    $task_id Dashboard task identity.
+     * @param string $child_task_id Child task identity.
+     * @return bool Whether this Child task owns a complete snapshot.
+     */
+    public function has_complete_for_child_task( int $site_id, int $task_id, string $child_task_id ): bool {
+        return null !== $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                'SELECT id FROM ' . $this->table_name( 'wp_backup_snapshot' ) . " WHERE run_key = %s AND site_id = %d AND task_id = %d AND status = 'complete'",
+                self::child_run_key( $site_id, $task_id, $child_task_id ),
+                $site_id,
+                $task_id
+            )
+        );
+    }
+
+    /**
+     * Build the durable identity used by native Child snapshots.
+     *
+     * @param int    $site_id Child site identity.
+     * @param int    $task_id Dashboard task identity.
+     * @param string $child_task_id Child task identity.
+     * @return string Snapshot run key.
+     */
+    public static function child_run_key( int $site_id, int $task_id, string $child_task_id ): string {
+        return $site_id . ':' . $task_id . ':c:' . $child_task_id;
+    }
+
+    /**
      * Get the newest complete snapshot for a task across all of its sites
      * - the run the backup list summarizes upload state from. Pruned rows
      * stay for audit but never represent the task.

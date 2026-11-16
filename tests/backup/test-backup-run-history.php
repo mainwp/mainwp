@@ -1323,8 +1323,9 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	 * @dataProvider cancel_answers
 	 * @param array  $answer Child response.
 	 * @param string $outcome Expected history outcome.
+	 * @param bool   $cancel_download Whether the ability caller stops download.
 	 */
-	public function test_cancel_lane( array $answer, string $outcome ): void {
+	public function test_cancel_lane( array $answer, string $outcome, bool $cancel_download = false ): void {
 		$site = $this->site();
 		MainWP_Backup_Operations::start_site_backup( $site, 'ui' );
 		$override = static function ( $pre, $website, $what ) use ( $answer ) {
@@ -1332,7 +1333,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		};
 		add_filter( 'mainwp_fetch_url_authed_pre', $override, 20, 3 );
 		try {
-			MainWP_Backup_Operations::cancel_site_backup( $site );
+			MainWP_Backup_Operations::cancel_site_backup( $site, 'ability', $cancel_download );
 			$this->assertCount( 1, $this->rows() );
 			$this->assertSame( $outcome, $this->rows()[0]['outcome'] );
 		} finally {
@@ -1347,16 +1348,24 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function cancel_answers(): array {
 		return array(
-			'confirmed' => array( array( 'result' => 'ok' ), 'cancelled' ),
-			'finished'  => array(
+			'confirmed'        => array( array( 'result' => 'ok' ), 'cancelled' ),
+			'finished'         => array(
 				array(
 					'result' => 'already_terminal',
 					'phase'  => 'completed',
 				),
 				'running',
 			),
-			'busy'      => array( array( 'result' => 'busy' ), 'running' ),
-			'failure'   => array( array( 'error' => 'secret' ), 'running' ),
+			'stopped download' => array(
+				array(
+					'result' => 'already_terminal',
+					'phase'  => 'completed',
+				),
+				'cancelled',
+				true,
+			),
+			'busy'             => array( array( 'result' => 'busy' ), 'running' ),
+			'failure'          => array( array( 'error' => 'secret' ), 'running' ),
 		);
 	}
 

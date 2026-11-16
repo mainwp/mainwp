@@ -3377,7 +3377,7 @@ class MainWP_Abilities_Backups {
             'mainwp/cancel-site-backup-v1',
             array(
                 'label'               => __( 'Cancel Site Backup', 'mainwp' ),
-                'description'         => __( 'Ask the site to stop its open on-demand backup. The result says what happened: cancelled, already_finished (the Dashboard still records the snapshot), already_failed, not_running, no_active_on_site, or busy (try again). Does not cancel scheduled task runs; use reset-backup-task-run-v1 for a stalled one. Possible errors: mainwp_operation_failed, mainwp_site_not_found.', 'mainwp' ),
+                'description'         => __( 'Ask the site to stop its open on-demand backup. If it already finished, the Dashboard still collects and records the snapshot unless cancel_download is true. Other results include already_failed, not_running, no_active_on_site, or busy (try again). Does not cancel scheduled task runs; use reset-backup-task-run-v1 for a stalled one. Possible errors: mainwp_operation_failed, mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::cancel_site_backup_input_schema(),
@@ -3412,6 +3412,11 @@ class MainWP_Abilities_Backups {
             ),
             'properties'           => array(
                 'site_id_or_domain' => self::site_id_or_domain_schema(),
+                'cancel_download'   => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Stop the Dashboard from collecting an archive the site has already finished. Defaults to false so collection continues.',
+                ),
                 'dry_run'           => array(
                     'type'        => 'boolean',
                     'default'     => false,
@@ -3476,7 +3481,7 @@ class MainWP_Abilities_Backups {
                             'no_active_on_site',
                             'busy',
                         ),
-                        'description' => 'cancelled: the site stopped the backup. already_finished: the site had completed it before the cancel arrived; the Dashboard still collects and records it. already_failed: the site had already failed it; the Dashboard records the failure. not_running: no on-demand backup is open on the Dashboard. no_active_on_site: the Dashboard has an open run but the site reports no such backup; the run closes through the stall reset. busy: the site could not stop right now, or its task id is not known yet; try again.',
+                        'description' => 'cancelled: the site stopped the backup or cancel_download stopped collection of a completed archive. already_finished: the site had completed it before the cancel arrived; the Dashboard still collects and records it. already_failed: the site had already failed it; the Dashboard records the failure. not_running: no on-demand backup is open on the Dashboard. no_active_on_site: the Dashboard has an open run but the site reports no such backup; the run closes through the stall reset. busy: the site or Dashboard publisher is busy, or the task id is not known yet; try again.',
                     ),
                     'message' => array(
                         'type'        => 'string',
@@ -6451,11 +6456,12 @@ class MainWP_Abilities_Backups {
                         }
                         break;
                     case 'cancel-site-backup':
-                        $result = MainWP_Backup_Operations::cancel_site_backup( $site_id );
+                        $cancel_download = MainWP_Abilities_Util::get_boolean_input( $input, 'cancel_download' );
+                        $result          = MainWP_Backup_Operations::cancel_site_backup( $site_id, 'ability', $cancel_download );
                         if ( ! is_wp_error( $result ) ) {
                             $messages          = self::cancel_messages();
                             $result['site_id'] = $site_id;
-                            $result['message'] = $messages[ $result['result'] ];
+                            $result['message'] = $cancel_download && 'cancelled' === $result['result'] ? __( 'The Dashboard backup run was cancelled.', 'mainwp' ) : $messages[ $result['result'] ];
                         }
                         break;
                     case 'reset-backup-task-run':

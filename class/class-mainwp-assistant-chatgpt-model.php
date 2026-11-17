@@ -233,7 +233,8 @@ class MainWP_Assistant_ChatGPT_Model implements ModelInterface, TextGenerationMo
      * @return array
      */
     private function parse_stream( $raw, $request_id ) {
-        $completed = null;
+        $completed    = null;
+        $output_items = array();
         foreach ( preg_split( '/\n\n/', str_replace( array( "\r\n", "\r" ), "\n", $raw ) ) as $frame ) {
             $event = '';
             $data  = array();
@@ -257,12 +258,25 @@ class MainWP_Assistant_ChatGPT_Model implements ModelInterface, TextGenerationMo
                 // Stream events carry no HTTP status; an unknown code is a provider-side failure, not a bad request.
                 self::fail( $this->user_id, $error['code'] ?? 'incomplete_response', 503, $request_id, $error['param'] ?? '' );
             }
+            if ( 'response.output_item.done' === $event
+                && is_int( $data['output_index'] ?? null )
+                && 0 <= $data['output_index']
+                && is_array( $data['item'] ?? null )
+                && 'completed' === ( $data['item']['status'] ?? 'completed' )
+            ) {
+                $output_items[ $data['output_index'] ] = $data['item'];
+            }
             if ( 'response.completed' === $event && is_array( $data['response'] ?? null ) ) {
                 $completed = $data['response'];
             }
         }
         if ( null === $completed ) {
             self::fail( $this->user_id, 'interrupted_stream', 503, $request_id );
+        }
+        // The final response can have empty output after streaming finalized items.
+        if ( array() === ( $completed['output'] ?? null ) && ! empty( $output_items ) ) {
+            ksort( $output_items, SORT_NUMERIC );
+            $completed['output'] = array_values( $output_items );
         }
         return $completed;
     }

@@ -257,6 +257,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'leftbar_order'      => 5,
             );
 
+            $assistant_enabled = MainWP_System::is_assistant_enabled();
+
             // Manage RESTAPI.
             $menus_items[] = array(
                 'slug'               => 'RESTAPI',
@@ -331,6 +333,34 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 ),
                 'init_menu_callback' => array( MainWP_Server_Information::class, 'init_menu' ),
                 'leftbar_order'      => 6,
+            );
+
+            if ( $assistant_enabled ) {
+                $menus_items_low[] = array(
+                    'slug'               => 'AssistantChatToggle',
+                    'menu_level'         => 2,
+                    'menu_rights'        => array(
+                        'dashboard' => array(
+                            'access_global_dashboard',
+                        ),
+                    ),
+                    'init_menu_callback' => array( MainWP_Assistant::class, 'init_chat_toggle_menu' ),
+                    'leftbar_order'      => 6.5,
+                );
+            }
+
+            $menus_items_low[] = array(
+                'slug'               => 'AssistantSettings',
+                'menu_level'         => 2,
+                'menu_rights'        => array(
+                    'dashboard' => array(
+                        'manage_dashboard_settings',
+                        // Chat users reach the page too; render() limits them to History & Privacy.
+                        'access_global_dashboard',
+                    ),
+                ),
+                'init_menu_callback' => array( MainWP_Assistant_Settings::class, 'init_menu' ),
+                'leftbar_order'      => 7,
             );
 
             static::init_mainwp_menu_items( $menus_items_low, 'second' );
@@ -595,6 +625,14 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $others['item_class'] = $params['item_class'];
         }
 
+        // Support tooltip attributes for disabled state indicators.
+        if ( ! empty( $params['data_tooltip'] ) ) {
+            $others['data_tooltip'] = $params['data_tooltip'];
+        }
+        if ( ! empty( $params['data_position'] ) ) {
+            $others['data_position'] = $params['data_position'];
+        }
+
         /**
          * MainWP Left Menu, Sub Menu & Active menu slugs.
          *
@@ -629,7 +667,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         if ( 0 === $level ) {
             $parent_key                   = 'mainwp_tab'; // forced value.
-            $mainwp_leftmenu['leftbar'][] = array( $title, $slug, $href, $id, $icon, $level_cls );
+            $mainwp_leftmenu['leftbar'][] = array( $title, $slug, $href, $id, $icon, $level_cls, $others );
         } elseif ( 1 === $level ) {
 
             if ( empty( $parent_key ) ) {
@@ -755,12 +793,13 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                 if ( is_array( $bar_leftmenu ) && ! empty( $bar_leftmenu ) ) {
                     foreach ( $bar_leftmenu as $item ) {
-                        $title     = wptexturize( $item[0] );
-                        $item_key  = $item[1];
-                        $href      = $item[2];
-                        $item_id   = isset( $item[3] ) ? $item[3] : '';
-                        $item_icon = isset( $item[4] ) ? $item[4] : '';
-                        $level_cls = isset( $item[5] ) ? $item[5] : '';
+                        $title      = wptexturize( $item[0] );
+                        $item_key   = $item[1];
+                        $href       = $item[2];
+                        $item_id    = isset( $item[3] ) ? $item[3] : '';
+                        $item_icon  = isset( $item[4] ) ? $item[4] : '';
+                        $level_cls  = isset( $item[5] ) ? $item[5] : '';
+                        $item_other = isset( $item[6] ) && is_array( $item[6] ) ? $item[6] : array();
 
                         $has_sub = true;
                         if ( ! isset( $mainwp_sub_leftmenu[ $item_key ] ) || empty( $mainwp_sub_leftmenu[ $item_key ] ) ) {
@@ -785,12 +824,22 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             $bar_item_active = $item;
                         }
 
-                        $id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
+                        $id_attr = ! empty( $item_id ) ? 'id="' . esc_attr( $item_id ) . '"' : '';
 
-                        $item_cls = $level_cls . ' ' . $active_item;
+                        // Include extra classes from $others array.
+                        $extra_classes = ! empty( $item_other['classes_item'] ) ? ' ' . $item_other['classes_item'] : '';
+                        $item_cls      = $level_cls . ' ' . $active_item . $extra_classes;
+
+                        // Build tooltip attributes if present.
+                        $tooltip_attrs = '';
+                        if ( ! empty( $item_other['data_tooltip'] ) ) {
+                            $tooltip_attrs .= ' data-tooltip="' . esc_attr( $item_other['data_tooltip'] ) . '"';
+                            $tooltip_attrs .= ' data-position="' . esc_attr( $item_other['data_position'] ?? 'right center' ) . '"';
+                            $tooltip_attrs .= ' data-inverted=""';
+                        }
 
                         // phpcs:disable WordPress.Security.EscapeOutput
-                        echo '<a ' . $id_attr . ' title="' . esc_html( $title ) . '" class="item ' . esc_attr( $item_cls ) . "\" href=\"$href\">";
+                        echo '<a ' . $id_attr . ' title="' . esc_attr( $title ) . '" class="item ' . esc_attr( $item_cls ) . "\"$tooltip_attrs href=\"" . esc_url( $href ) . '">';
                         echo ! empty( $item_icon ) ? $item_icon : '<i class="th large icon"></i>';
                         echo '<span class="ui small text">' . esc_html( $title ) . '</span>';
                         echo '</a>';
@@ -851,9 +900,8 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             position : 'top left',
                         }).popup('show');
 
-                        jQuery('.mainwp-help-popup .mainwp-notice-dismiss').on('click', function (e) {
+                        jQuery('.mainwp-help-popup .mainwp-notice-dismiss').on('click', function () {
                             jQuery('.mainwp-help-popup').removeClass('visible').addClass('hidden').hide();
-
                         });
                     });
                     </script>
@@ -1113,6 +1161,11 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      */
     public static function render_mobile_menu() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
+        $assistant_enabled            = MainWP_System::is_assistant_enabled();
+        // Mirrors the OR-rights the desktop AssistantSettings menu item registers
+        // with. Chat-only users reach the page and render() limits them to the
+        // History & Privacy tab.
+        $can_open_assistant_settings = \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) || \mainwp_current_user_can( 'dashboard', 'access_global_dashboard' );
         ?>
         <div id="mainwp-overlay"></div>
         <div id="mainwp-main-mobile-navigation-container" class="mainwp-main-mobile-navigation-container ui top fullscreen flyout">
@@ -1221,6 +1274,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <div class="item">
                         <div class="title"><a href="<?php echo esc_url( admin_url( 'admin.php?page=ai' ) ); ?>" class="with-sub"><i class="microchip icon"></i> <?php esc_html_e( 'AI', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
+                            <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=AssistantSettings' ) ); ?>"><?php esc_html_e( 'Assistant Settings', 'mainwp' ); ?></a>
                             <?php if ( ! static::is_disable_menu_item( 2, 'Knowledge' ) ) : ?>
                             <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=Knowledge' ) ); ?>"><?php esc_html_e( 'Knowledge', 'mainwp' ); ?></a>
                             <?php endif; ?>
@@ -1255,7 +1309,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     <div class="item">
                         <div class="title"><a href="admin.php?page=InsightsOverview" class="with-sub"><i class="chart pie icon"></i> <?php esc_html_e( 'Insights', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
-                            <a class="item" href="admin.php?page=InsightsOverview"><?php esc_html_e( 'Insights', 'mainwp' ); ?></a>
+                            <a class="item" href="admin.php?page=InsightsOverview"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
                         </div>
                     </div>
 
@@ -1275,6 +1329,12 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                     </div>
 
+                    <?php if ( $assistant_enabled && \mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) : ?>
+                    <div class="item">
+                        <a href="#" id="mainwp-assistant-chat-menu-item-mobile" class="mainwp-assistant-chat-toggle"><i class="robot icon"></i> <?php esc_html_e( 'Assistant', 'mainwp' ); ?></a>
+                    </div>
+                    <?php endif; ?>
+
                     <div class="item">
                         <div class="title"><a href="admin.php?page=Settings" class="with-sub"><i class="cog icon"></i> <?php esc_html_e( 'Settings', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
@@ -1285,6 +1345,9 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <a class="item" href="admin.php?page=SettingsEmail"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=PremiumUpdates"><?php esc_html_e( 'Premium Updates', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=MainWPTools"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
+                            <?php if ( $can_open_assistant_settings ) : ?>
+                            <a class="item" href="admin.php?page=AssistantSettings"><?php esc_html_e( 'Assistant Settings', 'mainwp' ); ?></a>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -1496,8 +1559,17 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 }
                 $fix_douplicate_ids[] = $menu_itemid;
 
+                $tooltip_attrs = '';
+                if ( ! empty( $others['data_tooltip'] ) ) {
+                    $tooltip_attrs .= ' data-tooltip="' . esc_attr( $others['data_tooltip'] ) . '"';
+                    $tooltip_attrs .= ' data-position="' . esc_attr( $others['data_position'] ?? 'right center' ) . '"';
+                    $tooltip_attrs .= ' data-inverted=""';
+                }
+
+                $blank_attrs = $_blank ? 'target="_blank" rel="noopener noreferrer"' : '';
+
                 ?>
-                <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $menu_itemid ); ?>" <?php echo $_blank ? 'target="_blank"' : ''; ?>>
+                <a class="item <?php echo $level2_active ? 'active level-two-active' : ''; ?> <?php echo esc_attr( $item_classes ); ?>" href="<?php echo esc_url( $href ); ?>" id="<?php echo esc_attr( $menu_itemid ); ?>" <?php echo $blank_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static target/rel attributes only. ?><?php echo $tooltip_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Tooltip attributes are escaped above. ?>>
                     <?php echo $before_title . $title; //phpcs:ignore -- requires escaped. ?>
                 </a>
                 <?php

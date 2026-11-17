@@ -650,7 +650,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
         foreach ( is_array( $completed_jobs ) ? $completed_jobs : array() as $completed_job ) {
             $completed_job->checkpoint = json_decode( $completed_job->checkpoint, true );
-            if ( is_array( $completed_job->checkpoint ) && MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $completed_job ) ) {
+            if ( is_array( $completed_job->checkpoint ) && ( MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $completed_job ) || ! empty( $completed_job->checkpoint['safety_removal_pending'] ) || ! empty( $completed_job->checkpoint['safety_removed'] ) ) ) {
                 $failed_jobs[] = $completed_job;
             }
         }
@@ -665,8 +665,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( ! is_array( $failed_job->checkpoint ) ) {
                 $failed_job->checkpoint = json_decode( (string) $failed_job->checkpoint, true );
             }
-            $report        = is_array( $failed_job->checkpoint ) ? self::restore_outcome_report( $failed_job->checkpoint, (string) ( $failed_job->checkpoint['sub_type'] ?? '' ), true ) : null;
-            $failed_rows[] = array(
+            $report     = is_array( $failed_job->checkpoint ) ? self::restore_outcome_report( $failed_job->checkpoint, (string) ( $failed_job->checkpoint['sub_type'] ?? '' ), true ) : null;
+            $failed_row = array(
                 'job_id'          => (int) $failed_job->id,
                 'snapshot_id'     => (int) $failed_job->snapshot_id,
                 'status'          => (string) $failed_job->status,
@@ -681,6 +681,12 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'database' => $report['database'],
                 ),
             );
+            foreach ( array( 'safety_removal_pending', 'safety_removed' ) as $flag ) {
+                if ( ! empty( $failed_job->checkpoint[ $flag ] ) ) {
+                    $failed_row[ $flag ] = true;
+                }
+            }
+            $failed_rows[] = $failed_row;
         }
         return array(
             'active_restore_job_id' => null !== $active_job ? (int) $active_job->id : 0,
@@ -1112,7 +1118,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $safety   = 'pending';
         if ( ! empty( $cp['is_rollback'] ) || empty( $cp['options']['pre_snapshot'] ) ) {
             $safety = 'not_requested';
-        } elseif ( ! empty( $cp['pre_snapshot_pruned'] ) ) {
+        } elseif ( ! empty( $cp['pre_snapshot_pruned'] ) || ! empty( $cp['safety_removed'] ) ) {
             $safety = 'pruned';
         } elseif ( ! empty( $cp['pre_snapshot_artifacts'] ) ) {
             $safety = 'taken';

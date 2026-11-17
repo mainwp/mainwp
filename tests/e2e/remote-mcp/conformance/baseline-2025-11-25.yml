@@ -1,0 +1,33 @@
+# Expected failures for `conformance server --requirements 2025-11-25` (pinned 0.2.0-alpha.12).
+# Only three classes may appear, each entry tagged with its class and a reason:
+#   (a) a capability v1 doesn't declare  (b) a fixture tool or prompt a real server doesn't have
+#   (c) a scenario that would only test the harness proxy
+# Any other failure is a finding for review, not a new entry. Scenarios left out on purpose
+# because they apply to us: server-initialize, ping, tools-list, prompts-list.
+server:
+  - logging-set-level:logging-set-level # (a) logging is not declared in v1
+  - completion-complete:completion-complete # (a) completions are not declared in v1
+  - tools-call-simple-text:tools-call-simple-text # (b) calls the fixture tool test_simple_text
+  - tools-call-image:tools-call-image # (b) calls the fixture tool test_image_content
+  - tools-call-audio:tools-call-audio # (b) calls the fixture tool test_audio_content
+  - tools-call-embedded-resource:tools-call-embedded-resource # (b) calls the fixture tool test_embedded_resource
+  - tools-call-mixed-content:tools-call-mixed-content # (b) calls the fixture tool test_multiple_content_types
+  - tools-call-with-logging:tools-call-with-logging # (b) calls the fixture tool test_tool_with_logging
+  - tools-call-error:tools-call-error # (b) its only check calls the fixture tool test_error_handling
+  - tools-call-with-progress:tools-call-with-progress # (b) calls the fixture tool test_tool_with_progress
+  - tools-call-sampling:tools-call-sampling # (b) calls the fixture tool test_sampling
+  - tools-call-elicitation:tools-call-elicitation # (b) calls the fixture tool test_elicitation
+  - elicitation-sep1034-defaults:elicitation-sep1034-general # (b) calls the fixture tool test_elicitation_sep1034_defaults
+  - elicitation-sep1330-enums:elicitation-sep1330-general # (b) calls the fixture tool test_elicitation_sep1330_enums
+  - server-sse-multiple-streams:server-sse-multiple-streams-session # (a) v1 never mints a session id
+  - resources-list:resources-list # (a) resources are not declared in v1
+  - resources-read-text:resources-read-text # (a) resources are not declared in v1
+  - resources-read-binary:resources-read-binary # (a) resources are not declared in v1
+  - resources-templates-read:resources-templates-read # (a) resources are not declared in v1
+  - resources-subscribe:resources-subscribe # (a) resources are not declared in v1
+  - resources-unsubscribe:resources-unsubscribe # (a) resources are not declared in v1
+  - prompts-get-simple:prompts-get-simple # (b) gets the fixture prompt test_simple_prompt
+  - prompts-get-with-args:prompts-get-with-args # (b) gets the fixture prompt test_prompt_with_arguments
+  - prompts-get-embedded-resource:prompts-get-embedded-resource # (b) gets the fixture prompt test_prompt_with_embedded_resource
+  - prompts-get-with-image:prompts-get-with-image # (b) gets the fixture prompt test_prompt_with_image
+  - dns-rebinding-protection:localhost-host-rebinding-rejected # (c) the proxy rewrites Host, so this would test the proxy

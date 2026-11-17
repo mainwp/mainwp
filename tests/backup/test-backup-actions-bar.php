@@ -122,8 +122,7 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 
 	/**
 	 * Snapshots & Restore: site selector and the removed-backups toggle on
-	 * the left, Back Up Now and Clean Up on the right, the table below the
-	 * bar in its own segment.
+	 * the left, backup and delete actions on the right, and the table below.
 	 */
 	public function test_snapshots_controls_sit_in_the_actions_bar() {
 		$output = $this->render( array( MainWP_Backup_Snapshots_View::class, 'render' ) );
@@ -134,6 +133,11 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 		$this->assert_in_bar( $xp, 'mainwp-native-backup-now-btn', 'right' );
 		$this->assert_in_bar( $xp, 'mainwp-native-backup-cancel-btn', 'right' );
 		$this->assert_in_bar( $xp, 'mainwp-snapshots-cleanup-btn', 'right' );
+		$this->assert_in_bar( $xp, 'mainwp-backup-bulk-delete-btn', 'right' );
+		$headers = $xp->query( '//table[@id="mainwp-restore-snapshots-table"]/thead/tr/th' );
+		$this->assertSame( 1, $xp->query( './/div[' . $this->has_class( 'checkbox' ) . ']/input[@id="mainwp-backup-select-all"]', $headers->item( 0 ) )->length );
+		$this->assertStringContainsString( 'collapsing', $headers->item( 0 )->getAttribute( 'class' ) );
+		$this->assertSame( 'Backup ID', trim( $headers->item( 1 )->textContent ) );
 
 		$this->assertSame( 0, $xp->query( '//div[@id="mainwp-backup-snapshots-toolbar"][not(' . $this->has_class( 'mainwp-actions-bar' ) . ')]' )->length, 'The old toolbar row is gone.' );
 		$this->assertSame( 1, $xp->query( '//div[@id="mainwp-backup-snapshots"][' . $this->has_class( 'padded' ) . '][.//div[' . $this->has_class( 'mainwp-actions-bar' ) . ']]//table[@id="mainwp-restore-snapshots-table"]' )->length, 'The bar and table share the padded segment.' );
@@ -175,6 +179,9 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 
 		$this->assertMatchesRegularExpression( '/class="ui mini green button disabled" id="mainwp-native-backup-now-btn"\s+disabled/', $output );
 		$this->assertMatchesRegularExpression( '/class="ui mini basic button disabled" id="mainwp-snapshots-cleanup-btn"\s+disabled/', $output );
+		$button = $this->xpath( $output )->query( '//button[@id="mainwp-backup-bulk-delete-btn" and @disabled]' );
+		$this->assertSame( 1, $button->length );
+		$this->assertSame( 'Delete Selected Backups (0)', trim( $button->item( 0 )->textContent ) );
 	}
 
 	/**

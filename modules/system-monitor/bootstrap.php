@@ -7,6 +7,8 @@
  * Responsibilities:
  * - Load autoloader / loader
  * - Initialize System Monitor core
+ *
+ * @package MainWP\Dashboard\SystemMonitor
  */
 
 namespace MainWP\Dashboard\SystemMonitor;
@@ -34,7 +36,7 @@ function bootstrap() {
     MainWP_System_Monitor::init();
 
     add_filter(
-        'cron_schedules',
+        'cron_schedules', // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- Preserve the existing one-minute telemetry schedule.
         function ( $schedules ) {
             if ( ! isset( $schedules['minute'] ) ) {
                 $schedules['minute'] = array(

@@ -291,15 +291,15 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * - Sorts list arrays by value (optional) or keeps original order
      * - Can ignore specific keys (e.g., nonce/timestamp) on associative arrays
      *
+     * Supported options:
+     * - coerce_types: default true
+     * - numeric_to_number: default true when coerce_types is enabled
+     * - sort_lists: default true
+     * - drop_empty_arrays: default true
+     * - ignore_keys: default empty array
+     *
      * @param array $params Params to clean.
-     * @param array $opts Clean opts.
-     * {
-     *   coerce_types?: bool,         // default true
-     *   numeric_to_number?: bool,    // default true (only if coerce_types)
-     *   sort_lists?: bool,           // default true (order-insensitive lists)
-     *   drop_empty_arrays?: bool,    // default true
-     *   ignore_keys?: string[]       // default []
-     * }
+     * @param array $opts Options for cleaning and sorting parameters.
      * @return array
      */
     private static function clean_and_sort_params( $params, $opts = array() ) { // phpcs:ignore -- NOSONAR -complex method.
@@ -397,7 +397,7 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $tmp = array();
             foreach ( $value as $v ) {
                 $nv = $walk( $v );
-                if ( $nv === null ) {
+                if ( null === $nv ) {
                     continue;
                 }
                 if ( is_array( $nv ) && $dropEmptyArrays && count( $nv ) === 0 ) {
@@ -447,14 +447,12 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *  2) Fallback to transient (get_transient) and warm object cache if found.
      *  3) Otherwise compute via $generator(), store in both layers, and return.
      *
-     * @param string      $key              Logical cache key (no group prefix).
-     * @param string      $group            Object cache group name.
-     * @param callable    $generator        Function that returns the fresh data when not cached.
-     * @param array       $args             Args for generator
-     * @param int         $ttl              Transient TTL in seconds (also used for object cache if $object_cache_ttl is null).
-     * @param int|null    $object_cache_ttl Optional TTL for object cache layer; defaults to $ttl.
-     * @param string|null $prefix           Optional prefix to avoid collisions (e.g., your plugin slug). If null, uses $group.
-     *
+     * @param string   $key              Logical cache key (no group prefix).
+     * @param string   $group            Object cache group name.
+     * @param callable $generator        Function that returns the fresh data when not cached.
+     * @param array    $args             Arguments passed to the generator.
+     * @param int      $ttl              Transient TTL in seconds (also used for object cache if $object_cache_ttl is null).
+     * @param int|null $object_cache_ttl Optional TTL for object cache layer; defaults to $ttl.
      * @return mixed
      */
     public function get_cache(
@@ -546,7 +544,7 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Method log_metrics().
      *
-     * @return void
+     * @return bool|null False when no metrics are available, otherwise null.
      */
     public static function log_metrics() {
 

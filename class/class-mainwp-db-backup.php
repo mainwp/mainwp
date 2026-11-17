@@ -22,6 +22,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
     // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
+    /** Site option rows that carry one terminal Child task each. */
+    private const MANUAL_CHILD_PRUNE_OPTION = 'backup_manual_child_prune';
+
     /**
      * Instance variable class.
      *
@@ -1006,6 +1009,117 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         );
 
         return 1 === (int) $closed;
+    }
+
+    /**
+     * Close cancellation and transfer any owed Child cleanup in one statement.
+     *
+     * @param int    $id Task identity.
+     * @param int    $last_run Cancelled run.
+     * @param int    $site_id Site identity.
+     * @param string $child_id Confirmed Child task identity.
+     * @param bool   $prune_child Whether an unpublished terminal task must be pruned.
+     * @return bool Whether this run closed and its progress cleared.
+     */
+    public function complete_cancelled_manual_run( int $id, int $last_run, int $site_id, string $child_id, bool $prune_child = false ): bool {
+        $tasks    = $this->table_name( 'wp_backup' );
+        $progress = $this->table_name( 'wp_backup_progress' );
+        $join     = '';
+        $set      = '';
+        if ( $prune_child ) {
+            $slot = $this->prepare_manual_child_prune( $site_id );
+            if ( 0 === $slot ) {
+                return false;
+            }
+            // Empty slots are invisible to cleanup until the guarded close succeeds.
+            $options = $this->table_name( 'wp_options' );
+            $join    = $this->wpdb->prepare( " INNER JOIN {$options} cleanup ON cleanup.opt_id = %d AND cleanup.wpid = progress.wp_id AND cleanup.value = ''", $slot ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from the DB helper.
+            $set     = $this->wpdb->prepare( ', cleanup.value = %s', $child_id );
+        }
+        $closed = $this->wpdb->query(
+            $this->wpdb->prepare(
+                "UPDATE {$tasks} backup INNER JOIN {$progress} progress ON progress.task_id = backup.id{$join} SET backup.completed = GREATEST(%d, backup.last_run), progress.child_backup_task_id = '', progress.child_phase = '', backup.backup_errors = CONCAT(COALESCE(backup.backup_errors, ''), %s), backup.backup_notices = CONCAT(COALESCE(backup.backup_notices, ''), %s){$set} WHERE backup.id = %d AND backup.last_run = %d AND backup.completed < backup.last_run AND progress.wp_id = %d AND progress.child_backup_task_id = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names and fixed SQL fragments; all data use placeholders.
+                time(),
+                esc_html__( 'Backup cancelled from the dashboard.', 'mainwp' ),
+                esc_html__( 'Backup cancelled from the dashboard.', 'mainwp' ) . "\n",
+                $id,
+                $last_run,
+                $site_id,
+                $child_id
+            )
+        );
+        return false !== $closed && $closed > 0;
+    }
+
+    /**
+     * Reuse an empty slot from a refused close. The manual publisher lock
+     * serializes slot creation, and the cleanup pass only sees active rows.
+     *
+     * @param int $site_id Site identity.
+     * @return int Empty slot identity, or zero if it could not be prepared.
+     */
+    private function prepare_manual_child_prune( int $site_id ): int {
+        $table = $this->table_name( 'wp_options' );
+        $slot  = $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                "SELECT opt_id FROM {$table} WHERE wpid = %d AND name = %s AND value = '' ORDER BY opt_id LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from the DB helper.
+                $site_id,
+                self::MANUAL_CHILD_PRUNE_OPTION
+            )
+        );
+        if ( '' !== $this->wpdb->last_error ) {
+            return 0;
+        }
+        if ( null !== $slot ) {
+            return (int) $slot;
+        }
+        $inserted = $this->wpdb->insert(
+            $table,
+            array(
+                'wpid'  => $site_id,
+                'name'  => self::MANUAL_CHILD_PRUNE_OPTION,
+                'value' => '',
+            ),
+            array( '%d', '%s', '%s' )
+        );
+        return 1 === $inserted ? (int) $this->wpdb->insert_id : 0;
+    }
+
+    /**
+     * Read the terminal Child task identities owed by manual cancellation.
+     *
+     * @param int $site_id Site identity.
+     * @return object[] Pending option rows.
+     */
+    public function get_pending_manual_child_prunes( int $site_id ): array {
+        $table = $this->table_name( 'wp_options' );
+        return (array) $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT opt_id, value FROM {$table} WHERE wpid = %d AND name = %s AND value <> '' ORDER BY opt_id", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from the DB helper.
+                $site_id,
+                self::MANUAL_CHILD_PRUNE_OPTION
+            )
+        );
+    }
+
+    /**
+     * Clear the exact obligation a Child confirmed it pruned.
+     *
+     * @param int    $site_id Site identity.
+     * @param int    $slot_id Pending option row identity.
+     * @param string $child_id Child backup task identity.
+     */
+    public function clear_pending_manual_child_prune( int $site_id, int $slot_id, string $child_id ): void {
+        $this->wpdb->delete(
+            $this->table_name( 'wp_options' ),
+            array(
+                'opt_id' => $slot_id,
+                'wpid'   => $site_id,
+                'name'   => self::MANUAL_CHILD_PRUNE_OPTION,
+                'value'  => $child_id,
+            ),
+            array( '%d', '%d', '%s', '%s' )
+        );
     }
 
     /**

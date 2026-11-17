@@ -9,10 +9,13 @@ composer.lock
 # PHPUnit
 .phpunit.result.cache
 
-# Local-only AI / plan files (Dennis approved 2026-09-21 — cloud VMs lack global excludes)
-AGENTS.md
-CLAUDE*.md
-.cursor/
-.mwpdev/
-# review-lessons* is Brain-local only
-review-lessons*
+# Git worktrees
+.worktrees/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Playwright e2e dependencies and artifacts (specs, if added, still get tracked)
+/tests/e2e/node_modules/
+/tests/e2e/playwright-report/
+/tests/e2e/test-results/

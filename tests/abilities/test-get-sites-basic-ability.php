@@ -138,4 +138,142 @@ class Test_GetSitesBasic_Ability extends MainWP_Abilities_Test_Case {
 
         $this->assertWPError( $result, 'Invalid input should return WP_Error.' );
     }
+
+    /**
+     * Test that the status enum offers a legal "not filtering" value.
+     *
+     * Models that habitually fill every parameter need a neutral status;
+     * without "any" in the enum they must pick a real status and silently
+     * narrow the results.
+     *
+     * @return void
+     */
+    public function test_get_sites_basic_status_enum_includes_any() {
+        $this->skip_if_no_abilities_api();
+
+        $ability = wp_get_ability( 'mainwp/get-sites-basic-v1' );
+        $this->assertNotNull( $ability );
+
+        $schema = $ability->get_input_schema();
+        $status = $schema['properties']['status'];
+
+        $this->assertContains( 'any', $status['enum'], 'Status enum must offer a no-filter value.' );
+        $this->assertSame( 'any', $status['default'], 'Status must default to the no-filter value.' );
+    }
+
+    /**
+     * Test that status "any" returns all sites regardless of status.
+     *
+     * @return void
+     */
+    public function test_get_sites_basic_any_status_returns_all_sites() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $connected_id = $this->create_test_site( [
+            'name' => 'Connected Basic Site',
+            'url'  => 'https://test-basic-any-connected.example.com/',
+        ] );
+        $suspended_id = $this->create_test_site( [
+            'name'      => 'Suspended Basic Site',
+            'url'       => 'https://test-basic-any-suspended.example.com/',
+            'suspended' => 1,
+        ] );
+
+        $result = $this->execute_ability( 'mainwp/get-sites-basic-v1', [
+            'page'     => 1,
+            'per_page' => 100,
+            'status'   => 'any',
+        ] );
+
+        $this->assertNotWPError( $result );
+        $ids = wp_list_pluck( $result['items'], 'id' );
+        $this->assertContains( $connected_id, $ids, 'Status "any" must include connected sites.' );
+        $this->assertContains( $suspended_id, $ids, 'Status "any" must include suspended sites.' );
+    }
+
+    /**
+     * Test that a filtered empty result tells the model which filters applied.
+     *
+     * A client- or status-filtered empty list is otherwise indistinguishable
+     * from "no sites exist", so the model burns tool-loop iterations probing
+     * filter variations.
+     *
+     * @return void
+     */
+    public function test_get_sites_basic_filtered_empty_result_includes_note() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $this->create_test_site( [
+            'name' => 'Note Basic Site',
+            'url'  => 'https://test-basic-note.example.com/',
+        ] );
+
+        $result = $this->execute_ability( 'mainwp/get-sites-basic-v1', [
+            'client_id' => 999999,
+        ] );
+
+        $this->assertNotWPError( $result );
+        $this->assertSame( [], $result['items'] );
+        $this->assertArrayHasKey( 'note', $result, 'Filtered empty result must explain itself to the caller.' );
+        $this->assertStringContainsString( 'client_id', $result['note'] );
+
+        // An unfiltered call never carries the note.
+        $unfiltered = $this->execute_ability( 'mainwp/get-sites-basic-v1', [] );
+        $this->assertNotWPError( $unfiltered );
+        $this->assertArrayNotHasKey( 'note', $unfiltered );
+    }
+
+    /**
+     * Test that tag and client filters narrow the returned items.
+     *
+     * The fetch query previously ignored both filters (it takes different
+     * param names than the count query), so items came back unfiltered
+     * while total was filtered.
+     *
+     * @return void
+     */
+    public function test_get_sites_basic_tag_and_client_filters_narrow_items() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $tagged_id   = $this->create_test_site( [
+            'name' => 'Tagged Basic Site',
+            'url'  => 'https://test-basic-tagged.example.com/',
+        ] );
+        $untagged_id = $this->create_test_site( [
+            'name' => 'Untagged Basic Site',
+            'url'  => 'https://test-basic-untagged.example.com/',
+        ] );
+
+        $tag_id = $this->create_test_tag( [ 'name' => 'Basic Filter Tag' ] );
+        $this->assign_site_to_tag( $tagged_id, $tag_id );
+
+        $result = $this->execute_ability( 'mainwp/get-sites-basic-v1', [
+            'page'     => 1,
+            'per_page' => 100,
+            'tag_ids'  => [ $tag_id ],
+        ] );
+
+        $this->assertNotWPError( $result );
+        $ids = wp_list_pluck( $result['items'], 'id' );
+        $this->assertContains( $tagged_id, $ids, 'Tag filter must include the tagged site.' );
+        $this->assertNotContains( $untagged_id, $ids, 'Tag filter must exclude untagged sites.' );
+        $this->assertSame( count( $ids ), $result['total'], 'Items and total must agree under a tag filter.' );
+
+        $client_id = $this->create_test_client( [ 'name' => 'Basic Filter Client' ] );
+        \MainWP\Dashboard\MainWP_DB::instance()->update_website_values( $tagged_id, [ 'client_id' => $client_id ] );
+
+        $result = $this->execute_ability( 'mainwp/get-sites-basic-v1', [
+            'page'      => 1,
+            'per_page'  => 100,
+            'client_id' => $client_id,
+        ] );
+
+        $this->assertNotWPError( $result );
+        $ids = wp_list_pluck( $result['items'], 'id' );
+        $this->assertContains( $tagged_id, $ids, 'Client filter must include the assigned site.' );
+        $this->assertNotContains( $untagged_id, $ids, 'Client filter must exclude unassigned sites.' );
+    }
 }

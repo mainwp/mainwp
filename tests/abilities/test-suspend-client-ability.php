@@ -56,6 +56,43 @@ class Test_Suspend_Client_Ability extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Suspending a client walks the canonical path: the mainwp_client_suspend
+	 * hook fires and the client's sites are suspended too (M19).
+	 *
+	 * @return void
+	 */
+	public function test_suspend_client_fires_hook_and_suspends_sites() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$client_id = $this->create_test_client( [
+			'name'      => 'Client With Sites',
+			'suspended' => 0,
+		] );
+		$site_id   = $this->create_test_site( [ 'name' => 'ClientSite', 'url' => 'https://clientsite.example/' ] );
+		global $wpdb;
+		$wpdb->update( \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' ), [ 'client_id' => $client_id ], [ 'id' => $site_id ] );
+
+		$hook_calls = [];
+		$listener   = static function ( $client, $suspended ) use ( &$hook_calls ) {
+			$hook_calls[] = [ $client, $suspended ];
+		};
+		add_action( 'mainwp_client_suspend', $listener, 10, 2 );
+
+		$result = $this->execute_ability( 'mainwp/suspend-client-v1', [
+			'client_id_or_email' => $client_id,
+		] );
+		remove_action( 'mainwp_client_suspend', $listener, 10 );
+
+		$this->assertNotWPError( $result );
+		$this->assertCount( 1, $hook_calls, 'mainwp_client_suspend must fire once.' );
+		$this->assertEquals( $client_id, $hook_calls[0][0]->client_id );
+		$this->assertTrue( (bool) $hook_calls[0][1] );
+		$site = $this->get_test_site( $site_id );
+		$this->assertEquals( 1, (int) $site->suspended, 'Client sites must be suspended with the client.' );
+	}
+
+	/**
 	 * Test that suspend-client requires authentication.
 	 *
 	 * @return void

@@ -486,8 +486,8 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$this->restrict_current_user_to_sites( array( $site_a ) );
 
 		$resolved = MainWP_Abilities_Util::resolve_site( $url );
-		$this->assertNotWPError( $resolved );
-		$this->assertSame( $site_b, (int) $resolved->id );
+		$this->assertWPError( $resolved );
+		$this->assertSame( 'mainwp_site_not_found', $resolved->get_error_code() );
 
 		$run = function ( array $input ) use ( $ability_name, $execute_method ) {
 			return null === $execute_method
@@ -565,5 +565,58 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
 		$this->assertSame( 404, $result->get_error_data()['status'] );
 		$this->assertSame( str_replace( 'missing@example.com', $email, $missing->get_error_message() ), $result->get_error_message() );
+	}
+
+	/**
+	 * A failed name-lookup query (get_results() returning null on DB error)
+	 * surfaces as a DB WP_Error, not a count(null) fatal (S10).
+	 *
+	 * @return void
+	 */
+	public function test_resolve_site_returns_db_error_when_name_lookup_fails() {
+		$this->set_current_user_as_admin();
+
+		$stub = new Stub_Null_Name_Match_DB();
+
+		$instance_prop = ( new \ReflectionClass( \MainWP\Dashboard\MainWP_DB::class ) )->getProperty( 'instance' );
+		$instance_prop->setAccessible( true );
+		$original = $instance_prop->getValue();
+		$instance_prop->setValue( null, $stub );
+
+		try {
+			$result = MainWP_Abilities_Util::resolve_site( 'name-lookup-broken-drill' );
+		} finally {
+			$instance_prop->setValue( null, $original );
+		}
+
+		$this->assertWPError( $result, 'A null query result must become a WP_Error, not a fatal.' );
+		$this->assertSame( 'mainwp_db_error', $result->get_error_code() );
+	}
+
+}
+
+/**
+ * DB stub whose name lookup simulates a query error (wpdb returns null).
+ */
+class Stub_Null_Name_Match_DB extends \MainWP\Dashboard\MainWP_DB {
+
+	/**
+	 * No site resolves by URL, forcing the name fallback.
+	 *
+	 * @param string $url Site URL.
+	 * @return array Empty set.
+	 */
+	public function get_websites_by_url( $url ) {
+		return array();
+	}
+
+	/**
+	 * Simulate the DB error path.
+	 *
+	 * @param string $needle Search needle.
+	 * @return null Always null, as wpdb returns on a failed query.
+	 */
+	public function get_websites_by_name_or_partial_match( $needle ) {
+		return null;
 	}
 }

@@ -8,6 +8,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_AI;
+use MainWP\Dashboard\MainWP_Assistant_Settings;
 use MainWP\Dashboard\MainWP_Control;
 use MainWP\Dashboard\MainWP_Knowledge;
 use MainWP\Dashboard\MainWP_Knowledge_UI;
@@ -113,11 +114,14 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 	}
 
 	private function render_mcp(): string {
+		// An HTTPS test site that meets the connector requirements would otherwise open the direct tab.
+		$_GET['tab'] = 'local';
 		ob_start();
 		try {
 			MainWP_MCP::render();
 		} finally {
 			$html = ob_get_clean();
+			unset( $_GET['tab'] );
 		}
 		return $html;
 	}
@@ -154,24 +158,39 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertNotFalse( has_action( 'load-' . get_plugin_page_hookname( 'mainwp-control', 'mainwp_tab' ), array( MainWP_Control::class, 'enqueue_scripts' ) ) );
 	}
 
+	public function test_assistant_settings_highlights_the_ai_nav_item(): void {
+		MainWP_Assistant_Settings::init_menu();
+		$this->assertSame( 'ai', $GLOBALS['_mainwp_menu_active_slugs']['AssistantSettings'] );
+		$this->assertContains( 'AssistantSettings', array_column( $GLOBALS['mainwp_sub_leftmenu']['ai'], 4 ) );
+	}
+
 	public function test_ai_feature_pages_render(): void {
 		$this->assert_menu();
 		// render_top_header() also prints the help sidebar and left menu, with their own docs links and icons.
 		$html = (string) strstr( $this->render_ai(), '<div id="mainwp-ai-page"' );
 		$this->assertStringContainsString( 'id="mainwp-ai-page" class="ui padded segment"', $html );
 		$this->assertStringNotContainsString( 'AI tools for your MainWP workflows', $html );
-		$this->assertStringContainsString( 'id="mainwp-ai-feature-cards" class="ui three stackable cards"', $html );
-		$this->assertSame( 3, substr_count( $html, '<div class="ui fluid card">' ) );
-		$this->assertSame( 3, substr_count( $html, '<div class="extra content">' ) );
-		$this->assertSame( 3, substr_count( $html, 'class="ui mini basic grey right floated button"' ) );
-		$this->assertSame( 3, substr_count( $html, 'Read More' ) );
+		$this->assertStringContainsString( 'id="mainwp-ai-feature-cards" class="ui two stackable cards"', $html );
+		$this->assertSame( 4, substr_count( $html, '<div class="ui fluid card">' ) );
+		$this->assertSame( 4, substr_count( $html, '<div class="extra content">' ) );
+		$this->assertSame( 4, substr_count( $html, 'class="ui mini basic grey right floated button"' ) );
+		$this->assertSame( 4, preg_match_all( '#>\s*Open\s*</a>#', $html ) );
 		$this->assertSame( 3, substr_count( $html, 'Documentation' ) );
-		$this->assertStringContainsString( 'Review collected Knowledge records or add and manage Agency knowledge for connected AI tools.', $html );
+		$assistant_at = strpos( $html, 'admin.php?page=AssistantSettings' );
+		$knowledge_at = strpos( $html, 'admin.php?page=Knowledge' );
+		$this->assertIsInt( $assistant_at );
+		$this->assertIsInt( $knowledge_at );
+		$this->assertLessThan( $knowledge_at, $assistant_at, 'The Assistant card comes first.' );
+		$this->assertStringNotContainsString( 'Read More', $html );
+		$this->assertStringContainsString( 'An AI assistant built into your Dashboard.', $html );
+		$this->assertStringContainsString( 'It starts read-only, and you choose how much it can change.', $html );
+		$this->assertStringContainsString( 'Teach the Assistant and your connected AI apps how your agency works', $html );
+		$this->assertStringContainsString( 'A Node.js command-line tool for developers, with JSON output and exit codes.', $html );
 		$this->assertStringNotContainsString( 'client, and site context', $html );
-		foreach ( array( 'Knowledge', 'MainWP MCP', 'MainWP Control', ':book:', ':brain:', ':computer:' ) as $copy ) {
+		foreach ( array( 'Assistant', 'Knowledge', 'MainWP MCP', 'MainWP Control', ':robot:', ':book:', ':brain:', ':computer:' ) as $copy ) {
 			$this->assertStringContainsString( $copy, $html );
 		}
-		foreach ( array( 'https://docs.mainwp.com/', 'https://docs.mainwp.com/mcp-server/quickstart', 'https://docs.mainwp.com/api-reference/mainwp-control' ) as $documentation_url ) {
+		foreach ( array( 'https://docs.mainwp.com/dashboard/overview/mainwp-knowledge', 'https://docs.mainwp.com/mcp-server/quickstart', 'https://docs.mainwp.com/api-reference/mainwp-control' ) as $documentation_url ) {
 			$this->assertStringContainsString( $documentation_url, $html );
 		}
 		foreach ( array( 'admin.php?page=Knowledge', 'admin.php?page=mainwp-mcp', 'admin.php?page=mainwp-control' ) as $href ) {
@@ -181,7 +200,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 
 		$mcp = (string) strstr( $this->render_mcp(), '<div id="mainwp-mcp-page"' );
 		$this->assertStringContainsString( 'id="mainwp-mcp-page" class="ui padded segment"', $mcp );
-		foreach ( array( 'Manage MainWP with your AI assistant', 'Credentials', 'Connect', 'Test', 'Finish', 'Create Application Password', 'List all my sites', 'You are ready to use MainWP MCP', 'What you can do', 'Built-in safeguards' ) as $copy ) {
+		foreach ( array( 'Needs Node.js 20.19 or later and an Application Password.', 'Credentials', 'Connect', 'Test', 'Finish', 'Create Application Password', 'List all my sites', 'You are ready to use MainWP MCP', 'What you can do', 'Built-in safeguards' ) as $copy ) {
 			$this->assertStringContainsString( $copy, $mcp );
 		}
 		$this->assertStringNotContainsString( 'Get connected in four steps', $mcp );
@@ -209,7 +228,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( '<pre id="mainwp-mcp-config"', $mcp );
 		$this->assertSame( 4, substr_count( $mcp, 'class="mainwp-mcp-step-intro"' ) );
 		$this->assertStringContainsString( 'Learn more about Application Passwords.', $mcp );
-		$this->assertStringContainsString( 'Find instructions for your AI tool.', $mcp );
+		$this->assertStringContainsString( 'Instructions for each app.', $mcp );
 		$this->assertStringNotContainsString( 'Credential guide', $mcp );
 		$this->assertStringNotContainsString( 'Your Dashboard stays in control', $mcp );
 		$this->assertStringNotContainsString( 'MainWP MCP lets your AI assistant work with sites', $mcp );

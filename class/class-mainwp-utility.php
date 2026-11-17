@@ -1096,6 +1096,150 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
 
     /**
+     * Method esc_note_attr()
+     *
+     * Escape a note for output inside an HTML attribute, such as the
+     * data-tooltip on the note icon in the site, client, group, plugin and
+     * theme lists.
+     *
+     * Notes are stored through esc_content(), which is wp_kses() with a tag
+     * allowlist. wp_kses() sanitizes tags; it does not encode a bare double
+     * quote, so a stored note can still close an attribute and attach an event
+     * handler. esc_content() is an input filter and must never be mistaken for
+     * output escaping: attribute context has to be escaped here, at the sink.
+     *
+     * Truncation runs before escaping and on a character boundary. esc_attr()
+     * scrubs invalid UTF-8 and returns an empty string when it finds any, so a
+     * byte-based substr() that cut a multibyte character in half would blank the
+     * whole tooltip for accented and non-Latin notes.
+     *
+     * Site notes are stored unslashed, so backslashes in paths such as C:\new
+     * are note text; callers whose source is slashed unslash it first.
+     *
+     * @param mixed $note   Note text, already tag-stripped by the caller.
+     * @param int   $length Maximum length in characters. Default 100.
+     *
+     * @return string Attribute-safe, truncated note.
+     */
+    public static function esc_note_attr( $note, $length = 100 ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+        return esc_attr( mb_substr( $note, 0, $length, 'UTF-8' ) );
+    }
+
+    /**
+     * Method expand_post_custom()
+     *
+     * Expand the serialized custom-field values of a local draft post before the
+     * bulk post and bulk page senders hand them to a child site.
+     *
+     * get_post_custom() returns every meta value as a raw string, so a value that
+     * was stored as an array comes back serialized. The child expects structured
+     * data, so it has to be expanded here.
+     *
+     * allowed_classes=>false because the expanded value only ever reaches
+     * wp_json_encode(): no caller reads it back as an object, so there is nothing
+     * to gain from building one, and building one would run the class's
+     * __wakeup()/__destruct() on the Dashboard. Post meta is writable by anything
+     * that can touch wp_postmeta -- another plugin, an editor typing into the
+     * Custom Fields box -- so it is not a trustworthy source of class names.
+     *
+     * Refusing to build the object leaves a __PHP_Incomplete_Class behind, which
+     * does NOT encode like the object it replaced: it carries an extra
+     * __PHP_Incomplete_Class_Name property that would land in the child's meta as
+     * a junk key. strip_incomplete_objects() puts the value back to the shape the
+     * child used to receive, without the class ever being constructed.
+     *
+     * @param mixed $post_custom Meta as get_post_custom() returns it: meta key =>
+     *                           list of raw values. false when the post has none.
+     *
+     * @return array Same shape, with serialized values expanded.
+     */
+    public static function expand_post_custom( $post_custom ) {
+        if ( ! is_array( $post_custom ) ) {
+            return array();
+        }
+
+        $expanded = array();
+
+        foreach ( $post_custom as $meta_key => $meta_values ) {
+            if ( ! is_array( $meta_values ) ) {
+                $expanded[ $meta_key ] = $meta_values;
+                continue;
+            }
+
+            $new_meta_values = array();
+
+            foreach ( $meta_values as $key_value => $meta_value ) {
+                if ( is_serialized( $meta_value ) ) {
+                    $meta_value = unserialize( $meta_value, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- expanding local post meta for the child; allowed_classes=>false blocks object injection.
+                    $meta_value = static::strip_incomplete_objects( $meta_value );
+                }
+                $new_meta_values[ $key_value ] = $meta_value;
+            }
+
+            $expanded[ $meta_key ] = $new_meta_values;
+        }
+
+        return $expanded;
+    }
+
+    /**
+     * Method strip_incomplete_objects()
+     *
+     * Turn the __PHP_Incomplete_Class placeholders left by an allowed_classes=>false
+     * unserialize() back into plain objects, so the value encodes to JSON the way
+     * the original object did.
+     *
+     * Without this an object-valued custom field reaches the child carrying an
+     * extra "__PHP_Incomplete_Class_Name" key. Private and protected properties
+     * are dropped: they survive the unserialize under NUL-mangled names, and
+     * json_encode() would have hidden them for a real object, so keeping them
+     * would send the child data the old code never sent it.
+     *
+     * One difference cannot be papered over. A class implementing JsonSerializable
+     * used to encode through its jsonSerialize(), and reproducing that means
+     * constructing the class -- exactly the thing that is unsafe here. Such a
+     * value now encodes from its raw properties instead. That is the intended
+     * trade: post meta is not a trustworthy source of class names, and no
+     * first-party meta relies on it.
+     *
+     * @param mixed $value Expanded meta value, possibly holding incomplete objects.
+     *
+     * @return mixed Same value with every incomplete object replaced.
+     */
+    protected static function strip_incomplete_objects( $value ) {
+        if ( is_array( $value ) ) {
+            return array_map( array( static::class, 'strip_incomplete_objects' ), $value );
+        }
+
+        if ( ! $value instanceof \__PHP_Incomplete_Class ) {
+            return $value;
+        }
+
+        // Casting is the only safe way in: reading a property off an incomplete
+        // object throws.
+        $properties = (array) $value;
+        $clean      = array();
+
+        foreach ( $properties as $name => $property ) {
+            if ( '__PHP_Incomplete_Class_Name' === $name ) {
+                continue;
+            }
+            // Skip private and protected members: PHP mangles their names with a
+            // leading NUL byte, so any name starting with one is not a public property.
+            if ( isset( $name[0] ) && "\0" === $name[0] ) {
+                continue;
+            }
+            $clean[ $name ] = static::strip_incomplete_objects( $property );
+        }
+
+        // An object, not an array: an empty one has to encode as {} rather than [].
+        return (object) $clean;
+    }
+
+    /**
      * Whether a note is longer than the save cap.
      *
      * Counted in characters so a multibyte note matches the error message.

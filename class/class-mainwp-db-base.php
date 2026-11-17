@@ -291,6 +291,7 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function ping( $link ) {
         if ( self::use_mysqli() ) { // NOSONAR - required.
             if ( version_compare( phpversion(), '8.4', '<' ) ) {
+                // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- mysqli_ping() is deprecated in PHP 8.4 and this branch only runs below 8.4; the 8.4+ path below uses a DO 1 query instead. phpcs cannot see the version gate.
                 return \mysqli_ping( $link );
             } else {
                 try {

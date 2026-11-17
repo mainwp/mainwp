@@ -184,6 +184,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_forceUseIPv4'                          => 0,
             'mainwp_module_log_enabled'                    => 1,
             'mainwp_selected_theme'                        => get_option( 'mainwp_selected_theme', 'default' ),
+            'mainwp_assistant_enabled'                     => 1,
             'mainwp_enable_guided_tours'                   => 0,
             'mainwp_enable_guided_video'                   => 0,
             'mainwp_enable_guided_chatbase'                => 0,

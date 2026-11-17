@@ -246,7 +246,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Method render_incompatible_message().
      *
      * @param  mixed $compatible_php Compatible php.
-     * @param  mixed $compatible_wp Compatible wp.
+     * @param  mixed $compatible_wp Compatible WordPress version.
      * @param  mixed $echo_content Print content or not.
      *
      * @return string Message

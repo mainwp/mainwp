@@ -1,0 +1,100 @@
+<?php
+/** Support modal render contract without a WordPress database. */
+namespace MainWP\Dashboard;
+
+define( 'ABSPATH', __DIR__ . '/' );
+
+class MainWP_Utility {
+    public static function get_siteview_mode() {
+        return false;
+    }
+}
+
+class MainWP_System {
+    public static function is_assistant_enabled() {
+        return (bool) get_option( 'mainwp_enable_guided_chatbase', 0 );
+    }
+}
+
+class MainWP_Assistant {
+    public static function current_user_can_use_assistant() {
+        return true;
+    }
+}
+
+function current_user_can( $capability ) {
+    return true;
+}
+
+function get_option( $key, $default = false ) {
+    return $GLOBALS['support_modal_options'][ $key ] ?? $default;
+}
+function esc_html__( $text, $domain ) {
+    return htmlspecialchars( $text, ENT_QUOTES );
+}
+function esc_html_e( $text, $domain ) {
+    echo esc_html__( $text, $domain );
+}
+function esc_attr( $text ) {
+    return htmlspecialchars( (string) $text, ENT_QUOTES );
+}
+function esc_attr_e( $text, $domain ) {
+    echo esc_html__( $text, $domain );
+}
+function esc_js( $text ) {
+    return addslashes( $text );
+}
+function sanitize_text_field( $text ) {
+    return strip_tags( $text );
+}
+function wp_unslash( $text ) {
+    return stripslashes( $text );
+}
+
+require_once dirname( __DIR__ ) . '/fixtures/support-modal-globals.inc';
+
+require_once getenv( 'MAINWP_UI_SOURCE' ) ?: dirname( __DIR__, 2 ) . '/class/class-mainwp-ui.php';
+
+class SupportModalTest extends \PHPUnit\Framework\TestCase {
+    public function test_support_controls_show_state_and_explicit_save(): void {
+        foreach ( array( 0, 1 ) as $enabled ) {
+            $GLOBALS['support_modal_options'] = array_fill_keys( array( 'mainwp_enable_guided_tours', 'mainwp_enable_guided_chatbase', 'mainwp_enable_guided_video' ), $enabled );
+            $_GET = array( 'page' => 'mainwp_tab' );
+            ob_start();
+            MainWP_UI::render_help_modal();
+            $html = ob_get_clean();
+            $dom = new \DOMDocument();
+            @$dom->loadHTML( $html );
+            $xpath = new \DOMXPath( $dom );
+            foreach ( array( 'tours', 'chatbase', 'video' ) as $feature ) {
+                $labels = $xpath->query( '//label[@for="mainwp-help-' . $feature . '-option"]' );
+                $this->assertSame( 1, $labels->length, $feature );
+                $this->assertSame( $enabled ? 'Enabled' : 'Disabled', $labels->item( 0 )->textContent );
+            }
+            $this->assertStringContainsString( 'Save Support Settings', $html );
+            $this->assertStringContainsString( 'Save and Reload', $html );
+            // The card opens the Assistant panel, so it is a button that is disabled while the Assistant is off.
+            $this->assertSame( 1, $xpath->query( '//button[@id="mainwp-start-chat-card"]' )->length );
+            $this->assertStringContainsString( 'Open Support Assistant', $html );
+            $this->assertSame( $enabled ? 0 : 1, $xpath->query( '//button[@id="mainwp-start-chat-card"][@aria-disabled="true"]' )->length );
+        }
+    }
+
+    public function test_video_card_is_hidden_on_pages_without_a_video(): void {
+        $GLOBALS['support_modal_options'] = array( 'mainwp_enable_guided_video' => 1 );
+        foreach ( array( 'mainwp_tab' => true, 'ServerInformation' => false ) as $page => $has_video ) {
+            $_GET = array( 'page' => $page );
+            ob_start();
+            MainWP_UI::render_help_modal();
+            $dom = new \DOMDocument();
+            @$dom->loadHTML( ob_get_clean() );
+            $xpath = new \DOMXPath( $dom );
+            $card  = $xpath->query( '//button[@id="mainwp-start-video-card"]/ancestor::div[contains(concat(" ", @class, " "), " card ")][1]' )->item( 0 );
+            $this->assertNotNull( $card, $page );
+            $this->assertSame( $has_video ? '' : 'display:none', $card->getAttribute( 'style' ), $page );
+            $this->assertSame( '', $xpath->query( '//button[@id="mainwp-start-video-card"]' )->item( 0 )->getAttribute( 'style' ), $page );
+            // The save handler reads this toggle on every page.
+            $this->assertSame( 1, $xpath->query( '//*[@id="mainwp-guided-video-check"]' )->length, $page );
+        }
+    }
+}

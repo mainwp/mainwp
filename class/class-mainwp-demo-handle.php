@@ -294,13 +294,13 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             $params['client_id'] = 0; // set: 0.
 
             $syncValues = array(
-                'dtsSync'                 => 0,
-                'dtsSyncStart'            => 0,
-                'dtsAutomaticSync'        => 0,
-                'dtsAutomaticSyncStart'   => 0,
-                'totalsize'               => 0,
-                'extauth'                 => '',
-                'sync_errors'             => '',
+                'dtsSync'               => 0,
+                'dtsSyncStart'          => 0,
+                'dtsAutomaticSync'      => 0,
+                'dtsAutomaticSyncStart' => 0,
+                'totalsize'             => 0,
+                'extauth'               => '',
+                'sync_errors'           => '',
             );
 
             if ( $wpdb->insert( MainWP_DB::instance()->get_table_name( 'wp' ), $params ) ) {
@@ -369,7 +369,7 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @param index $index index of data.
      * @param index $websiteid website id.
      */
-    private function add_demo_none_mainwp_action( $data_rows, $index, $websiteid ) {
+    private function add_demo_none_mainwp_action( $data_rows, $index, $websiteid ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Preserve the existing demo callback signature.
         global $wpdb;
     }
 
@@ -417,14 +417,14 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
 
         $table_wp = esc_sql( MainWP_DB::instance()->get_table_name( 'wp' ) );
-        $count    = $wpdb->get_var( "SELECT count(id) FROM {$table_wp}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name cannot be parameterized.
+        $count    = $wpdb->get_var( "SELECT count(id) FROM {$table_wp}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table_wp is the wp table identifier from the literal get_table_name() suffix; identifiers cannot use placeholders.
         if ( $count ) {
             wp_cache_set( $cache_key, false );
             return false;
         }
 
         $table_clients = esc_sql( MainWP_DB::instance()->get_table_name( 'wp_clients' ) );
-        $count         = $wpdb->get_var( "SELECT count(client_id) FROM {$table_clients}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name cannot be parameterized.
+        $count         = $wpdb->get_var( "SELECT count(client_id) FROM {$table_clients}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table_clients is the wp_clients table identifier from the literal get_table_name() suffix; identifiers cannot use placeholders.
         if ( $count ) {
             wp_cache_set( $cache_key, false );
             return false;

@@ -17,7 +17,9 @@ function harness( jobs, canRestore = true ) {
 	const tags = new Set( [
 		'<td class="collapsing"></td>', '<td></td>', '<tr></tr>', '<div></div>',
 		'<span class="ui small basic label"></span>',
-		'<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>'
+		'<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>',
+		'<button type="button" class="ui mini basic button mainwp-safety-delete"></button>',
+		'<div class="ui yellow message"></div>'
 	] );
 	const context = {
 		canRestore, currentSite: 1, currentJob: 0, backupPollTimer: null, backupFollowGen: 0, backupFollowStops: 0, backupPendingKickoffs: {}, backupCancelledEpoch: {}, backupPendingStarts: {}, siteDisconnected: false,
@@ -113,7 +115,7 @@ test( 'guard: completed history with a report keeps only the safety note', () =>
 	const h = harness( [ job( { status: 'completed', last_error: '', has_rollback: true, restore_outcome: { valid: true, files: 'applied', database: 'left_partial' } } ) ] );
 	assert.equal( h.details[0].text, h.context.safetyNoteText );
 	assert.deepEqual( h.details[0].children, [] );
-	assert.equal( h.actions[0][0].text, 'Roll Back' );
+	assert.ok( h.actions[0].some( action => action.text === 'Roll Back' ) );
 } );
 
 for ( const error_code of [ 'mainwp_restore_rolled_back', 'mainwp_restore_rollback_failed' ] ) {
@@ -168,15 +170,30 @@ for ( const has_rollback of [ true, false ] ) {
 			const offered = has_rollback && canRestore;
 			assert.equal( h.details[0].text, 'Restore stopped' );
 			assert.equal( h.details[0].children[0]?.text, h.context.restoreReportLabels.filesPartial + ' ' + h.context.restoreReportLabels.databaseNotStarted + ( offered ? ' ' + h.context.restoreReportLabels.rollBack : '' ) );
-			assert.equal( h.actions[0].length, offered ? 1 : 0 );
+			const rollbackActions = h.actions[0].filter( action => action.tag.includes( 'mainwp-restore-failed-job' ) );
+			assert.equal( rollbackActions.length, offered ? 1 : 0 );
 			if ( offered ) {
-				assert.equal( h.actions[0][0].text, 'Roll Back' );
-				assert.equal( h.actions[0][0].attrs['data-job-id'], 12 );
-				assert.equal( h.actions[0][0].props.disabled, false );
+				assert.equal( rollbackActions[0].text, 'Roll Back' );
+				assert.equal( rollbackActions[0].attrs['data-job-id'], 12 );
+				assert.equal( rollbackActions[0].props.disabled, false );
 			}
 		} );
 	}
 }
+
+test( 'pending safety removal survives reload and offers status reconciliation only', () => {
+	const h = harness( [ job( { status: 'completed', has_rollback: true, safety_removal_pending: true } ) ] );
+	assert.equal( h.actions[0].length, 1 );
+	assert.equal( h.actions[0][0].text, 'Check removal' );
+	assert.equal( h.actions[0][0].attrs['data-reconcile'], '1' );
+	assert.match( h.details[0].children[0].text, /Removal not confirmed/ );
+} );
+
+test( 'confirmed safety removal offers no Roll Back or delete action', () => {
+	const h = harness( [ job( { status: 'completed', has_rollback: true, safety_removed: true } ) ] );
+	assert.equal( h.actions[0].length, 0 );
+	assert.match( h.details[0].children[0].text, /Safety backup removed/ );
+} );
 
 test( 'guard: untrusted history errors remain text without a report', () => {
 	const unsafe = '<img src=x onerror=alert(1)>';

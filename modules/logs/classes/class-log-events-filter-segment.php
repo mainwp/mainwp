@@ -131,6 +131,7 @@ class Log_Events_Filter_Segment {
 
                     if('module_log_manage' === filter_opt){
                         data.seg_source =$('#mainwp-module-log-filter-source').dropdown('get value');
+                        data.seg_agent =$('#mainwp-module-log-filter-agent').dropdown('get value');
                         data.seg_sites =$('#mainwp-module-log-filter-sites').dropdown('get value');
                         data.seg_events =$('#mainwp-module-log-filter-events').dropdown('get value');
                     }
@@ -170,6 +171,7 @@ class Log_Events_Filter_Segment {
                         'seg_clients',
                         'seg_users',
                         'seg_source',
+                        'seg_agent',
                         'seg_sites',
                         'seg_events',
                     ];
@@ -178,6 +180,7 @@ class Log_Events_Filter_Segment {
                         try {
                             seg_values = JSON.parse(seg_values);
                             if('' != seg_values){
+                                jQuery( '#mainwp-module-log-filter-agent' ).dropdown('clear');
                                 jQuery( '#mainwp-module-log-filter-save-segment-button' ).attr('selected-segment-id',seg_id);
                                 jQuery( '#mainwp-module-log-filter-save-segment-button' ).attr('selected-segment-name',seg_values.name);
 
@@ -288,6 +291,7 @@ class Log_Events_Filter_Segment {
 
         if ( 'module_log_manage' === $opt_name ) {
             $fields[] = 'seg_source';
+            $fields[] = 'seg_agent';
             $fields[] = 'seg_sites';
             $fields[] = 'seg_events';
         }
@@ -297,6 +301,9 @@ class Log_Events_Filter_Segment {
         foreach ( $fields as $field ) {
             if ( isset( $_POST[ $field ] ) ) {
                 $val_seg = sanitize_text_field( wp_unslash( $_POST[ $field ] ) );
+                if ( 'seg_agent' === $field && 'mainwp_mcp' !== $val_seg ) {
+                    $val_seg = '';
+                }
                 if ( isset( $not_filters[ $field ] ) && false !== strpos( $val_seg, $not_filters[ $field ] ) ) {
                     $val_seg = '';
                 }

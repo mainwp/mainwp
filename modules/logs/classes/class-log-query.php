@@ -178,6 +178,18 @@ class Log_Query {
             $where       .= $wpdb->prepare( ' AND `lg`.`created` >= %d AND `lg`.`created` <= %d', $timestart_us, $timestop_us );
         }
 
+        if ( isset( $args['agent'] ) && 'mainwp_mcp' === $args['agent'] ) {
+            // Match the logger's scalar metadata format without requiring JSON SQL functions.
+            $agent_pattern = '^[{]("user_login":"([^"\\\\]|\\\\.)*",)?"agent":"mainwp_mcp"[}]$';
+            $where        .= $wpdb->prepare(
+                ' AND EXISTS (SELECT 1 FROM %i agent_meta WHERE agent_meta.meta_log_id = lg.log_id AND agent_meta.meta_key = %s AND agent_meta.meta_value REGEXP %s AND agent_meta.meta_value LIKE BINARY %s) ',
+                $wpdb->mainwp_tbl_logs_meta,
+                'user_meta_json',
+                $agent_pattern,
+                '%' . $wpdb->esc_like( '"agent":"mainwp_mcp"}' )
+            );
+        }
+
         // available sources conds values: wp-admin-only|dashboard-only|empty.
         if ( ! empty( $args['sources_conds'] ) ) {
             if ( 'wp-admin-only' === $args['sources_conds'] ) {
@@ -402,7 +414,7 @@ class Log_Query {
         }
 
         // Generate cache key for count query.
-        $cache_key = 'mainwp_logs_count_' . md5( serialize( $args ) . $site_visibility ); // NOSONAR - MD5 used for cache key generation only, not cryptographic purposes.
+        $cache_key = 'mainwp_logs_count_' . md5( serialize( $args ) . $site_visibility ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Filter values are hashed for a cache key and never unserialized.
 
         if ( $count_only ) {
             $cached_count = wp_cache_get( $cache_key, 'mainwp_logs' );

@@ -464,6 +464,28 @@ class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
         $this->assert_write_result( $response, $option, $path, $expected );
     }
 
+    /** A refused Assistant toggle must not leave the rest of the tools request half-saved. */
+    public function test_tools_chatbase_without_manage_options_saves_nothing(): void {
+        $this->add_test_filter(
+            'user_has_cap',
+            static function ( $caps ) {
+                $caps['manage_options'] = false;
+                return $caps;
+            }
+        );
+        $before   = $this->stored_state();
+        $response = $this->dispatch_write(
+            'PUT',
+            'tools/edit',
+            array(
+                'guided_tours' => true,
+                'mainwp_theme' => 'default',
+                'chatbase'     => true,
+            )
+        );
+        $this->assert_refused( $response, $before, 403, 'mainwp_permission_denied' );
+    }
+
     /**
      * Check the saved value or the scoped background job and scheduled event.
      *

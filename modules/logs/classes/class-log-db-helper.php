@@ -171,7 +171,7 @@ class Log_DB_Helper extends MainWP_DB {
             );
         }
 
-        $sql = 'SELECT lo.log_id, lo.site_id, lo.user_id, lo.user_login, lo.connector, wp.name, me.meta_log_id, me.meta_key, me.meta_value '
+        $sql              = 'SELECT lo.log_id, lo.site_id, lo.user_id, lo.user_login, lo.connector, wp.name, me.meta_log_id, me.meta_key, me.meta_value '
         . ', CASE
                 WHEN connector != "non-mainwp-changes" THEN "dashboard"
                 ELSE "wpadmin"
@@ -551,6 +551,9 @@ class Log_DB_Helper extends MainWP_DB {
 
     /**
      * Get meta data of logs.
+     *
+     * @param array $items Log rows to attach meta to. Passed by reference: each row gains
+     *                     the meta fields found for its log_id.
      */
     public function get_meta_items( &$items ) { // phpcs:ignore -- NOSONAR - complex.
 
@@ -667,14 +670,7 @@ class Log_DB_Helper extends MainWP_DB {
         $wp_table     = esc_sql( $this->table_name( 'wp' ) );
         $wp_opt_table = esc_sql( $this->table_name( 'wp_options' ) );
 
-        return $this->wpdb->get_results(
-            "
-            SELECT wp.id,wp.url,wp.name, COALESCE(o.value, 0) AS dbsize_activitylogs
-            FROM {$wp_table} wp
-            LEFT JOIN {$wp_opt_table} o
-            ON o.wpid = wp.id
-            AND o.name = 'dbsize_activitylogs'
-        "
-        );
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- The only interpolations are $wp_table and $wp_opt_table, table identifiers from table_name() run through esc_sql(); prepare() cannot parameterize identifiers. The query takes no user input at all.
+        return $this->wpdb->get_results( "SELECT wp.id,wp.url,wp.name, COALESCE(o.value, 0) AS dbsize_activitylogs FROM {$wp_table} wp LEFT JOIN {$wp_opt_table} o ON o.wpid = wp.id AND o.name = 'dbsize_activitylogs'" );
     }
 }

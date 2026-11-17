@@ -287,16 +287,13 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      */
     public function get_insights_filters( $save_filter = false ) { //phpcs:ignore -- NOSONAR - complex method.
 
-        $filters = array( 'client', 'range', 'group', 'user', 'dtsstart', 'dtsstop', 'source', 'sites', 'events' );
+        $filters = array( 'client', 'range', 'group', 'user', 'dtsstart', 'dtsstop', 'source', 'agent', 'sites', 'events' );
 
         $get_saved = true;
-
-        if ( isset( $_GET['_insights_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_insights_opennonce'] ), 'mainwp-admin-nonce' ) ) { //phpcs:ignore -- NOSONAR -ok.
-            foreach ( $filters as $filter ) {
-                if ( isset( $_REQUEST[ $filter ] ) ) { //phpcs:ignore -- safe.
-                    $get_saved = false;
-                    break;
-                }
+        foreach ( $filters as $filter ) {
+            if ( isset( $_REQUEST[ $filter ] ) ) { //phpcs:ignore -- safe.
+                $get_saved = false;
+                break;
             }
         }
 
@@ -307,6 +304,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $filter_dtsstart   = '';
         $filter_dtsstop    = '';
 
+        $filter_agent  = '';
         $filter_source = '';
         $filter_sites  = '';
         $filter_events = '';
@@ -334,6 +332,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             $filter_dtsstart = isset( $filters_saved['dtsstart'] ) && ! empty( $filters_saved['dtsstart'] ) ? $filters_saved['dtsstart'] : '';
             $filter_dtsstop  = isset( $filters_saved['dtsstop'] ) && ! empty( $filters_saved['dtsstop'] ) ? $filters_saved['dtsstop'] : '';
 
+            $filter_agent  = isset( $filters_saved['agent'] ) && 'mainwp_mcp' === $filters_saved['agent'] ? 'mainwp_mcp' : '';
             $filter_source = isset( $filters_saved['source'] ) && ! empty( $filters_saved['source'] ) ? $filters_saved['source'] : '';
             $filter_sites  = isset( $filters_saved['sites'] ) && ! empty( $filters_saved['sites'] ) ? $filters_saved['sites'] : '';
             $filter_events = isset( $filters_saved['events'] ) && ! empty( $filters_saved['events'] ) ? $filters_saved['events'] : '';
@@ -347,12 +346,22 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             $filter_dtsstart   = isset( $_REQUEST['dtsstart'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['dtsstart'] ) ) : '';
             $filter_dtsstop    = isset( $_REQUEST['dtsstop'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['dtsstop'] ) ) : '';
 
+            $filter_agent  = isset( $_REQUEST['agent'] ) && 'mainwp_mcp' === $_REQUEST['agent'] ? 'mainwp_mcp' : '';
             $filter_source = isset( $_REQUEST['source'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['source'] ) ) : '';
             $filter_sites  = isset( $_REQUEST['sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['sites'] ) ) : '';
             $filter_events = isset( $_REQUEST['events'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['events'] ) ) : '';
 
             // phpcs:enable WordPress.Security.NonceVerification
-            $update_filter = true;
+            $nonce = '';
+            if ( isset( $_REQUEST['_insights_opennonce'] ) ) { // phpcs:ignore -- verified below.
+                $nonce = sanitize_key( wp_unslash( $_REQUEST['_insights_opennonce'] ) );
+            } elseif ( isset( $_REQUEST['_wpnonce'] ) ) { // phpcs:ignore -- verified below.
+                $nonce = sanitize_key( wp_unslash( $_REQUEST['_wpnonce'] ) );
+            }
+
+            if ( ! empty( $nonce ) && wp_verify_nonce( $nonce, 'mainwp-admin-nonce' ) ) {
+                $update_filter = true;
+            }
         }
 
         // validate requests.
@@ -465,6 +474,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                     'dtsstart'   => $filter_dtsstart,
                     'dtsstop'    => $filter_dtsstop,
                     'source'     => $filter_source,
+                    'agent'      => $filter_agent,
                     'sites'      => $filter_sites,
                     'events'     => $filter_events,
                 )
@@ -479,6 +489,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             'filter_dtsstart',
             'filter_dtsstop',
             'filter_source',
+            'filter_agent',
             'filter_sites',
             'filter_events',
         );
@@ -566,6 +577,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         $array_groups_ids            = array();
         $array_usersfilter_sites_ids = array();
 
+        $filter_agent  = '';
         $filter_source = '';
         $filter_sites  = '';
         $filter_events = '';
@@ -578,7 +590,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
 
         $default_filter = false;
         // extracted values.
-        if ( ( empty( $filter_ranges ) || 'thismonth' === $filter_ranges ) && empty( $filter_groups_ids ) && empty( $filter_client_ids ) && empty( $filter_user_ids ) && empty( $filter_dtsstart ) && empty( $filter_dtsstop ) && empty( $array_clients_ids ) && empty( $array_groups_ids ) && empty( $array_usersfilter_sites_ids ) && empty( $array_source_list ) && empty( $array_sites_ids ) && empty( $array_events_list ) ) {
+        if ( ( empty( $filter_ranges ) || 'thismonth' === $filter_ranges ) && empty( $filter_groups_ids ) && empty( $filter_client_ids ) && empty( $filter_user_ids ) && empty( $filter_dtsstart ) && empty( $filter_dtsstop ) && empty( $array_clients_ids ) && empty( $array_groups_ids ) && empty( $array_usersfilter_sites_ids ) && empty( $filter_agent ) && empty( $array_source_list ) && empty( $array_sites_ids ) && empty( $array_events_list ) ) {
             $default_filter = true;
         }
 
@@ -620,6 +632,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                     'today'     => esc_html__( 'Today', 'mainwp' ),
                                     'yesterday' => esc_html__( 'Yesterday', 'mainwp' ),
                                     'thisweek'  => esc_html__( 'This week', 'mainwp' ),
+                                    'last30'    => esc_html__( 'Last 30 days', 'mainwp' ),
                                     'thismonth' => esc_html__( 'This month', 'mainwp' ),
                                     'lastmonth' => esc_html__( 'Last month', 'mainwp' ),
                                     'thisyear'  => esc_html__( 'This year', 'mainwp' ),
@@ -752,6 +765,13 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                     </div>
 
                     <div class="two wide middle aligned column">
+                        <select id="mainwp-module-log-filter-agent" class="ui selection fluid dropdown seg_agent" aria-label="<?php esc_attr_e( 'Agent', 'mainwp' ); ?>">
+                            <option value=""><?php esc_html_e( 'All Agents', 'mainwp' ); ?></option>
+                            <option value="mainwp_mcp" <?php selected( $filter_agent, 'mainwp_mcp' ); ?>><?php esc_html_e( 'MainWP MCP', 'mainwp' ); ?></option>
+                        </select>
+                    </div>
+
+                    <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-sites" class="ui selection multiple fluid dropdown seg_sites">
                             <input type="hidden" value="<?php echo esc_attr( $filter_sites ); ?>">
                             <i class="dropdown icon"></i>
@@ -809,7 +829,11 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                 'end'   => gmdate( $format, strtotime( '-1 day', $time ) ),
             ),
             'thisweek'  => array(
-                'start' => gmdate( $format, strtotime( 'last monday', $time ) ),
+                'start' => gmdate( $format, strtotime( 'monday this week', $time ) ),
+                'end'   => gmdate( $format, $time ),
+            ),
+            'last30'    => array(
+                'start' => gmdate( $format, strtotime( '-29 days', strtotime( 'today' ) ) ),
                 'end'   => gmdate( $format, $time ),
             ),
             'thismonth' => array(
@@ -829,7 +853,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                 'end'   => gmdate( $format, strtotime( 'last day of December ' . gmdate( 'Y' ) . '-1 year' ) ),
             ),
             'custom'    => array(
-                'start' => gmdate( $format, strtotime( 'last monday', $time ) ),
+                'start' => gmdate( $format, strtotime( 'monday this week', $time ) ),
                 'end'   => gmdate( $format, $time ),
             ),
         );
@@ -870,6 +894,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                     let dtsstop = jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val();
 
                     let source = jQuery( '#mainwp-module-log-filter-source').dropdown('get value');
+                    let agent = jQuery( '#mainwp-module-log-filter-agent').dropdown('get value');
                     let sites = jQuery( '#mainwp-module-log-filter-sites').dropdown('get value');
                     let events = jQuery( '#mainwp-module-log-filter-events').dropdown('get value');
 
@@ -882,6 +907,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                     params += '&dtsstop=' + encodeURIComponent( dtsstop );
 
                     params += '&source=' + encodeURIComponent( source );
+                    params += '&agent=' + encodeURIComponent( agent );
                     params += '&sites=' + encodeURIComponent( sites );
                     params += '&events=' + encodeURIComponent( events );
 
@@ -900,6 +926,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                         jQuery('#mainwp-module-log-filter-dtsstop input[type=text]').val('');
 
                         jQuery( '#mainwp-module-log-filter-source').dropdown('clear');
+                        jQuery( '#mainwp-module-log-filter-agent').dropdown('clear');
                         jQuery( '#mainwp-module-log-filter-sites').dropdown('clear');
                         jQuery( '#mainwp-module-log-filter-events').dropdown('clear');
 

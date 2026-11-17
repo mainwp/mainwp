@@ -377,6 +377,16 @@
     border-bottom: none !important;
 }
 
+/* Rows that cannot be restored can still have a selectable backup. */
+#mainwp-restore-snapshots-table tr.disabled .check-column .ui.checkbox {
+    pointer-events: auto;
+}
+
+/* DataTables clones the header into the scroll body to size its columns. */
+#mainwp-restore-snapshots-table .dt-scroll-sizing .ui.checkbox {
+    visibility: hidden;
+}
+
 /* end */
 
 

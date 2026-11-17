@@ -154,6 +154,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      */
     const KNOWLEDGE_SCHEMA_REPAIR_PENDING = 'mainwp_knowledge_schema_repair_pending';
 
+    /** Site-specific status of the Assistant message metadata repair. */
+    const ASSISTANT_MESSAGE_METADATA_REPAIR = 'mainwp_assistant_message_metadata_repair';
+
     /**
      * Private static variable to hold the single instance of the class.
      *
@@ -193,6 +196,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     public function install() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         // get_site_option is multisite aware!
         $currentVersion = get_site_option( $this->option_db_key );
+        $is_new_install = empty( $currentVersion );
 
         // Seed before the equal-version return so existing installs receive grace once.
         if ( false === get_option( 'mainwp_cron_key_state' ) ) {
@@ -224,6 +228,21 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             // Mark the cohort so a one-time dismissible notice can say the
             // feature exists and where to turn it on.
             MainWP_Utility::update_option( 'mainwp_native_backups_defaulted_off_on_upgrade', 1 );
+        }
+
+        $assistant_sentinel = 'mainwp_assistant_option_not_set';
+        $assistant_enabled  = get_option( MainWP_Assistant_Policies::OPTION_ASSISTANT_ENABLED, $assistant_sentinel );
+        $legacy_enabled     = get_option( 'mainwp_enable_guided_chatbase', $assistant_sentinel );
+
+        if ( $assistant_sentinel === $assistant_enabled ) {
+            if ( $assistant_sentinel !== $legacy_enabled ) {
+                MainWP_Utility::update_option( MainWP_Assistant_Policies::OPTION_ASSISTANT_ENABLED, (bool) $legacy_enabled );
+            } elseif ( $is_new_install ) {
+                MainWP_Utility::update_option( MainWP_Assistant_Policies::OPTION_ASSISTANT_ENABLED, true );
+                MainWP_Utility::update_option( 'mainwp_enable_guided_chatbase', 1 );
+            } else {
+                MainWP_Utility::update_option( MainWP_Assistant_Policies::OPTION_ASSISTANT_ENABLED, false );
+            }
         }
 
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '8.8', '<' ) ) {
@@ -262,6 +281,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_repair_wp_group_primary_key();
             $this->maybe_create_knowledge_table( $currentVersion );
             $this->maybe_repair_knowledge_table();
+            $this->maybe_create_assistant_tables( $currentVersion );
+            $this->maybe_repair_assistant_message_metadata();
             return;
         }
 
@@ -648,6 +669,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->ensure_backup_restore_job_checkpoint_rev();
 
         do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
+
+        $this->maybe_repair_assistant_message_metadata();
 
         if ( ! is_multisite() ) {
             MainWP_Utility::update_option( $this->option_db_key, $this->mainwp_db_version );
@@ -1133,6 +1156,80 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->wpdb->suppress_errors( $suppress );
 
         return true;
+    }
+
+    /**
+     * Create any missing Assistant table when the stored DB version already covers it.
+     *
+     * The Assistant tables can arrive without a DB version bump, and dbDelta errors
+     * are suppressed while the version is written anyway, so a Dashboard already on
+     * the current version would otherwise run every chat and spend read against a
+     * missing table. One SHOW TABLES per load covers all three tables, and only the
+     * missing ones are created.
+     *
+     * @param string|false $currentVersion Stored DB version.
+     *
+     * @return bool True when a table had to be created.
+     */
+    public function maybe_create_assistant_tables( $currentVersion ) {
+        $expected = array(
+            $this->table_name( 'assistant_conversations' ),
+            $this->table_name( 'assistant_messages' ),
+            $this->table_name( 'assistant_spend' ),
+        );
+        $existing = $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table_name( 'assistant_' ) ) . '%' ) );
+        $missing  = array_diff( $expected, is_array( $existing ) ? $existing : array() );
+        if ( empty( $missing ) ) {
+            return false;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $sql      = MainWP_DB_Assistant::instance()->hook_db_install_tables( array(), $currentVersion, $this->wpdb->get_charset_collate() );
+        $suppress = $this->wpdb->suppress_errors();
+        foreach ( $sql as $query ) {
+            foreach ( $missing as $table ) {
+                if ( 0 === strpos( $query, 'CREATE TABLE ' . $table . ' (' ) ) {
+                    dbDelta( $query );
+                }
+            }
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        return true;
+    }
+
+    /**
+     * Add the metadata column to pre-release message tables without replacing their rows.
+     *
+     * The stored DB version can already be current. Remember a verified column
+     * and retry failed repairs at most hourly for databases that disallow ALTER.
+     *
+     * @return bool Whether a missing column was repaired.
+     */
+    private function maybe_repair_assistant_message_metadata() {
+        $status = get_option( self::ASSISTANT_MESSAGE_METADATA_REPAIR );
+        if ( 'confirmed' === $status || ( $status && time() - (int) $status < HOUR_IN_SECONDS ) ) {
+            return false;
+        }
+
+        $table    = $this->table_name( 'assistant_messages' );
+        $probe    = $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'metadata' );
+        $repaired = false;
+        $suppress = $this->wpdb->suppress_errors();
+
+        try {
+            $has_column = 'metadata' === $this->wpdb->get_var( $probe ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above and reused after ALTER.
+            if ( ! $has_column && '' === $this->wpdb->last_error ) {
+                $this->wpdb->query( $this->wpdb->prepare( 'ALTER TABLE %i ADD COLUMN metadata longtext NOT NULL', $table ) );
+                $has_column = 'metadata' === $this->wpdb->get_var( $probe ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Recheck after ALTER, including a concurrent repair.
+                $repaired   = $has_column;
+            }
+        } finally {
+            $this->wpdb->suppress_errors( $suppress );
+        }
+
+        update_option( self::ASSISTANT_MESSAGE_METADATA_REPAIR, $has_column ? 'confirmed' : time(), false );
+        return $repaired;
     }
 
     /**

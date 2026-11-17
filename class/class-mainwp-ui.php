@@ -1343,6 +1343,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </script>
 
             <?php static::render_help_modal(); ?>
+            <?php static::render_assistant_panel(); ?>
             <?php static::render_loader_element(); ?>
             <?php
             ob_start();
@@ -1840,7 +1841,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <a id="mainwp-select-theme-button" class="ui button icon mainwp-selecte-theme-button" aria-label="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>" custom-theme="default" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Select MainWP theme', 'mainwp' ); ?>">
                     <i class="palette icon"></i>
                 </a>
-            <?php
+                <?php
             endif;
             return;
         }
@@ -1965,7 +1966,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         }
 
                         ?>
-                        <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>"<?php echo ! empty( $target ) ? ' target="' . esc_attr( $target ) . '"' : ''; ?><?php echo ! empty( $rel ) ? ' rel="' . esc_attr( $rel ) . '"' : ''; ?>>
+                        <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>"
+                        <?php
+                        if ( ! empty( $target ) ) :
+                            ?>
+                            target="<?php echo esc_attr( $target ); ?>"<?php endif; ?>
+                            <?php
+                            if ( ! empty( $rel ) ) :
+                                ?>
+                            rel="<?php echo esc_attr( $rel ); ?>"<?php endif; ?>>
                         <?php echo isset( $item['before_title'] ) ? $item['before_title'] : ''; ?> <?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         </a>
                         <?php
@@ -2113,6 +2122,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             if ( ! empty( $client_id ) && is_array( $sorted_array ) && isset( $sorted_array[ $client_id ] ) ) {
                 $wgsorted = $sorted_array[ $client_id ];
             }
+        }
+
+        // Older narrow-screen saves stored the display-only single-column layout.
+        $collapsed_layout = is_array( $wgsorted ) && count( $wgsorted ) > 1;
+        if ( $collapsed_layout ) {
+            foreach ( $wgsorted as $saved_widget ) {
+                if ( ! is_array( $saved_widget ) || ! isset( $saved_widget['x'], $saved_widget['w'] ) || 0 !== (int) $saved_widget['x'] || 1 !== (int) $saved_widget['w'] ) {
+                    $collapsed_layout = false;
+                    break;
+                }
+            }
+        }
+        if ( $collapsed_layout ) {
+            $wgsorted = array();
         }
 
         $wgsorted = apply_filters( 'mainwp_do_widget_boxes_sorted', $wgsorted, $page, $client_id );
@@ -2598,16 +2621,17 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     }
 
     /**
-     * Help Modal
+     * Get tour and video IDs for the current admin page.
      *
-     * Renders the help modal.
+     * Returns the Usetiful tour ID and YouTube video ID associated with
+     * the current admin page based on the 'page' query parameter.
      *
-     * @return void
+     * @return array { tour_id: string, video_id: string }
      */
-    public static function render_help_modal() { //phpcs:ignore -- NOSONAR - complex.
+    public static function get_page_tour_video_ids() { //phpcs:ignore -- NOSONAR - complex.
         $siteViewMode = MainWP_Utility::get_siteview_mode();
 
-        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended -- Display only.
         $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 
         $tour_id  = '';
@@ -2794,10 +2818,32 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         } elseif ( 'Extensions-Mainwp-Rocket-Extension' === $page ) {
             $video_id = 'qahq6cR7Svo';
         }
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended
 
-        $enable_guided_tours    = get_option( 'mainwp_enable_guided_tours', 0 );
-        $enable_guided_chatbase = get_option( 'mainwp_enable_guided_chatbase', 0 );
-        $enable_guided_video    = get_option( 'mainwp_enable_guided_video', 0 );
+        return array(
+            'tour_id'  => $tour_id,
+            'video_id' => $video_id,
+        );
+    }
+
+    /**
+     * Help Modal
+     *
+     * Renders the help modal.
+     *
+     * @return void
+     */
+    public static function render_help_modal() { //phpcs:ignore -- NOSONAR - complex.
+        $ids      = static::get_page_tour_video_ids();
+        $tour_id  = $ids['tour_id'];
+        $video_id = $ids['video_id'];
+
+        $enable_guided_tours       = get_option( 'mainwp_enable_guided_tours', 0 );
+        $enable_guided_chatbase    = MainWP_System::is_assistant_enabled();
+        $enable_guided_video       = get_option( 'mainwp_enable_guided_video', 0 );
+        $can_open_assistant_chat   = MainWP_Assistant::current_user_can_use_assistant();
+        $can_manage_assistant      = current_user_can( 'manage_options' ) && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' );
+        $assistant_card_is_enabled = $enable_guided_chatbase && $can_open_assistant_chat;
 
         ?>
         <div id="mainwp-help-modal" class="ui modal">
@@ -2809,44 +2855,45 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
 
                     <div class="ui secondary card">
                         <div class="content">
-                            <a id="mainwp-start-chat-card" class="<?php echo $enable_guided_chatbase ? '' : 'mainwp-disabled-link'; ?>" onclick="jQuery('#mainwp-update-permissions-button').fadeOut(200);jQuery('#mainwp-help-back-button').fadeIn(200);mainwp_help_modal_start_content_onclick( false, false, true );return false;">
-                                <div class="header"><?php esc_html_e( 'Support Assistant', 'mainwp' ); ?></div>
+                            <button type="button" id="mainwp-start-chat-card" data-can-open-assistant="<?php echo $can_open_assistant_chat ? '1' : '0'; ?>" class="<?php echo $assistant_card_is_enabled ? '' : 'mainwp-disabled-link'; ?>" <?php echo $assistant_card_is_enabled ? '' : 'disabled aria-disabled="true"'; ?>>
+                                <div class="header"><?php esc_html_e( 'MainWP Assistant', 'mainwp' ); ?></div>
                                 <div class="ui hidden divider"></div>
-                                <i class="robot big grey icon" style="opacity:0.5"></i>
+                                <i class="comments big green icon"></i>
+                                <div><?php esc_html_e( 'Open MainWP Assistant', 'mainwp' ); ?></div>
                                 <div class="ui fitted hidden divider"></div><br/>
-                                <span class="ui grey small text"><?php esc_html_e( 'Chat with our AI Support Assistant for quick guidance and troubleshooting. It\'s trained on MainWP documentation to help you find answers faster.', 'mainwp' ); ?> <span class="ui mini green label">BETA</span></span>
-                            </a>
+                                <span class="ui grey small text"><?php esc_html_e( 'Ask about MainWP, or work with your sites through your own AI provider.', 'mainwp' ); ?> <span class="ui mini green label">BETA</span></span>
+                            </button>
                         </div>
                         <div class="content">
                             <div class="ui tiny left aligned list">
                                 <div class="item" style="padding:0 0 0.21428571em 0;">
-                                    <i class="times red icon"></i> <div class="content"><?php esc_html_e( 'Access to your Database', 'mainwp' ); ?></div>
+                                    <i class="check green icon"></i> <div class="content"><?php esc_html_e( 'Docs answers come from MainWP documentation', 'mainwp' ); ?></div>
                                 </div>
                                 <div class="item" style="padding:0.21428571em 0;">
-                                    <i class="times red icon"></i> <div class="content"><?php esc_html_e( 'Access to your Screeen', 'mainwp' ); ?></div>
+                                    <i class="info blue icon"></i> <div class="content"><?php esc_html_e( 'Sites mode uses your own AI provider', 'mainwp' ); ?></div>
                                 </div>
                                 <div class="item" style="padding:0 0 0 0.21428571em;">
-                                    <i class="check green icon"></i> <div class="content"><?php esc_html_e( 'Processes only information you submit', 'mainwp' ); ?></div>
+                                    <i class="check green icon"></i> <div class="content"><?php esc_html_e( 'Read-only until you allow changes', 'mainwp' ); ?></div>
                                 </div>
                             </div>
                         </div>
                         <div class="left aligned extra content">
                             <div class="ui toggle checkbox" id="mainwp-guided-chatbase-check">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-chatbase-option" id="mainwp-guided-chatbase-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_chatbase', 0 ) ? 'checked="true"' : ''; ?> />
-                                <label><?php esc_html_e( 'Turn On / Turn Off', 'mainwp' ); ?></label>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-chatbase-option" id="mainwp-help-chatbase-option" <?php echo $enable_guided_chatbase ? 'checked="true"' : ''; ?> <?php echo $can_manage_assistant ? '' : 'disabled="disabled"'; ?> />
+                                <label for="mainwp-help-chatbase-option" data-enabled="<?php esc_attr_e( 'Enabled', 'mainwp' ); ?>" data-disabled="<?php esc_attr_e( 'Disabled', 'mainwp' ); ?>"><?php echo $enable_guided_chatbase ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' ); ?></label>
                             </div>
                         </div>
                     </div>
 
                     <div class="ui card">
                         <div class="content">
-                            <a id="mainwp-start-tour-card" class="<?php echo $enable_guided_tours ? '' : 'mainwp-disabled-link'; ?>" onclick="jQuery('#mainwp-help-modal').modal('hide');mainwp_help_modal_start_content_onclick( <?php echo (int) $tour_id; ?> );" >
+                            <button type="button" id="mainwp-start-tour-card" class="<?php echo $enable_guided_tours ? '' : 'mainwp-disabled-link'; ?>" data-tour-id="<?php echo (int) $tour_id; ?>" <?php echo $enable_guided_tours ? '' : 'disabled aria-disabled="true"'; ?>>
                                 <div class="header"><?php esc_html_e( 'Take a Quick Tour', 'mainwp' ); ?></div>
                                 <div class="ui hidden divider"></div>
                                 <i class="map marked alternate big grey icon" style="opacity:0.5"></i>
                                 <div class="ui fitted hidden divider"></div><br/>
-                                <span class="ui grey small text"><?php esc_html_e( 'Learn how to navigate and use key features with an interactive step-by-step tour.', 'mainwp' ); ?></span>
-                            </a>
+                                <span class="ui grey small text"><?php esc_html_e( 'Walk through the main features of this page, one step at a time.', 'mainwp' ); ?></span>
+                            </button>
                             <div class="ui mini green label"><?php esc_html_e( 'Recommended for first-time users.', 'mainwp' ); ?></div>
                         </div>
                         <div class="content">
@@ -2863,22 +2910,24 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             </div>
                         </div>
                         <div class="left aligned extra content">
-                            <div class="ui toggle checkbox" id="mainwp-guided-tours-check" data-tooltip="<?php esc_attr_e( 'Changes apply after page reload', 'mainwp' ); ?>" data-position="top left" data-inverted="">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
-                                <label><?php esc_html_e( 'Turn On / Turn Off', 'mainwp' ); ?></label>
+                            <div class="ui toggle checkbox" id="mainwp-guided-tours-check" data-saved="<?php echo (int) (bool) $enable_guided_tours; ?>" data-tooltip="<?php esc_attr_e( 'The page reloads when you save guided tour changes.', 'mainwp' ); ?>" data-position="top left" data-inverted="">
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-tours-option" id="mainwp-help-tours-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) ? 'checked="true"' : ''; ?> />
+                                <label for="mainwp-help-tours-option" data-enabled="<?php esc_attr_e( 'Enabled', 'mainwp' ); ?>" data-disabled="<?php esc_attr_e( 'Disabled', 'mainwp' ); ?>"><?php echo $enable_guided_tours ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' ); ?></label>
                             </div>
+                            <button type="button" class="ui mini basic button" onclick="mainwp_help_modal_content_onclick( true );"><i class="sync icon" aria-hidden="true"></i><?php esc_html_e( 'Save and Reload', 'mainwp' ); ?></button>
                         </div>
                     </div>
 
-                    <div class="ui card">
+                    <?php // Hidden rather than omitted: saving support settings reads this card's toggle on every page. ?>
+                    <div class="ui card" <?php echo '' !== $video_id ? '' : 'style="display:none"'; ?>>
                         <div class="content">
-                            <a id="mainwp-start-video-card" class="<?php echo $enable_guided_video ? '' : 'mainwp-disabled-link'; ?>" <?php echo '' !== $video_id ? '' : 'style="display:none"'; ?> onclick="jQuery('#mainwp-update-permissions-button').fadeOut(200);jQuery('#mainwp-help-back-button').fadeIn(200);mainwp_help_modal_start_content_onclick( false, '<?php echo esc_js( $video_id ); ?>', false );return false;" >
+                            <button type="button" id="mainwp-start-video-card" class="<?php echo $enable_guided_video ? '' : 'mainwp-disabled-link'; ?>" data-video-id="<?php echo esc_attr( $video_id ); ?>" <?php echo $enable_guided_video ? '' : 'disabled aria-disabled="true"'; ?>>
                                 <div class="header"><?php esc_html_e( 'MainWP 101 Video Tour', 'mainwp' ); ?></div>
                                 <div class="ui hidden divider"></div>
                                 <i class="youtube big grey icon" style="opacity:0.5"></i>
                                 <div class="ui fitted hidden divider"></div><br/>
-                                <span class="ui grey small text"><?php esc_html_e( 'Discover the essential features of this page in our quick, step-by-step video guide.', 'mainwp' ); ?></span>
-                            </a>
+                                <span class="ui grey small text"><?php esc_html_e( 'Watch a short video guide to the features on this page.', 'mainwp' ); ?></span>
+                            </button>
                         </div>
                         <div class="content">
                             <div class="ui tiny left aligned list">
@@ -2895,8 +2944,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         </div>
                         <div class="left aligned extra content">
                             <div class="ui toggle checkbox" id="mainwp-guided-video-check">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-video-option" id="mainwp-guided-video-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_video', 0 ) ? 'checked="true"' : ''; ?> />
-                                <label><?php esc_html_e( 'Turn On / Turn Off', 'mainwp' ); ?></label>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-video-option" id="mainwp-help-video-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_video', 0 ) ? 'checked="true"' : ''; ?> />
+                                <label for="mainwp-help-video-option" data-enabled="<?php esc_attr_e( 'Enabled', 'mainwp' ); ?>" data-disabled="<?php esc_attr_e( 'Disabled', 'mainwp' ); ?>"><?php echo $enable_guided_video ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' ); ?></label>
                             </div>
                         </div>
                     </div>
@@ -2908,7 +2957,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             <div class="ui hidden divider"></div>
                             <i class="ticket big grey icon" style="opacity:0.5"></i>
                             <div class="ui fitted hidden divider"></div><br/>
-                            <span class="ui grey small text"><?php esc_html_e( 'Get in touch with our team for any inquiries or support ? we\'re here to help you.', 'mainwp' ); ?></span>
+                            <span class="ui grey small text"><?php esc_html_e( 'Contact our team about anything the assistant cannot answer.', 'mainwp' ); ?></span>
 
                             </a>
                         </div>
@@ -2934,20 +2983,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     </div>
 
                 </div>
-                <div style="display:none" id="mainwp-chatbase-chat-screen">
-                    <iframe src="" width="100%" style="height: 100%; min-height: 600px;border: none;" title="MainWP Support Assistant"></iframe>
-                </div>
+                <p id="mainwp-support-settings-help"><?php esc_html_e( 'Changes apply when you save. The page reloads if you change guided tours.', 'mainwp' ); ?></p>
+                <div class="ui message" id="mainwp-support-settings-message" role="status" aria-live="polite" data-pending="<?php esc_attr_e( 'You have unsaved support settings. Select Save Support Settings to apply them.', 'mainwp' ); ?>" data-saved="<?php esc_attr_e( 'Support settings saved.', 'mainwp' ); ?>" data-error="<?php esc_attr_e( 'Settings could not be saved. Please try again.', 'mainwp' ); ?>" style="display:none"></div>
                 <div style="display:none;position:relative;padding-bottom:56.25%;height:0;" id="mainwp-chatbase-video-screen">
                     <iframe width="420" height="315" src="" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" title="MainWP Video Tutorials"></iframe>
                 </div>
             </div>
+
             <div class="actions">
                 <div class="ui grid">
                     <div class="eight wide left aligned middle aligned column">
-                        <a href="#" style="display:none" id="mainwp-help-back-button" class="ui mini basic button" onclick="jQuery('#mainwp-help-modal-options').fadeIn(200);jQuery('#mainwp-chatbase-video-screen').fadeOut(200);jQuery('#mainwp-chatbase-chat-screen').fadeOut(200);jQuery('#mainwp-help-back-button').fadeOut(200);jQuery('#mainwp-update-permissions-button').fadeIn(200);return false;"><i class="angle left icon"></i> <?php esc_html_e( 'Back to Support Options', 'mainwp' ); ?></a>
+                        <a href="#" style="display:none" id="mainwp-help-back-button" class="ui mini basic button" onclick="jQuery('#mainwp-help-modal-options, #mainwp-support-settings-help').fadeIn(200);jQuery('#mainwp-chatbase-video-screen').fadeOut(200);jQuery('#mainwp-help-back-button').fadeOut(200);jQuery('#mainwp-update-permissions-button').fadeIn(200);return false;"><i class="angle left icon"></i> <?php esc_html_e( 'Back to Support Options', 'mainwp' ); ?></a>
                     </div>
                     <div class="eight wide right aligned middle aligned column">
-                        <a class="ui mini basic button" id="mainwp-update-permissions-button" onclick="mainwp_help_modal_content_onclick();return false;"><?php esc_html_e( 'Update Permissions', 'mainwp' ); ?></a>
+                        <button type="button" class="ui mini green button" id="mainwp-update-permissions-button" aria-describedby="mainwp-support-settings-help" onclick="mainwp_help_modal_content_onclick();return false;"><?php esc_html_e( 'Save Support Settings', 'mainwp' ); ?></button>
                     </div>
                 </div>
             </div>
@@ -2963,6 +3012,440 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 }
             });
         </script>
+        <?php
+    }
+
+    /**
+     * Method render_assistant_panel()
+     *
+     * Renders the floating Intercom-style assistant panel.
+     *
+     * This panel contains the AI chat interface and appears as a fixed
+     * bottom-right overlay. It's independent of the help modal and can
+     * be opened from the left navigation menu or the help modal's
+     * MainWP Assistant card. Includes a bottom tab bar for Home/Messages
+     * navigation (hidden on the Chat screen on desktop).
+     *
+     * @return void Outputs the assistant panel HTML.
+     */
+    public static function render_assistant_panel() {
+        // Only render if assistant is enabled.
+        if ( ! MainWP_System::is_assistant_enabled() ) {
+            return;
+        }
+
+        // The assistant is limited to unrestricted administrators; the
+        // server enforces this on every endpoint, so render no panel DOM
+        // for accounts that could never use it.
+        if ( ! MainWP_Assistant::current_user_can_use_assistant() ) {
+            return;
+        }
+
+        // Render consent modal (standalone, outside panel DOM).
+        static::render_assistant_consent_modal();
+
+        // Same treatment for the onboarding wizard: it opens over the panel,
+        // so it must not live inside the panel's stacking context.
+        MainWP_Assistant_Onboarding::render_wizard_modal();
+
+        $support_copy  = MainWP_System::assistant_support_l10n();
+        $ids           = static::get_page_tour_video_ids();
+        $tour_id       = $ids['tour_id'];
+        $video_id      = $ids['video_id'];
+        $tour_enabled  = 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 ) && ! empty( $tour_id );
+        $video_enabled = 1 === (int) get_option( 'mainwp_enable_guided_video', 0 ) && ! empty( $video_id );
+
+        // History retention is a per-user setting (1-365 days, see the History
+        // tab); the disclosure has to state the user's real value. Match the
+        // cleanup cron: exactly -1 means keep forever, while 0, any other
+        // negative, unset and non-numeric all fall back to 30 days.
+        $retention_meta    = get_user_meta( get_current_user_id(), 'mainwp_assistant_history_retention', true );
+        $retention_meta    = is_numeric( $retention_meta ) ? (int) $retention_meta : 30;
+        $retention_forever = -1 === $retention_meta;
+        $retention_days    = $retention_meta > 0 ? $retention_meta : 30;
+        ?>
+        <div id="mainwp-assistant-panel" role="dialog" aria-labelledby="mainwp-assistant-panel-title">
+            <a href="#mainwp-assistant-home-screen" class="mainwp-sr-only"><?php esc_html_e( 'Skip to assistant content', 'mainwp' ); ?></a>
+            <div class="mainwp-assistant-panel-header" tabindex="0" aria-label="<?php esc_attr_e( 'Move panel. Use the arrow keys to reposition it. Hold Shift for larger steps.', 'mainwp' ); ?>">
+                <img src="<?php echo esc_url( plugins_url( 'assets/images/mainwp-icon.svg', MAINWP_PLUGIN_FILE ) ); ?>"
+                    alt="" aria-hidden="true" class="panel-logo">
+                <span class="panel-title" id="mainwp-assistant-panel-title"><?php esc_html_e( 'MainWP Assistant', 'mainwp' ); ?></span>
+                <button class="header-action-button new-chat-button"
+                    aria-label="<?php esc_attr_e( 'New Chat', 'mainwp' ); ?>"
+                    data-tooltip="<?php esc_attr_e( 'New Chat', 'mainwp' ); ?>"
+                    data-inverted="" data-position="bottom center">
+                    <i class="edit outline icon"></i>
+                </button>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'access_insights_dashboard' ) && \mainwp_modules_is_enabled( 'logs' ) ) : ?>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=InsightsOverview' ) ); ?>"
+                    class="header-action-button insights-button"
+                    aria-label="<?php esc_attr_e( 'Insights', 'mainwp' ); ?>"
+                    data-tooltip="<?php esc_attr_e( 'Insights', 'mainwp' ); ?>"
+                    data-inverted="" data-position="bottom center">
+                    <i class="chartline icon"></i>
+                </a>
+                <?php endif; ?>
+                <span class="header-divider" aria-hidden="true"></span>
+                <button class="header-window-button minimize-button"
+                    aria-label="<?php esc_attr_e( 'Minimize', 'mainwp' ); ?>"
+                    data-tooltip="<?php esc_attr_e( 'Minimize', 'mainwp' ); ?>"
+                    data-inverted="" data-position="bottom center">
+                    <i class="window minimize icon"></i>
+                </button>
+                <button class="header-window-button maximize-button"
+                    aria-label="<?php esc_attr_e( 'Maximize', 'mainwp' ); ?>"
+                    data-tooltip="<?php esc_attr_e( 'Maximize', 'mainwp' ); ?>"
+                    data-inverted="" data-position="bottom center">
+                    <i class="expand icon"></i>
+                </button>
+                <button class="close-button" aria-label="<?php esc_attr_e( 'Close assistant panel', 'mainwp' ); ?>"><i class="times icon"></i></button>
+            </div>
+            <div id="mainwp-assistant-live-region" aria-live="polite" aria-atomic="true" class="mainwp-sr-only"></div>
+
+            <!-- Home Screen -->
+            <div class="mainwp-assistant-screen" id="mainwp-assistant-home-screen" role="region" aria-label="<?php esc_attr_e( 'Assistant home', 'mainwp' ); ?>">
+                <div class="mainwp-assistant-home-header">
+                    <div class="mainwp-assistant-home-logo">
+                        <i class="robot icon"></i>
+                    </div>
+                    <h2><?php esc_html_e( 'MainWP Assistant', 'mainwp' ); ?></h2>
+                    <p><?php esc_html_e( 'Ask questions about MainWP, or run actions on your sites.', 'mainwp' ); ?></p>
+                </div>
+
+                <div class="mainwp-assistant-home-cards">
+                    <button type="button" class="mainwp-assistant-home-card" id="mainwp-home-start-chat-card">
+                        <i class="comments outline icon"></i>
+                        <span class="mainwp-assistant-home-card-title"><?php esc_html_e( 'Start Chat', 'mainwp' ); ?></span>
+                        <span class="mainwp-assistant-home-card-desc"><?php esc_html_e( 'Ask a question', 'mainwp' ); ?></span>
+                    </button>
+                    <?php if ( $tour_enabled ) : ?>
+                    <button type="button" class="mainwp-assistant-home-card" id="mainwp-home-tour-card" data-tour-id="<?php echo esc_attr( $tour_id ); ?>">
+                        <i class="map signs icon"></i>
+                        <span class="mainwp-assistant-home-card-title"><?php esc_html_e( 'Take a Tour', 'mainwp' ); ?></span>
+                        <span class="mainwp-assistant-home-card-desc"><?php esc_html_e( 'Guided walkthrough', 'mainwp' ); ?></span>
+                    </button>
+                    <?php endif; ?>
+                    <?php if ( $video_enabled ) : ?>
+                    <button type="button" class="mainwp-assistant-home-card" id="mainwp-home-videos-card" data-video-id="<?php echo esc_attr( $video_id ); ?>">
+                        <i class="play circle outline icon"></i>
+                        <span class="mainwp-assistant-home-card-title"><?php esc_html_e( 'Watch Videos', 'mainwp' ); ?></span>
+                        <span class="mainwp-assistant-home-card-desc"><?php esc_html_e( 'Video tutorials', 'mainwp' ); ?></span>
+                    </button>
+                    <?php endif; ?>
+                    <button type="button" class="mainwp-assistant-home-card" id="mainwp-home-support-card">
+                        <i class="life ring outline icon"></i>
+                        <span class="mainwp-assistant-home-card-title"><?php esc_html_e( 'Community Forum', 'mainwp' ); ?></span>
+                        <span class="mainwp-assistant-home-card-desc"><?php esc_html_e( 'Ask other MainWP users', 'mainwp' ); ?></span>
+                    </button>
+                </div>
+
+                <div class="mainwp-assistant-home-recent">
+                    <h4><?php esc_html_e( 'Recent Conversation', 'mainwp' ); ?></h4>
+                    <div class="mainwp-assistant-home-recent-content" id="mainwp-home-recent-content">
+                        <div class="mainwp-assistant-home-recent-loading" id="mainwp-home-recent-loading">
+                            <div class="skeleton-recent">
+                                <div class="skeleton-loader skeleton-recent-title"></div>
+                                <div class="skeleton-loader skeleton-recent-snippet"></div>
+                                <div class="skeleton-loader skeleton-recent-time"></div>
+                            </div>
+                        </div>
+                        <div class="mainwp-assistant-home-recent-empty" id="mainwp-home-recent-empty" style="display:none;">
+                            <i class="inbox icon"></i>
+                            <span><?php esc_html_e( 'No recent conversations', 'mainwp' ); ?></span>
+                            <a href="#" id="mainwp-home-start-new-chat"><?php esc_html_e( 'Start a new chat', 'mainwp' ); ?></a>
+                        </div>
+                        <div class="mainwp-assistant-home-recent-preview recent-conversation-preview" id="mainwp-home-recent-preview" style="display:none;">
+                            <div class="recent-preview-title" id="mainwp-home-recent-title"></div>
+                            <div class="recent-preview-snippet" id="mainwp-home-recent-snippet"></div>
+                            <div class="recent-preview-time" id="mainwp-home-recent-time"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Screen -->
+            <div class="mainwp-assistant-screen" id="mainwp-assistant-video-screen"
+                role="region" aria-label="<?php esc_attr_e( 'Video tutorial', 'mainwp' ); ?>">
+                <div class="mainwp-assistant-video-wrapper">
+                    <iframe id="mainwp-assistant-video-iframe" src=""
+                            style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+                            title="<?php esc_attr_e( 'MainWP Video Tutorials', 'mainwp' ); ?>"
+                            loading="lazy"
+                            allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <div class="mainwp-assistant-screen" id="mainwp-assistant-chat-screen" role="region" aria-label="<?php esc_attr_e( 'Chat', 'mainwp' ); ?>">
+                <!-- First-use disclosure banner -->
+                <div class="ui info message mainwp-mintlify-disclosure" id="mainwp-mintlify-disclosure" style="display:none;">
+                    <button type="button" class="mainwp-mintlify-disclosure-dismiss" id="mainwp-mintlify-disclosure-dismiss" aria-label="<?php esc_attr_e( 'Dismiss', 'mainwp' ); ?>">
+                        <i class="times icon"></i>
+                    </button>
+                    <div class="header"><?php esc_html_e( 'Conversation History', 'mainwp' ); ?></div>
+                    <p>
+                        <?php
+                        if ( $retention_forever ) {
+                            esc_html_e( 'Conversations are saved in this Dashboard\'s database until you delete them. Change retention or turn it off in settings.', 'mainwp' );
+                        } else {
+                            printf(
+                                /* translators: %d: number of days conversations are kept. */
+                                esc_html__( 'Conversations are saved in this Dashboard\'s database for %d days so the Assistant can refer back to earlier messages. Change retention or turn it off in settings.', 'mainwp' ),
+                                (int) $retention_days
+                            );
+                        }
+                        ?>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=AssistantSettings&tab=history' ) ); ?>">
+                            <?php esc_html_e( 'Manage Settings', 'mainwp' ); ?>
+                        </a>
+                    </p>
+                </div>
+
+                <div class="mainwp-mintlify-chat-wrapper">
+                    <div class="mainwp-mintlify-chat-container" id="mainwp-mintlify-chat-container">
+                        <div class="mainwp-mintlify-messages" id="mainwp-mintlify-messages" role="log" aria-live="polite">
+                            <div class="mainwp-mintlify-welcome">
+                                <div class="mainwp-mintlify-welcome-icon">
+                                    <i class="comments outline icon"></i>
+                                </div>
+                                <div class="mainwp-mintlify-welcome-text">
+                                    <?php esc_html_e( 'Welcome to MainWP Assistant', 'mainwp' ); ?>
+                                </div>
+                                <div class="mainwp-mintlify-welcome-subtext">
+                                    <?php esc_html_e( 'Ask me anything about MainWP', 'mainwp' ); ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Running conversation cost, filled by JS for agent-mode usage. -->
+                        <div class="mainwp-assistant-session-cost" id="mainwp-assistant-session-cost" style="display:none;" data-tooltip="<?php esc_attr_e( 'Estimated conversation cost based on published per-token pricing for your AI provider. Actual billing may differ.', 'mainwp' ); ?>" data-inverted="" data-position="top center"></div>
+
+                        <!-- Daily spend cap advisory, shown by JS when the provider check reports a cap reached. -->
+                        <div class="mainwp-assistant-budget-notice" id="mainwp-assistant-budget-notice" style="display:none;" role="status">
+                            <i class="exclamation triangle icon"></i>
+                            <span>
+                                <span class="mainwp-assistant-budget-reached"><?php esc_html_e( 'This dashboard reached its daily AI spend limit, so Sites mode requests are blocked until tomorrow.', 'mainwp' ); ?></span>
+                                <span class="mainwp-assistant-budget-user-reached" style="display:none;"><?php esc_html_e( 'You reached your daily AI spend limit, so your Sites mode requests are blocked until tomorrow.', 'mainwp' ); ?></span>
+                                <span class="mainwp-assistant-budget-unavailable" style="display:none;"><?php esc_html_e( 'The AI spend total could not be read, so Sites mode requests are blocked while a daily spend limit is set.', 'mainwp' ); ?></span>
+                                <?php // Same check as the limit save handlers; anyone else lands on a tab without the limit. ?>
+                                <?php if ( current_user_can( 'manage_options' ) && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) : ?>
+                                <a href="<?php echo esc_url( admin_url( 'admin.php?page=AssistantSettings&tab=policies' ) ); ?>"><?php esc_html_e( 'Change the limit', 'mainwp' ); ?></a>
+                                <?php endif; ?>
+                            </span>
+                        </div>
+
+                        <!-- Pill input (moved above mode selector) -->
+                        <div class="mainwp-assistant-input-pill">
+                            <textarea
+                                id="mainwp-mintlify-input"
+                                placeholder="<?php esc_attr_e( 'Type your question here...', 'mainwp' ); ?>"
+                                rows="1"
+                                aria-label="<?php esc_attr_e( 'Chat message input', 'mainwp' ); ?>"
+                            ></textarea>
+                            <button
+                                id="mainwp-mintlify-send"
+                                class="mainwp-assistant-pill-send"
+                                aria-label="<?php esc_attr_e( 'Send message', 'mainwp' ); ?>"
+                            >
+                                <i class="paper plane icon"></i>
+                            </button>
+                        </div>
+
+                        <!-- Mode selector row with pill toggle -->
+                        <div class="mainwp-assistant-mode-selector">
+                            <span class="mode-label" data-tooltip="<?php esc_attr_e( 'Docs answers questions about MainWP from the official documentation. Sites works with your own sites using your AI provider and can take actions with your confirmation.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><?php esc_html_e( 'Mode:', 'mainwp' ); ?></span>
+                            <div class="mainwp-mode-toggle-group" role="radiogroup" aria-label="<?php esc_attr_e( 'Assistant mode', 'mainwp' ); ?>">
+                                <button type="button" class="mainwp-mode-pill active" data-mode="ask" role="radio" aria-checked="true">
+                                    <i class="book icon"></i>
+                                    <?php esc_html_e( 'Docs', 'mainwp' ); ?>
+                                </button>
+                                <button type="button" class="mainwp-mode-pill" data-mode="agent" role="radio" aria-checked="false">
+                                    <i class="globe icon"></i>
+                                    <?php esc_html_e( 'Sites', 'mainwp' ); ?>
+                                </button>
+                            </div>
+                            <span class="mode-selector-spacer"></span>
+                        </div>
+
+                        <!-- Info bar with mode-specific messaging -->
+                        <div class="mainwp-assistant-info-bar" id="mainwp-assistant-info-bar">
+                            <span class="info-bar-ask"><?php esc_html_e( 'Answers from MainWP documentation. Your question, this dashboard\'s address, the page you\'re on and your Assistant access settings are sent to MainWP\'s documentation service.', 'mainwp' ); ?></span>
+                            <span class="info-bar-agent" style="visibility:hidden;"><?php esc_html_e( 'Works with your sites through your configured AI provider. Actions run only after you confirm them. Responses can take 1-3 minutes.', 'mainwp' ); ?></span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages screen -->
+            <div class="mainwp-assistant-screen" id="mainwp-assistant-messages-screen" role="region" aria-label="<?php esc_attr_e( 'Conversation history', 'mainwp' ); ?>">
+                <!-- Header with New Chat button -->
+                <div class="mainwp-messages-header">
+                    <button id="mainwp-messages-new-chat-btn" class="ui mini green basic button">
+                        <i class="plus icon"></i> <?php esc_html_e( 'New Chat', 'mainwp' ); ?>
+                    </button>
+                </div>
+                <!-- Search -->
+                <div class="mainwp-messages-search">
+                    <div class="ui icon input fluid mini">
+                        <input type="text" id="mainwp-messages-search-input" placeholder="<?php esc_attr_e( 'Search conversations...', 'mainwp' ); ?>">
+                        <i class="search icon"></i>
+                    </div>
+                </div>
+                <!-- Loading state -->
+                <div id="mainwp-messages-loading" class="mainwp-messages-loading">
+                    <div class="skeleton-message-item">
+                        <div class="skeleton-loader skeleton-message-title"></div>
+                        <div class="skeleton-loader skeleton-message-meta"></div>
+                    </div>
+                    <div class="skeleton-message-item">
+                        <div class="skeleton-loader skeleton-message-title"></div>
+                        <div class="skeleton-loader skeleton-message-meta"></div>
+                    </div>
+                    <div class="skeleton-message-item">
+                        <div class="skeleton-loader skeleton-message-title"></div>
+                        <div class="skeleton-loader skeleton-message-meta"></div>
+                    </div>
+                </div>
+                <!-- Empty state -->
+                <div id="mainwp-messages-empty" class="mainwp-messages-empty" style="display:none;">
+                    <i class="inbox icon"></i>
+                    <p><?php esc_html_e( 'No conversations yet', 'mainwp' ); ?></p>
+                    <a href="#" id="mainwp-messages-start-chat"><?php esc_html_e( 'Start a new chat', 'mainwp' ); ?></a>
+                </div>
+                <!-- Conversation list (populated by JS) -->
+                <div id="mainwp-messages-conversation-list"></div>
+                <!-- Delete confirmation modal -->
+                <div class="ui mini modal" id="mainwp-messages-delete-modal">
+                    <div class="header"><i class="trash icon"></i> <?php esc_html_e( 'Delete Conversation', 'mainwp' ); ?></div>
+                    <div class="content">
+                        <p id="mainwp-messages-delete-message"></p>
+                    </div>
+                    <div class="actions">
+                        <div class="ui cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></div>
+                        <div class="ui red approve button" id="mainwp-messages-delete-confirm"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mainwp-assistant-screen" id="mainwp-assistant-support-screen" role="region" aria-label="<?php echo esc_attr( $support_copy['menu'] ); ?>"></div>
+
+            <!-- Bottom tab bar for screen navigation -->
+            <nav class="mainwp-assistant-tab-bar" role="tablist" aria-label="<?php esc_attr_e( 'Assistant navigation', 'mainwp' ); ?>">
+                <button class="mainwp-assistant-tab active" role="tab" aria-selected="true" aria-controls="mainwp-assistant-home-screen" data-screen="home">
+                    <i class="home icon"></i>
+                    <span><?php esc_html_e( 'Home', 'mainwp' ); ?></span>
+                </button>
+                <button class="mainwp-assistant-tab" role="tab" aria-selected="false" aria-controls="mainwp-assistant-messages-screen" data-screen="messages">
+                    <i class="comments icon"></i>
+                    <span><?php esc_html_e( 'Messages', 'mainwp' ); ?></span>
+                </button>
+                <button class="mainwp-assistant-tab" role="tab" aria-selected="false" aria-controls="mainwp-assistant-support-screen" data-screen="support">
+                    <i class="life ring outline icon"></i>
+                    <span><?php echo esc_html( $support_copy['menu'] ); ?></span>
+                </button>
+                <a class="mainwp-assistant-tab mainwp-assistant-tab-external" href="<?php echo esc_url( admin_url( 'admin.php?page=AssistantSettings' ) ); ?>" aria-label="<?php esc_attr_e( 'Settings (opens the Assistant Settings page)', 'mainwp' ); ?>">
+                    <i class="cog icon"></i>
+                    <span><?php esc_html_e( 'Settings', 'mainwp' ); ?><i class="external alternate icon mainwp-assistant-tab-external-icon" aria-hidden="true"></i></span>
+                </a>
+            </nav>
+
+            <div class="mainwp-assistant-resize-handle mainwp-resize-tl" data-corner="tl" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Resize panel from the top-left corner. Use the arrow keys.', 'mainwp' ); ?>"></div>
+            <div class="mainwp-assistant-resize-handle mainwp-resize-tr" data-corner="tr" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Resize panel from the top-right corner. Use the arrow keys.', 'mainwp' ); ?>"></div>
+            <div class="mainwp-assistant-resize-handle mainwp-resize-bl" data-corner="bl" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Resize panel from the bottom-left corner. Use the arrow keys.', 'mainwp' ); ?>"></div>
+            <div class="mainwp-assistant-resize-handle mainwp-resize-br" data-corner="br" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Resize panel from the bottom-right corner. Use the arrow keys.', 'mainwp' ); ?>"></div>
+        </div>
+        <?php
+        // The panel script runs after the whole page loads, so an open panel would
+        // vanish on every navigation and reappear. This restores its saved place
+        // before the first paint; the panel script then takes over as usual.
+        wp_print_inline_script_tag(
+            "(function(){try{var s=window.localStorage,p=document.getElementById('mainwp-assistant-panel');" .
+            "if(!p||s.getItem('mainwp_assistant_panel_open')!=='true'||s.getItem('mainwp_assistant_panel_state')==='minimized'||window.innerWidth<=768){return;}" .
+            "if(s.getItem('mainwp_assistant_panel_state')==='maximized'){p.classList.add('maximized');}else{var g=JSON.parse(s.getItem('mainwp_assistant_geometry')||'null');" .
+            "if(g&&isFinite(g.x)&&isFinite(g.y)&&isFinite(g.w)&&isFinite(g.h)){p.style.left=g.x+'px';p.style.top=g.y+'px';p.style.width=g.w+'px';p.style.height=g.h+'px';p.style.right='auto';p.style.bottom='auto';}}" .
+            "var c=document.getElementById('mainwp-assistant-'+(s.getItem('mainwp_assistant_current_screen')||'home')+'-screen');if(c){c.classList.add('active');}" .
+            "p.style.display='flex';}catch(e){}})();"
+        );
+    }
+
+    /**
+     * Render the consent gate modal for assistant features.
+     *
+     * Rendered standalone (outside the assistant panel) to avoid stacking context issues.
+     * Shows a checklist of privacy assurances and requires admin opt-in before
+     * Chat, Tour, or Video features become available.
+     *
+     * @since 6.0.0
+     *
+     * @return void Outputs the consent modal HTML.
+     */
+    public static function render_assistant_consent_modal() {
+        if ( ! MainWP_System::is_assistant_enabled() ) {
+            return;
+        }
+
+        $agent_available = MainWP_Assistant::agent_mode_available();
+        // Keyed on a Google key being present, not on agent mode: an OpenAI or
+        // Anthropic dashboard must never read Gemini free-tier terms.
+        $google_free_key      = MainWP_Assistant_Onboarding::google_free_key_configured();
+        $guided_tours_enabled = 1 === (int) get_option( 'mainwp_enable_guided_tours', 0 );
+        $guided_video_enabled = 1 === (int) get_option( 'mainwp_enable_guided_video', 0 );
+        ?>
+        <!-- Assistant features consent modal -->
+        <div class="ui small modal" id="mainwp-assistant-consent-modal" role="dialog" aria-modal="true" aria-labelledby="mainwp-assistant-consent-title" aria-describedby="mainwp-assistant-consent-body">
+            <div class="header" id="mainwp-assistant-consent-title">
+                <i class="shield alternate icon"></i>
+                <?php esc_html_e( 'Enable Assistant Features', 'mainwp' ); ?>
+            </div>
+            <div class="content" id="mainwp-assistant-consent-body">
+                <p><?php esc_html_e( 'Before using Chat, Tour, and Video features, please review how the assistant handles your data:', 'mainwp' ); ?></p>
+                <ul class="mainwp-assistant-consent-checklist">
+                    <li>
+                        <i class="green check circle icon"></i>
+                        <?php esc_html_e( 'Conversations are stored locally on your dashboard by default.', 'mainwp' ); ?>
+                    </li>
+                    <li>
+                        <i class="yellow exclamation circle icon"></i>
+                        <?php esc_html_e( 'Chat requests may be sent to MainWP documentation services to answer support questions.', 'mainwp' ); ?>
+                    </li>
+                    <?php if ( $agent_available ) : ?>
+                    <li>
+                        <i class="yellow exclamation circle icon"></i>
+                        <?php esc_html_e( 'If you use Sites mode, prompts and returned results may be transmitted to the AI provider configured on this site under its terms.', 'mainwp' ); ?>
+                    </li>
+                    <?php endif; ?>
+                    <?php if ( $google_free_key ) : ?>
+                    <li>
+                        <i class="yellow exclamation circle icon"></i>
+                        <?php esc_html_e( 'Google\'s free Gemini tier is free because Google may use these requests to improve its products, including review by human reviewers. This doesn\'t apply to users in the EEA, UK, or Switzerland, and it doesn\'t apply to paid Google API keys.', 'mainwp' ); ?>
+                    </li>
+                    <?php endif; ?>
+                    <?php if ( $guided_tours_enabled || $guided_video_enabled ) : ?>
+                    <li>
+                        <i class="yellow exclamation circle icon"></i>
+                        <?php esc_html_e( 'Guided tours and video tutorials use external services when those options are enabled.', 'mainwp' ); ?>
+                    </li>
+                    <?php endif; ?>
+                    <li>
+                        <i class="green check circle icon"></i>
+                        <?php esc_html_e( 'You can manage AI connections under Settings > Connectors, turn off external guides, or delete stored conversations at any time.', 'mainwp' ); ?>
+                    </li>
+                    <li>
+                        <i class="green check circle icon"></i>
+                        <?php esc_html_e( 'The assistant sends the prompts and context you submit. It does not send your stored site credentials.', 'mainwp' ); ?>
+                    </li>
+                </ul>
+                <div class="mainwp-consent-error" id="mainwp-assistant-consent-error" style="display:none;"></div>
+            </div>
+            <div class="actions">
+                <button class="ui cancel button" id="mainwp-assistant-consent-cancel">
+                    <?php esc_html_e( 'Cancel', 'mainwp' ); ?>
+                </button>
+                <button class="ui green button" id="mainwp-assistant-consent-accept">
+                    <i class="check icon"></i> <?php esc_html_e( 'Enable & Continue', 'mainwp' ); ?>
+                </button>
+            </div>
+        </div>
         <?php
     }
 
@@ -3251,9 +3734,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * Renders the content for empty elements.
      *
-     * @param string $title Title text.
-     * @param string $message Message text.
-     * @param string $icon Icon HTML markup.
+     * @param string $title   Placeholder title text.
+     * @param string $message Placeholder message text.
+     * @param string $icon    Placeholder icon HTML markup.
      */
     public static function render_empty_element_placeholder( $title = '', $message = '', $icon = '' ) {
         ?>

@@ -39,6 +39,7 @@ If you think something could be improved and you're able to do so, make your cha
 * Make the changes to your forked repository
   * **Ensure you stick to the [WordPress Coding Standards](http://make.wordpress.org/core/handbook/coding-standards/php/).**
   * Ensure you use LF line endings - no crazy Windows line endings please :)
+  * **Name the sniff on any new `phpcs:ignore`.** A bare `// phpcs:ignore` silences every sniff on that line, including sniffs added to the standard years later, so it hides problems nobody has written a rule for yet. Write `// phpcs:ignore WordPress.Security.EscapeOutput -- $url is esc_url_raw'd above.` instead. A reason alone (`// phpcs:ignore -- because.`) still counts as bare, as does the legacy `// @codingStandardsIgnoreLine`. Run `bin/phpcs-ignore-ratchet.sh` before you push; it grandfathers the suppressions already in the tree and fails on new ones.
 * When committing, reference your issue number (#1234) and include a note about the fix
 * Push the changes to your fork and submit a pull request on the master branch of the MainWP Dashboard repository. Existing maintenance branches will be maintained by MainWP developers
 * Please **don't** modify the changelog - this will be maintained by the MainWP developers.

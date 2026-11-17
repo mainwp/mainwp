@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 7.1.4
+Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 6.4.2.1
+Stable tag: 6.5
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -153,6 +153,26 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.5 - 11-17-2026 =
+
+* Added: Introduced "MainWP Assistant" with "Docs" mode for questions about MainWP documentation and "Sites" mode for working with connected sites through your configured AI provider. Open it from the command palette, revisit past conversations, and track usage in "Assistant Insights".
+* Added: Enabled supported AI apps such as Claude and ChatGPT to connect directly to MainWP Dashboard over remote MCP. Manage app access, tool permissions, and approval settings on the "MainWP MCP" page.
+* Added: Introduced a "MainWP MCP" filter in "Network Activity" that can also be saved in a segment.
+* Added: Enabled bulk deletion of selected backups in "Built-In Backups".
+* Added: Enabled deletion of safety backups from "Restore History" after you verify the restored site. Deleting a safety backup removes the "Roll Back" option for that restore. Requires MainWP Child 6.5.
+* Added: Enabled nightly updates and changelogs for add-ons through "MainWP Early Access".
+* Fixed: Corrected REST API user management so regular users can be edited or deleted while the account used to connect the site stays protected from deletion and role changes.
+* Fixed: Resolved a recovery passphrase setup failure for administrators whose WordPress passwords contain an apostrophe.
+* Fixed: Prevented empty backup files from being uploaded to S3-compatible storage.
+* Fixed: Resolved an issue where deleting backups over SFTP left empty snapshot folders behind.
+* Fixed: Corrected older saved "Operations" layouts that squeezed widgets into a narrow column.
+* Updated: Improved cloud backup reliability when uploads encounter temporary errors or backup tasks run across multiple sites.
+* Updated: Increased upload speeds during backup restores.
+* Updated: Recorded the server response code in run history when a backup download fails.
+* Updated: Simplified saving "Help" settings and clarified when a page reload is required.
+* Updated: Moved "Reconnect all" next to the pagination controls in the "Connection Status" widget.
+* Updated: Clarified the notice shown when an older scheduled task still uses a URL without its security key.
 
 = 6.4.2.1 - 11-10-2026 =
 

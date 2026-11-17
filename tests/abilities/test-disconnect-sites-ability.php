@@ -119,14 +119,120 @@ class Test_DisconnectSites_Ability extends MainWP_Abilities_Test_Case {
 
         $this->assertWPError( $result, 'Invalid input should return WP_Error.' );
 
-        // An explicit null must be rejected, not silently widen the operation to
-        // every site like an omitted key does. Core schema validation catches it
-        // before the executor guard, so the error code is core's, not ours.
+        // An explicit null is rejected like an empty or omitted list. Core schema
+        // validation catches it before the executor guard, so the error code is
+        // core's, not ours.
         $result = $this->execute_ability( 'mainwp/disconnect-sites-v1', [
             'site_ids_or_domains' => null,
         ] );
 
         $this->assertWPError( $result, 'Explicit null should return WP_Error.' );
+    }
+
+    /**
+     * An empty site list is refused and never widened to every site.
+     *
+     * @return void
+     */
+    public function test_disconnect_sites_refuses_empty_list() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site( [
+            'name' => 'Untouched Site',
+            'url'  => 'https://test-disconnect-sites-empty.example.com/',
+        ] );
+
+        $result = $this->execute_ability( 'mainwp/disconnect-sites-v1', [
+            'site_ids_or_domains' => [],
+        ] );
+
+        $this->assertWPError( $result, 'Empty list should return WP_Error.' );
+        $this->assertSame( 'ability_invalid_input', $result->get_error_code(), 'The schema minItems rule rejects an empty list.' );
+        $this->assertSame( '', (string) \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id )->sync_errors, 'The site must stay connected.' );
+    }
+
+    /**
+     * An omitted site list is refused the same way.
+     *
+     * @return void
+     */
+    public function test_disconnect_sites_refuses_omitted_list() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site( [
+            'name' => 'Untouched Site',
+            'url'  => 'https://test-disconnect-sites-omitted.example.com/',
+        ] );
+
+        $result = $this->execute_ability( 'mainwp/disconnect-sites-v1', [] );
+
+        $this->assertWPError( $result, 'Omitted list should return WP_Error.' );
+        $this->assertSame( 'ability_invalid_input', $result->get_error_code(), 'The schema requires site_ids_or_domains.' );
+        $this->assertSame( '', (string) \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id )->sync_errors, 'The site must stay connected.' );
+    }
+
+    /**
+     * The executor refuses an empty list even when schema validation is bypassed.
+     *
+     * @return void
+     */
+    public function test_disconnect_sites_executor_refuses_empty_list() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        foreach ( [ [], [ 'site_ids_or_domains' => [] ] ] as $input ) {
+            $result = \MainWP\Dashboard\MainWP_Abilities_Sites::execute_disconnect_sites( $input );
+            $this->assertWPError( $result );
+            $this->assertSame( 'mainwp_invalid_input', $result->get_error_code() );
+        }
+    }
+
+    /**
+     * The input schema requires a non-empty list and has no empty default.
+     *
+     * @return void
+     */
+    public function test_disconnect_sites_schema_requires_sites() {
+        $this->skip_if_no_abilities_api();
+
+        $schema = wp_get_ability( 'mainwp/disconnect-sites-v1' )->get_input_schema();
+        $list   = $schema['properties']['site_ids_or_domains'];
+
+        $this->assertSame( [ 'site_ids_or_domains' ], $schema['required'] );
+        $this->assertSame( 1, $list['minItems'] );
+        $this->assertArrayNotHasKey( 'default', $list );
+    }
+
+    /**
+     * An explicit list acts on exactly the listed sites.
+     *
+     * @return void
+     */
+    public function test_disconnect_sites_acts_on_explicit_list() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site( [
+            'name' => 'Listed Site',
+            'url'  => 'https://test-disconnect-sites-listed.example.com/',
+        ] );
+        $other_id = $this->create_test_site( [
+            'name' => 'Unlisted Site',
+            'url'  => 'https://test-disconnect-sites-unlisted.example.com/',
+        ] );
+
+        $result = $this->execute_ability( 'mainwp/disconnect-sites-v1', [
+            'site_ids_or_domains' => [ $site_id ],
+        ] );
+
+        $this->assertNotWPError( $result );
+        $this->assertSame( 1, $result['total_disconnected'] );
+        $this->assertSame( $site_id, $result['disconnected'][0]['id'] );
+        $db = \MainWP\Dashboard\MainWP_DB::instance();
+        $this->assertNotSame( '', (string) $db->get_website_by_id( $site_id )->sync_errors, 'The listed site is disconnected.' );
+        $this->assertSame( '', (string) $db->get_website_by_id( $other_id )->sync_errors, 'The unlisted site is left alone.' );
     }
 
     /**
@@ -150,7 +256,7 @@ class Test_DisconnectSites_Ability extends MainWP_Abilities_Test_Case {
             for ( $i = 1; $i <= 3; $i++ ) {
                 $site_ids[] = $this->create_test_site( [
                     'name' => "Batch Test Site {$i}",
-                    'url'  => "https://batch-disconnect-{$i}.example.com/",
+                    'url'  => "https://test-batch-disconnect-{$i}.example.com/",
                 ] );
             }
 

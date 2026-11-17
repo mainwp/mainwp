@@ -955,7 +955,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                                     <?php if ( empty( $subscription->note ) ) : ?>
                                         <a href="javascript:void(0)" class="item mainwp-edit-sub-note"><?php esc_html_e( 'Add Notes', 'mainwp' ); ?></a>
                                     <?php else : ?>
-                                        <a href="javascript:void(0)" class="item mainwp-edit-sub-note" data-tooltip="<?php echo esc_attr( substr( wp_unslash( $strip_note ), 0, 100 ) ); ?>" data-position="left center" data-inverted=""><?php esc_html_e( 'View Notes', 'mainwp' ); ?></a>
+                                        <a href="javascript:void(0)" class="item mainwp-edit-sub-note" data-tooltip="<?php echo MainWP_Utility::esc_note_attr( wp_unslash( $strip_note ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped by esc_note_attr(). ?>" data-position="left center" data-inverted=""><?php esc_html_e( 'View Notes', 'mainwp' ); ?></a>
                                     <?php endif; ?>
                                     <span style="display: none" id="sub-notes-<?php echo intval( $subscription->id ); ?>-note"><?php echo wp_unslash( $esc_note ); //phpcs:ignore -- escaped. ?></span>
                                     <a class="item subscription_menu_item_delete" href="javascript:void(0)"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>

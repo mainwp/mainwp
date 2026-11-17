@@ -465,7 +465,6 @@ let mainwp_import_users_next = function () {
     }
 
     if (0 == pos_data.length) {
-        console.log('Error: import user data!');
         return;
     }
 

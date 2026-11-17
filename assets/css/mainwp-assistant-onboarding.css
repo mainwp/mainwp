@@ -1,0 +1,341 @@
+/**
+ * MainWP Assistant onboarding styles
+ *
+ * The connect-free-AI wizard modal, the chat card that launches it, and the
+ * provider advisory line under error bubbles. Loaded on every page that
+ * renders the assistant panel and on the Assistant Settings page.
+ *
+ * @package MainWP/Dashboard
+ */
+
+/* The assistant panel sits at z-index 9999, so the wizard and its dimmer have
+   to clear it the same way the consent modal does. */
+.ui.dimmer.modals:has(#mainwp-assistant-onboarding-modal) {
+    z-index: 10050;
+}
+
+#mainwp-assistant-onboarding-modal {
+    z-index: 10100;
+}
+
+/* Fomantic gives .ui.button, .ui.message and the panels an explicit display,
+   which outranks the browser's [hidden] rule. The wizard toggles every panel,
+   outcome and action button through that attribute, so it has to win here. */
+#mainwp-assistant-onboarding-modal [hidden] {
+    display: none !important;
+}
+
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-steps {
+    width: 100%;
+    margin-bottom: 1.25rem;
+}
+
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 6rem;
+    color: var(--mainwp-secondary-text-color, #73777b);
+}
+
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-instructions {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+    line-height: 1.7;
+}
+
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-illustration {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    margin: 0 0 1rem;
+}
+
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-disclosure {
+    color: var(--mainwp-secondary-text-color, #73777b);
+    background: var(--mainwp-secondary-background-color, #fbfbfc);
+    box-shadow: none;
+    border: 1px solid var(--mainwp-secondary-border-color, #e8e8eb);
+    border-radius: var(--input-radius, 5px);
+    line-height: 1.6;
+}
+
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-hint {
+    margin-top: 0.5rem;
+    font-size: 0.85em;
+    color: var(--mainwp-warning-color, #d7b33e);
+}
+
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-working {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 6rem;
+    color: var(--mainwp-secondary-text-color, #73777b);
+}
+
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-success {
+    min-height: 6rem;
+}
+
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-suggestion {
+    color: var(--mainwp-secondary-text-color, #73777b);
+    font-style: italic;
+}
+
+/* Google's own error text. It can be long and it is not a sentence we wrote,
+   so it gets its own quieter line under the message we did write. */
+#mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-provider-message,
+.mainwp-assistant-error-detail {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--mainwp-secondary-border-color, #e8e8eb);
+    font-size: 0.85em;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    opacity: 0.85;
+}
+
+/* ===== Connect card in the chat stream ===== */
+
+.mainwp-assistant-connect-card.ui.segment {
+    margin: 0;
+    border-radius: var(--area-radius, 1rem);
+    border: 1px solid var(--mainwp-secondary-border-color, #e8e8eb);
+    background: var(--mainwp-secondary-background-color, #fbfbfc);
+    box-shadow: none;
+}
+
+.mainwp-assistant-connect-card .mainwp-assistant-connect-title {
+    font-weight: 700;
+    color: var(--mainwp-primary-text-color, #202427);
+    margin-bottom: 0.25rem;
+}
+
+.mainwp-assistant-connect-card .mainwp-assistant-connect-lead {
+    color: var(--mainwp-secondary-text-color, #73777b);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.mainwp-assistant-connect-card .mainwp-assistant-connect-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.mainwp-assistant-connect-card .mainwp-assistant-connect-alt {
+    font-size: 0.85em;
+}
+
+.mainwp-assistant-connect-card .mainwp-assistant-connect-disclosure {
+    margin-top: 0.75rem;
+    font-size: 0.8em;
+    line-height: 1.5;
+    color: var(--mainwp-secondary-text-color, #73777b);
+}
+
+.mainwp-assistant-connect-card .mainwp-assistant-connect-dismiss {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--mainwp-secondary-text-color, #73777b);
+}
+
+.mainwp-assistant-connect-card {
+    position: relative;
+}
+
+/* ===== Providers tab ===== */
+
+#mainwp-assistant-connection-tab .mainwp-assistant-connect-segment {
+    border-left: 3px solid var(--mainwp-accent-color, #7fb100);
+}
+
+#mainwp-assistant-connection-tab .mainwp-assistant-connect-note {
+    margin-top: 0.5rem;
+    color: var(--mainwp-secondary-text-color, #73777b);
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+#mainwp-assistant-connection-tab .mainwp-assistant-key-masked {
+    font-family: monospace;
+}
+
+/* ===== Narrow panels and screens ===== */
+
+@media (max-width: 768px) {
+    #mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-steps .step .title {
+        font-size: 0.8em;
+    }
+
+    .mainwp-assistant-connect-card .mainwp-assistant-connect-actions {
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    #mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-steps {
+        flex-direction: column;
+    }
+
+    /* Fomantic's action input keeps the field at its intrinsic width, which
+       pushes it off-canvas at phone widths; let it shrink inside the flex row. */
+    #mainwp-assistant-onboarding-modal .ui.action.input {
+        display: flex;
+        width: 100%;
+    }
+
+    #mainwp-assistant-onboarding-modal .ui.action.input > input {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* !important: the dashboard's small-screen rules give buttons a 50%
+       min-width, which would split this row in half. */
+    #mainwp-assistant-onboarding-modal .ui.action.input > .button {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    #mainwp-assistant-onboarding-modal .mainwp-assistant-onboarding-illustration {
+        max-width: 100%;
+    }
+
+    .mainwp-assistant-connect-card .mainwp-assistant-connect-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.ui.dimmer.modals:has(.mainwp-assistant-connection-modal) {
+    z-index: 10050;
+}
+
+.mainwp-assistant-connection-modal.ui.modal {
+    z-index: 10100;
+    color: var(--mainwp-text);
+    background: var(--mainwp-element-background);
+    border-radius: var(--area-radius);
+}
+
+.mainwp-assistant-connection-modal [hidden],
+#mainwp-assistant-chatgpt-card [hidden],
+#mainwp-assistant-plan-indicator[hidden] {
+    display: none !important;
+}
+
+.mainwp-assistant-connection-choice + .mainwp-assistant-connection-choice {
+    border-top: 1px solid var(--mainwp-border);
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+.mainwp-assistant-connection-choice h3,
+.mainwp-assistant-plan-card h3,
+#mainwp-assistant-connection-tab .mainwp-assistant-site-connection > h3 {
+    color: var(--mainwp-text-header);
+    font-size: 1em;
+    margin: 0 0 0.75rem;
+}
+
+.mainwp-assistant-connection-choice p,
+.mainwp-assistant-plan-card p {
+    overflow-wrap: anywhere;
+}
+
+.mainwp-assistant-connection-choice .mainwp-assistant-connect-note {
+    color: var(--mainwp-text-secondary);
+    margin-top: 0.75rem;
+}
+
+.mainwp-assistant-connection-choice .mainwp-assistant-connect-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#mainwp-assistant-connection-tab .mainwp-assistant-site-connection {
+    margin-top: 1.5rem;
+}
+
+/* Same divider the ChatGPT choice above uses between its own sections. */
+#mainwp-assistant-chatgpt-card + .mainwp-assistant-site-connection {
+    border-top: 1px solid var(--mainwp-border);
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+.mainwp-assistant-connection-modal [data-restart] {
+    margin: 0 0.75rem;
+}
+
+.mainwp-assistant-connection-modal .mainwp-assistant-chatgpt-steps {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+    line-height: 1.7;
+}
+
+.mainwp-assistant-connection-modal .mainwp-assistant-chatgpt-reopen {
+    margin: 0.75rem 0 0;
+    font-size: 0.9em;
+}
+
+@media (max-width: 480px) {
+    .mainwp-assistant-connection-modal .ui.action.input {
+        display: flex;
+        width: 100%;
+    }
+
+    .mainwp-assistant-connection-modal .ui.action.input > input {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* !important: the dashboard's small-screen rules give buttons a 50%
+       min-width, which would split this row in half. */
+    .mainwp-assistant-connection-modal .ui.action.input > .button {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+}
+
+.mainwp-mintlify-error-message .mainwp-assistant-error-actions {
+    margin-top: 0.5rem;
+}
+
+.mainwp-assistant-plan-card .ui.dropdown {
+    max-width: 22rem;
+}
+
+.mainwp-assistant-plan-card .ui.form {
+    margin-bottom: 1rem;
+}
+
+.mainwp-assistant-connection-choice .button,
+.mainwp-assistant-plan-card .button {
+    margin-bottom: 0.5rem;
+}
+
+#mainwp-assistant-plan-indicator {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-left: 0.25rem;
+    color: var(--mainwp-secondary-text-color, #6b7280);
+    font-size: 0.75rem;
+}
+
+#mainwp-assistant-plan-indicator a {
+    color: var(--mainwp-link-color);
+}

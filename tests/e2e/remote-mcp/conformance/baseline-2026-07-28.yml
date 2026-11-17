@@ -1,0 +1,52 @@
+# Expected failures for `conformance server --requirements 2026-07-28` (pinned 0.2.0-alpha.12).
+# Only three classes may appear, each entry tagged with its class and a reason:
+#   (a) a capability v1 doesn't declare  (b) a fixture tool or prompt a real server doesn't have
+#   (c) a scenario that would only test the harness proxy
+# Any other failure is a finding for review, not a new entry. Scenarios left out on purpose
+# because they apply to us: server-stateless, tools-list, prompts-list, caching (except the
+# resource checks below), input-required-result-unsupported-methods.
+server:
+  - completion-complete:completion-complete # (a) completions are not declared in v1
+  - tools-call-simple-text:tools-call-simple-text # (b) calls the fixture tool test_simple_text
+  - tools-call-image:tools-call-image # (b) calls the fixture tool test_image_content
+  - tools-call-audio:tools-call-audio # (b) calls the fixture tool test_audio_content
+  - tools-call-embedded-resource:tools-call-embedded-resource # (b) calls the fixture tool test_embedded_resource
+  - tools-call-mixed-content:tools-call-mixed-content # (b) calls the fixture tool test_multiple_content_types
+  - tools-call-error:tools-call-error # (b) its only check calls the fixture tool test_error_handling
+  - tools-call-with-progress:tools-call-with-progress # (b) calls the fixture tool test_tool_with_progress
+  - resources-list:resources-list # (a) resources are not declared in v1
+  - resources-read-text:resources-read-text # (a) resources are not declared in v1
+  - resources-read-binary:resources-read-binary # (a) resources are not declared in v1
+  - resources-templates-read:resources-templates-read # (a) resources are not declared in v1
+  - sep-2164-resource-not-found:sep-2164-error-code # (a) resources are not declared in v1
+  - sep-2164-resource-not-found:sep-2164-data-uri # (a) resources are not declared in v1
+  - prompts-get-simple:prompts-get-simple # (b) gets the fixture prompt test_simple_prompt
+  - prompts-get-with-args:prompts-get-with-args # (b) gets the fixture prompt test_prompt_with_arguments
+  - prompts-get-embedded-resource:prompts-get-embedded-resource # (b) gets the fixture prompt test_prompt_with_embedded_resource
+  - prompts-get-with-image:prompts-get-with-image # (b) gets the fixture prompt test_prompt_with_image
+  - dns-rebinding-protection:localhost-host-rebinding-rejected # (c) the proxy rewrites Host, so this would test the proxy
+  - caching:sep-2549-resources-read-caching-hints # (a) needs resources/read; resources are not declared in v1
+  - input-required-result-basic-elicitation:sep-2322-elicitation-incomplete # (b) calls the fixture tool test_input_required_result_elicitation
+  - input-required-result-basic-elicitation:sep-2322-elicitation-complete # (b) calls the fixture tool test_input_required_result_elicitation
+  - input-required-result-basic-sampling:sep-2322-sampling-incomplete # (b) calls the fixture tool test_input_required_result_sampling
+  - input-required-result-basic-sampling:sep-2322-sampling-complete # (b) calls the fixture tool test_input_required_result_sampling
+  - input-required-result-basic-list-roots:sep-2322-list-roots-incomplete # (b) calls the fixture tool test_input_required_result_list_roots
+  - input-required-result-basic-list-roots:sep-2322-list-roots-complete # (b) calls the fixture tool test_input_required_result_list_roots
+  - input-required-result-request-state:sep-2322-request-state-incomplete # (b) calls the fixture tool test_input_required_result_request_state
+  - input-required-result-request-state:sep-2322-request-state-complete # (b) calls the fixture tool test_input_required_result_request_state
+  - input-required-result-multiple-input-requests:sep-2322-multiple-inputs-incomplete # (b) calls the fixture tool test_input_required_result_multiple_inputs
+  - input-required-result-multiple-input-requests:sep-2322-multiple-inputs-complete # (b) calls the fixture tool test_input_required_result_multiple_inputs
+  - input-required-result-multi-round:sep-2322-multi-round-r1 # (b) calls the fixture tool test_input_required_result_multi_round
+  - input-required-result-multi-round:sep-2322-multi-round-r2 # (b) calls the fixture tool test_input_required_result_multi_round
+  - input-required-result-multi-round:sep-2322-multi-round-r3 # (b) calls the fixture tool test_input_required_result_multi_round
+  - input-required-result-missing-input-response:sep-2322-missing-response-rerequests # (b) calls the fixture tool test_input_required_result_elicitation
+  - input-required-result-non-tool-request:sep-2322-non-tool-incomplete # (b) gets the fixture prompt test_input_required_result_prompt
+  - input-required-result-non-tool-request:sep-2322-non-tool-complete # (b) gets the fixture prompt test_input_required_result_prompt
+  - input-required-result-result-type:sep-2322-result-type-included # (b) calls the fixture tool test_input_required_result_elicitation
+  - input-required-result-tampered-state:sep-2322-reject-tampered-state # (b) calls the fixture tool test_input_required_result_tampered_state
+  - input-required-result-capability-check:sep-2322-respect-client-capabilities # (b) calls the fixture tool test_input_required_result_capabilities
+  - input-required-result-ignore-extra-params:sep-2322-ignore-unexpected-params # (b) calls the fixture tool test_input_required_result_elicitation
+  - input-required-result-validate-input:sep-2322-validate-input-responses # (b) calls the fixture tool test_input_required_result_elicitation
+  - input-required-result-validate-input:sep-2322-error-on-protocol-error # (b) calls the fixture tool test_input_required_result_elicitation
+  - caching:sep-2549-resources-list-caching-hints # (a) needs resources/list; resources are not declared in v1
+  - caching:sep-2549-resources-templates-list-caching-hints # (a) needs resources/templates/list; resources are not declared in v1

@@ -111,6 +111,10 @@ jobs:
         if: ${{ !cancelled() && steps.wordpress_tests.outcome == 'success' }}
         run: ./vendor/bin/phpunit --testsuite=Backup
 
+      - name: Run PHPUnit - Remote MCP
+        if: ${{ !cancelled() && steps.wordpress_tests.outcome == 'success' }}
+        run: ./vendor/bin/phpunit --testsuite="Remote MCP"
+
       - name: Run PHPUnit - REST Key Authentication
         if: ${{ !cancelled() && steps.wordpress_tests.outcome == 'success' }}
         run: ./vendor/bin/phpunit --testsuite="REST Key Authentication"
@@ -149,12 +153,12 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-progress --prefer-dist
 
-      # Scoped to the native-backups surface, which is phpcs-clean today.
+      # Scoped to the native-backups and remote MCP surfaces, which are phpcs-clean today.
       # The wider legacy codebase carries pre-existing violations; broaden
       # this to the whole repo once that debt is paid down. Test suites run
       # under their own ruleset below: phpcs.xml excludes */tests/*, which
       # silently zeroes any tests/ path passed here.
-      - name: Run PHPCS (native-backups surface)
+      - name: Run PHPCS (native-backups and remote MCP surfaces)
         run: >-
           ./vendor/bin/phpcs --standard=phpcs.xml
           class/backup/
@@ -164,6 +168,9 @@ jobs:
           pages/page-mainwp-manage-backups-handler.php
           pages/page-mainwp-manage-backups.php
           modules/logs/connectors/class-connector-backup.php
+          modules/remote-mcp/
+          pages/page-mainwp-mcp.php
+          pages/page-mainwp-ai.php
 
       - name: Run PHPCS (backup test suites)
         run: ./vendor/bin/phpcs --standard=phpcs-tests.xml

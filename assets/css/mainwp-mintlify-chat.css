@@ -1,0 +1,859 @@
+/**
+ * MainWP Mintlify Chat Styles
+ *
+ * Styling for the native Mintlify Assistant chat interface.
+ * Uses Fomantic UI classes where appropriate.
+ *
+ * @package MainWP/Dashboard
+ * @since   5.4
+ */
+
+/* ==========================================================================
+   Chat Container Layout
+   ========================================================================== */
+
+/* Main chat container - full height with flex layout */
+.mainwp-mintlify-chat-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+    background: var(--mainwp-primary-background-color, #ffffff);
+    border-radius: 4px;
+}
+
+/* Message list area - scrollable */
+.mainwp-mintlify-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background: var(--mainwp-secondary-background-color, #f9fafb);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================================================
+   Message Bubbles
+   ========================================================================== */
+
+/* Base message styling */
+.mainwp-mintlify-message {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    max-width: 80%;
+    min-width: 0;
+    font-family: inherit;
+    animation: mintlify-fadeIn 0.3s ease-in;
+}
+
+/* Suppress per-message entrance animations during conversation restore. */
+.batch-loading .mainwp-mintlify-message {
+    animation: none;
+}
+
+/* User messages - right aligned, brand green */
+.mainwp-mintlify-user-message {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.mainwp-mintlify-user-message .message-content {
+    background: var(--mainwp-accent-color, #7fb100);
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    border-radius: 1.375rem;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Assistant messages - left aligned, gray */
+.mainwp-mintlify-assistant-message {
+    align-self: flex-start;
+    align-items: flex-start;
+}
+
+.mainwp-mintlify-assistant-message .message-content {
+    background: var(--mainwp-primary-background-color, #ffffff);
+    color: var(--mainwp-primary-text-color, rgba(0,0,0,.87));
+    padding: 0.75rem 1rem;
+    border-radius: 1.375rem;
+    border: 1px solid var(--mainwp-secondary-border-color, rgba(34,36,38,.15));
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Timestamp styling */
+.mainwp-mintlify-timestamp {
+    font-size: 0.75rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.4));
+    margin-top: 0.25rem;
+    padding: 0 0.5rem;
+}
+
+/* ==========================================================================
+   Loading and Error States
+   ========================================================================== */
+
+/* Loading message animation */
+.mainwp-mintlify-loading-message {
+    align-self: flex-start;
+    opacity: 0.7;
+}
+
+.mainwp-mintlify-loading-message .message-content {
+    background: var(--mainwp-primary-background-color, #ffffff);
+    border: 1px solid var(--mainwp-secondary-border-color, rgba(34,36,38,.15));
+    padding: 0.75rem 1rem;
+    border-radius: 1.375rem;
+}
+
+.mainwp-mintlify-loading-message .icon {
+    margin-right: 0.5rem;
+}
+
+@keyframes mintlify-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Error message styling */
+.mainwp-mintlify-error-message {
+    align-self: center;
+    max-width: 100%;
+}
+
+.mainwp-mintlify-error-message .ui.message {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Source Citations
+   ========================================================================== */
+
+/* Sources container */
+.mainwp-mintlify-sources {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--mainwp-secondary-border-color, rgba(34,36,38,.15));
+    font-size: 0.875rem;
+}
+
+.mainwp-mintlify-sources-header {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+}
+
+.mainwp-mintlify-source-link {
+    display: inline-block;
+    margin-right: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--mainwp-secondary-background-color, #f0f0f0);
+    border-radius: 3px;
+    color: var(--mainwp-accent-color, #7fb100);
+    text-decoration: none;
+    font-size: 0.8125rem;
+}
+
+.mainwp-mintlify-source-link:hover {
+    background: var(--mainwp-secondary-border-color, #e0e0e0);
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Suggestion Links (Bridge ask mode)
+   ========================================================================== */
+
+/* Suggestions container rendered from ```suggestions blocks */
+.mainwp-mintlify-suggestions {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--mainwp-secondary-border-color, rgba(34,36,38,.1));
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.mainwp-mintlify-suggestion-link {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background: var(--mainwp-secondary-background-color, #f0f0f0);
+    border-radius: 1rem;
+    color: var(--mainwp-accent-color, #7fb100);
+    text-decoration: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: background 0.15s ease;
+}
+
+.mainwp-mintlify-suggestion-link:hover {
+    background: var(--mainwp-secondary-border-color, #e0e0e0);
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Markdown Content Styling
+   ========================================================================== */
+
+/* Markdown elements within messages */
+.mainwp-mintlify-message strong {
+    font-weight: 600;
+}
+
+.mainwp-mintlify-message em {
+    font-style: italic;
+}
+
+.mainwp-mintlify-message code {
+    background: var(--mainwp-secondary-background-color, rgba(0,0,0,.05));
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 0.9em;
+}
+
+.mainwp-mintlify-message pre {
+    background: var(--mainwp-secondary-background-color, rgba(0,0,0,.05));
+    padding: 0.75rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+}
+
+.mainwp-mintlify-message pre code {
+    background: transparent;
+    padding: 0;
+    font-size: 0.85em;
+}
+
+/* Headings */
+.mainwp-mintlify-message h2 {
+    font-size: 1.15em;
+    font-weight: 600;
+    margin: 0.75rem 0 0.35rem;
+}
+.mainwp-mintlify-message h3 {
+    font-size: 1.05em;
+    font-weight: 600;
+    margin: 0.6rem 0 0.25rem;
+}
+.mainwp-mintlify-message h4 {
+    font-size: 1em;
+    font-weight: 600;
+    margin: 0.5rem 0 0.2rem;
+}
+
+/* Lists */
+.mainwp-mintlify-message ul,
+.mainwp-mintlify-message ol {
+    padding-left: 1.5em;
+    margin: 0.4rem 0;
+}
+.mainwp-mintlify-message li {
+    margin-bottom: 0.2em;
+}
+
+/* Blockquotes */
+.mainwp-mintlify-message blockquote {
+    border-left: 3px solid var(--mainwp-secondary-border-color, rgba(0,0,0,.15));
+    padding: 0.25rem 0.75rem;
+    margin: 0.4rem 0;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+}
+
+/* Horizontal rules */
+.mainwp-mintlify-message hr {
+    border: none;
+    border-top: 1px solid var(--mainwp-secondary-border-color, rgba(0,0,0,.1));
+    margin: 0.6rem 0;
+}
+
+/* Tables */
+.mainwp-mintlify-message table {
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    width: 100%;
+    font-size: 0.9em;
+}
+.mainwp-mintlify-message th,
+.mainwp-mintlify-message td {
+    border: 1px solid var(--mainwp-secondary-border-color, rgba(0,0,0,.1));
+    padding: 0.35rem 0.6rem;
+    text-align: left;
+}
+.mainwp-mintlify-message th {
+    background: var(--mainwp-secondary-background-color, rgba(0,0,0,.04));
+    font-weight: 600;
+}
+
+.mainwp-mintlify-message a {
+    color: var(--mainwp-accent-color, #7fb100);
+    text-decoration: underline;
+}
+
+.mainwp-mintlify-message a:hover {
+    color: var(--mainwp-accent-color, #7fb100);
+    opacity: .85;
+}
+
+/* User message links need different styling */
+.mainwp-mintlify-user-message .message-content a {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.mainwp-mintlify-user-message .message-content a:hover {
+    color: rgba(255,255,255,.8);
+}
+
+/* ==========================================================================
+   Welcome Message
+   ========================================================================== */
+
+/* Welcome/empty state */
+.mainwp-mintlify-welcome {
+    text-align: center;
+    padding: 2rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+    margin: auto;
+}
+
+.mainwp-mintlify-welcome-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.mainwp-mintlify-welcome-icon .icon {
+    margin: 0;
+}
+
+.mainwp-mintlify-welcome-text {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.mainwp-mintlify-welcome-subtext {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+/* ==========================================================================
+   First-Run Mode Explainer
+   ========================================================================== */
+
+.mainwp-assistant-modes-intro {
+    margin: 0 1rem 1rem;
+    padding: 0.875rem 1rem;
+    background: var(--mainwp-secondary-background-color, #f8f9fa);
+    border: 1px solid var(--mainwp-secondary-border-color, #e5e7eb);
+    border-radius: 0.5rem;
+}
+
+.mainwp-assistant-modes-intro .modes-intro-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--mainwp-primary-text-color, #1f2937);
+    margin-bottom: 0.375rem;
+}
+
+.mainwp-assistant-modes-intro .modes-intro-text {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--mainwp-secondary-text-color, #6b7280);
+    margin-bottom: 0.625rem;
+}
+
+.mainwp-assistant-modes-intro .modes-intro-dismiss {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--mainwp-accent-color, #7fb100);
+    border-radius: 1rem;
+    background: transparent;
+    color: var(--mainwp-accent-color, #7fb100);
+    cursor: pointer;
+}
+
+.mainwp-assistant-modes-intro .modes-intro-dismiss:hover {
+    background: var(--mainwp-accent-color, #7fb100);
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   Batch Progress UI
+   ========================================================================== */
+
+/* Batch progress container */
+.mainwp-mintlify-batch-progress {
+    padding: 1rem;
+    background: var(--mainwp-secondary-background-color, #f8f9fa);
+    border-radius: 0.5rem;
+}
+
+/* Status text */
+.mainwp-batch-status-text {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--mainwp-primary-text-color, rgba(0,0,0,.8));
+}
+
+/* Progress bar wrapper - uses Fomantic UI .ui.progress */
+.mainwp-mintlify-batch-progress .ui.progress {
+    margin: 0.5rem 0;
+}
+
+.mainwp-mintlify-batch-progress .ui.progress .bar {
+    transition: width 0.3s ease;
+    min-width: 0;
+}
+
+/* Stats display */
+.mainwp-batch-stats {
+    font-size: 0.875rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+    margin: 0.5rem 0;
+}
+
+.mainwp-batch-success-fail {
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.5));
+}
+
+/* Estimated time */
+.mainwp-batch-eta {
+    font-size: 0.8125rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.5));
+    font-style: italic;
+    margin: 0.5rem 0;
+}
+
+/* ==========================================================================
+   Batch Completion States
+   ========================================================================== */
+
+/* Completion container */
+.mainwp-mintlify-batch-complete {
+    padding: 0.75rem;
+}
+
+.mainwp-batch-result-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.mainwp-batch-result-header .icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Success state */
+.mainwp-mintlify-batch-complete .icon.green {
+    color: var(--mainwp-accent-color, #7fb100);
+}
+
+/* Failed state. The tint carries the semantic, so it derives from the danger
+   token instead of the neutral surface; the flat line is the color-mix fallback. */
+.mainwp-batch-failed {
+    background: #fff6f6;
+    background: color-mix(in srgb, var(--mainwp-danger-color, #ad0000) 10%, var(--mainwp-secondary-background-color, #ffffff));
+    border-left: 3px solid var(--mainwp-danger-color, #ad0000);
+}
+
+.mainwp-batch-failed .icon.red {
+    color: var(--mainwp-danger-color, #ad0000);
+}
+
+/* Timeout state */
+.mainwp-batch-timeout {
+    background: #fffaf3;
+    background: color-mix(in srgb, var(--mainwp-warning-color, #ffd300) 14%, var(--mainwp-secondary-background-color, #ffffff));
+    border-left: 3px solid var(--mainwp-warning-color, #ffd300);
+}
+
+.mainwp-batch-timeout .icon.orange {
+    color: var(--mainwp-warning-color, #ffd300);
+}
+
+/* Expired state */
+.mainwp-mintlify-batch-expired {
+    background: var(--mainwp-secondary-background-color, #f8f8f9);
+    padding: 0.75rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+}
+
+/* ==========================================================================
+   Batch Errors List
+   ========================================================================== */
+
+/* Errors container */
+.mainwp-batch-errors {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--mainwp-secondary-border-color, rgba(34,36,38,.1));
+}
+
+/* Clickable header — a real <button> for keyboard access, so the UA
+   button chrome is reset here to keep the plain-text disclosure look. */
+.mainwp-batch-errors-header {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--mainwp-accent-color, #7fb100);
+    user-select: none;
+}
+
+.mainwp-batch-errors-header:hover {
+    color: var(--mainwp-accent-color, #7fb100);
+    opacity: .85;
+    text-decoration: underline;
+}
+
+.mainwp-batch-errors-header .dropdown.icon {
+    transition: transform 0.2s ease;
+}
+
+/* Errors list */
+.mainwp-batch-errors-list {
+    margin-top: 0.5rem;
+    padding-left: 1rem;
+}
+
+.mainwp-batch-errors-list ul {
+    margin: 0;
+    padding-left: 1rem;
+    list-style-type: disc;
+}
+
+.mainwp-batch-errors-list li {
+    font-size: 0.8125rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.7));
+    margin-bottom: 0.25rem;
+    word-break: break-word;
+}
+
+/* ==========================================================================
+   System Messages
+   ========================================================================== */
+
+/* System message styling */
+.mainwp-mintlify-system-message {
+    align-self: center;
+    max-width: 100%;
+}
+
+.mainwp-mintlify-system-message .message-content {
+    background: var(--mainwp-secondary-background-color, #f0f0f0);
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mainwp-mintlify-system-message .icon {
+    opacity: 0.6;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .mainwp-mintlify-chat-container {
+        height: 500px;
+    }
+
+    .mainwp-mintlify-message {
+        max-width: 90%;
+    }
+
+    .mainwp-mintlify-chat-wrapper {
+        flex-direction: column;
+        height: auto;
+    }
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .mainwp-mintlify-message {
+        animation: none;
+    }
+
+    .mainwp-mintlify-messages {
+        scroll-behavior: auto;
+    }
+}
+
+/* ==========================================================================
+   Chat Wrapper (for history panel layout)
+   ========================================================================== */
+
+.mainwp-mintlify-chat-wrapper {
+    display: flex;
+    position: relative;
+    min-height: 400px;
+}
+
+.mainwp-mintlify-chat-wrapper .mainwp-mintlify-chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: unset;
+}
+
+/* ==========================================================================
+   Thinking Indicator with Timer
+   ========================================================================== */
+
+#mainwp-mintlify-thinking-indicator {
+    opacity: 0.8;
+}
+
+#mainwp-mintlify-thinking-elapsed {
+    font-size: 0.8125rem;
+    font-style: italic;
+}
+
+/* ==========================================================================
+   Executed-Ability Chips (per-message action record)
+   ========================================================================== */
+
+.mainwp-assistant-ability-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.mainwp-assistant-ability-chips .ui.mini.label {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Session Cost Line (running conversation total)
+   ========================================================================== */
+
+.mainwp-assistant-session-cost {
+    font-size: 0.75rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.4));
+    text-align: right;
+    padding: 2px 12px 4px;
+}
+
+/* ==========================================================================
+   Inline Cost Line (per-message)
+   ========================================================================== */
+
+.mainwp-assistant-cost-line {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+}
+
+.mainwp-assistant-cost-text {
+    font-size: 0.75rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.4));
+    margin-right: auto;
+}
+
+.mainwp-assistant-copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.35));
+    border-radius: 4px;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+}
+
+/* The rgba line is the fallback for engines without color-mix(). */
+.mainwp-assistant-copy-btn:hover {
+    color: var(--mainwp-primary-text-color, rgba(0,0,0,.6));
+    background: rgba(0,0,0,.06);
+    background: color-mix(in srgb, var(--mainwp-primary-text-color, #000000) 8%, transparent);
+}
+
+.mainwp-assistant-copy-btn.copied {
+    color: var(--mainwp-accent-color, #7fb100);
+}
+
+.mainwp-assistant-copy-btn svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+}
+
+/* Default: show copy icon, hide check icon */
+.mainwp-assistant-copy-btn .icon-check { display: none; }
+.mainwp-assistant-copy-btn .icon-copy  { display: block; }
+
+/* Copied state: swap icons */
+.mainwp-assistant-copy-btn.copied .icon-check { display: block; }
+.mainwp-assistant-copy-btn.copied .icon-copy  { display: none; }
+
+/* ==========================================================================
+   First-Use Disclosure Banner
+   ========================================================================== */
+
+.mainwp-mintlify-disclosure {
+    margin: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}
+
+/* The dismiss control is a real <button> for keyboard access. Fomantic
+   positions message close icons via the direct-child rule
+   `.ui.message > .close.icon`, which stops matching with the icon inside
+   a button, so the positioning and opacity are reapplied here on the
+   button (the .ui.message container is position: relative). */
+.mainwp-mintlify-disclosure-dismiss {
+    position: absolute;
+    top: 0.78575em;
+    right: 0.5em;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    font-size: 1em;
+    line-height: 1;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.1s ease;
+}
+
+.mainwp-mintlify-disclosure-dismiss:hover,
+.mainwp-mintlify-disclosure-dismiss:focus {
+    opacity: 1;
+}
+
+.mainwp-mintlify-disclosure-dismiss .times.icon {
+    margin: 0;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   Inline Confirmation Card
+   ========================================================================== */
+
+.mainwp-assistant-confirm-card {
+    background: var(--mainwp-secondary-background-color, #f9fafb);
+    border: 1px solid var(--mainwp-secondary-border-color, rgba(0,0,0,.1));
+    border-left: 3px solid var(--mainwp-info-color, #4682b4);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+}
+
+.mainwp-assistant-confirm-card.mainwp-confirm-card-destructive {
+    border-left-color: var(--mainwp-danger-color, #ad0000);
+}
+
+.mainwp-confirm-card-header {
+    font-size: 0.9375rem;
+    margin-bottom: 0.375rem;
+    color: var(--mainwp-primary-text-color, inherit);
+}
+
+.mainwp-confirm-card-text {
+    font-size: 0.875rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+    margin-bottom: 0.5rem;
+}
+
+.mainwp-confirm-card-summary {
+    margin-bottom: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.mainwp-confirm-card-summary .mainwp-confirm-summary-action,
+.mainwp-confirm-card-summary .mainwp-confirm-summary-message {
+    margin-bottom: 0.5rem;
+}
+
+.mainwp-confirm-card-summary .mainwp-confirm-summary-sites ul.ui.list {
+    margin: 0.25rem 0 0.5rem 1rem;
+}
+
+.mainwp-confirm-card-summary .mainwp-confirm-summary-more {
+    font-size: 0.875rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+    margin-bottom: 0.5rem;
+}
+
+.mainwp-confirm-card-details {
+    margin-bottom: 0.5rem;
+}
+
+.mainwp-confirm-card-details .title {
+    font-size: 0.8125rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+}
+
+.mainwp-confirm-card-preview {
+    background: var(--mainwp-primary-background-color, #fff);
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
+    overflow-x: auto;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.mainwp-confirm-card-actions {
+    margin-bottom: 0.375rem;
+}
+
+.mainwp-confirm-card-hint {
+    font-size: 0.75rem;
+    color: var(--mainwp-secondary-text-color, rgba(0,0,0,.6));
+}
+
+.mainwp-confirm-card-resolved,
+.mainwp-confirm-card-stale {
+    opacity: 0.65;
+}
+
+.mainwp-confirm-card-resolved .mainwp-confirm-card-hint,
+.mainwp-confirm-card-stale .mainwp-confirm-card-hint {
+    display: none;
+}
+
+/* ==========================================================================
+   Policy Warning Messages
+   ========================================================================== */
+
+.mainwp-mintlify-policy-warning {
+    background: #fffaf3;
+    background: color-mix(in srgb, var(--mainwp-warning-color, #ffd300) 14%, var(--mainwp-secondary-background-color, #ffffff));
+    border-left: 3px solid var(--mainwp-warning-color, #ffd300);
+}

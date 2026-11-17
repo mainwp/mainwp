@@ -147,7 +147,7 @@ class Test_CheckSites_Ability extends MainWP_Abilities_Test_Case {
             for ( $i = 1; $i <= 3; $i++ ) {
                 $site_ids[] = $this->create_test_site( [
                     'name' => "Batch Test Site {$i}",
-                    'url'  => "https://batch-check-{$i}.example.com/",
+                    'url'  => "https://test-batch-check-{$i}.example.com/",
                 ] );
             }
 

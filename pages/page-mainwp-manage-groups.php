@@ -268,7 +268,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 </td>
                 <td class="not-selectable center aligned">
                     <?php if ( MainWP_UI::is_site_preview_enabled() ) : ?>
-                    <?php $site_mshot = MainWP_UI::get_mshots_image_sources( $website->url, 900 ); ?>
+                        <?php $site_mshot = MainWP_UI::get_mshots_image_sources( $website->url, 900 ); ?>
                     <span class="mainwp-preview-item ui mini grey icon basic button" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot . ', 'mainwp' ); ?>" preview-site-url="<?php echo esc_url( $website->url ); ?>" data-mainwp-mshot-src="<?php echo esc_url( $site_mshot['src'] ); ?>" data-mainwp-mshot-requeue-src="<?php echo esc_url( $site_mshot['requeue_src'] ); ?>" ><i class="camera icon"></i></span>
                     <?php endif; ?>
                 </td>
@@ -276,7 +276,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <?php if ( empty( $website->note ) ) : ?>
                     <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Click to add a note . ', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
                 <?php else : ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php echo esc_attr( substr( $strip_note, 0, 100 ) ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                    <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php echo MainWP_Utility::esc_note_attr( $strip_note ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped by esc_note_attr(). ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                 <?php endif; ?>
                     <span style="display: none" id="mainwp-notes-<?php echo intval( $website->id ); ?>-note"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                 </td>

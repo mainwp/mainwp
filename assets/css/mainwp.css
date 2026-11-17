@@ -1,8 +1,30 @@
-.mainwp-ui a.mainwp-disabled-link {
+.mainwp-ui a.mainwp-disabled-link,
+.mainwp-ui button.mainwp-disabled-link {
     pointer-events: none;
     cursor: not-allowed;
     opacity: 0.5;
     text-decoration: none;
+}
+
+/* The help-modal cards are <button> so they are keyboard focusable; strip the
+   UA button chrome so they still render as the card links they replaced. The
+   cursor is split out so the disabled rule's not-allowed still wins. */
+#mainwp-help-modal-options .content > button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+}
+
+#mainwp-help-modal-options .content > button:not(.mainwp-disabled-link) {
+    cursor: pointer;
 }
 
 /* 22px - 24px */
@@ -480,6 +502,36 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
     border-radius: 0px !important;
 }
 
+/* AssistantSettings page navigation - show sub-tabs */
+.mainwp_page_AssistantSettings #mainwp-page-navigation-wrapper {
+    display: block;
+    float: left;
+    position: fixed;
+    top: 58px;
+    bottom: 0px;
+    width: 199px;
+    left: 72px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset;
+    -webkit-box-shadow: 20px 0px 15px -18px rgba(0, 0, 0, 0.15) inset;
+}
+
+.mainwp_page_AssistantSettings #mainwp-page-navigation-wrapper .mainwp-page-navigation {
+    width: 199px;
+    border-radius: 0px !important;
+    border: none !important;
+}
+
+.mainwp_page_AssistantSettings #mainwp-page-navigation-wrapper .mainwp-page-navigation .item {
+    padding: 0.9rem !important;
+}
+
+.mainwp_page_AssistantSettings #mainwp-page-navigation-wrapper .mainwp-page-navigation .item:last-child {
+    box-shadow: none !important;
+    border-radius: 0px !important;
+}
+
 .mainwp-individual-site-view #mainwp-page-navigation-wrapper #mainwp-site-preview-image {
     max-width: 100%;
     width: 100%;
@@ -720,6 +772,41 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
     color: rgba(255, 255, 255, .3) !important;
 }
 
+/* The disabled marker is a class on the menu-title span, not on the item. */
+#mainwp-second-level-navigation .ui.menu a .assistant-disabled {
+    color: rgba(255, 255, 255, .3) !important;
+}
+
+/* The rgba line is the fallback for engines without color-mix(). */
+#mainwp-first-level-navigation-menu a.item.assistant-chat-active {
+    background: rgba(127, 177, 0, 0.15);
+    background: color-mix(in srgb, var(--mainwp-accent-color, #7fb100) 15%, transparent);
+}
+#mainwp-first-level-navigation-menu a.item.assistant-chat-active .icon {
+    color: var(--mainwp-accent-color, #7fb100);
+}
+
+#mainwp-first-level-navigation-menu a.item.assistant-chat-notification {
+    position: relative;
+}
+
+#mainwp-first-level-navigation-menu a.item.assistant-chat-notification::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: var(--mainwp-info-color, #4682b4);
+    border-radius: 50%;
+    animation: assistant-notification-pulse 2s ease-in-out infinite;
+}
+
+@keyframes assistant-notification-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
 #mainwp-navigation-icon {
     width: 50px;
     margin-left: 10px;
@@ -746,7 +833,8 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
 .mainwp-ui.mainwp_page_ActionLogs #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_PluginPrivacy #mainwp-main-navigation-container,
 .mainwp-ui.mainwp-hidden-second-level-navigation #mainwp-main-navigation-container,
-.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-main-navigation-container {
+.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-main-navigation-container,
+.mainwp-ui.mainwp_page_AssistantSettings #mainwp-main-navigation-container {
     width: 72px !important;
 }
 
@@ -767,7 +855,8 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
 .mainwp-ui.mainwp_page_ActionLogs #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_PluginPrivacy #mainwp-second-level-navigation,
 .mainwp-ui.mainwp-hidden-second-level-navigation #mainwp-second-level-navigation,
-.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-second-level-navigation {
+.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-second-level-navigation,
+.mainwp-ui.mainwp_page_AssistantSettings #mainwp-second-level-navigation {
     display: none !important;
 }
 
@@ -786,7 +875,8 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
 .mainwp-ui.mainwp_page_ErrorLog #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_ActionLogs #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_PluginPrivacy #mainwp-divider-handle,
-.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-divider-handle {
+.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-divider-handle,
+.mainwp-ui.mainwp_page_AssistantSettings #mainwp-divider-handle {
     display: none !important;
 }
 
@@ -805,7 +895,8 @@ body.mainwp-header-collapsed #mainwp-top-header #mainwp-mobile-menu-trigger {
 .mainwp-ui.mainwp_page_ErrorLog #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_ActionLogs #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_PluginPrivacy #mainwp-divider-handle:hover,
-.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-divider-handle:hover {
+.mainwp-ui.mainwp_page_CostTrackerSettings #mainwp-divider-handle:hover,
+.mainwp-ui.mainwp_page_AssistantSettings #mainwp-divider-handle:hover {
     display: none !important;
 }
 
@@ -1479,6 +1570,128 @@ table.mainwp-manage-wpsites-table .error a {
 .mainwp-code-actions {
     margin-bottom: .5em;
     text-align: right;
+}
+
+.mainwp-ui .mainwp-rmcp-notice-dismiss-form {
+    margin: 0;
+    position: absolute;
+    right: .5em;
+    top: .78575em;
+}
+
+.mainwp-ui .mainwp-rmcp-notice-dismiss {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+    opacity: .7;
+    padding: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-notice-dismiss .icon {
+    margin: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-notice-dismiss:hover {
+    opacity: 1;
+}
+
+.mainwp-ui .mainwp-rmcp-notice-dismiss:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.mainwp-ui #mainwp-rmcp-advanced-menu {
+    flex-wrap: wrap;
+}
+
+.mainwp-ui #mainwp-remote-mcp-panel > .mainwp-rmcp-section {
+    margin-top: 2.5rem;
+}
+
+.mainwp-ui #mainwp-remote-mcp-panel > #mainwp-rmcp-connection-accordion {
+    margin-top: 0;
+}
+
+.mainwp-ui #mainwp-rmcp-advanced > .ui.tab:not(.active) {
+    display: none !important;
+}
+
+.mainwp-ui .mainwp-rmcp-category-summary {
+    margin-left: .75em;
+}
+
+.mainwp-ui #mainwp-rmcp-tool-categories > .title {
+    padding: 1.25rem;
+}
+
+.mainwp-ui #mainwp-rmcp-tool-categories > .content > .ui.divider ~ .ui.grid.field {
+    padding-inline-start: 1rem;
+}
+
+.mainwp-ui .mainwp-rmcp-code {
+    min-width: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-code pre {
+    background: var(--mainwp-element-background-secondary, #fbfbfc);
+    border: 1px solid var(--mainwp-border, #e8e8eb);
+    border-radius: var(--input-radius, 5px);
+    color: var(--mainwp-text, #2f3437);
+    margin: 0 0 .5em;
+    padding: 1em;
+}
+
+.mainwp-ui .mainwp-rmcp-token-app {
+    margin-top: 1em;
+}
+
+.mainwp-ui .mainwp-rmcp-token-app[hidden] {
+    display: none !important;
+}
+
+.mainwp-ui .mainwp-rmcp-app-details {
+    overflow-wrap: anywhere;
+}
+
+.mainwp-ui .mainwp-rmcp-app-details p {
+    margin: 0 0 .5em;
+}
+
+.mainwp-ui .mainwp-rmcp-app-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75em;
+}
+
+.mainwp-ui .mainwp-rmcp-app-setup {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.mainwp-ui .mainwp-rmcp-app-select {
+    flex: 0 1 14rem;
+    min-width: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-app-instructions {
+    flex: 1 1 20rem;
+    min-width: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-app-instructions > .ui.segment {
+    margin: 0;
+}
+
+.mainwp-ui .mainwp-rmcp-app-instructions > [hidden] {
+    display: none !important;
 }
 
 .mainwp-ui #mainwp-mcp-config.mainwp-mcp-config-editor {

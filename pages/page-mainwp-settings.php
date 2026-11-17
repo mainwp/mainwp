@@ -852,6 +852,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_uptimecheck_running',
             'mainwp_uptimecheck_auto_main_counter_lasttime_started',
             'mainwp_enable_guided_tours',
+            'mainwp_assistant_enabled',
             'mainwp_enable_guided_chatbase',
             'mainwp_enable_guided_video',
             'mainwp_enable_cloudways_api',
@@ -870,7 +871,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
         $values = array();
         foreach ( $keys as $key ) {
-            $values[ $key ] = get_option( $key );
+            if ( 'mainwp_assistant_enabled' === $key ) {
+                $values[ $key ] = MainWP_System::is_assistant_enabled() ? 1 : 0;
+            } else {
+                $values[ $key ] = get_option( $key );
+            }
         }
         return $values;
     }
@@ -1357,7 +1362,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <label class="six wide column middle aligned"><?php esc_html_e( 'Timezone', 'mainwp' ); ?></label>
             <?php
             // translators: %s is the abbreviation "UTC".
-            $timezone_tooltip = esc_attr__( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.', 'mainwp' );
+            $timezone_tooltip = sprintf(
+                esc_attr__( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.', 'mainwp' ),
+                'UTC'
+            );
             ?>
             <div class="ten wide column" data-tooltip="<?php echo $timezone_tooltip; // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-inverted="" data-position="top left">
                 <select id="timezone_string" class="ui dropdown" name="timezone_string" aria-describedby="timezone-description">
@@ -1367,13 +1375,29 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 <div class="ui secondary segment">
                     <?php
                     // translators: %s is the current UTC date and time.
-                    printf( esc_html__( 'Universal time is %s.', 'mainwp' ), '<code>' . esc_html( date_i18n( $timezone_format, false, true ) ) . '</code>' );
+                    echo wp_kses(
+                        sprintf(
+                            __( 'Universal time is %s.', 'mainwp' ),
+                            '<code>' . esc_html( date_i18n( $timezone_format, false, true ) ) . '</code>'
+                        ),
+                        array(
+                            'code' => array(),
+                        )
+                    );
                     ?>
                     <div class="ui hidden fitted divider"></div>
                 <?php if ( get_option( 'timezone_string' ) || ! empty( $current_offset ) ) : ?>
                         <?php
                         // translators: %s is the current local date and time.
-                        printf( esc_html__( 'Local time is %s.', 'mainwp' ), '<code>' . esc_html( date_i18n( $timezone_format ) ) . '</code>' );
+                        echo wp_kses(
+                            sprintf(
+                                __( 'Local time is %s.', 'mainwp' ),
+                                '<code>' . esc_html( date_i18n( $timezone_format ) ) . '</code>'
+                            ),
+                            array(
+                                'code' => array(),
+                            )
+                        );
                         ?>
                         <div class="ui hidden fitted divider"></div>
                 <?php endif; ?>
@@ -1741,8 +1765,12 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                         <input type="text" name="mainwp_openssl_lib_location" value="<?php echo esc_html( $openssl_loc ); ?>">
                                         <em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?>
                                         <?php
+                                        $openssl_help_link = sprintf(
+                                            '<a href="%1$s" target="_blank" rel="noopener noreferrer">',
+                                            esc_url( 'https://docs.mainwp.com/troubleshooting/potential-issues#openssl-library-error-invalid-request' )
+                                        );
                                         // translators: 1: Opening anchor tag. 2: Closing anchor tag.
-                                        printf( esc_html__( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues#openssl-library-error-invalid-request" target="_blank">', '</a> <i class="external alternate icon"></i>' );
+                                        printf( wp_kses_post( __( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ) ), $openssl_help_link, '</a> <i class="external alternate icon"></i>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $openssl_help_link is built above from esc_url() and static markup; message body passes through wp_kses_post().
                                         ?>
                                         </em>
                                         <em><?php esc_html_e( 'If you have confirmed the placement of your openssl.cnf and are still receiving an error banner, click the "Error Fixed" button to dismiss it.', 'mainwp' ); ?></em>
@@ -2531,15 +2559,15 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-tools">
                         <label class="six wide column middle aligned">
                             <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enable_guided_chatbase', (int) get_option( 'mainwp_enable_guided_chatbase', 0 ) );
-                            esc_html_e( 'Chatbase (AI-Powered Chat Support)', 'mainwp' );
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_assistant_enabled', (int) MainWP_System::is_assistant_enabled() );
+                            esc_html_e( 'MainWP Assistant (AI-Powered Chat Support)', 'mainwp' );
                             ?>
                             <span class="ui blue mini label"><?php esc_html_e( 'BETA', 'mainwp' ); ?></span>
                         </label>
-                        <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'Check this option to enable, or uncheck to disable MainWP AI drive support.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                        <div class="ten wide column " data-tooltip="<?php esc_attr_e( 'Check this option to enable, or uncheck to disable MainWP Assistant AI-powered chat support.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                             <div class="ui toggle checkbox">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-chatbase-option" id="mainwp-guided-chatbase-option" <?php echo 1 === (int) get_option( 'mainwp_enable_guided_chatbase', 0 ) ? 'checked="true"' : ''; ?> />
-                                <label><?php esc_html_e( 'Get AI-driven support within the MainWP Dashboard for quick answers to common questions.', 'mainwp' ); ?></label>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp-guided-chatbase-option" id="mainwp-guided-chatbase-option" <?php echo MainWP_System::is_assistant_enabled() ? 'checked="true"' : ''; ?> <?php disabled( ! current_user_can( 'manage_options' ) ); ?> />
+                                <label><?php esc_html_e( 'Enable MainWP Assistant to get AI-powered support within the MainWP Dashboard for quick answers to common questions.', 'mainwp' ); ?></label>
                             </div>
                         </div>
                     </div>
@@ -2638,7 +2666,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <div class="ten wide column" tabindex="0" data-tooltip="<?php esc_attr_e( 'Select your MainWP Dashboard theme.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                 <select name="mainwp_settings_custom_theme" id="mainwp_settings_custom_theme" class="ui dropdown selection settings-field-value-change-handler">
                     <?php foreach ( static::get_builtin_theme_choices() as $theme => $label ) : ?>
-                        <option value="<?php echo esc_attr( $theme ); ?>" <?php selected( $custom_theme ?: 'default', $theme ); ?>><?php echo esc_html( $label ); ?></option>
+                        <option value="<?php echo esc_attr( $theme ); ?>" <?php selected( $custom_theme ? $custom_theme : 'default', $theme ); ?>><?php echo esc_html( $label ); ?></option>
                     <?php endforeach; ?>
                     <?php if ( 'default-2024' === $custom_theme ) { ?>
                     <option value="default-2024" <?php echo ( 'default-2024' === $custom_theme ) ? 'selected' : ''; ?>><?php esc_html_e( 'Default 2024', 'mainwp' ); ?></option>

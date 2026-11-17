@@ -9,7 +9,7 @@
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
  * Requires at least: 6.2
- * Version:  6.4.2.1
+ * Version:  6.5
  * Requires PHP: 8.3
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -152,12 +152,16 @@ require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' 
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-tags.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-batch.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-cron.php'; // NOSONAR -- WP compatible.
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-insights.php'; // NOSONAR -- WP compatible.
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-fleet.php'; // NOSONAR -- WP compatible.
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-monitoring.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-knowledge.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-backups.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities.php'; // NOSONAR -- WP compatible.
 
 // Initialize Abilities API integration (does nothing if Abilities API not available).
 if ( class_exists( '\MainWP\Dashboard\MainWP_Abilities' ) ) {
+    add_filter( 'wp_register_ability_args', array( \MainWP\Dashboard\MainWP_Abilities_Util::class, 'wrap_ability_callbacks' ), 10, 2 );
     \MainWP\Dashboard\MainWP_Abilities::init();
 }
 
@@ -172,6 +176,10 @@ if ( file_exists( MAINWP_PLUGIN_DIR . 'modules/system-monitor/bootstrap.php' ) )
         MAINWP_SYSTEM_MONITOR_FILE,
         array( MainWP\Dashboard\SystemMonitor\MainWP_System_Monitor::class, 'deactivate' )
     );
+}
+
+if ( file_exists( MAINWP_PLUGIN_DIR . 'modules/remote-mcp/bootstrap.php' ) ) {
+    require_once MAINWP_PLUGIN_DIR . 'modules/remote-mcp/bootstrap.php'; // NOSONAR - WP compatible.
 }
 
 // Detect if secupress_scanner is running.

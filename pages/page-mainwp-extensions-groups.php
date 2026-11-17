@@ -614,7 +614,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'active_path'          => array( 'Extensions-Mainwp-Url-Extractor-Extension' => 'managesites' ),
         );
 
-         $extensions_and_leftmenus[] = array(
+        $extensions_and_leftmenus[] = array(
             'type'                 => 'extension',
             'title'                => esc_html__( 'WooCommerce Shortcuts', 'mainwp' ),
             'slug'                 => 'mainwp-woocommerce-shortcuts-extension/mainwp-woocommerce-shortcuts-extension.php',
@@ -1043,7 +1043,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <?php } ?>
         </div>
     </div>
-    <?php
-    do_action( 'mainwp_pagefooter_extensions' );
+        <?php
+        do_action( 'mainwp_pagefooter_extensions' );
     }
 }

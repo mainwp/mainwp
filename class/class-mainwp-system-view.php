@@ -581,6 +581,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         $grace_end = MainWP_Server_Information::get_cron_key_grace_end( $state );
         $blocked   = ! empty( $state['keyless_blocked'] ) || time() >= $grace_end;
         $script    = isset( $state['keyless_script'] ) && is_string( $state['keyless_script'] ) ? $state['keyless_script'] : '';
+        // A keyed call cleared the notice before, so the keyless caller is usually an old job still running.
+        $keyed = ! empty( $state['keyed_seen'] );
 
         wp_enqueue_script( 'clipboard' );
         wp_enqueue_script( 'mainwp-code-copy', MAINWP_PLUGIN_URL . 'assets/js/mainwp-code-copy.js', array( 'jquery', 'clipboard' ), MAINWP_VERSION, true );
@@ -589,7 +591,12 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <p><strong><?php esc_html_e( 'Update your cron job URL', 'mainwp' ); ?></strong></p>
             <p>
                 <?php
-                if ( $blocked ) {
+                if ( $keyed && $blocked ) {
+                    esc_html_e( "A cron job with the key is reaching your Dashboard, but another job still calls MainWP's cron scripts without a key, and those calls are being blocked. Find that job in your hosting cron jobs or cron service. If another job already calls the same script with the key, delete the old job. Otherwise, replace its address with this one:", 'mainwp' );
+                } elseif ( $keyed ) {
+                    /* translators: %s: date when the cron key grace period ends. */
+                    printf( esc_html__( "A cron job with the key is reaching your Dashboard, but another job still calls MainWP's cron scripts without a key. From %s those calls will be blocked. Find that job in your hosting cron jobs or cron service. If another job already calls the same script with the key, delete the old job. Otherwise, replace its address with this one:", 'mainwp' ), esc_html( date_i18n( get_option( 'date_format' ), $grace_end ) ) );
+                } elseif ( $blocked ) {
                     esc_html_e( "Your server is calling MainWP's cron scripts by web address without a key, and these calls are being blocked. Scheduled updates, syncs and backups are not running. In your hosting cron job or cron service, replace the address with this one:", 'mainwp' );
                 } else {
                     /* translators: %s: date when the cron key grace period ends. */
@@ -597,11 +604,17 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 }
                 ?>
             </p>
+            <p>
+                <?php
+                /* translators: 1: cron script file name, 2: how long ago, e.g. "5 minutes". */
+                printf( esc_html__( 'Latest recorded call without a key: %1$s, %2$s ago. MainWP records these calls at most once an hour.', 'mainwp' ), '<code>' . esc_html( MainWP_Server_Information::sanitize_cron_script( $script ) ) . '</code>', esc_html( human_time_diff( (int) $state['keyless_seen'] ) ) );
+                ?>
+            </p>
             <div class="<?php echo $wp_admin ? '' : 'ui fluid action input'; ?>">
                 <input type="text" readonly id="mainwp-cron-key-notice-url" class="mainwp-cron-key-url" style="width:100%" aria-label="<?php esc_attr_e( 'Cron URL', 'mainwp' ); ?>" value="<?php echo esc_attr( MainWP_Server_Information::get_cron_url( $script ) ); ?>">
                 <button type="button" class="mainwp-code-copy-button <?php echo $wp_admin ? 'button' : 'ui button'; ?>" data-clipboard-target="#mainwp-cron-key-notice-url" data-copy-success="<?php esc_attr_e( 'Copied', 'mainwp' ); ?>" data-copy-error="<?php esc_attr_e( 'Copy failed', 'mainwp' ); ?>" aria-label="<?php esc_attr_e( 'Copy cron URL', 'mainwp' ); ?>"><?php esc_html_e( 'Copy', 'mainwp' ); ?></button>
             </div>
-            <p><?php esc_html_e( 'Use the same key for the other scripts in the cron folder. This notice goes away after the first call with the key.', 'mainwp' ); ?></p>
+            <p><?php esc_html_e( 'Use the same key for the other scripts in the cron folder. This notice clears after a call with the key and returns on the next call without one, so check every cron job that calls MainWP.', 'mainwp' ); ?></p>
         </div>
         <?php
     }

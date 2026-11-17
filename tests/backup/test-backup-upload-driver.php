@@ -16,6 +16,7 @@ namespace MainWP\Dashboard\Tests;
 
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 require_once __DIR__ . '/class-backup-pcloud-transport-fixture.php';
+require_once __DIR__ . '/test-backup-now-continuation.php';
 
 use MainWP\Dashboard\MainWP_Backup_Archive_Cipher;
 use MainWP\Dashboard\MainWP_Backup_Chunker;
@@ -33,6 +34,398 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
  * Class MainWP_Backup_Upload_Driver_Test
  */
 class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * A refused chunk plan cannot advance into uploading without durable chunks.
+	 *
+	 * @dataProvider refused_chunk_plan_saves
+	 * @param int $refused_save Which planning save first fails.
+	 */
+	public function test_refused_chunk_plan_stays_chunking_and_retries_safely( int $refused_save ) {
+		list( $destination, $base ) = $this->make_local_destination();
+		$snapshot_id                = $this->make_snapshot( $this->standard_files() );
+		$store                      = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $destination ) );
+		$failing               = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Planning write to refuse once.
+			 *
+			 * @var int
+			 */
+			public $refused_save;
+
+			/**
+			 * Planning saves after the initial artifact index.
+			 *
+			 * @var int
+			 */
+			public $plan_saves = 0;
+
+			/**
+			 * Refuse the plan and expire the job's slice before uploading.
+			 *
+			 * @param int         $job_id Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Whether the checkpoint was saved.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				if ( is_array( $checkpoint['artifacts'][0]['chunks'] ?? null ) ) {
+					++$this->plan_saves;
+					if ( $this->plan_saves === $this->refused_save ) {
+						MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 31;
+						return false;
+					}
+				}
+				return parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$failing->refused_save = $refused_save;
+		$prop                  = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$prop->setValue( null, $failing );
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = microtime( true );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$parked = $failing->get_jobs_for_snapshot( $snapshot_id )[0];
+		} finally {
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+			$prop->setValue( null, $store );
+		}
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING, $parked->status, 'A refused plan must never advance the durable phase to uploading.' );
+		$this->assertFalse( $parked->checkpoint['artifacts'][0]['done'] );
+		$this->assertFileDoesNotExist( $base . '/4-site/' . $snapshot_id . '/manifest.json' );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, (int) $parked->next_retry_at );
+		$completed = $store->get_job( (int) $parked->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $completed->status );
+		$this->assertNotEmpty( $completed->checkpoint['artifacts'][0]['chunks'] );
+		foreach ( $completed->checkpoint['artifacts'][0]['chunks'] as $chunk ) {
+			$this->assertTrue( $chunk['remote_present'] );
+			$this->assertFileExists( $base . '/4-site/' . $snapshot_id . '/chunks/' . $chunk['hash'] . '.bin' );
+		}
+		$manifest = json_decode( file_get_contents( $base . '/4-site/' . $snapshot_id . '/manifest.json' ), true );
+		$this->assertNotEmpty( $manifest['artifacts'][0]['chunks'], 'The published manifest must contain the remotely verified chunk plan.' );
+	}
+
+	/**
+	 * Both per-artifact and final planning writes must succeed.
+	 *
+	 * @return array Planning save positions.
+	 */
+	public static function refused_chunk_plan_saves(): array {
+		return array(
+			'artifact plan' => array( 1 ),
+			'phase end'     => array( 2 ),
+		);
+	}
+
+	/**
+	 * Every refused upload-progress write stops before publishing the manifest.
+	 *
+	 * @dataProvider refused_upload_progress_saves
+	 * @param string $stage Refused checkpoint stage.
+	 * @param int    $size Artifact bytes.
+	 */
+	public function test_refused_upload_progress_stops_and_retries_safely( string $stage, int $size ) {
+		list( $destination, $base ) = $this->make_local_destination();
+		$snapshot_id                = $this->make_snapshot(
+			array(
+				'archive.bin' => array(
+					'size' => $size,
+					'role' => 'full',
+				),
+			)
+		);
+		$store                      = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $destination ) );
+		$failing        = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Checkpoint stage to refuse once.
+			 *
+			 * @var string
+			 */
+			public $stage;
+
+			/**
+			 * Whether the selected save was refused.
+			 *
+			 * @var bool
+			 */
+			public $refused = false;
+
+			/**
+			 * Reject exactly one upload-progress checkpoint.
+			 *
+			 * @param int         $job_id Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Whether the checkpoint was saved.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				$artifact = $checkpoint['artifacts'][0] ?? array();
+				$selected = ( 'hash' === $this->stage && ! empty( $artifact['sha256'] ) )
+					|| ( 'whole done' === $this->stage && 'whole' === ( $artifact['mode'] ?? '' ) && ! empty( $artifact['done'] ) )
+					|| ( 'chunk cursor' === $this->stage && 1 === ( $artifact['chunks_cursor'] ?? 0 ) )
+					|| ( 'chunked done' === $this->stage && 'chunked' === ( $artifact['mode'] ?? '' ) && ! empty( $artifact['done'] ) );
+				if ( ! $this->refused && $selected ) {
+					$this->refused = true;
+					return false;
+				}
+				return parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$failing->stage = $stage;
+		$prop           = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$prop->setValue( null, $failing );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$parked = $failing->get_jobs_for_snapshot( $snapshot_id )[0];
+		} finally {
+			$prop->setValue( null, $store );
+		}
+		$this->assertTrue( $failing->refused, 'The fixture must reach the selected upload checkpoint.' );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING, $parked->status, 'A refused progress save must not advance the durable phase to submitting or complete.' );
+		$this->assertFalse( $parked->checkpoint['artifacts'][0]['done'] );
+		$this->assertFileDoesNotExist( $base . '/4-site/' . $snapshot_id . '/manifest.json' );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, (int) $parked->next_retry_at );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_job( (int) $parked->id )->status );
+		$this->assertFileExists( $base . '/4-site/' . $snapshot_id . '/manifest.json' );
+	}
+
+	/**
+	 * Hash, whole-file, chunk-cursor and final chunked-artifact saves.
+	 *
+	 * @return array Progress checkpoints.
+	 */
+	public static function refused_upload_progress_saves(): array {
+		return array(
+			'hash'         => array( 'hash', 100 ),
+			'whole done'   => array( 'whole done', 100 ),
+			'chunk cursor' => array( 'chunk cursor', 3000 ),
+			'chunked done' => array( 'chunked done', 3000 ),
+		);
+	}
+
+	/**
+	 * A one-shot mid-phase refusal cannot suppress the next site's continuation.
+	 *
+	 * @dataProvider transient_midphase_refusals
+	 * @param string $stage Checkpoint stage to refuse once.
+	 */
+	public function test_midphase_refusal_keeps_other_sites_continuing( string $stage ) {
+		list( $destination ) = $this->make_local_destination();
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$jobs                = array();
+		for ( $i = 0; $i <= MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK; ++$i ) {
+			$snapshot = $this->make_snapshot( $this->standard_files(), 0, 4 + $i );
+			$store->enqueue_for_snapshot( $snapshot, array( $destination ) );
+			$jobs[] = $store->get_jobs_for_snapshot( $snapshot )[0];
+		}
+		$failing         = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Job whose selected checkpoint fails once.
+			 *
+			 * @var int
+			 */
+			public $job_id;
+
+			/**
+			 * Selected mid-phase checkpoint.
+			 *
+			 * @var string
+			 */
+			public $stage;
+
+			/**
+			 * Whether the one-shot refusal happened.
+			 *
+			 * @var bool
+			 */
+			public $refused = false;
+
+			/**
+			 * Later saves for the same job.
+			 *
+			 * @var int
+			 */
+			public $writes_after_refusal = 0;
+
+			/**
+			 * Refuse once, then permit any later persistence attempt.
+			 *
+			 * @param int         $job_id Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Whether the checkpoint was saved.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				if ( $job_id === $this->job_id ) {
+					if ( $this->refused ) {
+						++$this->writes_after_refusal;
+					} else {
+						$artifact = $checkpoint['artifacts'][0] ?? array();
+						$selected = 'plan' === $this->stage ? is_array( $artifact['chunks'] ?? null ) : ! empty( $artifact['sha256'] );
+						if ( $selected ) {
+							$this->refused = true;
+							return false;
+						}
+					}
+				}
+				return parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$failing->job_id = (int) $jobs[0]->id;
+		$failing->stage  = $stage;
+		$prop            = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$prop->setValue( null, $failing );
+		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		try {
+			$driver = MainWP_Backup_Upload_Driver::instance();
+			$driver->process_pending_jobs( 240 );
+			$parked = $failing->get_job( $failing->job_id );
+			$this->assertTrue( $failing->refused );
+			$this->assertSame( 0, $failing->writes_after_refusal, 'The same run must stop at the refusal, even when later writes would succeed.' );
+			$this->assertSame( 'plan' === $stage ? $store::STATUS_CHUNKING : $store::STATUS_UPLOADING, $parked->status );
+			$this->assertGreaterThan( time(), (int) $parked->next_retry_at );
+			$this->assertSame( $store::STATUS_PENDING, $failing->get_job( (int) $jobs[ MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK ]->id )->status );
+			$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'Unattempted healthy work must retain its successor.' );
+			wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+			$driver->process_pending_jobs( 240 );
+			foreach ( array_slice( $jobs, 1 ) as $job ) {
+				$this->assertSame( $store::STATUS_COMPLETE, $failing->get_job( (int) $job->id )->status );
+			}
+			$this->assertSame( $parked->status, $failing->get_job( $failing->job_id )->status );
+			$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'Only the deferred first job remains.' );
+			$driver->process_pending_jobs( 240, (int) $parked->next_retry_at );
+			$this->assertSame( $store::STATUS_COMPLETE, $failing->get_job( $failing->job_id )->status, 'The one-shot refusal must recover at its retry time.' );
+		} finally {
+			$prop->setValue( null, $store );
+		}
+	}
+
+	/**
+	 * Planning and uploading each stop on transient checkpoint refusal.
+	 *
+	 * @return array Mid-phase write failures.
+	 */
+	public static function transient_midphase_refusals(): array {
+		return array(
+			'plan'     => array( 'plan' ),
+			'progress' => array( 'progress' ),
+		);
+	}
+
+	/** Slow provider round trips cannot keep a different site behind the same job across ticks. */
+	public function test_slow_provider_upload_rotates_to_another_site_next_tick() {
+		$objects = array();
+		$calls   = array();
+		add_filter(
+			'pre_http_request',
+			static function ( $pre, $args, $url ) use ( &$objects, &$calls ) {
+				unset( $pre );
+				$key     = wp_parse_url( $url, PHP_URL_PATH );
+				$calls[] = array( $args['method'], $key );
+				if ( false !== strpos( $key, '/4-site/' ) ) {
+					MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 90;
+					MainWP_Backup_Incremental_Sender_Test::$fixed_time    += 90;
+				}
+				if ( 'PUT' === $args['method'] ) {
+					$objects[ $key ] = (string) $args['body'];
+				}
+				$exists = isset( $objects[ $key ] );
+				return array(
+					'headers'  => array( 'content-length' => $exists ? (string) strlen( $objects[ $key ] ) : '0' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => $exists ? 200 : 404,
+						'message' => '',
+					),
+				);
+			},
+			10,
+			3
+		);
+		$destination = $this->make_s3_destination();
+		$task        = $this->insert_task( array( $destination ) );
+		$files       = array(
+			'archive.bin' => array(
+				'size' => 100,
+				'role' => 'full',
+			),
+		);
+		$slow_id     = $this->make_snapshot( $files, $task, 4 );
+		$next_id     = $this->make_snapshot( $files, $task, 5 );
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $slow_id, array( $destination ) );
+		$store->enqueue_for_snapshot( $next_id, array( $destination ) );
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = microtime( true );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time    = time();
+		try {
+			$driver = MainWP_Backup_Upload_Driver::instance();
+			$driver->process_pending_jobs( 240 );
+			$slow = $store->get_jobs_for_snapshot( $slow_id )[0];
+			$this->assertSame( array( 'HEAD', 'PUT', 'HEAD' ), array_column( $calls, 0 ), 'The first upload must retain its confirming HEAD as one verification unit.' );
+			$this->assertTrue( $slow->checkpoint['artifacts'][0]['done'], 'Only the confirming HEAD authorizes payload progress.' );
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $store->get_jobs_for_snapshot( $next_id )[0]->status );
+			$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ) );
+			$driver->process_pending_jobs( 240 );
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_jobs_for_snapshot( $next_id )[0]->status, 'The next site must precede the slow upload on the successor tick.' );
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_jobs_for_snapshot( $slow_id )[0]->status );
+		} finally {
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time    = null;
+		}
+	}
+
+	/**
+	 * Whole artifacts require matching remote sizes after PUT, including zero.
+	 *
+	 * @dataProvider whole_artifact_sizes
+	 * @param string $body Artifact bytes.
+	 * @param mixed  $head Remote verification result.
+	 * @param bool   $valid Whether verification should succeed.
+	 */
+	public function test_whole_artifact_verifies_remote_size( $body, $head, $valid ) {
+		$path = wp_tempnam( 'tombstones.list' );
+		file_put_contents( $path, $body );
+		$provider = $this->createMock( \MainWP\Dashboard\MainWP_Backup_Storage_Provider::class );
+		$provider->expects( $this->exactly( 2 ) )->method( 'head_object' )
+			->with( 'snapshot/files/tombstones.list' )->willReturnOnConsecutiveCalls( false, $head );
+		$provider->expects( $this->once() )->method( 'put_object' )
+			->with( 'snapshot/files/tombstones.list', $body )->willReturn( true );
+		if ( ! $valid ) {
+			$this->expectException( \RuntimeException::class );
+			$this->expectExceptionMessage( 'Upload verification failed' );
+		}
+		try {
+			$method   = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'upload_whole_artifact' );
+			$artifact = array(
+				'file' => 'tombstones.list',
+				'path' => $path,
+			);
+			$method->invoke( MainWP_Backup_Upload_Driver::instance(), $artifact, 'snapshot/', $provider, array( 'encrypt' => false ) );
+		} finally {
+			unlink( $path );
+		}
+	}
+
+	/**
+	 * Matching, missing and incorrect sizes for empty and nonempty artifacts.
+	 *
+	 * @return array
+	 */
+	public function whole_artifact_sizes() {
+		$cases = array();
+		foreach ( array( '', 'payload' ) as $body ) {
+			$cases[] = array( $body, array( 'size' => strlen( $body ) ), true );
+			$cases[] = array( $body, array( 'size' => strlen( $body ) + 1 ), false );
+			$cases[] = array( $body, array( 'size' => null ), false );
+			$cases[] = array( $body, false, false );
+		}
+		return $cases;
+	}
 
 	/**
 	 * Both remote layouts survive a display-name change.
@@ -1850,11 +2243,218 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$now = time();
 		for ( $i = 0; $i < 7; $i++ ) {
 			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
-			$now += 20000;
+			$now = max( $now, (int) $store->get_jobs_for_snapshot( $snapshot_id )[0]->next_retry_at );
 		}
 
 		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 6, (int) $job->attempt_count );
+	}
+
+	/**
+	 * Each transient chunk failure recovers before the next chunk fails.
+	 *
+	 * @dataProvider chunk_retry_budgets
+	 * @param int    $failures Failures per chunk.
+	 * @param string $status Expected final status.
+	 * @param int    $attempts Expected recorded retryable failures.
+	 */
+	public function test_scattered_chunk_failures_do_not_exhaust_upload( $failures, $status, $attempts ) {
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Scattered failures',
+				'settings' => array(
+					'bucket'     => 'fixture',
+					'region'     => 'us-east-1',
+					'access_key' => 'fixture-key',
+					'secret_key' => 'fixture-secret',
+				),
+			)
+		);
+		$id      = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 16384,
+					'role' => 'full',
+				),
+			)
+		);
+		$store   = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$objects = array();
+		$failed  = array();
+		add_filter(
+			'pre_http_request',
+			static function ( $pre, $args, $url ) use ( &$objects, &$failed, $failures ) {
+				$key    = (string) wp_parse_url( $url, PHP_URL_PATH );
+				$method = strtoupper( $args['method'] ?? 'GET' );
+				$code   = 200;
+				if ( 'PUT' === $method ) {
+					if ( false !== strpos( $key, '/chunks/' ) && ( $failed[ $key ] ?? 0 ) < $failures ) {
+						$failed[ $key ] = ( $failed[ $key ] ?? 0 ) + 1;
+						$code           = count( $failed ) % 2 ? 503 : 500;
+					} else {
+						$objects[ $key ] = strlen( $args['body'] );
+					}
+				} elseif ( 'HEAD' === $method && ! isset( $objects[ $key ] ) ) {
+					$code = 404;
+				}
+				return array(
+					'headers'  => array( 'content-length' => (string) ( $objects[ $key ] ?? 0 ) ),
+					'body'     => '',
+					'response' => array( 'code' => $code ),
+				);
+			},
+			10,
+			3
+		);
+		$now = time();
+		for ( $i = 0; $i < 60; ++$i ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+			$now = max( $now, (int) $store->get_jobs_for_snapshot( $id )[0]->next_retry_at );
+		}
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( $attempts + ( 'failed_permanent' === $status ? 1 : 0 ), array_sum( $failed ) );
+		$this->assertSame( $status, $job->status );
+		$this->assertSame( $attempts, (int) $job->attempt_count );
+		if ( 'failed_permanent' === $status ) {
+			$this->assertStringContainsString( 'HTTP 503', $job->last_error );
+			$this->assertStringContainsString( '(chunk ', $job->last_error );
+			$this->assertStringNotContainsString( 'fixture-secret', $job->last_error );
+		}
+	}
+
+	/**
+	 * Scattered recovery, a stuck first chunk and the scaled whole-job ceiling.
+	 *
+	 * @return array
+	 */
+	public static function chunk_retry_budgets(): array {
+		return array(
+			'scattered recovery' => array( 1, 'complete', 16 ),
+			'stuck chunk'        => array( 7, 'failed_permanent', 6 ),
+			'whole-job ceiling'  => array( 3, 'failed_permanent', 31 ),
+		);
+	}
+
+	/**
+	 * Progress cannot keep a failing upload retrying beyond one day.
+	 *
+	 * @dataProvider upload_retry_deadline_ages
+	 * @param int  $age Age at the failure, seconds.
+	 * @param bool $expired Whether the retry deadline has passed.
+	 */
+	public function test_upload_retry_deadline( int $age, bool $expired ) {
+		global $wpdb;
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Deadline fixture',
+				'settings' => array(
+					'bucket'     => 'fixture',
+					'region'     => 'us-east-1',
+					'access_key' => 'fixture-key',
+					'secret_key' => 'fixture-secret',
+				),
+			)
+		);
+		$id      = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 16384,
+					'role' => 'full',
+				),
+			)
+		);
+		$store   = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$now = time();
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'created' => $now - $age ), array( 'id' => $job->id ) );
+		add_filter(
+			'pre_http_request',
+			static function () {
+				return array(
+					'headers'  => array(),
+					'body'     => '',
+					'response' => array( 'code' => 503 ),
+				);
+			}
+		);
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( $expired ? 'failed_permanent' : 'failed_retryable', $job->status );
+		$this->assertStringContainsString( 'HTTP 503', $job->last_error );
+		if ( $expired ) {
+			$this->assertStringContainsString( '24-hour upload retry deadline', $job->last_error );
+		} else {
+			$this->assertLessThanOrEqual( $now - $age + DAY_IN_SECONDS, (int) $job->next_retry_at );
+			$this->assertGreaterThan( $now, (int) $job->next_retry_at );
+		}
+	}
+
+	/**
+	 * A malformed chunk list must not hide the original permanent error.
+	 *
+	 * @dataProvider scalar_chunk_failure_phases
+	 * @param bool $during_chunking Whether planning encounters the failure.
+	 */
+	public function test_scalar_chunk_checkpoint_preserves_failure_handling( bool $during_chunking ) {
+		global $wpdb;
+		list( $dest_id ) = $this->make_local_destination();
+		$id              = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$job                                  = $store->get_jobs_for_snapshot( $id )[0];
+		$build                                = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+		$checkpoint                           = $build->invoke( MainWP_Backup_Upload_Driver::instance(), $snapshot );
+		$checkpoint['artifacts'][0]['chunks'] = 'malformed-chunks';
+		if ( ! $during_chunking ) {
+			$checkpoint['destination_binding'] = 'mismatched-destination';
+		}
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'checkpoint' => wp_json_encode( $checkpoint ) ), array( 'id' => $job->id ) );
+		if ( $during_chunking ) {
+			unlink( $checkpoint['artifacts'][0]['path'] );
+		}
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( 'failed_permanent', $job->status );
+		$this->assertStringContainsString( $during_chunking ? 'Backup file is missing' : 'storage destination settings changed', $job->last_error );
+		$this->assertSame( 0, (int) $job->attempt_count );
+	}
+
+	/**
+	 * Failures before and during planning exercise both retry and error context.
+	 *
+	 * @return array
+	 */
+	public static function scalar_chunk_failure_phases(): array {
+		return array(
+			'before planning' => array( false ),
+			'during planning' => array( true ),
+		);
+	}
+
+	/**
+	 * Deadline boundary ages.
+	 *
+	 * @return array
+	 */
+	public static function upload_retry_deadline_ages(): array {
+		return array(
+			'before deadline' => array( DAY_IN_SECONDS - 1, false ),
+			'at deadline'     => array( DAY_IN_SECONDS, true ),
+			'after deadline'  => array( DAY_IN_SECONDS + 1, true ),
+		);
 	}
 
 	/**
@@ -2698,17 +3298,407 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A transient DB error on the initial artifact-index checkpoint must park
-	 * the job for the next tick, never complete it over an empty checkpoint.
-	 *
-	 * The index built at process_one_job's first save is what a later restore
-	 * reads to locate the offsite artifacts. If that write is silently ignored
-	 * the job can still reach COMPLETE with an empty persisted checkpoint, and
-	 * the "offsite-verified" snapshot becomes unrestorable once retention
-	 * prunes the local copy.
+	 * A parked upload must leave time for another site in the same task.
 	 *
 	 * @return void
 	 */
+	public function test_parked_upload_does_not_starve_another_site() {
+		list( $dest_id ) = $this->make_local_destination();
+		$task_id         = $this->insert_task( array( $dest_id ) );
+		$first_snapshot  = $this->make_snapshot( $this->standard_files(), $task_id, 4 );
+		$next_snapshot   = $this->make_snapshot( $this->standard_files(), $task_id, 5 );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $first_snapshot, array( $dest_id ) );
+		$store->enqueue_for_snapshot( $next_snapshot, array( $dest_id ) );
+		$first_job = $store->get_jobs_for_snapshot( $first_snapshot )[0];
+
+		$failing                 = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Job whose checkpoint cannot be saved.
+			 *
+			 * @var int
+			 */
+			public $blocked_job_id;
+
+			/**
+			 * Checkpoint attempts for the parked job.
+			 *
+			 * @var int
+			 */
+			public $blocked_calls = 0;
+
+			/**
+			 * Refuse one site's checkpoint writes.
+			 *
+			 * @param int         $job_id Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Whether the checkpoint was saved.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				if ( $this->blocked_job_id === $job_id ) {
+					++$this->blocked_calls;
+					return false;
+				}
+				return parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$failing->blocked_job_id = (int) $first_job->id;
+		$prop                    = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$prop->setValue( null, $failing );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$first = $failing->get_job( (int) $first_job->id );
+			$next  = $failing->get_jobs_for_snapshot( $next_snapshot )[0];
+		} finally {
+			$prop->setValue( null, $store );
+		}
+
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $first->status );
+		$this->assertSame( 1, $failing->blocked_calls, 'A parked upload must not spin within a tick.' );
+		$this->assertSame( '', $first->locked_by );
+		$this->assertEmpty( $first->checkpoint['artifacts'] ?? array(), 'A refused checkpoint must not authorize completion.' );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $next->status, 'Another site must finish while the first upload is parked.' );
+		$this->assertSame( '', $next->locked_by );
+	}
+
+	/**
+	 * Parked uploads alone must not schedule an immediate retry loop.
+	 *
+	 * @dataProvider parked_upload_queue_sizes
+	 * @param bool $extra_site Whether one working site remains beyond the tick limit.
+	 */
+	public function test_parked_uploads_do_not_schedule_immediate_retry_loop( bool $extra_site ) {
+		list( $dest_id ) = $this->make_local_destination();
+		$task_id         = $this->insert_task( array( $dest_id ) );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$jobs            = array();
+		$count           = MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK + ( $extra_site ? 1 : 0 );
+		for ( $i = 0; $i < $count; ++$i ) {
+			$snapshot_id = $this->make_snapshot( $this->standard_files(), $task_id, 4 + $i );
+			$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			$jobs[] = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		}
+		$failing              = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Jobs whose checkpoint writes fail.
+			 *
+			 * @var int[]
+			 */
+			public $blocked_ids = array();
+
+			/**
+			 * Refuse checkpoint writes for the parked jobs.
+			 *
+			 * @param int         $job_id Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Whether the checkpoint was saved.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				return in_array( $job_id, $this->blocked_ids, true ) ? false : parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$failing->blocked_ids = array_map( 'intval', array_column( array_slice( $jobs, 0, MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK ), 'id' ) );
+		$prop                 = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$prop->setValue( null, $failing );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = time() + 2;
+		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			foreach ( $failing->blocked_ids as $id ) {
+				$job = $failing->get_job( $id );
+				$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $job->status );
+				$this->assertSame( '', $job->locked_by );
+				$this->assertEmpty( $job->checkpoint['artifacts'] ?? array() );
+			}
+			if ( $extra_site ) {
+				$last_id = (int) $jobs[ $count - 1 ]->id;
+				$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $failing->get_job( $last_id )->status );
+				$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'An unattempted site needs a successor tick.' );
+				wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+				++MainWP_Backup_Incremental_Sender_Test::$fixed_time;
+				MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+				$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $failing->get_job( $last_id )->status, 'The successor must reach the working site behind the parked uploads.' );
+			} else {
+				$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'Only parked uploads remain; wait for the periodic retry.' );
+			}
+		} finally {
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+			$prop->setValue( null, $store );
+		}
+	}
+
+	/**
+	 * Queue sizes at and beyond the per-tick limit.
+	 *
+	 * @return array Queue cases.
+	 */
+	public static function parked_upload_queue_sizes(): array {
+		return array(
+			'only parked jobs'         => array( false ),
+			'working site after limit' => array( true ),
+		);
+	}
+
+	/**
+	 * A slow site's upload yields before the shared tick budget runs out.
+	 *
+	 * @dataProvider next_site_upload_outcomes
+	 * @param bool $park_next Whether the next site's checkpoint write fails.
+	 */
+	public function test_slow_upload_yields_a_slice_to_another_site( bool $park_next ) {
+		list( $dest_id ) = $this->make_local_destination();
+		$task_id         = $this->insert_task( array( $dest_id ) );
+		$first_snapshot  = $this->make_snapshot( $this->standard_files(), $task_id, 4 );
+		$next_snapshot   = $this->make_snapshot( $this->standard_files(), $task_id, 5 );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $first_snapshot, array( $dest_id ) );
+		$store->enqueue_for_snapshot( $next_snapshot, array( $dest_id ) );
+		$first_job            = $store->get_jobs_for_snapshot( $first_snapshot )[0];
+		$next_job             = $store->get_jobs_for_snapshot( $next_snapshot )[0];
+		$slow                 = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Job consuming time between checkpoints.
+			 *
+			 * @var int
+			 */
+			public $slow_job_id;
+
+			/**
+			 * Job whose checkpoint writes fail.
+			 *
+			 * @var int
+			 */
+			public $blocked_job_id = 0;
+
+			/**
+			 * Exclusions used to decide whether to schedule a successor.
+			 *
+			 * @var int[]
+			 */
+			public $continuation_exclusions = array();
+
+			/**
+			 * Record exclusions while checking the actual runnable rows.
+			 *
+			 * @param int   $now Current time.
+			 * @param int[] $exclude_ids Jobs not eligible for an immediate retry.
+			 * @return bool Whether another job can run.
+			 */
+			public function has_runnable_job( int $now, array $exclude_ids = array() ): bool {
+				$this->continuation_exclusions = $exclude_ids;
+				return parent::has_runnable_job( $now, $exclude_ids );
+			}
+
+			/**
+			 * Advance the clock as one upload makes progress.
+			 *
+			 * @param int         $job_id Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Whether the checkpoint was saved.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				if ( $this->blocked_job_id === $job_id ) {
+					return false;
+				}
+				$saved = parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+				if ( $this->slow_job_id === $job_id ) {
+					MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 31;
+				}
+				return $saved;
+			}
+		};
+		$slow->slow_job_id    = (int) $first_job->id;
+		$slow->blocked_job_id = $park_next ? (int) $next_job->id : 0;
+		$prop                 = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$prop->setValue( null, $slow );
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = microtime( true );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$first = $slow->get_job( (int) $first_job->id );
+			$next  = $slow->get_jobs_for_snapshot( $next_snapshot )[0];
+		} finally {
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+			$prop->setValue( null, $store );
+		}
+		$this->assertNotEmpty( $first->checkpoint['artifacts'], 'The slow upload must preserve resumable progress.' );
+		$this->assertSame( '', $first->locked_by );
+		$this->assertSame( $park_next ? MainWP_Backup_Upload_Job_Store::STATUS_PENDING : MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $next->status, 'The next site must get a turn independently of the slow upload.' );
+		$this->assertNotSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $first->status );
+		$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'The yielded upload needs a successor.' );
+		$this->assertNotContains( (int) $first->id, $slow->continuation_exclusions, 'A genuine yield remains eligible for continuation.' );
+		if ( $park_next ) {
+			$this->assertContains( (int) $next->id, $slow->continuation_exclusions, 'A different job yielding must not reopen an immediate retry for the parked site.' );
+		}
+	}
+
+	/**
+	 * The next site can finish or park independently of the slow upload.
+	 *
+	 * @return array Next-site outcomes.
+	 */
+	public static function next_site_upload_outcomes(): array {
+		return array(
+			'working site' => array( false ),
+			'parked site'  => array( true ),
+		);
+	}
+
+	/**
+	 * More parked jobs than one tick can handle must eventually stop scheduling.
+	 *
+	 * @dataProvider checkpoint_deferral_write_outcomes
+	 * @param bool $refuse_deferral Whether the deferral write also fails.
+	 */
+	public function test_parked_upload_deferral_survives_successor_ticks( bool $refuse_deferral ) {
+		list( $dest_id ) = $this->make_local_destination();
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$jobs            = array();
+		for ( $i = 0; $i <= MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK; ++$i ) {
+			$snapshot = $this->make_snapshot( $this->standard_files(), 0, 4 + $i );
+			$store->enqueue_for_snapshot( $snapshot, array( $dest_id ) );
+			$jobs[] = $store->get_jobs_for_snapshot( $snapshot )[0];
+		}
+		$failing                  = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Whether the retry-not-before write fails too.
+			 *
+			 * @var bool
+			 */
+			public $refuse_deferral = false;
+
+			/**
+			 * Checkpoint save attempts across requests.
+			 *
+			 * @var int
+			 */
+			public $calls = 0;
+
+			/**
+			 * Refuse checkpoint writes for every site.
+			 *
+			 * @param int         $job_id Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Whether the checkpoint was saved.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				++$this->calls;
+				return false;
+			}
+
+			/**
+			 * Model a second storage failure when requested.
+			 *
+			 * @param int    $job_id Job id.
+			 * @param int    $until Earliest next attempt.
+			 * @param string $lock_token Lease token.
+			 * @return bool Whether the deferral was saved.
+			 */
+			public function defer_checkpoint_retry( int $job_id, int $until, string $lock_token ): bool {
+				return $this->refuse_deferral ? false : parent::defer_checkpoint_retry( $job_id, $until, $lock_token );
+			}
+		};
+		$failing->refuse_deferral = $refuse_deferral;
+		$prop                     = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$prop->setValue( null, $failing );
+		$now = time();
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now;
+		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		try {
+			$driver = MainWP_Backup_Upload_Driver::instance();
+			$driver->process_pending_jobs( 240 );
+			$this->assertSame( MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK, $failing->calls );
+			if ( $refuse_deferral ) {
+				$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'A failed durable deferral must not cause an immediate retry loop.' );
+				foreach ( $jobs as $job ) {
+					$this->assertSame( 0, (int) $failing->get_job( (int) $job->id )->next_retry_at, 'A refused write must not be reported as persisted.' );
+				}
+			} else {
+				$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'The unattempted eleventh site needs a successor.' );
+				wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+				++MainWP_Backup_Incremental_Sender_Test::$fixed_time;
+				$driver->process_pending_jobs( 240 );
+				$this->assertSame( count( $jobs ), $failing->calls, 'The successor must only attempt the remaining site.' );
+				$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'All sites are parked now; the continuation chain must stop.' );
+				foreach ( $jobs as $job ) {
+					$this->assertGreaterThanOrEqual( $now + 300, (int) $failing->get_job( (int) $job->id )->next_retry_at );
+				}
+				MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now + 299;
+				$driver->process_pending_jobs( 240 );
+				$this->assertSame( count( $jobs ), $failing->calls, 'Deferred jobs must stay parked before their retry time.' );
+			}
+			foreach ( $jobs as $job ) {
+				$saved = $failing->get_job( (int) $job->id );
+				$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $saved->status );
+				$this->assertSame( '', $saved->locked_by );
+				$this->assertSame( 0, (int) $saved->attempt_count );
+				$this->assertEmpty( $saved->checkpoint['artifacts'] ?? array() );
+			}
+		} finally {
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+			$prop->setValue( null, $store );
+		}
+	}
+
+	/**
+	 * Successful and refused durable deferrals.
+	 *
+	 * @return array Deferral outcomes.
+	 */
+	public static function checkpoint_deferral_write_outcomes(): array {
+		return array(
+			'deferral persisted' => array( false ),
+			'deferral refused'   => array( true ),
+		);
+	}
+
+	/** A slow failed checkpoint is parked even after its slice expires. */
+	public function test_delayed_checkpoint_refusal_does_not_schedule_continuation() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job     = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$failing = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Model a refused database write that took longer than one slice.
+			 *
+			 * @param int         $job_id Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Whether the checkpoint was saved.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 31;
+				return false;
+			}
+		};
+		$prop    = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$prop->setValue( null, $failing );
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = microtime( true );
+		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$saved = $failing->get_job( (int) $job->id );
+		} finally {
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+			$prop->setValue( null, $store );
+		}
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $saved->status );
+		$this->assertEmpty( $saved->checkpoint['artifacts'] ?? array() );
+		$this->assertSame( '', $saved->locked_by );
+		$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'Elapsed time must not turn a refused checkpoint into an immediate retry.' );
+	}
+
+	/** A refused artifact index leaves the job pending. */
 	public function test_initial_checkpoint_save_failure_parks_job() {
 		list( $dest_id ) = $this->make_local_destination();
 		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
@@ -2746,6 +3736,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		try {
 			MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
 			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
 			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
 		} finally {
@@ -2754,6 +3745,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $job->status, 'A failed initial index save must leave the job pending for the next tick, not complete it.' );
 		$this->assertSame( 1, $failing->calls, 'A parked job must not be attempted twice within one tick.' );
+		$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'A refused checkpoint must wait for the periodic lane rather than start an immediate retry loop.' );
 		$this->assertSame( '', $job->locked_by, 'The repeated acquisition must release its lock.' );
 		$this->assertEmpty( $job->checkpoint['artifacts'] ?? array(), 'The unpersisted checkpoint must stay empty; the job must not have completed over it.' );
 	}
@@ -3259,7 +4251,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotEmpty( $before->checkpoint['destination_binding'] ?? '' );
 		$this->assertSame( array( true, true, true ), array_column( $before->checkpoint['artifacts'], 'done' ) );
 		MainWP_Backup_Storage_Destinations::instance()->update_destination( $destination, array( 'settings' => array( 'base_path' => $new_base ) ) );
-		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$this->assertGreaterThan( time(), (int) $before->next_retry_at, 'The refused checkpoint must wait before resuming.' );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, (int) $before->next_retry_at );
 		$after = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $after->status );
 		$this->assertSame( $before->checkpoint['destination_binding'], $after->checkpoint['destination_binding'] );
@@ -3368,7 +4361,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			} else {
 				$this->assertTrue( $store->update_destination( $destination, array( 'settings' => $settings ) ) );
 			}
-			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertGreaterThan( time(), (int) $job->next_retry_at, 'The refused checkpoint must wait before resuming.' );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, (int) $job->next_retry_at );
 			$this->assertSame( 'complete', $original->get_jobs_for_snapshot( $id )[0]->status );
 			if ( $opt_in ) {
 				$this->assertTrue( $protection::required_uploads_verified( $id ) );
@@ -3563,7 +4557,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			if ( ! $changed_account ) {
 				$this->assertSame( $binding, $protection::destination_binding( $store->get_destination( $destination ) ) );
 			}
-			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertGreaterThan( time(), (int) $job->next_retry_at, 'The refused checkpoint must wait before resuming.' );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, (int) $job->next_retry_at );
 			$job = $original->get_jobs_for_snapshot( $id )[0];
 			if ( $changed_account ) {
 				$this->assertSame( 'failed_permanent', $job->status, 'The existing 410 rule must refuse resuming into another account.' );

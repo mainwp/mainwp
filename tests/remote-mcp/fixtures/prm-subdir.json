@@ -1,0 +1,13 @@
+{
+  "resource": "https://example.com/sub/wp-json/mainwp-remote/v1/mcp",
+  "authorization_servers": [
+    "https://example.com/sub"
+  ],
+  "scopes_supported": [
+    "mainwp:read",
+    "mainwp:write"
+  ],
+  "bearer_methods_supported": [
+    "header"
+  ]
+}

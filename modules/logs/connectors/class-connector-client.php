@@ -82,7 +82,7 @@ class Connector_Client extends Log_Connector {
      * @param bool   $created true add new, false updated.
      */
     public function callback_mainwp_client_updated( $client, $created = false ) {
-        $action = $created ? 'created' : 'updated';
+        $action  = $created ? 'created' : 'updated';
         $message = '%s';
 
         $state = 1;

@@ -97,6 +97,9 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
             'extra'            => isset( $plugin['extra'] ) ? $plugin['extra'] : '',
         );
 
+        // License operations append their own query string to get_upgrade_url().
+        $args = apply_filters( 'mainwp_api_manager_update_check_args', $args, 'pluginupdatecheck' );
+
         // Check for a plugin update.
         return $this->plugin_information( $args ); // pluginupdatecheck.
     }
@@ -122,6 +125,8 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
         if ( ! empty( $mainwp_api_key ) ) {
             $args['api_key'] = $mainwp_api_key;
         }
+
+        $args = apply_filters( 'mainwp_api_manager_update_check_args', $args, 'bulkupdatecheck' );
 
         return $this->plugin_information( $args, true ); // bulkupdatecheck.
     }

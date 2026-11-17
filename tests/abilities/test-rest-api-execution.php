@@ -1474,11 +1474,12 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 		] );
 
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/sync-sites-v1' ) );
-		$request->set_body_params( [
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( [
 			'input' => [
 				'site_ids_or_domains' => [ $site_id ],
 			],
-		] );
+		] ) );
 
 		$response = rest_do_request( $request );
 

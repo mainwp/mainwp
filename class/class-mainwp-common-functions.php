@@ -253,7 +253,7 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
             if ( ! empty( $slug ) ) {
                 $item_slug = $slug;
             } else {
-                $item_slug   = isset( $item['update'] ) && is_array( $item['update'] ) && isset( $item['update'][ $type ] ) ? $item['update'][ $type ] : '';
+                $item_slug = isset( $item['update'] ) && is_array( $item['update'] ) && isset( $item['update'][ $type ] ) ? $item['update'][ $type ] : '';
                 if ( empty( $item_slug ) && ! empty( $item['slug'] ) ) {
                     $item_slug = $item['slug']; // for data of plugin/theme of site.
                 }

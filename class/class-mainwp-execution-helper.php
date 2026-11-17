@@ -111,7 +111,7 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * Get the execution time value.
      *
-     * @param  bool $ret_microseconds
+     * @param  bool $ret_microseconds Whether to return the value in microseconds.
      *
      * @since 5.5.
      *
@@ -238,13 +238,35 @@ class MainWP_Execution_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     'url' => $url,
                 );
                 if ( ! empty( $args ) ) {
-                    $data['args'] = $args;
+                    $data['args'] = static::redact_call_args( $args );
                 }
 
                 static::$exec_stats['check_data'][] = $data;
                 unset( $start[ $key ] );
             }
         }
+    }
+
+    /**
+     * Redact sensitive fields from tracked HTTP call args before they are
+     * stored in the (opt-in) execution-sync diagnostic log. The raw $args from
+     * the http_api_debug hook carry request headers (Authorization/Bearer,
+     * cookies) and the request body, which must never be written to the
+     * DB-backed action log. Timing/URL are unaffected.
+     *
+     * @param array $args Raw wp_remote_* args.
+     * @return array Args with headers/body/cookies removed.
+     */
+    protected static function redact_call_args( $args ) {
+        if ( ! is_array( $args ) ) {
+            return array();
+        }
+
+        foreach ( array( 'headers', 'body', 'cookies', 'Authorization' ) as $sensitive ) {
+            unset( $args[ $sensitive ] );
+        }
+
+        return $args;
     }
 
     /**

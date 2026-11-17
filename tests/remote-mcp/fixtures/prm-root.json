@@ -1,0 +1,13 @@
+{
+  "resource": "https://dash.example.com/wp-json/mainwp-remote/v1/mcp",
+  "authorization_servers": [
+    "https://dash.example.com"
+  ],
+  "scopes_supported": [
+    "mainwp:read",
+    "mainwp:write"
+  ],
+  "bearer_methods_supported": [
+    "header"
+  ]
+}

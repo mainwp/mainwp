@@ -659,6 +659,40 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
     }
 
     /**
+     * Staff with the settings right but without manage_options save the whole
+     * Tools form; the admin-only Assistant toggle keeps its stored value.
+     */
+    public function test_tools_save_without_manage_options_keeps_assistant_toggle(): void {
+        $this->right( 'manage_dashboard_settings', true );
+        $this->filter(
+            'user_has_cap',
+            static function ( $caps ) {
+                $caps['manage_options'] = false;
+                return $caps;
+            }
+        );
+        $this->assertFalse( current_user_can( 'manage_options' ) );
+        $_GET  = array( 'page' => 'MainWPTools' );
+        $_POST = array( 'wp_nonce' => wp_create_nonce( 'MainWPTools' ) );
+        $this->options(
+            true,
+            array(
+                'mainwp_enable_guided_tours'    => 1,
+                'mainwp_enable_guided_chatbase' => 1,
+                'mainwp_enable_guided_video'    => 1,
+            ),
+            array(
+                'mainwp_enable_guided_tours'    => 0,
+                'mainwp_enable_guided_chatbase' => 1,
+                'mainwp_enable_guided_video'    => 0,
+            ),
+            static function () {
+                MainWP_System_Handler::instance()->handle_mainwp_tools_settings();
+            }
+        );
+    }
+
+    /**
      * The absent optimize field and forced favicon write are both global.
      *
      * @param bool $allowed Settings grant.
@@ -864,6 +898,8 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
      */
     private function options( bool $allowed, array $before, array $after, callable $callback ): void {
         foreach ( $before as $name => $value ) {
+            // Install seeds some of these, and update_option() keeps an equal stored string, so start from a fresh row.
+            delete_option( $name );
             update_option( $name, $value );
         }
         $snapshot = $this->snapshot();

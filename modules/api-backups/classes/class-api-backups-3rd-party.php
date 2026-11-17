@@ -729,11 +729,9 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-module-api-backups-info-message"></i>
                                 <div><?php esc_html_e( 'You can create up to 5 manual backups. Each manual backup will be stored for 14 days.', 'mainwp' ); ?></div>
                             </div>
-                            <?php
-                        endif;
-                        $el_id_wp_1 = $website['id'];
-                        ?>
-                        <table id="mainwp-siteid-<?php echo intval( $el_id_wp_1 ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
+                        <?php endif; ?>
+                        <?php $el_id_wp_1 = $website['id']; ?>
+                        <table id="mainwp-siteid-<?php echo intval( $el_id_wp_1 ); ?>-table-kinsta-available" class="ui mainwp-api-backup-table table" style="width:100%">
                             <thead>
                             <tr>
                                 <th  scope="col"><?php esc_html_e( 'Backup Name', 'mainwp' ); ?></th>
@@ -789,7 +787,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                             </tfoot>
                         </table>
                         <div class="ui divider hidden"></div>
-                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
+                        <table id="mainwp-siteid-<?php echo intval( $website['id'] ); ?>-table-kinsta-downloadable" class="ui mainwp-api-backup-table table" style="width:100%"> <?php // NOSONAR - id ok. ?>
                             <thead>
                             <tr>
                                 <th scope="col" colspan="3">
@@ -2929,16 +2927,13 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         $backup_response = static::call_gridpane_api( 'POST', '/backups/' . $site_id, $accessToken, $backup_data );
         $backup_status   = json_decode( $backup_response );
 
-        $success = false;
-        $error   = false;
+        $error   = static::gridpane_backup_error( $backup_status );
+        $success = null === $error;
         // Store Last Backup timestamp.
-        if ( $backup_status && ! empty( $backup_status->success ) ) {
-            $success      = true;
+        if ( $success ) {
             $local_time   = current_datetime();
             $current_time = $local_time->getTimestamp() + $local_time->getOffset();
             Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_gridpane_last_backup', $current_time );
-        } else {
-            $error = new WP_Error( $backup_status->error->code, $backup_status->error->message );
         }
 
         if ( $ret_val ) {
@@ -2953,6 +2948,53 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             }
             wp_send_json_error( $error );
         }
+    }
+
+    /**
+     * GridPane: read the create-backup response.
+     *
+     * The bulk backup handler and the single-site action both read this, so a
+     * failed request reports the same error on either path. A body without a
+     * success flag is a failure even when it carries no error, and the error
+     * may arrive as an object, an array or a plain string.
+     *
+     * @param mixed $backup_status Decoded GridPane response.
+     *
+     * @return WP_Error|null Null when GridPane reported success.
+     */
+    public static function gridpane_backup_error( $backup_status ) {
+        if ( ( is_object( $backup_status ) && ! empty( $backup_status->success ) ) || ( is_array( $backup_status ) && ! empty( $backup_status['success'] ) ) ) {
+            return null;
+        }
+
+        $error_data = null;
+        if ( is_object( $backup_status ) && isset( $backup_status->error ) ) {
+            $error_data = $backup_status->error;
+        } elseif ( is_array( $backup_status ) && isset( $backup_status['error'] ) ) {
+            $error_data = $backup_status['error'];
+        }
+
+        $error_code = is_object( $error_data ) && isset( $error_data->code ) ? sanitize_key( (string) $error_data->code ) : '';
+        if ( empty( $error_code ) && is_array( $error_data ) && isset( $error_data['code'] ) ) {
+            $error_code = sanitize_key( (string) $error_data['code'] );
+        }
+        if ( empty( $error_code ) ) {
+            $error_code = 'gridpane_backup_failed';
+        }
+
+        $error_message = '';
+        if ( is_string( $error_data ) ) {
+            $error_message = sanitize_text_field( $error_data );
+        } elseif ( is_object( $error_data ) && isset( $error_data->message ) ) {
+            $error_message = sanitize_text_field( $error_data->message );
+        } elseif ( is_array( $error_data ) && isset( $error_data['message'] ) ) {
+            $error_message = sanitize_text_field( $error_data['message'] );
+        }
+        if ( empty( $error_message ) ) {
+            $error_message = esc_html__( 'GridPane backup request failed.', 'mainwp' );
+        }
+
+        return new WP_Error( $error_code, $error_message );
     }
 
     /**

@@ -104,6 +104,7 @@ class Log_DB_Archive extends MainWP_DB {
         $total_archived = 0;
 
         do {
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal table name; integer-built WHERE and ORDER fragments.
             // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL fragments are built from integer-cast archive inputs; table name is internal.
             $ids = $this->wpdb->get_col(
                 "SELECT log_id
@@ -111,6 +112,7 @@ class Log_DB_Archive extends MainWP_DB {
                 WHERE 1 $where " . ( ! empty( $order_by ) ? " ORDER BY $order_by " : '' ) . // phpcs:ignore -- NOSONAR -no user input
                 ' LIMIT ' . intval( $batch_limit )
             );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
             if ( '' !== $this->wpdb->last_error ) {
                 $this->log_archive_error( 'select logs to archive' );
@@ -130,7 +132,7 @@ class Log_DB_Archive extends MainWP_DB {
 
             $total_archived += count( $ids );
 
-        } while ( count( $ids ) === $batch_limit ); // Continue if we hit the batch limit.
+        } while ( count( $ids ) === $batch_limit ); // phpcs:ignore Squiz.PHP.DisallowSizeFunctionsInLoops.Found -- Batch size changes after each database read.
 
         $this->wpdb->suppress_errors( $suppress );
         return $total_archived;

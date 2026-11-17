@@ -1,0 +1,45 @@
+<?php
+/** Support-settings persistence responses, separate from the WordPress bootstrap. */
+namespace MainWP\Dashboard\Tests;
+
+class SupportSettingsSaveTest extends \PHPUnit\Framework\TestCase {
+    /** @dataProvider save_cases */
+    public function test_save_response_matches_persistence( $scenario, $expected_status ): void {
+        $process = proc_open(
+            array( PHP_BINARY, dirname( __DIR__ ) . '/fixtures/support-settings-save.inc', $scenario ),
+            array( 0 => array( 'pipe', 'r' ), 1 => array( 'pipe', 'w' ), 2 => array( 'pipe', 'w' ) ),
+            $pipes
+        );
+        $this->assertIsResource( $process );
+        fclose( $pipes[0] );
+        $body = stream_get_contents( $pipes[1] );
+        $metadata = stream_get_contents( $pipes[2] );
+        fclose( $pipes[1] );
+        fclose( $pipes[2] );
+        $this->assertSame( 0, proc_close( $process ), $metadata );
+        $state = json_decode( $metadata, true );
+        $this->assertIsArray( $state, $metadata );
+        $this->assertTrue( $state['secured'] );
+        $this->assertSame( $expected_status, $state['status'], $body );
+        $this->assertSame( 200 === $expected_status ? 'ok' : 'save-error', $body );
+        foreach ( array( 'tours', 'video', 'chatbase' ) as $feature ) {
+            if ( 'fail_' . $feature === $scenario ) {
+                $this->assertSame( 0, (int) $state['options'][ 'mainwp_enable_guided_' . $feature ] );
+            } elseif ( 200 === $expected_status ) {
+                $this->assertSame( 'unchanged_off' === $scenario ? 0 : 1, (int) $state['options'][ 'mainwp_enable_guided_' . $feature ] );
+            }
+        }
+    }
+
+    public function save_cases(): array {
+        return array(
+            'changed' => array( 'changed', 200 ),
+            'unchanged WordPress strings' => array( 'unchanged', 200 ),
+            'unchanged disabled values' => array( 'unchanged_off', 200 ),
+            'tour write failure' => array( 'fail_tours', 500 ),
+            'video write failure' => array( 'fail_video', 500 ),
+            // The Assistant toggle goes through the Assistant policy, which refuses with 403.
+            'assistant write failure' => array( 'fail_chatbase', 403 ),
+        );
+    }
+}

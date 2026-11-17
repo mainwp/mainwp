@@ -910,7 +910,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         $cost_name = isset( $cost_data_raw['cost']['name'] ) && is_string( $cost_data_raw['cost']['name'] ) ? sanitize_text_field( $cost_data_raw['cost']['name'] ) : '';
 
         if ( empty( $cost_name ) ) {
-            return wp_send_json_error(
+            wp_send_json_error(
                 array(
                     'message' => esc_html__( 'Cost name is required', 'mainwp' ),
                 )
@@ -967,7 +967,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         try {
             $inserted = Cost_Tracker_DB::get_instance()->update_cost_tracker( $cost_data );
         } catch ( \MainWP_Exception $e ) {
-            return wp_send_json_error(
+            wp_send_json_error(
                 array(
                     'message' => $e->getMessage(),
                 )
@@ -975,7 +975,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( empty( $inserted ) || ! is_object( $inserted ) || ! isset( $inserted->id ) ) {
-            return wp_send_json_error(
+            wp_send_json_error(
                 array(
                     'message' => esc_html__( 'Failed to create cost tracker entry', 'mainwp' ),
                 )
@@ -991,7 +991,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        return wp_send_json_success(
+        wp_send_json_success(
             array(
                 'message' => esc_html__( 'Cost imported successfully.', 'mainwp' ),
                 'cost'    => $inserted,

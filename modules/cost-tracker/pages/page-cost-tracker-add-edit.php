@@ -99,22 +99,22 @@ class Cost_Tracker_Add_Edit {
      */
     public function render_add_edit_content( $edit_id, $duplicate_id = 0 ) { //phpcs:ignore -- NOSONAR - complex method.
 
-        $edit_cost                    = false;
-        $source_cost                  = false;
-        $is_duplicate                 = false;
-        $selected_payment_type        = '';
-        $selected_product_type        = '';
-        $selected_license_type        = '';
-        $selected_renewal             = '';
-        $selected_cost_tracker_status = '';
-        $last_renewal                 = time();
-        $selected_payment_method      = 'paypal';
-        $slug                         = '';
-        $selected_default_icon        = '';
-        $selected_prod_icon           = '';
-        $selected_prod_color          = '';
+        $edit_cost                       = false;
+        $source_cost                     = false;
+        $is_duplicate                    = false;
+        $selected_payment_type           = '';
+        $selected_product_type           = '';
+        $selected_license_type           = '';
+        $selected_renewal                = '';
+        $selected_cost_tracker_status    = '';
+        $last_renewal                    = time();
+        $selected_payment_method         = 'paypal';
+        $slug                            = '';
+        $selected_default_icon           = '';
+        $selected_prod_icon              = '';
+        $selected_prod_color             = '';
         $duplicate_uploaded_icon_cleared = false;
-        $is_plugintheme               = true;
+        $is_plugintheme                  = true;
 
         if ( $edit_id ) {
             $edit_cost = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $edit_id );
@@ -262,7 +262,8 @@ class Cost_Tracker_Add_Edit {
                     <?php
                     MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $edit_cost ? $edit_cost->name : '' );
                     esc_html_e( 'Name', 'mainwp' );
-                    ?> <span class="ui small red text">(<?php esc_html_e( 'Required', 'mainwp' ); ?>)</span>
+                    ?>
+                    <span class="ui small red text">(<?php esc_html_e( 'Required', 'mainwp' ); ?>)</span>
                     </label>
                     <div class="five wide column">
                         <input type="text" class="settings-field-value-change-handler" aria-label="<?php esc_attr_e( 'Enter the Company (Product) name.', 'mainwp' ); ?>" name="mainwp_module_cost_tracker_edit_name" id="mainwp_module_cost_tracker_edit_name" value="<?php echo $prefill_cost ? esc_html( $prefill_cost->name ) : ''; ?>">

@@ -85,7 +85,7 @@ class MainWP_Encrypt_Data_Lib { // phpcs:ignore Generic.Classes.OpeningBraceSame
             if ( ! file_exists( $new_path ) ) {
                 $legacy_path = $key_dir . static::legacy_key_filename( $site_id );
                 if ( file_exists( $legacy_path ) ) {
-                    if ( @rename( $legacy_path, $new_path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort lazy migration.
+                    if ( @rename( $legacy_path, $new_path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions.rename_rename -- rename() is atomic on a local filesystem, so a concurrent request either sees the legacy name or the new one and never a half-written key; WP_Filesystem::move() offers no such guarantee and needs WP_Filesystem() initialised, which is not the case on the child-sync and cron paths that reach get_key_file().
                         return $new_path;
                     }
                     return $legacy_path; // rename failed; fall back to legacy until bulk migration runs.

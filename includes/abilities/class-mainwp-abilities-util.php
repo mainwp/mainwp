@@ -19,6 +19,61 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
     /**
+     * Abilities opt in only after their staff rights and scope are audited.
+     *
+     * @var string
+     */
+    public const TEAM_CONTROL_META_KEY = 'mainwp_team_control';
+
+    /**
+     * Allows integrations to retire their compatibility gate.
+     *
+     * @var int
+     */
+    public const STAFF_ABILITY_GATE_VERSION = 1;
+
+    /**
+     * Nested callbacks must not inherit an outer ability's grant.
+     *
+     * @var array
+     */
+    private static $ability_frames = array();
+
+    /**
+     * Keep context through permission checks and authorization repeated by executors.
+     *
+     * @param array  $args Ability registration arguments.
+     * @param string $name Namespaced ability name.
+     * @return array
+     */
+    public static function wrap_ability_callbacks( array $args, string $name ): array {
+        $frame = null;
+        if ( 0 === strpos( $name, 'mainwp/' ) ) {
+            $frame = array(
+                'name'         => $name,
+                'team_control' => isset( $args['meta'][ self::TEAM_CONTROL_META_KEY ] ) && true === $args['meta'][ self::TEAM_CONTROL_META_KEY ],
+            );
+        }
+
+        foreach ( array( 'permission_callback', 'execute_callback' ) as $key ) {
+            if ( ! isset( $args[ $key ] ) || ! is_callable( $args[ $key ] ) ) {
+                continue;
+            }
+            $callback     = $args[ $key ];
+            $args[ $key ] = static function ( ...$arguments ) use ( $callback, $frame ) {
+                self::$ability_frames[] = $frame;
+                try {
+                    return $callback( ...$arguments );
+                } finally {
+                    array_pop( self::$ability_frames );
+                }
+            };
+        }
+
+        return $args;
+    }
+
+    /**
      * Minimum child plugin version required for Abilities API operations.
      *
      * This constant centralizes the version requirement to ensure consistency
@@ -42,7 +97,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * MainWP_Abilities_Backups::READ_RIGHTS, and knowledge reads, which
      * MainWP_DB_Knowledge checks per record (access_individual_dashboard
      * for site records, manage_clients for client records). Every other
-     * family's reads are gated by manage_options plus site scoping only.
+     * family's reads rely on the base ability gate and site scoping.
      *
      * The update family (run-updates / update-all) is intentionally absent
      * here: it needs per-type rights derived from its `types` input, handled
@@ -287,6 +342,10 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Check for manage_options capability.
         if ( ! current_user_can( 'manage_options' ) ) {
+            $frame = end( self::$ability_frames );
+            if ( ! empty( $frame['team_control'] ) && true === apply_filters( 'mainwp_currentusercan', false, 'rest_api', 'use_abilities' ) ) {
+                return true;
+            }
             return new \WP_Error(
                 'mainwp_permission_denied',
                 __( 'You do not have permission to perform this action.', 'mainwp' ),
@@ -301,10 +360,9 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * Check that the current user has unrestricted access to all sites.
      *
      * The mainwp_currentuserallowedaccesssites filter is applied directly here
-     * rather than through MainWP_DB::get_sql_where_allow_access_sites(), which
-     * skips the filter while DOING_CRON, WP_CLI, or MAINWP_REST_API_DOING is
-     * defined. Going through that wrapper would turn this guard into a no-op on
-     * the REST and MCP surfaces it exists to cover.
+     * rather than through MainWP_DB::get_sql_where_allow_access_sites(), so
+     * this guard evaluates grants independently of the DB query's staging
+     * and userless maintenance exceptions.
      *
      * @param mixed $_input The ability input (unused but required by callback signature).
      * @return true|\WP_Error True when unrestricted, WP_Error otherwise.
@@ -336,10 +394,9 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * Get normalized site grants configured by Team Control.
      *
      * Applies the mainwp_currentuserallowedaccesssites filter directly,
-     * not through MainWP_DB::get_sql_where_allow_access_sites(), which
-     * skips the filter entirely while DOING_CRON, WP_CLI, or
-     * MAINWP_REST_API_DOING is defined. Every scoping check below builds on
-     * the effective scope so REST/MCP surfaces stay covered.
+     * not through MainWP_DB::get_sql_where_allow_access_sites(), so the
+     * configured grants remain independent of staging and userless
+     * maintenance exceptions. Every scoping check below builds on this scope.
      *
      * @return string|int[] 'all' when unrestricted, otherwise a (possibly
      *                      empty) unique int list. Unexpected filter shapes
@@ -652,9 +709,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Check if current user can manage sites (write operations).
      *
-     * Currently a wrapper over check_rest_api_permission() which already verifies
-     * manage_options capability. This method exists as an extension point for future
-     * granular permissions (e.g., a dedicated 'mainwp_manage_sites' capability).
+     * Granular rights belong to the operation wrappers so each write keeps its own right.
      *
      * @param mixed $input The ability input (unused but required by signature).
      * @return true|\WP_Error True on success, WP_Error on failure.
@@ -664,9 +719,6 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         if ( is_wp_error( $base ) ) {
             return $base;
         }
-
-        // Future: Add granular 'mainwp_manage_sites' capability check here.
-        // For now, manage_options is already verified in check_rest_api_permission().
 
         return true;
     }
@@ -717,6 +769,11 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
          * @param mixed|null $input      The ability input, if available.
          */
         $can_access = apply_filters( 'mainwp_check_site_access', true, $site_id, $input );
+
+        // Filters may refuse with their own error, such as a protected site that needs confirmation.
+        if ( is_wp_error( $can_access ) ) {
+            return $can_access;
+        }
 
         if ( ! $can_access ) {
             if ( 'all' !== $allowed_sites ) {
@@ -929,7 +986,92 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $site = $db->get_websites_by_url( $url );
 
         if ( $site && ! empty( $site ) ) {
-            return is_array( $site ) ? $site[0] : $site;
+            $match = is_array( $site ) ? $site[0] : $site;
+            // Re-fetch through the access-scoped lookup. An inaccessible site
+            // resolves to the same not-found error as a nonexistent one - no
+            // fallthrough to the name search, which could silently land on a
+            // different site whose name resembles this domain.
+            $site = $db->get_website_by_id( (int) $match->id );
+            if ( $site ) {
+                return $site;
+            }
+            return new \WP_Error(
+                'mainwp_site_not_found',
+                sprintf(
+                    /* translators: %s: domain or URL */
+                    __( 'No site found matching "%s".', 'mainwp' ),
+                    $site_id_or_domain
+                ),
+                array( 'status' => 404 )
+            );
+        }
+
+        // Name fallback: exact (case-insensitive) name first, then a partial
+        // match on name/url. Resolves only a UNIQUE match - multiple matches
+        // return an error naming the candidates rather than guessing, since
+        // this resolver also feeds disruptive batch abilities. The lookup is
+        // scoped to the current user's allowed sites.
+        $matches = $db->get_websites_by_name_or_partial_match( $site_id_or_domain );
+
+        // wpdb returns null when the lookup query itself fails; that is a
+        // database problem, not "no such site".
+        if ( ! is_array( $matches ) ) {
+            return new \WP_Error(
+                'mainwp_db_error',
+                __( 'The site lookup failed due to a database error.', 'mainwp' ),
+                array( 'status' => 500 )
+            );
+        }
+
+        // A domain or URL that matched no site URL must not land on another site
+        // whose URL merely contains it (example.com -> shop.example.com): only a
+        // site named exactly that may stand in for it.
+        $is_address = false !== strpos( $site_id_or_domain, '://' )
+            || 1 === preg_match( '#^[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(/\S*)?$#i', $site_id_or_domain );
+        if ( $is_address ) {
+            $matches = array_values(
+                array_filter(
+                    $matches,
+                    static function ( $candidate ) use ( $site_id_or_domain ) {
+                        return 0 === strcasecmp( (string) $candidate->name, $site_id_or_domain );
+                    }
+                )
+            );
+        }
+
+        $allowed = self::get_scoped_site_ids_or_all();
+        if ( 'all' !== $allowed ) {
+            $matches = array_values(
+                array_filter(
+                    $matches,
+                    static function ( $candidate ) use ( $allowed ) {
+                        return in_array( (int) $candidate->id, $allowed, true );
+                    }
+                )
+            );
+        }
+
+        if ( 1 === count( $matches ) ) {
+            $site = $db->get_website_by_id( (int) $matches[0]->id );
+            if ( $site ) {
+                return $site;
+            }
+        }
+
+        if ( count( $matches ) > 1 ) {
+            return new \WP_Error(
+                'mainwp_site_ambiguous',
+                sprintf(
+                    /* translators: 1: search term, 2: comma-separated candidate site names */
+                    __( 'Multiple sites match "%1$s": %2$s. Use the exact site URL or full name.', 'mainwp' ),
+                    $site_id_or_domain,
+                    implode( ', ', wp_list_pluck( $matches, 'name' ) )
+                ),
+                array(
+                    'status'     => 409,
+                    'candidates' => array_map( 'intval', wp_list_pluck( $matches, 'id' ) ),
+                )
+            );
         }
 
         return new \WP_Error(
@@ -2079,5 +2221,103 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function is_abilities_api_available(): bool {
         return function_exists( 'wp_register_ability' );
+    }
+
+    /**
+     * Resolve the owning user of a batch job, across all three job-type
+     * transients. Used to gate status polling so a user cannot read another
+     * user's job. Returns null when the job is not found or predates owner
+     * stamping (legacy in-flight jobs), in which case the caller should fall
+     * back to the not-found handling rather than blocking.
+     *
+     * @param string $job_id Job identifier.
+     * @return int|null Owner user ID, or null if unknown.
+     */
+    public static function get_batch_job_owner( string $job_id ): ?int {
+        $job_data = self::get_batch_sync_status( $job_id );
+        if ( null === $job_data ) {
+            $job_data = self::get_batch_update_status( $job_id );
+        }
+        if ( null === $job_data ) {
+            $job_data = self::get_batch_operation_status( $job_id );
+        }
+
+        if ( is_array( $job_data ) && isset( $job_data['user_id'] ) ) {
+            return (int) $job_data['user_id'];
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Validate and extract the site_ids_or_domains input for batch abilities.
+     *
+     * A present non-array value is malformed input. The schema layer cannot
+     * reject it because WP core's rest_is_array() coerces scalars during
+     * validation while the callback still receives the original value, so the
+     * type check has to live here. An absent value normalizes to an empty
+     * array, which callers treat as "all applicable sites"; destructive
+     * operations pass $require_non_empty to refuse that implicit select-all.
+     *
+     * @param array $input             Normalized ability input.
+     * @param bool  $require_non_empty Reject an empty identifier list too.
+     *
+     * @return array|\WP_Error Identifier list, or mainwp_invalid_input error.
+     */
+    public static function validate_site_identifiers( array $input, $require_non_empty = false ) {
+        if ( isset( $input['site_ids_or_domains'] ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'site_ids_or_domains must be an array of site IDs or domains.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
+
+        if ( $require_non_empty && empty( $identifiers ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'site_ids_or_domains must list the sites to target; this operation does not support an empty list.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        return $identifiers;
+    }
+
+
+    /**
+     * Resolve a date range from ability input.
+     *
+     * Missing bounds default to a window of $default_days ending now. Inverted
+     * bounds are swapped. Spans longer than $max_days are clamped by moving
+     * 'from' forward.
+     *
+     * @param array $input        Normalized ability input (uses 'date_from' / 'date_to', unix seconds).
+     * @param int   $default_days Window size when no bounds given.
+     * @param int   $max_days     Maximum allowed span in days.
+     * @return array Array with 'from' and 'to' unix timestamps (seconds).
+     */
+    public static function resolve_date_range( array $input, int $default_days = 30, int $max_days = 90 ): array {
+        $to   = ! empty( $input['date_to'] ) ? (int) $input['date_to'] : time();
+        $from = ! empty( $input['date_from'] ) ? (int) $input['date_from'] : $to - $default_days * DAY_IN_SECONDS;
+
+        if ( $from > $to ) {
+            $swap = $from;
+            $from = $to;
+            $to   = $swap;
+        }
+
+        $max_span = $max_days * DAY_IN_SECONDS;
+        if ( ( $to - $from ) > $max_span ) {
+            $from = $to - $max_span;
+        }
+
+        return array(
+            'from' => $from,
+            'to'   => $to,
+        );
     }
 }

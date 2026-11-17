@@ -3090,7 +3090,8 @@ window.MainWPMintlifyChat = ( function( $ ) {
             $indicator = $( '<span id="mainwp-assistant-plan-indicator"></span>' );
             $( '.mainwp-mode-pill[data-mode="agent"]' ).parent().after( $indicator );
         }
-        let usingPlan = chatgptPlan.connected && planCanConnect();
+        // Docs answers come from MainWP's documentation service, never the plan.
+        let usingPlan = chatgptPlan.connected && planCanConnect() && 'agent' === currentMode;
         $indicator.empty().prop( 'hidden', ! usingPlan );
         if ( usingPlan ) {
             $indicator.append( $( '<span></span>' ).text( planText( 'using' ) ) );
@@ -3241,6 +3242,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
 
         syncPillToggle( value );
         updateInfoBar( value );
+        updatePlanIndicator();
     }
 
     /**
@@ -3714,7 +3716,8 @@ window.MainWPMintlifyChat = ( function( $ ) {
             usd: usd,
             displayTokens: displayTokens,
             displayUsd: displayUsd,
-            folded: folded
+            folded: folded,
+            plan: !! ( responseData.cost && 'mainwp-chatgpt-plan' === responseData.cost.provider )
         };
     }
 
@@ -3774,7 +3777,10 @@ window.MainWPMintlifyChat = ( function( $ ) {
      */
     function formatCostText( info ) {
         let text;
-        if ( info.displayUsd != null ) {
+        if ( info.plan ) {
+            // Plan turns are paid for by the ChatGPT subscription, not per token.
+            text = l10n( 'token_usage_plan', '%s tokens · ChatGPT plan' ).replace( '%s', info.displayTokens.toLocaleString() );
+        } else if ( info.displayUsd != null ) {
             text = l10n( 'token_usage_cost', '%1$s tokens · est. %2$s' )
                 .replace( '%1$s', info.displayTokens.toLocaleString() )
                 .replace( '%2$s', formatUsd( info.displayUsd ) );
@@ -4298,7 +4304,7 @@ window.MainWPMintlifyChat = ( function( $ ) {
         if ( params && typeof params === 'object' && ! Array.isArray( params ) ) {
             let rows = '';
             Object.keys( params ).forEach( function( key ) {
-                if ( key === 'dry_run' || key === 'confirm' ) {
+                if ( key === 'dry_run' || key === 'confirm' || key === 'preview_token' ) {
                     return;
                 }
                 let value = params[ key ];
@@ -4352,7 +4358,8 @@ window.MainWPMintlifyChat = ( function( $ ) {
         let title = isDestructive
             ? l10n( 'confirm_destructive', 'Confirm Destructive Action' )
             : l10n( 'confirm_action', 'Confirm Action' );
-        let messageText = isDestructive
+        // A destructive write without a dry run has no preview to point at.
+        let messageText = isDestructive && actionData.preview
             ? l10n( 'confirm_destructive_txt', 'This action will make permanent changes. Review the preview below:' )
             : l10n( 'confirm_action_txt', 'Please confirm you want to proceed with this action:' );
         let proceedColor = isDestructive ? 'red' : 'green';

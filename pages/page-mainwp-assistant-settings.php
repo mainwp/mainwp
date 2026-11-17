@@ -401,6 +401,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $agent_available  = MainWP_Assistant::agent_mode_available();
         $provider_failure = MainWP_Assistant::get_provider_failure();
         $model_preference = get_option( 'mainwp_assistant_model_preference', '' );
+        $plan_connected   = $supports_ai && MainWP_Assistant_ChatGPT_Plan::get_status( get_current_user_id() )['connected'];
 
         // Google connection state, read in the same order the endpoints use:
         // version, AI support, contract, provider, key, agent.
@@ -412,6 +413,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
             ? MainWP_Assistant_Onboarding::mask_key( (string) get_option( $contract['setting_name'], '' ) )
             : '';
         $can_connect   = MainWP_Assistant_Onboarding::user_can_run_wizard();
+        $google_failed = $provider_failure && 'google' === $provider_failure['provider'];
 
         /**
          * Filter the URL of the WordPress Connectors settings screen.
@@ -422,9 +424,14 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
          */
         $connectors_url = apply_filters( 'mainwp_assistant_connectors_url', admin_url( 'options-connectors.php' ) );
         ?>
-        <div class="mainwp-assistant-site-connection">
+        <div class="mainwp-assistant-site-connection" data-plan-connected="<?php echo $plan_connected ? '1' : '0'; ?>">
             <h3><?php esc_html_e( 'Use an API key', 'mainwp' ); ?></h3>
             <p class="mainwp-assistant-connect-note"><?php esc_html_e( 'Connect a free Google Gemini key, or add an OpenAI or Anthropic key on the Connectors screen. Requests run on your own provider account.', 'mainwp' ); ?></p>
+            <?php if ( $plan_connected ) : ?>
+                <div class="ui visible info blue message">
+                    <?php esc_html_e( 'Your Sites mode requests use your ChatGPT plan while it is connected, never this key. People on this Dashboard without a connected plan use the key. Disconnect your plan to use the key yourself.', 'mainwp' ); ?>
+                </div>
+            <?php endif; ?>
 
             <div class="ui form">
                 <div class="ui grid field">
@@ -447,8 +454,21 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 </div>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Sites mode', 'mainwp' ); ?></label>
-                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Whether the assistant can run actions on your sites. Sites mode needs at least one AI provider with a working API key.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                        <?php if ( $provider_failure && 'google' === $provider_failure['provider'] ) : ?>
+                    <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Whether the assistant can run actions on your sites. Sites mode needs your ChatGPT plan or an AI provider with a working API key.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <?php if ( $plan_connected ) : ?>
+                            <i class="green check circle icon"></i><?php esc_html_e( 'Ready. Uses your ChatGPT plan.', 'mainwp' ); ?>
+                            <?php if ( $provider_failure && ! $google_failed ) : ?>
+                                <div class="ui visible yellow message">
+                                    <?php
+                                    printf(
+                                        /* translators: %s: date and time of the failed request. */
+                                        esc_html__( 'The last request that used an API key failed (%s). Your ChatGPT plan is not affected.', 'mainwp' ),
+                                        esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $provider_failure['time'] ) )
+                                    );
+                                    ?>
+                                </div>
+                            <?php endif; ?>
+                        <?php elseif ( $google_failed ) : ?>
                             <i class="yellow exclamation circle icon"></i><?php esc_html_e( 'Not working. See Google Gemini below.', 'mainwp' ); ?>
                         <?php elseif ( $provider_failure ) : ?>
                             <div class="ui visible yellow message"><?php echo esc_html( $provider_failure['message'] ); ?></div>
@@ -465,7 +485,7 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Google Gemini', 'mainwp' ); ?></label>
                     <div class="ten wide column">
-                        <?php if ( $provider_failure && 'google' === $provider_failure['provider'] ) : ?>
+                        <?php if ( $google_failed ) : ?>
                             <div class="ui visible yellow message"><?php echo esc_html( $provider_failure['message'] ); ?></div>
                         <?php endif; ?>
                         <?php if ( ! $has_ai_client ) : ?>
@@ -498,11 +518,23 @@ class MainWP_Assistant_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 <?php esc_html_e( 'This site supplies a Google API key through its server configuration. That key takes priority over anything stored here, so change it where it is defined.', 'mainwp' ); ?>
                             </div>
                         <?php elseif ( 'database' === $key_source && $google_active && $agent_available ) : ?>
-                            <?php if ( ! $provider_failure || 'google' !== $provider_failure['provider'] ) : ?>
+                            <?php if ( ! $google_failed ) : ?>
                             <h4 class="ui header mainwp-assistant-connected-header">
+                                <?php if ( $provider_failure ) : ?>
+                                <i class="yellow exclamation circle icon"></i>
+                                <?php else : ?>
                                 <i class="green check circle icon"></i>
+                                <?php endif; ?>
                                 <div class="content">
-                                    <?php esc_html_e( 'Connected - Google (Gemini)', 'mainwp' ); ?>
+                                    <?php
+                                    // A failure no provider was named for leaves this key unproven,
+                                    // so the row stops claiming it is connected.
+                                    if ( $provider_failure ) {
+                                        esc_html_e( 'Key saved - Google (Gemini)', 'mainwp' );
+                                    } else {
+                                        esc_html_e( 'Connected - Google (Gemini)', 'mainwp' );
+                                    }
+                                    ?>
                                     <div class="sub header"><?php echo esc_html( MainWP_Assistant_Onboarding::free_tier_disclosure() ); ?></div>
                                 </div>
                             </h4>

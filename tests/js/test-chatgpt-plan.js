@@ -78,7 +78,7 @@ function harness( overrides = {}, state = {} ) {
         busy: false, pageTitle: null, MODAL: '#modal'
     };
     vm.createContext( c );
-    for ( const name of [ 'config', 'text', 'errorText', 'request', 'button', 'connectButton', 'manageLink', 'choices' ] ) { vm.runInContext( fn( shared, name ), c ); }
+    for ( const name of [ 'config', 'text', 'errorText', 'request', 'button', 'connectButton', 'manageLink', 'choices', 'signinSteps', 'copyKeys', 'accountLine' ] ) { vm.runInContext( fn( shared, name ), c ); }
     for ( const name of [ 'connectionChoicesReady', 'planText', 'planCanConnect', 'buildErrorDeepLink', 'connectPrompt', 'buildConnectCard' ] ) { vm.runInContext( fn( chat, name ), c ); }
     c.openConnect = fresh => calls.push( fresh );
     return { c, config, calls, requests, roots, created };
@@ -125,9 +125,10 @@ test( 'AI-disabled dashboards never offer a ChatGPT sign-in', () => {
     assert.equal( c.buildErrorDeepLink( 'chatgpt_plan_reconnect' ), '' );
 } );
 
-test( 'the plan indicator requires a connected plan and AI support', () => {
+test( 'the plan indicator requires a connected plan, AI support and Sites mode', () => {
     const { c, config, roots } = harness( { can_connect: false }, { connected: true } );
     const indicator = new Element(); roots.set( '#mainwp-assistant-plan-indicator', indicator );
+    c.currentMode = 'agent';
     vm.runInContext( fn( chat, 'updatePlanIndicator' ), c );
     c.updatePlanIndicator();
     assert.equal( indicator.prop( 'hidden' ), true );
@@ -136,6 +137,10 @@ test( 'the plan indicator requires a connected plan and AI support', () => {
     c.updatePlanIndicator();
     assert.equal( indicator.prop( 'hidden' ), false );
     assert.ok( contents( indicator ).includes( 'Using ChatGPT plan' ) );
+    c.currentMode = 'ask';
+    c.updatePlanIndicator();
+    assert.equal( indicator.prop( 'hidden' ), true, 'Docs answers never use the plan.' );
+    c.currentMode = 'agent';
     c.chatgptPlan.connected = false;
     c.updatePlanIndicator();
     assert.equal( indicator.prop( 'hidden' ), true );
@@ -233,7 +238,9 @@ test( 'connected email, models and notices reach text setters', () => {
     vm.runInContext( fn( shared, 'renderSettings' ), c );
     c.renderSettings();
     const plan = card.nodes[0];
-    assert.ok( plan.nodes.some( node => node.content === payload ) );
+    const account = plan.nodes.find( node => node.markup && node.markup.includes( 'mainwp-assistant-plan-account' ) );
+    assert.ok( ! account.nodes.some( node => node && node.content === payload ), 'the email stays hidden until asked for' );
+    assert.ok( account.nodes.some( node => node && node.attributes && node.attributes['data-tooltip'] === payload ), 'hover shows the email' );
     const form = plan.nodes.find( node => node.markup.includes( 'ui form' ) );
     const select = form.find( '.field' ).nodes[0];
     assert.equal( select.nodes[0].content, payload );
@@ -252,6 +259,9 @@ test( 'the settings card leaves the API key choice to the Google Gemini row', ()
     vm.runInContext( fn( shared, 'renderSettings' ), c );
     c.renderSettings();
     assert.ok( contents( card ).includes( 'Continue with ChatGPT' ) );
+    // The error page the sign-in ends on is explained before anyone clicks.
+    assert.ok( contents( card ).some( line => /error page/.test( line ) ), 'settings card lists the sign-in steps' );
+    assert.ok( ! contents( c.choices( 'error_bubble', false ) ).some( line => /error page/.test( line ) ), 'other entry points keep the steps in the dialog' );
     for ( const missing of [ 'Use an API key', 'Connect free AI', 'Use OpenAI or Anthropic instead' ] ) {
         assert.ok( ! contents( card ).includes( missing ), missing );
     }
@@ -411,7 +421,8 @@ test( 'a stopped plan still offers Disconnect and a different account without sh
         vm.runInContext( fn( shared, 'renderSettings' ), c );
         c.renderSettings();
         const copy = contents( card );
-        assert.ok( copy.includes( 'owner@example.com' ) );
+        assert.ok( ! copy.includes( 'owner@example.com' ) );
+        assert.ok( copy.includes( 'Show account' ) );
         assert.ok( copy.includes( 'Disconnect' ) );
         assert.ok( copy.includes( 'Connect a different ChatGPT account or workspace' ) );
         assert.ok( copy.includes( status === 'plan_disabled' ? 'Turn on ChatGPT plan use' : 'Continue with ChatGPT' ) );
@@ -431,7 +442,7 @@ test( 'Start over is a deliberate return to step one and preserves the registrat
     let starts = 0;
     c.start = () => { starts++; };
     c.complete = () => {};
-    for ( const name of [ 'connectModal', 'copyKeys', 'waitTitle', 'openConnect', 'isCallback', 'pasteFromClipboard', 'focusPaste' ] ) { vm.runInContext( fn( shared, name ), c ); }
+    for ( const name of [ 'connectModal', 'copyKeys', 'waitTitle', 'signinSteps', 'openConnect', 'pastedUrl', 'isCallback', 'isSigninPage', 'pasteFromClipboard', 'focusPaste' ] ) { vm.runInContext( fn( shared, name ), c ); }
     const modal = c.connectModal();
     assert.equal( modal.find( '.header' ).text(), 'Use your ChatGPT plan' );
     roots.set( '#modal', modal );
@@ -526,9 +537,9 @@ function pasteHarness( clipboard, built = false ) {
     h.c.root.navigator = clipboard === undefined ? {} : { clipboard };
     h.c.start = () => {};
     h.c.complete = () => { out.completes++; };
-    const names = [ 'error', 'isCallback', 'pasteFromClipboard', 'focusPaste' ];
+    const names = [ 'error', 'pastedUrl', 'isCallback', 'isSigninPage', 'pasteFromClipboard', 'focusPaste' ];
     if ( built ) {
-        names.push( 'connectModal', 'copyKeys', 'waitTitle' );
+        names.push( 'connectModal', 'copyKeys', 'waitTitle', 'signinSteps' );
     } else {
         out.modal = new Element(); h.roots.set( '#modal', out.modal );
         h.c.connectModal = () => out.modal;
@@ -544,14 +555,14 @@ test( 'step one explains the error page before the user leaves for ChatGPT', () 
     const { c } = harness();
     c.start = () => {};
     c.complete = () => {};
-    for ( const name of [ 'connectModal', 'copyKeys', 'waitTitle', 'isCallback', 'pasteFromClipboard', 'focusPaste' ] ) { vm.runInContext( fn( shared, name ), c ); }
+    for ( const name of [ 'connectModal', 'copyKeys', 'waitTitle', 'signinSteps', 'pastedUrl', 'isCallback', 'isSigninPage', 'pasteFromClipboard', 'focusPaste' ] ) { vm.runInContext( fn( shared, name ), c ); }
     const modal = c.connectModal();
     const steps = contents( modal.find( '[data-step="start"]' ) );
     assert.deepEqual( steps, [
         'Uses the ChatGPT plan you already pay for. Each person on this Dashboard connects their own.',
         'Sign in to ChatGPT in the new tab and approve MainWP.',
-        "ChatGPT then sends that tab to an error page. That's expected, so keep that tab open.",
-        "Click that page's address bar, press Ctrl+C to copy the full address, and paste it here."
+        "ChatGPT then sends that tab to an error page, such as “This site can't be reached”. That's expected, so keep that tab open.",
+        "Click that page's address bar, press Ctrl+C to copy the full address, and paste it back into MainWP."
     ] );
     assert.match( modal.find( '[data-step="paste"] > p:first-child' ).text(), /Click its address bar and press Ctrl\+C to copy the full address\.$/ );
     assert.equal( modal.find( 'label' ).text(), 'Paste the address from the error page' );
@@ -664,7 +675,7 @@ test( 'a blocked tab leaves only the blocked-tab link, and closing the dialog re
     c.publish = () => {};
     c.root.open = () => null;
     c.root.document = { title: 'Assistant Settings' };
-    for ( const name of [ 'connectModal', 'copyKeys', 'waitTitle', 'isCallback', 'pasteFromClipboard', 'focusPaste', 'error' ] ) { vm.runInContext( fn( shared, name ), c ); }
+    for ( const name of [ 'connectModal', 'copyKeys', 'waitTitle', 'signinSteps', 'pastedUrl', 'isCallback', 'isSigninPage', 'pasteFromClipboard', 'focusPaste', 'error' ] ) { vm.runInContext( fn( shared, name ), c ); }
     const modal = c.connectModal();
     roots.set( '#modal', modal );
     vm.runInContext( fn( shared, 'start' ), c );
@@ -678,4 +689,60 @@ test( 'a blocked tab leaves only the blocked-tab link, and closing the dialog re
     assert.equal( c.root.document.title, 'Paste the address · Assistant Settings', 'The title is never prefixed twice' );
     modal.modalState.onHidden();
     assert.equal( c.root.document.title, 'Assistant Settings' );
+} );
+
+test( 'plan turns show tokens with the plan, not an estimated dollar cost', () => {
+    const c = vm.createContext( { l10n: ( key, fallback ) => fallback } );
+    [ 'parseUsageFromResponse', 'extractTotalTokens', 'extractKnownUsd', 'formatCostText', 'formatUsd' ].forEach( name => vm.runInContext( fn( chat, name ), c ) );
+    const usage = { total_tokens: 1200 };
+    const plan = c.parseUsageFromResponse( { usage, cost: { usd: 0, known: true, provider: 'mainwp-chatgpt-plan' } } );
+    assert.equal( c.formatCostText( plan ), '1,200 tokens · ChatGPT plan' );
+    const key = c.parseUsageFromResponse( { usage, cost: { usd: 0.0123, known: true, provider: 'openai' } } );
+    assert.equal( c.formatCostText( key ), '1,200 tokens · est. $0.01' );
+    assert.match( php, /'token_usage_plan'\s*=> esc_html__\( '%s tokens · ChatGPT plan'/ );
+} );
+
+test( 'the paste check accepts ordinary copy variations and names the sign-in page', () => {
+    const c = vm.createContext( { URL } );
+    [ 'pastedUrl', 'isCallback', 'isSigninPage' ].forEach( name => vm.runInContext( fn( wizard, name ), c ) );
+    const url = 'http://127.0.0.1:1456/auth/callback?code=ac.1.AAAq0x&scope=openid+email&state=s-123&iss=https%3A%2F%2Fauth.openai.com&client_id=oaiapp_test';
+    [
+        url,
+        url.slice( 'http://'.length ),
+        '  \n' + url.slice( 0, 50 ) + '\n' + url.slice( 50 ) + ' ',
+        '"' + url + '"',
+        url.replace( '/auth/callback?', '/auth/callback/?' ),
+    ].forEach( pasted => assert.equal( c.isCallback( pasted ), true, JSON.stringify( pasted ) ) );
+    [ url.replace( '127.0.0.1', 'localhost' ), 'http://127.0.0.1:1455/auth/callback?state=s&code=c', 'http://example.com:1456/auth/callback?state=s&code=c', 'http://127.0.0.1:1456/auth/callback?code=c', 'hello' ]
+        .forEach( pasted => assert.equal( c.isCallback( pasted ), false, pasted ) );
+    assert.equal( c.isSigninPage( 'https://auth.openai.com/oauth/authorize?state=s' ), true );
+    assert.equal( c.isSigninPage( url ), false );
+    assert.match( php, /'signin_address'\s*=> __\(/ );
+} );
+
+test( 'only a disconnect reloads AI Connection, and never over a notice the user must read', () => {
+    const run = ( rendered, action, response ) => {
+        const { c, roots, requests } = harness( {}, { connected: true } );
+        let reloads = 0;
+        c.root.location = { reload: () => { reloads++; } };
+        c.renderSettings = () => {};
+        c.error = () => {};
+        roots.set( '#mainwp-assistant-chatgpt-card', new Element() );
+        if ( rendered ) {
+            roots.set( '.mainwp-assistant-site-connection[data-plan-connected="1"]', new Element() );
+        }
+        for ( const name of [ 'publish', 'mutate' ] ) { vm.runInContext( fn( shared, name ), c ); }
+        if ( 'start' === action ) {
+            c.publish( response.data, true );
+        } else {
+            c.mutate( action );
+            requests.at( -1 ).callbacks.done( response );
+        }
+        return reloads;
+    };
+    assert.equal( run( true, 'disconnect', { success: true, data: { connected: false, notice: '' } } ), 1 );
+    assert.equal( run( true, 'disconnect', { success: true, data: { connected: false, notice: 'Remote revocation was not confirmed.' } } ), 0 );
+    assert.equal( run( true, 'disconnect', { success: false, data: { connected: true, error_code: 'storage_failed' } } ), 0 );
+    assert.equal( run( true, 'start', { success: true, data: { connected: false, authorize_url: 'https://auth.openai.com/' } } ), 0, 'starting a sign-in never reloads' );
+    assert.equal( run( false, 'disconnect', { success: true, data: { connected: false, notice: '' } } ), 0, 'pages without the rows never reload' );
 } );

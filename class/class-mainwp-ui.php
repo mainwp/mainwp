@@ -3185,11 +3185,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     <p>
                         <?php
                         if ( $retention_forever ) {
-                            esc_html_e( 'Conversations are stored until you delete them. Change retention or turn it off in settings.', 'mainwp' );
+                            esc_html_e( 'Conversations are saved in this Dashboard\'s database until you delete them. Change retention or turn it off in settings.', 'mainwp' );
                         } else {
                             printf(
                                 /* translators: %d: number of days conversations are kept. */
-                                esc_html__( 'Your conversations are stored for %d days to provide context. You can change retention or opt out in settings.', 'mainwp' ),
+                                esc_html__( 'Conversations are saved in this Dashboard\'s database for %d days so the Assistant can refer back to earlier messages. Change retention or turn it off in settings.', 'mainwp' ),
                                 (int) $retention_days
                             );
                         }
@@ -3355,6 +3355,17 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <div class="mainwp-assistant-resize-handle mainwp-resize-br" data-corner="br" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Resize panel from the bottom-right corner. Use the arrow keys.', 'mainwp' ); ?>"></div>
         </div>
         <?php
+        // The panel script runs after the whole page loads, so an open panel would
+        // vanish on every navigation and reappear. This restores its saved place
+        // before the first paint; the panel script then takes over as usual.
+        wp_print_inline_script_tag(
+            "(function(){try{var s=window.localStorage,p=document.getElementById('mainwp-assistant-panel');" .
+            "if(!p||s.getItem('mainwp_assistant_panel_open')!=='true'||s.getItem('mainwp_assistant_panel_state')==='minimized'||window.innerWidth<=768){return;}" .
+            "if(s.getItem('mainwp_assistant_panel_state')==='maximized'){p.classList.add('maximized');}else{var g=JSON.parse(s.getItem('mainwp_assistant_geometry')||'null');" .
+            "if(g&&isFinite(g.x)&&isFinite(g.y)&&isFinite(g.w)&&isFinite(g.h)){p.style.left=g.x+'px';p.style.top=g.y+'px';p.style.width=g.w+'px';p.style.height=g.h+'px';p.style.right='auto';p.style.bottom='auto';}}" .
+            "var c=document.getElementById('mainwp-assistant-'+(s.getItem('mainwp_assistant_current_screen')||'home')+'-screen');if(c){c.classList.add('active');}" .
+            "p.style.display='flex';}catch(e){}})();"
+        );
     }
 
     /**

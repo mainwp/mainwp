@@ -52,11 +52,11 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     'api_alt'       => __( 'Use OpenAI or Anthropic instead', 'mainwp' ),
                     'disclosure'    => MainWP_Assistant_Onboarding::free_tier_disclosure(),
                     'step_signin'   => __( 'Sign in to ChatGPT in the new tab and approve MainWP.', 'mainwp' ),
-                    'step_error'    => __( "ChatGPT then sends that tab to an error page. That's expected, so keep that tab open.", 'mainwp' ),
+                    'step_error'    => __( "ChatGPT then sends that tab to an error page, such as “This site can't be reached”. That's expected, so keep that tab open.", 'mainwp' ),
                     /* translators: %s: copy keyboard shortcut, such as Ctrl+C. */
-                    'step_paste'    => __( "Click that page's address bar, press %s to copy the full address, and paste it here.", 'mainwp' ),
+                    'step_paste'    => __( "Click that page's address bar, press %s to copy the full address, and paste it back into MainWP.", 'mainwp' ),
                     /* translators: %s: copy keyboard shortcut, such as Ctrl+C. */
-                    'paste_detail'  => __( "When you approve, the ChatGPT tab ends on an error page. That's expected: that page's address is what MainWP needs. Click its address bar and press %s to copy the full address.", 'mainwp' ),
+                    'paste_detail'  => __( "When you approve, the ChatGPT tab ends on an error page, such as “This site can't be reached”. That's expected: that page's address is what MainWP needs. Click its address bar and press %s to copy the full address.", 'mainwp' ),
                     'callback'      => __( 'Paste the address from the error page', 'mainwp' ),
                     'paste'         => __( 'Paste', 'mainwp' ),
                     'reopen'        => __( 'Closed the ChatGPT tab? Open it again', 'mainwp' ),
@@ -68,6 +68,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     'welcome_body'  => __( 'The Assistant will use your ChatGPT plan for its answers. You can see and limit this usage in ChatGPT settings.', 'mainwp' ),
                     'got_it'        => __( 'Got it', 'mainwp' ),
                     'using'         => __( 'Using ChatGPT plan', 'mainwp' ),
+                    'connected'     => __( 'Connected', 'mainwp' ),
+                    'show_account'  => __( 'Show account', 'mainwp' ),
                     'manage'        => __( 'Manage usage', 'mainwp' ),
                     'disconnect'    => __( 'Disconnect', 'mainwp' ),
                     'different'     => __( 'Connect a different ChatGPT account or workspace', 'mainwp' ),
@@ -84,6 +86,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'errors'              => array(
                     'empty_callback'         => __( 'Paste the address from the error page first.', 'mainwp' ),
                     'clipboard_no_callback'  => __( "Your clipboard doesn't have the error page's address yet. Copy the full address from that tab's address bar, then click Paste again.", 'mainwp' ),
+                    'signin_address'         => __( "That's the address of the ChatGPT sign-in page. Approve MainWP on that page first, then copy the address of the error page that opens next.", 'mainwp' ),
                     'invalid_callback'       => __( 'This address does not match your sign-in attempt, or the attempt expired. Continue with ChatGPT again and paste the full address from the error page.', 'mainwp' ),
                     'access_denied'          => __( 'You declined the connection. Continue with ChatGPT again when you are ready.', 'mainwp' ),
                     'authorization_failed'   => __( 'ChatGPT did not approve the connection. Continue with ChatGPT again.', 'mainwp' ),
@@ -1667,6 +1670,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'token_usage'                 => esc_html__( '%s tokens', 'mainwp' ),
                         /* translators: 1: token count, 2: estimated USD amount */
                         'token_usage_cost'            => esc_html__( '%1$s tokens · est. %2$s', 'mainwp' ),
+                        /* translators: %s: number of tokens. */
+                        'token_usage_plan'            => esc_html__( '%s tokens · ChatGPT plan', 'mainwp' ),
                         'cost_includes_confirmation'  => esc_html__( '(includes confirmation step)', 'mainwp' ),
                         /* translators: 1: token count, 2: estimated USD amount */
                         'session_cost_label'          => esc_html__( '%1$s tokens · est. %2$s this conversation', 'mainwp' ),

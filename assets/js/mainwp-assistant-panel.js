@@ -24,7 +24,7 @@ var MainWPAssistantPanel = ( function( $ ) {
         },
         bodyScrollLocked: false,
         savedBodyOverflow: '',
-        geometry: { v: 1, x: null, y: null, w: 400, h: 560 },
+        geometry: { v: 1, x: null, y: null, w: 480, h: 640 },
         isDragging: false,
         isResizing: false,
         dragDidMove: false,
@@ -614,6 +614,26 @@ var MainWPAssistantPanel = ( function( $ ) {
     }
 
     /**
+     * Grow geometry still at the old 400x560 default to the new default.
+     *
+     * A panel at exactly 400x560 was never resized. Its bottom-right corner
+     * stays put.
+     *
+     * @param {object} g The geometry object, changed in place.
+     * @return {boolean} True if the geometry was changed.
+     */
+    function migrateOldDefault( g ) {
+        if ( 400 !== g.w || 560 !== g.h ) {
+            return false;
+        }
+        g.x -= 80;
+        g.y -= 80;
+        g.w = 480;
+        g.h = 640;
+        return true;
+    }
+
+    /**
      * Load panel geometry from localStorage or compute defaults.
      */
     function loadGeometry() {
@@ -625,11 +645,13 @@ var MainWPAssistantPanel = ( function( $ ) {
                 saved = null;
             }
         }
+        var migrated = false;
         if ( isValidGeometry( saved ) ) {
+            migrated = migrateOldDefault( saved );
             state.geometry = saved;
         } else {
-            state.geometry.w = 400;
-            state.geometry.h = 560;
+            state.geometry.w = 480;
+            state.geometry.h = 640;
             state.geometry.x = window.innerWidth - state.geometry.w - 20;
             state.geometry.y = window.innerHeight - state.geometry.h - 20;
         }
@@ -637,6 +659,16 @@ var MainWPAssistantPanel = ( function( $ ) {
 
         // Restore panel state (minimized/maximized) from localStorage.
         loadPanelState();
+        if ( state.previousGeometry && migrateOldDefault( state.previousGeometry ) ) {
+            migrated = true;
+        }
+
+        // The inline script in the panel markup places the panel from the
+        // saved geometry before this runs, so save the new size right away;
+        // otherwise every page load shows the old size and then jumps.
+        if ( migrated ) {
+            saveGeometry();
+        }
     }
 
     /**

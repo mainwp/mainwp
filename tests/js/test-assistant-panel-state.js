@@ -164,3 +164,30 @@ test( 'keyboard guards ignore hidden dimmers and respect visible modals', () => 
     }
 }
 } );
+
+test( 'a panel at the old default size is grown and saved, including its pre-min/max geometry', () => {
+    const run = ( saved, previous ) => {
+        const store = { mainwp_assistant_geometry: JSON.stringify( saved ) };
+        const context = {
+            state: { geometry: { v: 1, x: null, y: null, w: 480, h: 640 }, previousGeometry: null },
+            window: { innerWidth: 1440, innerHeight: 900 },
+            GEOMETRY_KEY: 'mainwp_assistant_geometry',
+            localStorage: { getItem: key => store[key] || null },
+            hasLocalStorage: () => true, clampGeometry() {}, saves: 0,
+            JSON,
+        };
+        context.loadPanelState = () => { context.state.previousGeometry = previous; };
+        context.saveGeometry = () => { context.saves++; };
+        vm.createContext( context );
+        for ( const name of [ 'isValidGeometry', 'migrateOldDefault', 'loadGeometry' ] ) { vm.runInContext( fn( panel, name ), context ); }
+        context.loadGeometry();
+        return context;
+    };
+    const old = run( { v: 1, x: 1020, y: 320, w: 400, h: 560 }, { v: 1, x: 1000, y: 300, w: 400, h: 560 } );
+    assert.deepEqual( [ old.state.geometry.x, old.state.geometry.y, old.state.geometry.w, old.state.geometry.h ], [ 940, 240, 480, 640 ] );
+    assert.deepEqual( [ old.state.previousGeometry.w, old.state.previousGeometry.h ], [ 480, 640 ] );
+    assert.equal( old.saves, 1, 'the migrated size is saved so the next page shows it from the start' );
+    const resized = run( { v: 1, x: 100, y: 100, w: 520, h: 600 }, null );
+    assert.equal( resized.state.geometry.w, 520 );
+    assert.equal( resized.saves, 0 );
+} );

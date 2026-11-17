@@ -3091,7 +3091,22 @@ class Test_Assistant_Chat extends MainWP_Assistant_Test_Case {
 			$this->assertEmpty( $failure['provider'] );
 			$html = $this->render_providers_tab_html();
 			$this->assertSame( 1, substr_count( $html, 'Last Sites request failed:' ) );
-			$this->assertStringContainsString( 'Connected - Google (Gemini)', $html );
+			$this->assertStringContainsString( 'Key saved - Google (Gemini)', $html );
+			$this->assertStringNotContainsString( 'Connected - Google (Gemini)', $html );
+
+			// Signed in with a ChatGPT plan, the same failure no longer reads as Sites mode being broken.
+			update_user_meta(
+				$user_id,
+				\MainWP\Dashboard\MainWP_Assistant_ChatGPT_Plan::META,
+				array(
+					'status' => 'connected',
+					'owner'  => $user_id,
+				)
+			);
+			$html = $this->render_providers_tab_html();
+			$this->assertStringContainsString( 'Ready. Uses your ChatGPT plan.', $html );
+			$this->assertStringContainsString( 'Your ChatGPT plan is not affected.', $html );
+			$this->assertStringNotContainsString( 'Last Sites request failed:', $html );
 		} finally {
 			$connectors->unregister( 'second_provider' );
 			$property->setValue( $registry, $before );

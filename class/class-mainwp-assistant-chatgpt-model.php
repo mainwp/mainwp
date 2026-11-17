@@ -109,6 +109,10 @@ class MainWP_Assistant_ChatGPT_Model implements ModelInterface, TextGenerationMo
                 'type'        => 'function',
                 'name'        => $declaration->getName(),
                 'description' => $declaration->getDescription(),
+                // Responses tools default to strict, which makes the model fill
+                // every optional field. Abilities treat a filled optional field
+                // as a filter or a target, so leave unused ones out.
+                'strict'      => false,
                 'parameters'  => $declaration->getParameters() ?? array(
                     'type'       => 'object',
                     'properties' => new \stdClass(),

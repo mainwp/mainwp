@@ -12,8 +12,8 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 400px;
-    height: 560px;
+    width: 480px;
+    height: 640px;
     z-index: 9999;
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
@@ -524,12 +524,23 @@
     margin: 0 0.25rem;
 }
 
-/* --- Disclosure banners: Fit within 400px panel width --- */
+/* --- Disclosure banners: compact, so they don't crowd the conversation --- */
 #mainwp-assistant-chat-screen .mainwp-mintlify-disclosure {
     margin: 0.5rem;
+    padding: 0.625rem 2rem 0.625rem 2.75rem;
     border-radius: 8px;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
+    line-height: 1.45;
     flex-shrink: 0;
+}
+
+#mainwp-assistant-chat-screen .mainwp-mintlify-disclosure .header {
+    font-size: 0.8125rem;
+    margin-bottom: 0.125rem;
+}
+
+#mainwp-assistant-chat-screen .mainwp-mintlify-disclosure p {
+    margin: 0;
 }
 
 /* --- Inline cost line: Use theme-aware colors in panel --- */

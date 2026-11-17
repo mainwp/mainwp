@@ -344,6 +344,7 @@ class Test_Assistant_ChatGPT_Provider extends MainWP_Assistant_Test_Case {
 								'type'        => 'function',
 								'name'        => 'lookup',
 								'description' => 'Lookup site',
+								'strict'      => false,
 								'parameters'  => array( 'type' => 'object' ),
 							),
 						),

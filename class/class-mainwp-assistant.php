@@ -5308,11 +5308,20 @@ Knowledge records:
         $is_destructive = $is_listed ? ! empty( $annotations['destructive'] ) : ( true !== ( $raw['readonly'] ?? null ) && false !== ( $raw['destructive'] ?? null ) );
 
         // Listed destructive abilities have an established preview contract. An
-        // add-on must explicitly declare that dry_run=true never changes state.
+        // add-on must explicitly declare that dry_run=true never changes state,
+        // or take a preview_token, which only a side-effect-free dry run mints.
         $can_preview        = $is_destructive && in_array( 'boolean', (array) ( $input_schema['properties']['dry_run']['type'] ?? array() ), true )
-            && ( $is_listed || $this->addon_allows_preview( $ability_name ) );
+            && ( $is_listed || isset( $input_schema['properties']['preview_token'] ) || $this->addon_allows_preview( $ability_name ) );
         $needs_confirmation = $is_destructive || ( empty( $annotations['readonly'] )
             && ( MainWP_Assistant_Policies::CONFIRM_DESTRUCTIVE !== $policies->get_confirmation_level( $user_id ) || isset( $input_schema['properties']['confirm'] ) ) );
+
+        // A nullable preview_token is minted by this ability's own dry run, so
+        // the model's value is replaced: the dry run sends null and the
+        // confirmed run sends the token the dry run returned. A non-nullable
+        // token comes from a separate preview ability and stays as sent.
+        if ( $can_preview && in_array( 'null', (array) ( $input_schema['properties']['preview_token']['type'] ?? array() ), true ) ) {
+            $ai_params['preview_token'] = null;
+        }
 
         $run_params = self::with_run_flags( $ai_params, $input_schema, $can_preview, $needs_confirmation && ! $can_preview, ! $needs_confirmation );
 
@@ -5390,7 +5399,7 @@ Knowledge records:
             return array(
                 'requires_confirmation' => true,
                 'extra_confirm'         => $has_protected,
-                'destructive'           => false,
+                'destructive'           => ! empty( $annotations['destructive'] ),
                 'ability'               => $ability_name,
                 'label'                 => $ability['label'],
                 'params'                => $ai_params,
@@ -5519,6 +5528,14 @@ Knowledge records:
 
         if ( isset( $params['site_id_or_domain'] ) ) {
             $resolved = $this->resolve_site_id( $params['site_id_or_domain'] );
+            if ( ! is_wp_error( $resolved ) ) {
+                $site_ids[] = $resolved;
+            }
+        }
+
+        // Add-on abilities name their single target site site_id.
+        if ( isset( $params['site_id'] ) && is_numeric( $params['site_id'] ) ) {
+            $resolved = $this->resolve_site_id( (int) $params['site_id'] );
             if ( ! is_wp_error( $resolved ) ) {
                 $site_ids[] = $resolved;
             }
@@ -6073,6 +6090,13 @@ Knowledge records:
 
         if ( 'mainwp/delete-backup-snapshot-v1' === $ability_name ) {
             $params['expected_snapshot_ids'] = $preview['would_affect']['snapshot_ids'] ?? array();
+        }
+
+        // Add-ons that bind the confirmed run to the reviewed preview return a
+        // token from the dry run and refuse a confirmed run without it.
+        if ( isset( $ability['input_schema']['properties']['preview_token'] ) && is_array( $preview )
+            && is_string( $preview['preview_token'] ?? null ) && '' !== $preview['preview_token'] ) {
+            $params['preview_token'] = $preview['preview_token'];
         }
 
         return array(

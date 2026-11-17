@@ -86,7 +86,7 @@ function resolveSendIntercept( pendingConfirmation, messageOverride, userMessage
  * a characterization copy; drift-guarded below.
  */
 function paramRowRenders( key, value ) {
-	if ( key === 'dry_run' || key === 'confirm' ) {
+	if ( key === 'dry_run' || key === 'confirm' || key === 'preview_token' ) {
 		return false;
 	}
 	if ( value === null || typeof value === 'undefined' || value === '' ) {
@@ -99,7 +99,7 @@ function paramRowRenders( key, value ) {
 }
 
 runTest( 'drift guard: buildConfirmationSummary() param filter matches paramRowRenders()', () => {
-	assertSourceContains( 'dry_run/confirm skip', "if ( key === 'dry_run' || key === 'confirm' ) {" );
+	assertSourceContains( 'control key skip', "if ( key === 'dry_run' || key === 'confirm' || key === 'preview_token' ) {" );
 	assertSourceContains( 'empty-value skip', "if ( value === null || typeof value === 'undefined' || value === '' ) {" );
 	assertSourceContains( 'empty-array skip', 'if ( Array.isArray( value ) && value.length === 0 ) {' );
 } );
@@ -180,9 +180,10 @@ runTest( 'empty arrays, empty strings, and null are skipped', () => {
 	assert.equal( paramRowRenders( 'type', undefined ), false );
 } );
 
-runTest( 'dry_run and confirm control keys are skipped', () => {
+runTest( 'dry_run, confirm and preview_token control keys are skipped', () => {
 	assert.equal( paramRowRenders( 'dry_run', true ), false );
 	assert.equal( paramRowRenders( 'confirm', true ), false );
+	assert.equal( paramRowRenders( 'preview_token', 'token-from-preview' ), false );
 } );
 
 runTest( 'real values render', () => {

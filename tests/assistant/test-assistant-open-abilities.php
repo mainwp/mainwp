@@ -217,6 +217,17 @@ class Test_Assistant_Open_Abilities extends MainWP_Assistant_Test_Case {
 		$this->assertTrue( $result['requires_confirmation'] ?? false );
 		$this->assertArrayNotHasKey( 'preview', $result );
 		$this->assertSame( array( 'value' => 'original' ), $result['params'] );
+		$this->assertFalse( $result['destructive'] );
+		$this->assertEmpty( $this->calls );
+	}
+
+	/** A write annotated destructive but without a dry run gets the destructive card styling. */
+	public function test_destructive_write_without_dry_run_is_marked_destructive() {
+		$id     = $this->register_ability( 'example-addon/destructive-no-preview', array( 'destructive' => true ) );
+		$result = $this->invoke( new MainWP_Assistant(), 'execute_tool_call', $id, array( 'value' => 'original' ), $this->user_id );
+		$this->assertTrue( $result['requires_confirmation'] ?? false );
+		$this->assertArrayNotHasKey( 'preview', $result );
+		$this->assertTrue( $result['destructive'] );
 		$this->assertEmpty( $this->calls );
 	}
 
@@ -563,6 +574,165 @@ class Test_Assistant_Open_Abilities extends MainWP_Assistant_Test_Case {
 		$this->assertTrue( $confirmed['success'], wp_json_encode( $confirmed ) );
 		$this->assertCount( 2, $this->calls[ $id ] );
 		$this->assertEquals( array( 'value' => 'x', 'dry_run' => false, 'confirm' => true ), $this->calls[ $id ][1] );
+	}
+
+	/**
+	 * Register a previewable destructive add-on write whose schema requires every property.
+	 *
+	 * @param string   $id         Ability ID.
+	 * @param array    $properties Input properties.
+	 * @param callable $execute    Execute callback; receives the input.
+	 * @param bool     $opt_in     Whether the ability sets the preview opt-in meta.
+	 * @return string
+	 */
+	private function register_strict_write( $id, $properties, $execute, $opt_in = true ) {
+		\WP_Abilities_Registry::get_instance()->register(
+			$id,
+			array(
+				'label'               => 'Strict write',
+				'description'         => 'Preview or write.',
+				'category'            => $this->category,
+				'input_schema'        => array(
+					'type'                 => 'object',
+					'properties'           => $properties,
+					'required'             => array_keys( $properties ),
+					'additionalProperties' => false,
+				),
+				'execute_callback'    => function ( $input ) use ( $id, $execute ) {
+					$this->calls[ $id ][] = $input;
+					return $execute( $input );
+				},
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'meta'                => array(
+					'show_in_rest'             => true,
+					'annotations'              => array( 'destructive' => true ),
+					'mainwp_assistant_preview' => $opt_in,
+				),
+			)
+		);
+		$this->ability_ids[] = $id;
+		$this->clear_catalog_cache();
+		return $id;
+	}
+
+	/** A preview_token schema previews without the opt-in, and Proceed sends the token the dry run returned. */
+	public function test_confirm_sends_preview_token_from_dry_run() {
+		$id        = $this->register_strict_write(
+			'example-addon/token-write',
+			array(
+				'value'         => array( 'type' => 'string' ),
+				'dry_run'       => array( 'type' => 'boolean' ),
+				'confirm'       => array( 'type' => 'boolean' ),
+				'preview_token' => array( 'type' => array( 'string', 'null' ) ),
+			),
+			static function ( $input ) {
+				if ( $input['dry_run'] ) {
+					return null === $input['preview_token'] ? array( 'mode' => 'dry_run', 'preview_token' => 'token-from-preview' ) : new \WP_Error( 'invalid_input', 'Preview needs a null token.' );
+				}
+				if ( 'token-from-preview' !== $input['preview_token'] ) {
+					return new \WP_Error( 'preview_required', 'Run a preview first.' );
+				}
+				return array( 'mode' => 'applied' );
+			},
+			false
+		);
+		$assistant = new MainWP_Assistant();
+		$card      = $this->invoke( $assistant, 'execute_tool_call', $id, array( 'value' => 'x', 'preview_token' => str_repeat( '0', 43 ) ), $this->user_id );
+		$this->assertTrue( $card['requires_confirmation'] ?? false, wp_json_encode( $card ) );
+		$this->assertSame( 'token-from-preview', $card['preview']['preview_token'] ?? null );
+		$this->assertNull( $this->calls[ $id ][0]['preview_token'] );
+		$confirmed = $this->confirm_card( $assistant, $card );
+		$this->assertTrue( $confirmed['success'], wp_json_encode( $confirmed ) );
+		$this->assertCount( 2, $this->calls[ $id ] );
+		$this->assertSame( 'token-from-preview', $this->calls[ $id ][1]['preview_token'] );
+		$this->assertTrue( $this->calls[ $id ][1]['confirm'] );
+	}
+
+	/** A dry-run token never reaches an ability whose schema does not take one. */
+	public function test_preview_token_is_not_sent_to_ability_without_that_input() {
+		$id        = $this->register_strict_write(
+			'example-addon/tokenless-write',
+			array(
+				'value'   => array( 'type' => 'string' ),
+				'dry_run' => array( 'type' => 'boolean' ),
+				'confirm' => array( 'type' => 'boolean' ),
+			),
+			static function ( $input ) {
+				return $input['dry_run'] ? array( 'preview_token' => 'unrelated' ) : array( 'mode' => 'applied' );
+			}
+		);
+		$assistant = new MainWP_Assistant();
+		$card      = $this->invoke( $assistant, 'execute_tool_call', $id, array( 'value' => 'x' ), $this->user_id );
+		$this->assertSame( array( 'value' => 'x' ), $card['params'] );
+		$confirmed = $this->confirm_card( $assistant, $card );
+		$this->assertTrue( $confirmed['success'], wp_json_encode( $confirmed ) );
+		$this->assertArrayNotHasKey( 'preview_token', $this->calls[ $id ][1] );
+	}
+
+	/** An add-on write keyed by site_id on a protected-tag site gets the extra-confirm card, then runs once confirmed. */
+	public function test_site_id_write_on_protected_site_shows_extra_confirm_card() {
+		global $wpdb;
+		$site_id = $this->create_test_site();
+		$wpdb->insert( $wpdb->prefix . 'mainwp_wp_sync', array( 'wpid' => $site_id, 'version' => '5.0.0', 'sync_errors' => '' ), array( '%d', '%s', '%s' ) );
+		$wpdb->insert( $wpdb->prefix . 'mainwp_wp_options', array( 'wpid' => $site_id, 'name' => 'verify_method', 'value' => '1' ), array( '%d', '%s', '%s' ) );
+		$tag_id = $this->create_test_tag( array( 'name' => 'Protected Add-on Target' ) );
+		$this->assign_site_to_tag( $site_id, $tag_id );
+		$this->set_user_protected_tags( $this->user_id, array( $tag_id ) );
+
+		$id        = $this->register_strict_write(
+			'example-addon/site-write',
+			array(
+				'site_id' => array( 'type' => 'integer' ),
+				'dry_run' => array( 'type' => 'boolean' ),
+				'confirm' => array( 'type' => 'boolean' ),
+			),
+			static function ( $input ) {
+				$access = \MainWP\Dashboard\MainWP_Abilities_Util::check_site_access( $input['site_id'], $input );
+				return is_wp_error( $access ) ? $access : array( 'mode' => $input['dry_run'] ? 'dry_run' : 'applied' );
+			}
+		);
+		$assistant = new MainWP_Assistant();
+		$card      = $this->invoke( $assistant, 'execute_tool_call', $id, array( 'site_id' => $site_id ), $this->user_id );
+		$this->assertArrayNotHasKey( 'error', $card, $card['message'] ?? '' );
+		$this->assertTrue( $card['extra_confirm'] ?? false );
+		$this->assertSame( array( $site_id ), array_map( 'intval', $card['protected_sites'] ) );
+
+		$state = MainWP_Assistant_Confirmation_State::instance();
+		$token = $state->arm_transient( $card, array(), array(), $this->user_id );
+		update_user_meta( $this->user_id, 'mainwp_assistant_history_opt_out', true );
+		$calls_before = count( $this->calls[ $id ] );
+		try {
+			$unacknowledged = $this->confirm_request(
+				$assistant,
+				array(
+					'ability'         => $id,
+					'params'          => wp_json_encode( $card['params'] ),
+					'conversation_id' => 0,
+					'request_id'      => $token,
+				)
+			);
+			$this->assertFalse( $unacknowledged['success'], wp_json_encode( $unacknowledged ) );
+			$this->assertCount( $calls_before, $this->calls[ $id ], 'The write must not run before the protected site is acknowledged.' );
+
+			$confirmed = $this->confirm_request(
+				$assistant,
+				array(
+					'ability'                   => $id,
+					'params'                    => wp_json_encode( $card['params'] ),
+					'conversation_id'           => 0,
+					'request_id'                => $token,
+					'confirmed_protected_sites' => wp_json_encode( array( $site_id ) ),
+				)
+			);
+		} finally {
+			delete_user_meta( $this->user_id, 'mainwp_assistant_history_opt_out' );
+			delete_transient( MainWP_Assistant_Confirmation_State::TRANSIENT_PREFIX . $token );
+			delete_option( MainWP_Assistant_Confirmation_State::CLAIM_OPTION_PREFIX . $token );
+		}
+		$this->assertTrue( $confirmed['success'], wp_json_encode( $confirmed ) );
+		$this->assertSame( 'applied', $confirmed['data']['result']['mode'] ?? null, wp_json_encode( $confirmed ) );
 	}
 
 	/** Filler words and the always-included site category do not narrow the catalog. */

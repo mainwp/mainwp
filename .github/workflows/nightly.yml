@@ -1,0 +1,25 @@
+name: Nightly build
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate without publishing
+        type: boolean
+        default: true
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  nightly:
+    uses: mainwp/mainwp-build-workflows/.github/workflows/nightly.yml@main
+    with:
+      product: mainwp
+      main_file: mainwp.php
+      first_build_base: 6c036869a87dac0343679aedc1d1699daa6a80ee
+      first_build_excluded_commits: '3fea047e3e2a070eace7d5ffd2411b3a0c2d0889 f30d3b44179a57721f3110a7c6abd5b481cf1483'
+      dry_run: ${{ github.event_name == 'schedule' && vars.NIGHTLY_PUBLISH_ENABLED != 'true' || github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+    secrets:
+      CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
+      ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}

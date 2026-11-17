@@ -6,7 +6,7 @@
  * @author  MainWP
  */
 
-class TestCase extends WP_UnitTestCase {
+abstract class TestCase extends WP_UnitTestCase {
 
 	/**
 	 * Emulate deactivating, then subsequently reactivating the plugin.

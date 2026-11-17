@@ -89,6 +89,7 @@ switch ( $path ) {
         break;
 
     case '/206':
+        header( 'Content-Encoding: identity' );
         // Honors single-range requests like the updated child site.
         if ( false !== $range_start ) {
             if ( $range_start >= $size ) {

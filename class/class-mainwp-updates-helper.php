@@ -144,7 +144,7 @@ class MainWP_Updates_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $old_version = isset( $item['old_version'] ) ? $item['old_version'] : '';
             $version     = isset( $item['version'] ) ? $item['version'] : '';
             // translators: 1: Plugin/theme name, 2: Version rolled back from, 3: Version rolled back to.
-            $msg         = sprintf( __( 'WordPress detected an error with %1$s and rolled it back from version %2$s to version %3$s to ensure site stability.', 'mainwp' ), $name, $version, $old_version );
+            $msg = sprintf( __( 'WordPress detected an error with %1$s and rolled it back from version %2$s to version %3$s to ensure site stability.', 'mainwp' ), $name, $version, $old_version );
         }
 
         if ( ! $with_icon ) {

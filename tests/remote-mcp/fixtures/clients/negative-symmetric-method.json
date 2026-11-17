@@ -1,0 +1,1 @@
+{"client_id":"https://claude.ai/oauth/claude-code-client-metadata","client_name":"Claude Code","redirect_uris":["http://localhost/callback"],"token_endpoint_auth_methods_supported":["none","client_secret_basic"]}

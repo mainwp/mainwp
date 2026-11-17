@@ -1541,4 +1541,113 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 		}
 		return $cases;
 	}
+
+	/**
+	 * The jobs route is owner-scoped: another user's job is denied.
+	 *
+	 * @return void
+	 */
+	public function test_jobs_route_denies_other_users_job() {
+		$this->skip_if_no_abilities_api();
+		$this->authenticate_as_admin();
+
+		$other_user = $this->factory->user->create( [ 'role' => 'administrator' ] );
+		$job_id     = 'sync_restdeny' . wp_rand( 1000, 9999 );
+		set_transient(
+			'mainwp_sync_job_' . $job_id,
+			[
+				'job_type' => 'sync',
+				'status'   => 'queued',
+				'total'    => 1,
+				'user_id'  => $other_user,
+			],
+			DAY_IN_SECONDS
+		);
+
+		$response = $this->do_authenticated_request( 'GET', $this->route_from_status_url( rest_url( "mainwp/v2/jobs/{$job_id}" ) ) );
+		delete_transient( 'mainwp_sync_job_' . $job_id );
+
+		$this->assertSame( 403, $response->get_status(), 'Another user\'s job must be denied.' );
+	}
+
+
+	/**
+	 * The /mainwp/v2/jobs/{id} route returns the owner's batch job status
+	 * (M21: no /mainwp/v2/jobs route existed). Queued abilities emit the
+	 * Abilities run URL as status_url; test-batch-operations.php follows that.
+	 *
+	 * @return void
+	 */
+	public function test_jobs_route_returns_owned_job_status() {
+		$this->skip_if_no_abilities_api();
+		$this->authenticate_as_admin();
+
+		$job_id = 'sync_resturl' . wp_rand( 1000, 9999 );
+		set_transient(
+			'mainwp_sync_job_' . $job_id,
+			[
+				'job_type'  => 'sync',
+				'status'    => 'queued',
+				'progress'  => 0,
+				'processed' => 0,
+				'total'     => 3,
+				'synced'    => [],
+				'errors'    => [],
+				'created'   => time(),
+				'started'   => null,
+				'completed' => null,
+				'user_id'   => $this->admin_user_id,
+			],
+			DAY_IN_SECONDS
+		);
+
+		$route = $this->route_from_status_url( rest_url( "mainwp/v2/jobs/{$job_id}" ) );
+
+		$response = $this->do_authenticated_request( 'GET', $route );
+		delete_transient( 'mainwp_sync_job_' . $job_id );
+
+		$this->assertSame( 200, $response->get_status(), 'The jobs route must return the owner\'s job.' );
+		$data = $response->get_data();
+		$this->assertSame( $job_id, $data['job_id'] );
+		$this->assertSame( 'sync', $data['type'] );
+		$this->assertSame( 'queued', $data['status'] );
+	}
+
+
+	/**
+	 * The jobs route requires API-key authentication.
+	 *
+	 * @return void
+	 */
+	public function test_jobs_route_requires_authentication() {
+		$this->skip_if_no_abilities_api();
+
+		wp_set_current_user( 0 );
+		$request  = new WP_REST_Request( 'GET', '/mainwp/v2/jobs/sync_noauth1' );
+		$response = rest_do_request( $request );
+
+		$this->assertGreaterThanOrEqual( 400, $response->get_status(), 'Unauthenticated access must be rejected.' );
+	}
+
+
+	/**
+	 * Resolve the REST route from a status_url the way a client would follow it.
+	 *
+	 * Handles both permalink styles: /wp-json/<route> and ?rest_route=<route>.
+	 *
+	 * @param string $status_url Full status URL.
+	 * @return string Route path.
+	 */
+	private function route_from_status_url( string $status_url ): string {
+		$query = wp_parse_url( $status_url, PHP_URL_QUERY );
+		if ( $query ) {
+			parse_str( $query, $query_vars );
+			if ( ! empty( $query_vars['rest_route'] ) ) {
+				return $query_vars['rest_route'];
+			}
+		}
+		$path = (string) wp_parse_url( $status_url, PHP_URL_PATH );
+		return preg_replace( '#^.*?/wp-json#', '', $path );
+	}
+
 }

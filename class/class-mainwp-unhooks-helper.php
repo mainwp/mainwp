@@ -425,7 +425,7 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Remove callbacks on a hook where the callable's function/method name matches a pattern
      *
      * @param  mixed $hook The hook.
-     * @param  mixed $names Array of classes names.
+     * @param  mixed $cls_names Array of class name patterns to match.
      * @return int
      */
     private function remove_by_name( $hook, $cls_names = array() ) { // phpcs:ignore -- NOSONAR -complex.
@@ -630,7 +630,7 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Returns the source filename for a callable, or null if unknown.
      *
-     * @param callable $callback
+     * @param callable $callback Callable whose source filename should be resolved.
      * @return string|null
      */
     private function callable_file( $callback ) { // phpcs:ignore -- NOSONAR -complex.
@@ -641,7 +641,8 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( $callback instanceof \Closure ) {
             $key = 'closure:' . spl_object_id( $callback );
         } elseif ( is_string( $callback ) ) {
-            $key = 'string:' . $callback; // "function" or "Class::method".
+            // A string callback is either a plain function name or a static method reference.
+            $key = 'string:' . $callback;
         } elseif ( is_array( $callback ) ) {
             $key = 'array:' . ( is_object( $callback[0] ) ? get_class( $callback[0] ) . '#' . spl_object_id( $callback[0] ) : $callback[0] ) . '::' . ( $callback[1] ?? '' );
         } elseif ( is_object( $callback ) && method_exists( $callback, '__invoke' ) ) {
@@ -687,7 +688,7 @@ class MainWP_Unhooks_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 [$objOrClass, $method] = array( $callback[0], $callback[1] ?? '' );
                 $ref                   = new \ReflectionMethod( $objOrClass, $method );
                 $cache[ $key ]         = $ref->getFileName();
-                $cache[ $key ]         = $cache[ $key ] ?: null;
+                $cache[ $key ]         = $cache[ $key ] ? $cache[ $key ] : null;
                 return $cache[ $key ];
             }
 

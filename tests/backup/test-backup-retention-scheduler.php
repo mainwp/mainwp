@@ -646,8 +646,119 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A recorded snapshot queues its pair only when the task carries a
-	 * policy, and the queue deduplicates.
+	 * Concurrent completion events preserve both sites' cleanup work.
+	 *
+	 * @return void
+	 */
+	public function test_concurrent_snapshot_events_keep_both_site_pairs() {
+		$task       = $this->insert_task( array( 'retention_count' => 1 ) );
+		$scheduler  = MainWP_Backup_Retention_Scheduler::instance();
+		$interleave = null;
+		$interleave = static function ( $value ) use ( &$interleave, $scheduler, $task ) {
+			if ( false === strpos( $value, 'UPDATE ' ) || false === strpos( $value, MainWP_Backup_Retention_Scheduler::QUEUE_OPTION ) ) {
+				return $value;
+			}
+			remove_filter( 'query', $interleave );
+			$scheduler->on_snapshot_recorded( 2, $task, 202 );
+			return $value;
+		};
+		update_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION, array() );
+		add_filter( 'query', $interleave );
+		try {
+			$scheduler->on_snapshot_recorded( 1, $task, $this->site_id );
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+		$queue = get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION );
+		$this->assertArrayHasKey( $task . '-' . $this->site_id, $queue );
+		$this->assertArrayHasKey( $task . '-202', $queue, 'Concurrent completion must preserve the other site cleanup.' );
+	}
+
+	/**
+	 * Initialization cannot clear an event inserted by another worker.
+	 *
+	 * @return void
+	 */
+	public function test_concurrent_first_enqueue_keeps_both_site_pairs() {
+		$task       = $this->insert_task( array( 'retention_count' => 1 ) );
+		$scheduler  = MainWP_Backup_Retention_Scheduler::instance();
+		$interleave = null;
+		$interleave = static function ( $sql ) use ( &$interleave, $scheduler, $task ) {
+			if ( false !== strpos( $sql, 'INSERT ' ) && false !== strpos( $sql, MainWP_Backup_Retention_Scheduler::QUEUE_OPTION ) ) {
+				remove_filter( 'query', $interleave );
+				$scheduler->on_snapshot_recorded( 2, $task, 202 );
+			}
+			return $sql;
+		};
+		delete_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION );
+		add_filter( 'query', $interleave );
+		try {
+			$scheduler->on_snapshot_recorded( 1, $task, $this->site_id );
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+		$queue = get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION );
+		$this->assertArrayHasKey( $task . '-' . $this->site_id, $queue );
+		$this->assertArrayHasKey( $task . '-202', $queue, 'First enqueue must not overwrite a concurrently initialized queue.' );
+	}
+
+	/**
+	 * Draining one site cannot discard another site's new completion event.
+	 *
+	 * @return void
+	 */
+	public function test_queue_drain_preserves_concurrent_enqueue() {
+		$task      = $this->insert_task( array( 'retention_count' => 1 ) );
+		$scheduler = MainWP_Backup_Retention_Scheduler::instance();
+		$scheduler->on_snapshot_recorded( 1, $task, $this->site_id );
+		$interleave = null;
+		$interleave = static function ( $sql ) use ( &$interleave, $scheduler, $task ) {
+			if ( false !== strpos( $sql, 'UPDATE ' ) && false !== strpos( $sql, MainWP_Backup_Retention_Scheduler::QUEUE_OPTION ) ) {
+				remove_filter( 'query', $interleave );
+				$scheduler->on_snapshot_recorded( 2, $task, 202 );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $interleave );
+		try {
+			$scheduler->process_post_snapshot_queue();
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+		$queue = get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION );
+		$this->assertArrayNotHasKey( $task . '-' . $this->site_id, $queue );
+		$this->assertArrayHasKey( $task . '-202', $queue, 'Only the claimed pair may leave the queue.' );
+	}
+
+	/**
+	 * A refused queue claim preserves the local archive for a later pass.
+	 *
+	 * @return void
+	 */
+	public function test_failed_queue_claim_does_not_evict_archive() {
+		list( $task, $id, $path ) = $this->insert_verified_eviction_fixture();
+		$scheduler                = MainWP_Backup_Retention_Scheduler::instance();
+		$scheduler->on_snapshot_recorded( $id, $task, $this->site_id );
+		$refuse_claim = static function ( $sql ) {
+			if ( false !== strpos( $sql, 'UPDATE ' ) && false !== strpos( $sql, MainWP_Backup_Retention_Scheduler::QUEUE_OPTION ) ) {
+				return 'SELECT 1 WHERE 0';
+			}
+			return $sql;
+		};
+		add_filter( 'query', $refuse_claim );
+		try {
+			$scheduler->process_post_snapshot_queue();
+		} finally {
+			remove_filter( 'query', $refuse_claim );
+		}
+		$this->assertFileExists( $path, 'A worker without a persisted queue claim must not remove archives.' );
+		$this->assertArrayHasKey( $task . '-' . $this->site_id, get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION ) );
+		$scheduler->process_post_snapshot_queue();
+		$this->assert_archive_evicted_inventory_kept( $id, $path );
+	}
+
+	/**
+	 * A policy queues each task and site pair once.
 	 *
 	 * @return void
 	 */

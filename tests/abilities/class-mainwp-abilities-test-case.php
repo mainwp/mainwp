@@ -944,4 +944,87 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		$tag      = \MainWP\Dashboard\MainWP_DB_Common::instance()->add_tag( $data );
 		return (int) $tag->id;
 	}
+
+	/**
+	 * Update mainwp_wp_sync row fields for a test site (dtsSync, health_value, sync_errors, ...).
+	 *
+	 * @param int   $site_id Site ID.
+	 * @param array $fields  Column => value pairs for the wp_sync table.
+	 */
+	protected function update_site_sync( int $site_id, array $fields ): void {
+		global $wpdb;
+		$table = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp_sync' );
+		$wpdb->update( $table, $fields, [ 'wpid' => $site_id ] ); // phpcs:ignore WordPress.DB -- test fixture.
+	}
+
+	/**
+	 * Insert an uptime monitor for a site. Returns monitor_id.
+	 *
+	 * @param int   $site_id Site ID.
+	 * @param array $args    Column overrides for the monitors table.
+	 * @return int Monitor ID.
+	 */
+	protected function seed_monitor( int $site_id, array $args = [] ): int {
+		global $wpdb;
+		$table    = \MainWP\Dashboard\MainWP_DB_Uptime_Monitoring::instance()->get_table_name( 'monitors' );
+		$defaults = [
+			'wpid'        => $site_id,
+			'active'      => 1,
+			'issub'       => 0,
+			'suburl'      => '',
+			'type'        => 'useglobal',
+			'last_status' => 1,
+		];
+		$wpdb->insert( $table, array_merge( $defaults, $args ) ); // phpcs:ignore WordPress.DB -- test fixture.
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * Insert a heartbeat row for a monitor.
+	 *
+	 * @param int   $monitor_id Monitor ID.
+	 * @param array $args       Column overrides for monitor_heartbeat.
+	 */
+	protected function seed_heartbeat( int $monitor_id, array $args = [] ): void {
+		global $wpdb;
+		$table    = \MainWP\Dashboard\MainWP_DB_Uptime_Monitoring::instance()->get_table_name( 'monitor_heartbeat' );
+		$defaults = [
+			'monitor_id' => $monitor_id,
+			'status'     => 0,
+			'time'       => gmdate( 'Y-m-d H:i:s' ),
+			'ping_ms'    => 250,
+			'duration'   => 60,
+			'http_code'  => '500',
+			'msg'        => 'Connection timeout',
+			'importance' => 1,
+		];
+		$wpdb->insert( $table, array_merge( $defaults, $args ) ); // phpcs:ignore WordPress.DB -- test fixture.
+	}
+
+	/**
+	 * Insert an hourly stat row for a monitor.
+	 *
+	 * @param int        $monitor_id Monitor ID.
+	 * @param int        $timestamp  Hour-bucket unix timestamp.
+	 * @param int        $up         Up checks in the hour.
+	 * @param int        $down       Down checks in the hour.
+	 * @param float      $ping_avg   Average ping ms.
+	 * @param float|null $ping_min   Minimum ping ms (defaults to ping_avg).
+	 */
+	protected function seed_stat_hourly( int $monitor_id, int $timestamp, int $up, int $down, float $ping_avg = 100, ?float $ping_min = null ): void {
+		global $wpdb;
+		$table = \MainWP\Dashboard\MainWP_DB_Uptime_Monitoring::instance()->get_table_name( 'monitor_stat_hourly' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB -- test fixture.
+			$table,
+			[
+				'monitor_id' => $monitor_id,
+				'timestamp'  => $timestamp,
+				'up'         => $up,
+				'down'       => $down,
+				'ping_avg'   => $ping_avg,
+				'ping_min'   => null === $ping_min ? $ping_avg : $ping_min,
+				'ping_max'   => $ping_avg,
+			]
+		);
+	}
 }

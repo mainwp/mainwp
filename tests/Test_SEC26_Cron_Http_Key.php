@@ -352,6 +352,7 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
             array(
                 'mode'        => 'grace',
                 'grace_start' => $now,
+                'keyed_seen'  => $end,
             ),
             get_option( 'mainwp_cron_key_state' )
         );
@@ -405,6 +406,26 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
         $this->assertSame( $partial, get_option( 'mainwp_cron_key_state' ) );
     }
 
+    /** A keyed job that starts before any keyless call is still recorded, once, and only on a seeded state. */
+    public function test_first_keyed_call_is_recorded_once() {
+        update_option( 'mainwp_cron_secret', 'sec26-key', false );
+        $this->assertTrue( $this->http( 'sec26-key' ) );
+        $this->assertFalse( get_option( 'mainwp_cron_key_state' ) );
+
+        $now = time();
+        update_option( 'mainwp_cron_key_state', array( 'mode' => 'required' ), true );
+        $this->assertTrue( $this->http( 'sec26-key', 'updatescheck.php', $now ) );
+        $this->assertSame(
+            array(
+                'mode'       => 'required',
+                'keyed_seen' => $now,
+            ),
+            get_option( 'mainwp_cron_key_state' )
+        );
+        $this->assertTrue( $this->http( 'sec26-key', 'updatescheck.php', $now + HOUR_IN_SECONDS ) );
+        $this->assertSame( $now, get_option( 'mainwp_cron_key_state' )['keyed_seen'] );
+    }
+
     /** Notice paths are mutually exclusive and retain exact actionable copy. */
     public function test_notice_renders_once_on_mainwp_and_wordpress_pages_then_clears() {
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
@@ -454,10 +475,53 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
         $this->assertFalse( $this->http( '' ) );
         $html = $this->capture_render( array( MainWP_System_View::class, 'wp_admin_notices' ) );
         $this->assertStringContainsString( esc_html( "Your server is calling MainWP's cron scripts by web address without a key, and these calls are being blocked. Scheduled updates, syncs and backups are not running. In your hosting cron job or cron service, replace the address with this one:" ), $html );
-        $this->assertStringContainsString( 'Use the same key for the other scripts in the cron folder. This notice goes away after the first call with the key.', $html );
+        $this->assertStringContainsString( 'Latest recorded call without a key: <code>updatescheck.php</code>,', $html );
+        $this->assertStringContainsString( 'Use the same key for the other scripts in the cron folder. This notice clears after a call with the key and returns on the next call without one, so check every cron job that calls MainWP.', $html );
         $this->assertTrue( $this->http( 'sec26<&"key' ) );
         $this->assertStringNotContainsString( 'Update your cron job URL', $this->capture_render( array( MainWP_System_View::class, 'wp_admin_notices' ) ) );
         set_current_screen( 'front' );
+    }
+
+    /** An old keyless job left running next to a keyed one brings the notice back with wording that names it. */
+    public function test_notice_returns_for_leftover_keyless_job_after_keyed_call() {
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+        $now = time();
+        update_option( 'mainwp_cron_secret', 'sec26-key', false );
+        update_option(
+            'mainwp_cron_key_state',
+            array(
+                'mode'        => 'grace',
+                'grace_start' => $now,
+            ),
+            true
+        );
+        $render = function () {
+            return $this->capture_render( array( MainWP_System_View::class, 'render_cron_key_notice' ) );
+        };
+        $mixed  = "A cron job with the key is reaching your Dashboard, but another job still calls MainWP's cron scripts without a key.";
+
+        // Before any keyed call the notice keeps the plain wording.
+        $this->assertTrue( $this->http( '', 'checkstatuschilds.php', $now - 10 * MINUTE_IN_SECONDS ) );
+        $html = $render();
+        $this->assertStringNotContainsString( esc_html( $mixed ), $html );
+        $this->assertStringContainsString( 'Latest recorded call without a key: <code>checkstatuschilds.php</code>, ' . human_time_diff( $now - 10 * MINUTE_IN_SECONDS ) . ' ago.', $html );
+
+        $this->assertTrue( $this->http( 'sec26-key', 'checkstatuschilds.php', $now - 5 * MINUTE_IN_SECONDS ) );
+        $this->assertSame( '', $render() );
+
+        $this->assertTrue( $this->http( '', 'checkstatuschilds.php', $now - 4 * MINUTE_IN_SECONDS ) );
+        $html = $render();
+        $this->assertSame( 1, substr_count( $html, 'Update your cron job URL' ) );
+        $this->assertStringContainsString( esc_html( $mixed ), $html );
+        $this->assertStringContainsString( esc_html( 'From ' . date_i18n( get_option( 'date_format' ), $now + 60 * DAY_IN_SECONDS ) . ' those calls will be blocked. Find that job in your hosting cron jobs or cron service. If another job already calls the same script with the key, delete the old job. Otherwise, replace its address with this one:' ), $html );
+        $this->assertStringContainsString( 'Latest recorded call without a key: <code>checkstatuschilds.php</code>, ' . human_time_diff( $now - 4 * MINUTE_IN_SECONDS ) . ' ago.', $html );
+        $this->assertStringContainsString( esc_attr( MAINWP_PLUGIN_URL . 'cron/checkstatuschilds.php?key=sec26-key' ), $html );
+
+        $state                = get_option( 'mainwp_cron_key_state' );
+        $state['grace_start'] = $now - 60 * DAY_IN_SECONDS;
+        update_option( 'mainwp_cron_key_state', $state, true );
+        $this->assertFalse( $this->http( '', 'checkstatuschilds.php' ) );
+        $this->assertStringContainsString( esc_html( "A cron job with the key is reaching your Dashboard, but another job still calls MainWP's cron scripts without a key, and those calls are being blocked." ), $render() );
     }
 
     /** Server-information access alone must never reveal a credential. */
@@ -690,6 +754,7 @@ class Test_SEC26_Cron_Http_Key extends \WP_UnitTestCase {
                     }
                 }
                 $code = str_replace( '\\wp_die;', '\\wp_die();', $code );
+                // nosemgrep: AIK_eval-use -- Only this repository's own handler source is evaluated; no input reaches it.
                 eval( '?>' . $code ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- Preserve real nonce checks while capturing termination.
             }
         }

@@ -24,6 +24,63 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws MainWP_Exception.
+    /**
+     * Serialize publication with cancellation without holding a mutex during transfer.
+     *
+     * @param object   $task Observed run.
+     * @param callable $publish Local publication.
+     * @return mixed Publication result.
+     * @throws MainWP_Exception When another publisher owns the mutex or the run ended.
+     */
+    public static function with_run_publication( object $task, callable $publish ) {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        if ( empty( $task->manual_site_id ) ) {
+            return $publish();
+        }
+        global $wpdb;
+        $key = 'mainwp-backup-' . md5( DB_NAME . ':' . $wpdb->prefix . ':' . (int) $task->id );
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- connection-scoped publication mutex.
+        $locked = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $key ) );
+        if ( null === $locked || '' !== $wpdb->last_error ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED, self::EXTRA_PUBLICATION_MUTEX ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+        }
+        if ( '1' !== (string) $locked ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+        }
+        try {
+            $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
+            if ( ! $current || (int) $current->last_run !== (int) $task->last_run || ( (int) $current->last_run > 0 && (int) $current->completed >= (int) $current->last_run ) ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- stale publishers yield.
+            }
+            return $publish();
+        } finally {
+            $publication_error = $wpdb->last_error;
+            $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) );
+            if ( '' !== $publication_error ) {
+                $wpdb->last_error = $publication_error;
+            }
+            // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+        }
+    }
+
+    /**
+     * Keep late transfer replies from writing into a closed or successor run.
+     *
+     * @param object $task Observed run.
+     * @param string $method Progress update method.
+     * @param array  $args Update arguments.
+     * @return mixed Update result.
+     */
+    private static function publish_run_progress( object $task, string $method, array $args ) {
+        return self::with_run_publication(
+            $task,
+            static function () use ( $method, $args ) {
+                return MainWP_DB_Backup::instance()->$method( ...$args );
+            }
+        );
+    }
+
     /** Keep the Dashboard's own database and uploads writable. */
     private const DOWNLOAD_DISK_MARGIN = 100 * MB_IN_BYTES;
 
@@ -289,6 +346,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     const EXTRA_FOREIGN_ALREADY_RUNNING = 'foreign_backup';
 
+    /** Distinguish local publication failures from persistent Child lock refusals. */
+    const EXTRA_PUBLICATION_MUTEX = 'publication_mutex';
+
     /**
      * How long a marker-less child already-running refusal must persist on a
      * run's progress row before it surfaces as a foreign collision. Set above
@@ -456,30 +516,34 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     MainWP_DB_Backup::instance()->add_backup_task_progress( $taskId, $website->id, array() );
                 }
 
-                MainWP_DB_Backup::instance()->update_backup_task_progress(
-                    $taskId,
-                    $website->id,
+                self::publish_run_progress(
+                    $pTask,
+                    'update_backup_task_progress',
                     array(
-                        // A same-second re-claim can put last_run one second ahead of the clock (GREATEST( ..., last_run + 1 )),
-                        // and every current-run predicate compares dtsFetched to last_run.
-                        'dtsFetched'             => max( time(), (int) $pTask->last_run ),
-                        'fetchResult'            => wp_json_encode( array() ),
-                        'downloadedDB'           => '',
-                        'downloadedDBComplete'   => 0,
-                        'downloadedFULL'         => '',
-                        'downloadedFULLComplete' => 0,
-                        'removedFiles'           => 0,
-                        'attempts'               => 0,
-                        'last_error'             => '',
-                        'pid'                    => $pid,
-                        'busy_since'             => 0,
-                        'child_backup_task_id'   => $creating_marker,
-                        'child_phase'            => '',
-                        'bytes_downloaded'       => 0,
-                        'bytes_expected'         => 0,
-                        'current_file'           => '',
-                        'files_processed'        => 0,
-                        'files_total'            => 0,
+                        $taskId,
+                        $website->id,
+                        array(
+                            // A same-second re-claim can put last_run one second ahead of the clock (GREATEST( ..., last_run + 1 )),
+                            // and every current-run predicate compares dtsFetched to last_run.
+                            'dtsFetched'             => max( time(), (int) $pTask->last_run ),
+                            'fetchResult'            => wp_json_encode( array() ),
+                            'downloadedDB'           => '',
+                            'downloadedDBComplete'   => 0,
+                            'downloadedFULL'         => '',
+                            'downloadedFULLComplete' => 0,
+                            'removedFiles'           => 0,
+                            'attempts'               => 0,
+                            'last_error'             => '',
+                            'pid'                    => $pid,
+                            'busy_since'             => 0,
+                            'child_backup_task_id'   => $creating_marker,
+                            'child_phase'            => '',
+                            'bytes_downloaded'       => 0,
+                            'bytes_expected'         => 0,
+                            'current_file'           => '',
+                            'files_processed'        => 0,
+                            'files_total'            => 0,
+                        ),
                     )
                 );
 
@@ -555,16 +619,20 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     // Remember what this run attempted, so a child-reported
                     // missing base escalates plain -> push -> full instead
                     // of retrying the same send forever.
-                    MainWP_DB_Backup::instance()->update_backup_task_progress(
-                        $taskId,
-                        $website->id,
+                    self::publish_run_progress(
+                        $pTask,
+                        'update_backup_task_progress',
                         array(
-                            'last_error' => wp_json_encode(
-                                array(
-                                    'incremental_sent'   => $send['mode'],
-                                    'parent_snapshot_id' => isset( $params['parent_snapshot_id'] ) ? (int) $params['parent_snapshot_id'] : 0,
-                                    'run'                => (int) $pTask->last_run,
-                                )
+                            $taskId,
+                            $website->id,
+                            array(
+                                'last_error' => wp_json_encode(
+                                    array(
+                                        'incremental_sent' => $send['mode'],
+                                        'parent_snapshot_id' => isset( $params['parent_snapshot_id'] ) ? (int) $params['parent_snapshot_id'] : 0,
+                                        'run'              => (int) $pTask->last_run,
+                                    )
+                                ),
                             ),
                         )
                     );
@@ -627,18 +695,27 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $stop = microtime( true );
                 // Bigger then 30 seconds means a timeout.
                 if ( 30 < ( $stop - $start ) ) {
-                    MainWP_DB_Backup::instance()->update_backup_task_progress(
-                        $taskId,
-                        $website->id,
-                        array(
-                            'last_error' => wp_json_encode(
+                    try {
+                        self::publish_run_progress(
+                            $pTask,
+                            'update_backup_task_progress',
+                            array(
+                                $taskId,
+                                $website->id,
                                 array(
-                                    'message' => $e->getMessage(),
-                                    'extra'   => $e->get_message_extra(),
-                                )
-                            ),
-                        )
-                    );
+                                    'last_error' => wp_json_encode(
+                                        array(
+                                            'message' => $e->getMessage(),
+                                            'extra'   => $e->get_message_extra(),
+                                        )
+                                    ),
+                                ),
+                            )
+                        );
+                    } catch ( MainWP_Exception $publication_error ) {
+                        // Diagnostic persistence must not skip owned-marker cleanup or replace the request failure.
+                        MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Could not persist backup create error: ' . $publication_error->get_message_error_code() );
+                    }
                 }
 
                 if ( isset( $diag_start ) ) {
@@ -682,7 +759,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 );
                 if ( $claimed_elsewhere ) {
                     if ( ! empty( $current->foreign_refused_since ) ) {
-                        MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) );
+                        self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) ) );
                     }
                     MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child refused a duplicate backup start for this run; yielding to the driver that holds the slot.' );
                     /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
@@ -696,7 +773,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // blocker, so the persistence clock must not run for it.
                 if ( 0 < MainWP_DB_Backup::instance()->get_sibling_site_holder( (int) $website->id, (int) $taskId ) ) {
                     if ( $current && ! empty( $current->foreign_refused_since ) ) {
-                        MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) );
+                        self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) ) );
                     }
                     self::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
                     MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child refused the backup start because another task of this Dashboard holds the site; waiting for it to finish.' );
@@ -710,7 +787,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     : 0;
 
                 if ( 0 === $refused_since ) {
-                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => time() ) );
+                    self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'foreign_refused_since' => time() ) ) );
                     self::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
                     /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                     do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'foreign_refusal_pending', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
@@ -741,7 +818,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     : 0;
 
                 if ( 0 === $refused_since ) {
-                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => time() ) );
+                    self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'foreign_refused_since' => time() ) ) );
                     self::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
                     /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                     do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'mutex_write_refusal_pending', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
@@ -778,14 +855,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // The create round trip resolved into a fetch result, so the
                 // marker's window is over: clear it in the same write, or every
                 // later cycle would read it as a create still in flight.
-                $stored = MainWP_DB_Backup::instance()->update_backup_task_progress_if_marker(
-                    $taskId,
-                    $website->id,
-                    $creating_marker,
+                $stored = self::publish_run_progress(
+                    $pTask,
+                    'update_backup_task_progress_if_marker',
                     array(
-                        'fetchResult'           => wp_json_encode( $information ),
-                        'child_backup_task_id'  => '',
-                        'foreign_refused_since' => 0,
+                        $taskId,
+                        $website->id,
+                        $creating_marker,
+                        array(
+                            'fetchResult'           => wp_json_encode( $information ),
+                            'child_backup_task_id'  => '',
+                            'foreign_refused_since' => 0,
+                        ),
                     )
                 );
                 if ( $stored < 1 ) {
@@ -811,12 +892,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             // be a driver that died mid-request. Reset the row the same way
             // an escalated incremental retry does, so the next cycle creates
             // the task again from scratch.
-            MainWP_DB_Backup::instance()->update_backup_task_progress(
-                $taskId,
-                $website->id,
+            self::publish_run_progress(
+                $pTask,
+                'update_backup_task_progress',
                 array(
-                    'dtsFetched'           => 0,
-                    'child_backup_task_id' => '',
+                    $taskId,
+                    $website->id,
+                    array(
+                        'dtsFetched'           => 0,
+                        'child_backup_task_id' => '',
+                    ),
                 )
             );
 
@@ -842,7 +927,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     return false;
                 }
                 $run_state['reconcile_pending']['last_status_at'] = $now;
-                $backupTaskProgress                               = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'last_error' => wp_json_encode( $run_state ) ) );
+                $backupTaskProgress                               = self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'last_error' => wp_json_encode( $run_state ) ) ) );
             }
             $operation  = $reconcile ? 'status' : 'run';
             $temp       = false;
@@ -855,7 +940,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 if ( $reconcile ) {
                     $run_state['reconcile_pending']['transport_error_code'] = MainWP_Backup_Error_Codes::code_for_exception( $e );
-                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'last_error' => wp_json_encode( $run_state ) ) );
+                    self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'last_error' => wp_json_encode( $run_state ) ) ) );
                 }
                 // The failed run call consumes a retry attempt below instead of being ignored.
                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup task ' . $operation . ' failed: ' . $e->getMessage() );
@@ -879,12 +964,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $run_state                      = json_decode( (string) $current_progress->last_error, true );
                 $run_state                      = is_array( $run_state ) ? $run_state : array();
                 $run_state['reconcile_pending'] = array_merge( $watermark, array( 'last_status_at' => microtime( true ) ) );
-                $backupTaskProgress             = MainWP_DB_Backup::instance()->update_backup_task_progress(
-                    $taskId,
-                    $website->id,
+                $backupTaskProgress             = self::publish_run_progress(
+                    $pTask,
+                    'update_backup_task_progress',
                     array(
-                        'last_error' => wp_json_encode( $run_state ),
-                        'attempts'   => 0,
+                        $taskId,
+                        $website->id,
+                        array(
+                            'last_error' => wp_json_encode( $run_state ),
+                            'attempts'   => 0,
+                        ),
                     )
                 );
                 $reconcile                      = true;
@@ -922,15 +1011,24 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $terminal = in_array( (string) $temp['phase'], array( 'completed', 'failed' ), true );
                 if ( $terminal || self::task_progress_advanced( $observed, (array) $run_state['reconcile_pending'] ) ) {
                     unset( $run_state['reconcile_pending'] );
-                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress(
-                        $taskId,
-                        $website->id,
+                    $backupTaskProgress = self::publish_run_progress(
+                        $pTask,
+                        'update_backup_task_progress',
                         array(
-                            'last_error' => empty( $run_state ) ? '' : wp_json_encode( $run_state ),
-                            'attempts'   => 0,
+                            $taskId,
+                            $website->id,
+                            array(
+                                'last_error' => empty( $run_state ) ? '' : wp_json_encode( $run_state ),
+                                'attempts'   => 0,
+                            ),
                         )
                     );
-                    self::record_child_progress( $taskId, (int) $website->id, $temp );
+                    self::with_run_publication(
+                        $pTask,
+                        static function () use ( $taskId, $website, $temp ) {
+                            self::record_child_progress( $taskId, (int) $website->id, $temp );
+                        }
+                    );
                 } elseif ( ! isset( $temp['error'] ) ) {
                     $temp = false;
                 }
@@ -957,7 +1055,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     : 0;
 
                 if ( 0 === $run_refused_since ) {
-                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => time() ) );
+                    self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'foreign_refused_since' => time() ) ) );
                     /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                     do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'run_refusal_pending', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
                     return false;
@@ -1000,7 +1098,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                 }
 
-                self::record_child_progress( $taskId, (int) $website->id, $temp );
+                self::with_run_publication(
+                    $pTask,
+                    static function () use ( $taskId, $website, $temp ) {
+                        self::record_child_progress( $taskId, (int) $website->id, $temp );
+                    }
+                );
                 if ( '' !== $observed['last_progress_at'] ) {
                     $run_state['last_progress_at'] = $observed['last_progress_at'];
                 }
@@ -1008,13 +1111,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( self::task_progress_advanced( $observed, $watermark, false ) || in_array( (string) $temp['phase'], array( 'completed', 'failed' ), true ) ) {
                     $values['attempts'] = 0;
                 }
-                MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, $values );
+                self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, $values ) );
 
                 if ( (int) $backupTaskProgress->foreign_refused_since > 0 ) {
                     // The lock holder is gone and the slice ran: stop the
                     // persistence clock so a later, unrelated refusal starts
                     // its own window instead of inheriting this one's age.
-                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) );
+                    self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) ) );
                 }
 
                 if ( MainWP_Backup_Task_Phase::FAILED === $phase ) {
@@ -1079,7 +1182,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // consumer. A losing driver yields without firing a second
                 // completion event and never enters the download phase
                 // against an artifact the winner is already consuming.
-                if ( ! MainWP_DB_Backup::instance()->claim_backup_fetch_result( $taskId, $website->id, wp_json_encode( $information ) ) ) {
+                if ( ! self::publish_run_progress( $pTask, 'claim_backup_fetch_result', array( $taskId, $website->id, wp_json_encode( $information ) ) ) ) {
                     MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Another driver consumed this completed backup task; yielding.' );
                     return false;
                 }
@@ -1101,7 +1204,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     );
                 }
             } elseif ( self::RUN_ATTEMPT_CAP > $backupTaskProgress->attempts ) {
-                $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
+                $backupTaskProgress = self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) ) );
                 return false;
             } else {
                 throw MainWP_Backup_Error_Codes::exception( $reconcile ? MainWP_Backup_Error_Codes::ERR_TIMEOUT : MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED, $reconcile ? 'AUTH_ERROR2' . ( ! empty( $run_state['reconcile_pending']['transport_error_code'] ) ? '; ' . $run_state['reconcile_pending']['transport_error_code'] : '' ) : null ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -1336,7 +1439,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                     $localBackupFile = MainWP_Backup_File_Manager::reserve_local_archive_path( $localBackupFile, (int) $website->id );
 
-                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDB' => $localBackupFile ) );
+                    $backupTaskProgress = self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'downloadedDB' => $localBackupFile ) ) );
                 } else {
                     $localBackupFile = $backupTaskProgress->downloadedDB;
                 }
@@ -1373,7 +1476,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             // resumable row; it consumes a retry attempt and
                             // yields instead of failing the site terminally.
                             if ( 5 > $backupTaskProgress->attempts ) {
-                                MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
+                                self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) ) );
                                 $extra = $e instanceof MainWP_Exception ? (string) $e->get_message_extra() : '';
                                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup download failed; the next cycle retries it: ' . $e->getMessage() . ( '' !== $extra ? ' (' . $extra . ')' : '' ) );
                                 return false;
@@ -1382,7 +1485,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         }
                         // Flag before delete, as for the full archive below.
                         $before             = $backupTaskProgress;
-                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
+                        $backupTaskProgress = self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) ) );
                         $advanced           = true;
 
                         if ( self::download_recorded( $backupTaskProgress, $before, 'downloadedDB', $localBackupFile ) ) {
@@ -1417,7 +1520,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                     $localBackupFile = MainWP_Backup_File_Manager::reserve_local_archive_path( $localBackupFile, (int) $website->id );
 
-                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULL' => $localBackupFile ) );
+                    $backupTaskProgress = self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'downloadedFULL' => $localBackupFile ) ) );
                 } else {
                     $localBackupFile = $backupTaskProgress->downloadedFULL;
                 }
@@ -1454,7 +1557,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             // resumable row; it consumes a retry attempt and
                             // yields instead of failing the site terminally.
                             if ( 5 > $backupTaskProgress->attempts ) {
-                                MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
+                                self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) ) );
                                 $extra = $e instanceof MainWP_Exception ? (string) $e->get_message_extra() : '';
                                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup download failed; the next cycle retries it: ' . $e->getMessage() . ( '' !== $extra ? ' (' . $extra . ')' : '' ) );
                                 return false;
@@ -1468,7 +1571,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         // driver can slip in after the remote artifact is
                         // gone and destroy the local copy with a re-download.
                         $before             = $backupTaskProgress;
-                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
+                        $backupTaskProgress = self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) ) );
                         $advanced           = true;
 
                         if ( self::download_recorded( $backupTaskProgress, $before, 'downloadedFULL', $localBackupFile ) ) {
@@ -1655,12 +1758,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return string|null Run identity, or null when no durable identity exists.
      */
     private static function snapshot_run_key( $website, $task, $progress ): ?string {
-        $prefix = (int) $website->id . ':' . (int) $task->id;
         if ( ! empty( $progress->child_backup_task_id ) && ! self::is_creating_marker( $progress->child_backup_task_id ) ) {
-            return $prefix . ':c:' . $progress->child_backup_task_id;
+            return MainWP_Backup_Snapshots::child_run_key( (int) $website->id, (int) $task->id, $progress->child_backup_task_id );
         }
         if ( ! empty( $progress->fetchResult['snapshot_run_token'] ) ) {
-            return $prefix . ':l:' . $progress->fetchResult['snapshot_run_token'];
+            return (int) $website->id . ':' . (int) $task->id . ':l:' . $progress->fetchResult['snapshot_run_token'];
         }
         return null;
     }
@@ -1676,6 +1778,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     private static function task_run_accepts_create( object $task ): bool {
         $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
+        if ( $current && ! empty( $task->manual_site_id ) && (int) $current->last_run > 0 && (int) $current->completed >= (int) $current->last_run ) {
+            return false;
+        }
         if ( $current && (int) $current->last_run > 0 && (int) $current->last_run !== (int) $task->last_run ) {
             return false;
         }
@@ -1952,13 +2057,17 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return false; // The full fallback itself failed - a real failure.
         }
 
-        MainWP_DB_Backup::instance()->update_backup_task_progress(
-            $pTask->id,
-            $website->id,
+        self::publish_run_progress(
+            $pTask,
+            'update_backup_task_progress',
             array(
-                'dtsFetched'           => 0,
-                'child_backup_task_id' => '',
-                'attempts'             => 0,
+                $pTask->id,
+                $website->id,
+                array(
+                    'dtsFetched'           => 0,
+                    'child_backup_task_id' => '',
+                    'attempts'             => 0,
+                ),
             )
         );
 
@@ -2238,17 +2347,22 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'backup lease lost before snapshot record' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
-        $snapshot_id = $snapshots->record_snapshot(
-            array(
-                'task_id'       => (int) $pTask->id,
-                'site_id'       => (int) $website->id,
-                'type'          => $snapshot_type,
-                'parent_id'     => null,
-                'archives'      => $archives,
-                'manifest_path' => $manifest_path,
-                'woo_meta'      => self::woo_meta_from_progress( $progress ),
-                'run_key'       => self::snapshot_run_key( $website, $pTask, $progress ),
-            )
+        $snapshot_id = self::with_run_publication(
+            $pTask,
+            static function () use ( $snapshots, $pTask, $website, $snapshot_type, $archives, $manifest_path, $progress ) {
+                return $snapshots->record_snapshot(
+                    array(
+                        'task_id'       => (int) $pTask->id,
+                        'site_id'       => (int) $website->id,
+                        'type'          => $snapshot_type,
+                        'parent_id'     => null,
+                        'archives'      => $archives,
+                        'manifest_path' => $manifest_path,
+                        'woo_meta'      => self::woo_meta_from_progress( $progress ),
+                        'run_key'       => self::snapshot_run_key( $website, $pTask, $progress ),
+                    )
+                );
+            }
         );
         if ( $snapshot_id < 1 ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, 'task id ' . (int) $pTask->id . ', site id ' . (int) $website->id ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -2528,22 +2642,27 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                     $sent['incremental_sent'] = 'push';
                     $progress->last_error     = wp_json_encode( $sent );
-                    MainWP_DB_Backup::instance()->update_backup_task_progress( $pTask->id, $website->id, array( 'last_error' => $progress->last_error ) );
+                    self::publish_run_progress( $pTask, 'update_backup_task_progress', array( $pTask->id, $website->id, array( 'last_error' => $progress->last_error ) ) );
                     self::requeue_incremental_after_base_missing( $website, $pTask, $progress );
                     return false;
                 }
                 $parent_id   = $is_base || null === $latest ? null : (int) $latest->id;
-                $snapshot_id = $snapshots->record_snapshot(
-                    array(
-                        'task_id'       => (int) $pTask->id,
-                        'site_id'       => (int) $website->id,
-                        'type'          => 'files' === $pTask->type ? 'files' : ( $is_base ? 'full' : 'incremental' ),
-                        'parent_id'     => $parent_id,
-                        'archives'      => $archives,
-                        'manifest_path' => $manifest_path,
-                        'woo_meta'      => self::woo_meta_from_progress( $progress ),
-                        'run_key'       => $run_key,
-                    )
+                $snapshot_id = self::with_run_publication(
+                    $pTask,
+                    static function () use ( $snapshots, $pTask, $website, $archives, $manifest_path, $progress, $parent_id, $is_base, $run_key ) {
+                        return $snapshots->record_snapshot(
+                            array(
+                                'task_id'       => (int) $pTask->id,
+                                'site_id'       => (int) $website->id,
+                                'type'          => 'files' === $pTask->type ? 'files' : ( $is_base ? 'full' : 'incremental' ),
+                                'parent_id'     => $parent_id,
+                                'archives'      => $archives,
+                                'manifest_path' => $manifest_path,
+                                'woo_meta'      => self::woo_meta_from_progress( $progress ),
+                                'run_key'       => $run_key,
+                            )
+                        );
+                    }
                 );
             } else {
                 $snapshot_id = (int) $existing->id;
@@ -2569,11 +2688,15 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     self::record_manifest_writer( $website, $fresh, $snapshot_id );
                 }
                 $information['announced_snapshot_id'] = $snapshot_id;
-                $claimed                              = MainWP_DB_Backup::instance()->update_backup_task_progress_if_marker(
-                    $pTask->id,
-                    $website->id,
-                    $progress->child_backup_task_id,
-                    array( 'fetchResult' => wp_json_encode( $information ) )
+                $claimed                              = self::publish_run_progress(
+                    $pTask,
+                    'update_backup_task_progress_if_marker',
+                    array(
+                        $pTask->id,
+                        $website->id,
+                        $progress->child_backup_task_id,
+                        array( 'fetchResult' => wp_json_encode( $information ) ),
+                    )
                 );
                 if ( '' !== $wpdb->last_error ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
@@ -3026,6 +3149,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'pid'                   => time(),
                     'f'                     => '',
                 );
+                if ( '' !== $owner ) {
+                    $params['safety_restore_id'] = $owner;
+                }
                 if ( 'full' === $type && '' !== $owner ) {
                     // This create can replace the shared list used by incremental backups.
                     global $wpdb;

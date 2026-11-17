@@ -1585,19 +1585,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         if ( ! empty( $dbwebsites ) ) {
 
                             // prepare $post_custom values.
-                            $new_post_custom = array();
-                            foreach ( $post_custom as $meta_key => $meta_values ) {
-                                $new_meta_values = array();
-                                foreach ( $meta_values as $key_value => $meta_value ) {
-                                    if ( is_serialized( $meta_value ) ) {
-                                        // Any plugin can write an object to this page's meta; waking it here would run its class code in the admin's request.
-                                        // nosemgrep: AIK_unserialize-use -- allowed_classes false: objects come back incomplete and no class code runs.
-                                        $meta_value = unserialize( $meta_value, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- arrays and scalars only; allowed_classes false blocks object instantiation.
-                                    }
-                                    $new_meta_values[ $key_value ] = $meta_value;
-                                }
-                                $new_post_custom[ $meta_key ] = $new_meta_values;
-                            }
+                            $new_post_custom = MainWP_Utility::expand_post_custom( $post_custom );
 
                             $post_data = array(
                                 'new_post'            => base64_encode( wp_json_encode( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.

@@ -471,6 +471,11 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		try {
 			$this->assertSame( 'mwp2259-safety', MainWP_Backup_Executor::trigger_backup( $site_id, $type, $owner ) );
 			$this->assertIsArray( $sent );
+			if ( '' !== $owner ) {
+				$this->assertSame( $owner, $sent['safety_restore_id'] ?? null );
+			} else {
+				$this->assertArrayNotHasKey( 'safety_restore_id', $sent );
+			}
 			if ( $expected ) {
 				$this->assertSame( '1', $sent['emit_manifest'] ?? null );
 			} else {

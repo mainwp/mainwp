@@ -424,6 +424,37 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Find a published snapshot using the Child task that produced it.
+     *
+     * @param int    $site_id Child site identity.
+     * @param int    $task_id Dashboard task identity.
+     * @param string $child_task_id Child task identity.
+     * @return bool Whether this Child task owns a complete snapshot.
+     */
+    public function has_complete_for_child_task( int $site_id, int $task_id, string $child_task_id ): bool {
+        return null !== $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                'SELECT id FROM ' . $this->table_name( 'wp_backup_snapshot' ) . " WHERE run_key = %s AND site_id = %d AND task_id = %d AND status = 'complete'",
+                self::child_run_key( $site_id, $task_id, $child_task_id ),
+                $site_id,
+                $task_id
+            )
+        );
+    }
+
+    /**
+     * Build the durable identity used by native Child snapshots.
+     *
+     * @param int    $site_id Child site identity.
+     * @param int    $task_id Dashboard task identity.
+     * @param string $child_task_id Child task identity.
+     * @return string Snapshot run key.
+     */
+    public static function child_run_key( int $site_id, int $task_id, string $child_task_id ): string {
+        return $site_id . ':' . $task_id . ':c:' . $child_task_id;
+    }
+
+    /**
      * Get the newest complete snapshot for a task across all of its sites
      * - the run the backup list summarizes upload state from. Pruned rows
      * stay for audit but never represent the task.
@@ -695,15 +726,48 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
      *
      * @param int    $snapshot_id Snapshot id.
      * @param string $status      New status, e.g. 'pruned'.
+     * @param array  $artifacts   Archive descriptors and manifest_path for failed/partial; omitted fields reuse stored ownership.
      *
      * @return bool False when the status write fails.
      */
-    public function set_status( int $snapshot_id, string $status ): bool {
+    public function set_status( int $snapshot_id, string $status, array $artifacts = array() ): bool {
+        $data   = array( 'status' => $status );
+        $format = array( '%s' );
+        if ( in_array( $status, array( 'failed', 'partial' ), true ) ) {
+            $snapshot = $this->get_snapshot_by_id( $snapshot_id );
+            if ( null === $snapshot ) {
+                return false;
+            }
+            $archives = array_key_exists( 'archives', $artifacts ) ? $artifacts['archives'] : $snapshot->archives;
+            $manifest = array_key_exists( 'manifest_path', $artifacts ) ? $artifacts['manifest_path'] : $snapshot->manifest_path;
+            if ( ! is_array( $archives ) || empty( $archives ) || ! is_string( $manifest ) ) {
+                return false;
+            }
+            foreach ( $archives as $archive ) {
+                if ( ! is_array( $archive ) || ! isset( $archive['path'] ) || ! is_string( $archive['path'] ) || '' === trim( $archive['path'] ) ) {
+                    return false;
+                }
+            }
+            // Ownership supplied by the writer becomes durable with terminal status.
+            // Leave reused columns untouched so concurrent metadata updates survive.
+            if ( array_key_exists( 'archives', $artifacts ) ) {
+                $encoded = wp_json_encode( $archives );
+                if ( false === $encoded ) {
+                    return false;
+                }
+                $data['archives'] = $encoded;
+                $format[]         = '%s';
+            }
+            if ( array_key_exists( 'manifest_path', $artifacts ) ) {
+                $data['manifest_path'] = $manifest;
+                $format[]              = '%s';
+            }
+        }
         return false !== $this->wpdb->update(
             $this->table_name( 'wp_backup_snapshot' ),
-            array( 'status' => $status ),
+            $data,
             array( 'id' => $snapshot_id ),
-            array( '%s' ),
+            $format,
             array( '%d' )
         );
     }

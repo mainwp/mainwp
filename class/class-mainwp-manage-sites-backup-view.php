@@ -112,14 +112,14 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
 
         <?php if ( empty( $primaryBackupMethods ) ) { ?>
-            <div class="ui blue message"><?php printf( /* translators: 1: Opening anchor tag, 2: Closing anchor tag with icon. */ esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+            <div class="ui blue message"><?php printf( /* translators: 1: Opening anchor tag, 2: Closing anchor tag with icon. */ esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" rel="noopener noreferrer">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
             <?php
         }
 
         $native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
         ?>
         <?php if ( $native_backups ) : ?>
-        <?php MainWP_Backup_Snapshots_View::render_restore_surface( (int) $website->id, true ); ?>
+            <?php MainWP_Backup_Snapshots_View::render_restore_surface( (int) $website->id, true ); ?>
         <div class="ui hidden divider"></div>
         <div class="ui padded segment" id="mainwp-legacy-archives">
             <div class="ui basic accordion mainwp-blank-accordion" id="mainwp-downloadable-archives-accordion">

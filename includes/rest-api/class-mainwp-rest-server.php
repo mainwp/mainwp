@@ -112,6 +112,7 @@ class MainWP_Rest_Server {
             'tags'          => 'MainWP_Rest_Tags_Controller',
             'updates'       => 'MainWP_Rest_Updates_Controller',
             'batch'         => 'MainWP_Rest_Global_Batch_Controller',
+            'jobs'          => 'MainWP_Rest_Jobs_Controller',
             'monitors'      => 'MainWP_Rest_Monitors_Controller',
             'rest_api_keys' => 'MainWP_Rest_API_Keys_Controller',
             'settings'      => 'MainWP_Rest_Settings_Controller',

@@ -535,10 +535,19 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 			array(
 				array(
 					'result' => 'already_terminal',
+					'phase'  => 'completed',
+				),
+				'cancelled',
+				true,
+				true,
+			),
+			array(
+				array(
+					'result' => 'already_terminal',
 					'phase'  => 'failed',
 				),
 				'already_failed',
-				false,
+				true,
 			),
 			array( array( 'result' => 'no_active' ), 'no_active_on_site', false ),
 			array( array( 'result' => 'busy' ), 'busy', false ),
@@ -549,7 +558,7 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Only an explicit cancellation closes the local on-demand run.
+	 * The existing ability collects completed archives unless the caller opts in.
 	 *
 	 * @dataProvider cancellation_replies
 
@@ -558,18 +567,20 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @param string|null $result Honest result.
 
 	 * @param bool        $closes Local closure.
+	 * @param bool        $cancel_download Whether the caller opted in.
 	 */
-	public function test_cancel_returns_honest_results( $reply, $result, $closes ) {
+	public function test_cancel_returns_honest_results( $reply, $result, $closes, $cancel_download = false ) {
 		$task = MainWP_DB_Backup::instance()->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) );
 		$this->open_run( (int) $task->id );
 		$this->cancel_reply = $reply;
-		$output             = $this->execute(
-			'cancel-site-backup',
-			array(
-				'site_id_or_domain' => $this->site_id,
-				'confirm'           => true,
-			)
+		$input              = array(
+			'site_id_or_domain' => $this->site_id,
+			'confirm'           => true,
 		);
+		if ( $cancel_download ) {
+			$input['cancel_download'] = true;
+		}
+		$output = $this->execute( 'cancel-site-backup', $input );
 		if ( null === $result ) {
 			$this->assertSame( 'mainwp_operation_failed', $output->get_error_code() );
 			$this->assertSame( 502, $output->get_error_data()['status'] );

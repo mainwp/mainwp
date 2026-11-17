@@ -749,6 +749,30 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
         }
     }
 
+    /**
+     * The bulk backup worker and the single-site action read GridPane's reply
+     * the same way: a string error keeps its text, and a body that reports no
+     * success is a failure even without an error field.
+     */
+    public function test_gridpane_backup_error_shapes(): void {
+        $this->assertNull( Rights_Api_Backups_3rd_Party::gridpane_backup_error( json_decode( '{"success":true}' ) ) );
+
+        $error = Rights_Api_Backups_3rd_Party::gridpane_backup_error( json_decode( '{"success":false,"error":"Backup quota reached"}' ) );
+        $this->assertWPError( $error );
+        $this->assertSame( 'gridpane_backup_failed', $error->get_error_code() );
+        $this->assertSame( 'Backup quota reached', $error->get_error_message() );
+
+        $error = Rights_Api_Backups_3rd_Party::gridpane_backup_error( json_decode( '{"error":{"code":"site_busy","message":"Site is busy"}}' ) );
+        $this->assertSame( 'site_busy', $error->get_error_code() );
+        $this->assertSame( 'Site is busy', $error->get_error_message() );
+
+        foreach ( array( json_decode( '<html>502</html>' ), json_decode( '{"message":"Server Error"}' ) ) as $body ) {
+            $error = Rights_Api_Backups_3rd_Party::gridpane_backup_error( $body );
+            $this->assertWPError( $error );
+            $this->assertSame( 'GridPane backup request failed.', $error->get_error_message() );
+        }
+    }
+
     /** Bulk workers must use the site authorized through websiteId. */
     public function test_selected_websites_ignores_conflicting_site_id(): void {
         $this->rights( 'execute_backups', true );

@@ -977,7 +977,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'class="close icon mainwp-notice-dismiss" notice-id="mainwp-knowledge-site-info-message"', $site );
 		foreach ( array(
 			'Facts an AI agent should know before it acts on this site: hosting, stack, constraints, known quirks.',
-			'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.',
+			'Records saved here reach the Assistant and any AI app connected to this Dashboard through MCP. There is no export in this release.',
 			'Client records apply to every site assigned to the client, and AI agents receive them together with the records of this site. They are read-only here.',
 			'Procedures for specific tasks, such as deployments and checks before updates. Store standing rules and restrictions in Context.',
 		) as $text ) {
@@ -987,7 +987,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		MainWP_Knowledge_UI::render_panel( 'client', $this->client_id, true );
 		$client = ob_get_clean();
 		$this->assertStringContainsString( '<div class="ui info message">', $client );
-		$this->assertStringContainsString( 'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.', $client );
+		$this->assertStringContainsString( 'Records saved here reach the Assistant and any AI app connected to this Dashboard through MCP. There is no export in this release.', $client );
 		$this->assertStringContainsString( 'Client records apply to every site assigned to this client. Site records belong to the site and stay with it if the site is moved to another client.', $client );
 		$this->assertStringContainsString( 'Facts an AI agent should know before it acts for this client: hosting, agreements, preferences, constraints.', $client );
 		$this->assertStringContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $client );
@@ -1660,7 +1660,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( '<h2', $html );
 		$this->assertStringNotContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $html );
 		$this->assertStringNotContainsString( '<div class="ui info message">', $html );
-		$this->assertStringNotContainsString( 'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.', $html );
+		$this->assertStringNotContainsString( 'Records saved here reach the Assistant and any AI app connected to this Dashboard through MCP. There is no export in this release.', $html );
 		$this->assertStringNotContainsString( 'Client records apply to every site assigned to this client. Site records belong to the site and stay with it if the site is moved to another client.', $html );
 		$this->assertStringContainsString( 'class="ui one column stackable grid mainwp-knowledge-sections"', $html );
 		$this->assertSame( 3, substr_count( $html, 'class="ui styled fluid accordion mainwp-knowledge-records"' ) );

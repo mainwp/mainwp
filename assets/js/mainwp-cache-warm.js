@@ -99,7 +99,6 @@
                 mode: 'same-origin',
                 cache: 'default'
             }).catch(() => { /* ignore */ });
-            console.log('Warm cached url: ' + urlStr);
             markSeen(urlStr);
         } finally {
             inflight--;

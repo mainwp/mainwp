@@ -495,15 +495,18 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         $update_dt = false;
 
         if ( MainWP_Uptime_Monitoring_Connect::UP === $ping_data['status'] ) {
-            $update    = array(
+            // A ping_min of 0 means no UP ping recorded yet this hour; the
+            // first real ping seeds it, otherwise min(0, ping) pins it to 0.
+            $current_min = (float) $current_stat['ping_min'];
+            $update      = array(
                 'monitor_id' => $monitor_id,
                 'up'         => ( $current_stat['up'] + 1 ),
                 'ping_avg'   => intval( ( $current_stat['ping_avg'] * $current_stat['up'] + $ping_data['ping_ms'] ) / ( $current_stat['up'] + 1 ) ),
-                'ping_min'   => min( $current_stat['ping_min'], $ping_data['ping_ms'] ),
+                'ping_min'   => empty( $current_min ) ? $ping_data['ping_ms'] : min( $current_min, $ping_data['ping_ms'] ),
                 'ping_max'   => max( $current_stat['ping_max'], $ping_data['ping_ms'] ),
                 'timestamp'  => $hourly_key,
             );
-            $update_dt = true;
+            $update_dt   = true;
         } elseif ( MainWP_Uptime_Monitoring_Connect::DOWN === $ping_data['status'] ) {
             // do not update ping_avg, ping_min, ping_max here.
             $update    = array(

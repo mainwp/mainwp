@@ -42,6 +42,46 @@ class Fake_SFTP_Connection {
 	public $dirs = array();
 
 	/**
+	 * Directory removal attempts.
+	 *
+	 * @var string[]
+	 */
+	public $rmdir_calls = array();
+
+	/**
+	 * Whether directory removal is refused.
+	 *
+	 * @var bool
+	 */
+	public $refuse_rmdir = false;
+
+	/**
+	 * Whether directory removal throws.
+	 *
+	 * @var bool
+	 */
+	public $throw_rmdir = false;
+
+	/**
+	 * Remove an empty directory.
+	 *
+	 * @param string $dir Directory.
+	 * @return bool
+	 * @throws \RuntimeException When the fixture scripts a removal exception.
+	 */
+	public function rmdir( $dir ) {
+		$this->rmdir_calls[] = $dir;
+		if ( $this->throw_rmdir ) {
+			throw new \RuntimeException( 'Directory removal refused.' );
+		}
+		if ( $this->refuse_rmdir || ! isset( $this->dirs[ $dir ] ) || count( $this->rawlist( $dir ) ) > 2 ) {
+			return false;
+		}
+		unset( $this->dirs[ $dir ] );
+		return true;
+	}
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string[] $dirs Pre-existing directories.
@@ -266,6 +306,130 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase {
 	public function test_implements_storage_provider_interface() {
 		$provider = $this->make_provider( new Fake_SFTP_Connection() );
 		$this->assertInstanceOf( MainWP_Backup_Storage_Provider::class, $provider );
+	}
+
+	/**
+	 * Completed deletes remove only their empty snapshot directories.
+	 *
+	 * @return void
+	 */
+	public function test_cleanup_snapshot_directories() {
+		$connection = new Fake_SFTP_Connection();
+		$provider   = $this->make_provider( $connection );
+		$provider->put_object( '4-site/42/chunks/a.bin', 'a' );
+		$provider->put_object( '4-site/42/chunks/b.bin', 'b' );
+		$provider->put_object( '4-site/43/chunks/keep.bin', 'keep' );
+		$provider->delete_object( '4-site/42/chunks/a.bin' );
+		$provider->delete_object( '4-site/42/chunks/b.bin' );
+		$provider->delete_object( '4-site/42/missing.bin' );
+		$provider->cleanup_snapshot_directories( '4-site/42/' );
+		$this->assertSame( array( '/backups/4-site/42/chunks', '/backups/4-site/42' ), $connection->rmdir_calls );
+		$this->assertFalse( $connection->is_dir( '/backups/4-site/42' ) );
+		$this->assertTrue( $connection->is_dir( '/backups/4-site' ) );
+		$this->assertTrue( $connection->is_dir( '/backups' ) );
+		$this->assertSame( 'keep', $connection->files['/backups/4-site/43/chunks/keep.bin'] );
+	}
+
+	/**
+	 * Refused removal stays bounded and preserves successful object deletion.
+	 *
+	 * @return void
+	 */
+	public function test_cleanup_refusal_and_nonempty_directories() {
+		$connection = new Fake_SFTP_Connection();
+		$provider   = $this->make_provider( $connection );
+		$provider->put_object( '4/42/chunks/keep.bin', 'keep' );
+		$provider->put_object( '4/42/files/delete.bin', 'delete' );
+		$this->assertTrue( $provider->delete_object( '4/42/files/delete.bin' ) );
+		$connection->refuse_rmdir = true;
+		$provider->cleanup_snapshot_directories( '4/42/' );
+		$this->assertCount( 3, $connection->rmdir_calls );
+		$this->assertSame( 'keep', $connection->files['/backups/4/42/chunks/keep.bin'] );
+		$this->assertTrue( $connection->is_dir( '/backups/4/42' ) );
+	}
+
+	/**
+	 * Cleanup cannot widen a malformed prefix to shared directories.
+	 *
+	 * @return void
+	 */
+	public function test_cleanup_rejects_shared_or_invalid_prefixes() {
+		$connection = new Fake_SFTP_Connection( array( '/backups', '/backups/4' ) );
+		$provider   = $this->make_provider( $connection );
+		foreach ( array( '', '4/', '4/42/../', '/4/42/', '4/42/chunks/', '4\\42\\', '4/42' ) as $prefix ) {
+			$provider->cleanup_snapshot_directories( $prefix );
+		}
+		$this->assertSame( array(), $connection->rmdir_calls );
+		$this->assertTrue( $connection->is_dir( '/backups/4' ), 'The shared site directory must survive an invalid snapshot prefix.' );
+	}
+
+	/**
+	 * Non-empty folders remain even when their neighbors can be removed.
+	 *
+	 * @return void
+	 */
+	public function test_cleanup_keeps_nonempty_directory() {
+		$connection = new Fake_SFTP_Connection();
+		$provider   = $this->make_provider( $connection );
+		$provider->put_object( '4/42/chunks/keep.bin', 'keep' );
+		$connection->mkdir( '/backups/4/42/files' );
+		$provider->cleanup_snapshot_directories( '4/42/' );
+		$this->assertTrue( $connection->is_dir( '/backups/4/42/chunks' ) );
+		$this->assertTrue( $connection->is_dir( '/backups/4/42' ) );
+		$this->assertFalse( $connection->is_dir( '/backups/4/42/files' ) );
+		$this->assertSame( 'keep', $connection->files['/backups/4/42/chunks/keep.bin'] );
+	}
+
+	/**
+	 * Directory errors are logged once per attempt and do not escape.
+	 *
+	 * @return void
+	 */
+	public function test_cleanup_logs_directory_exceptions() {
+		$connection              = new Fake_SFTP_Connection( array( '/backups', '/backups/4', '/backups/4/42', '/backups/4/42/chunks', '/backups/4/42/files' ) );
+		$provider                = $this->make_provider( $connection );
+		$connection->throw_rmdir = true;
+		$warnings                = array();
+		$listener                = static function ( $message ) use ( &$warnings ) {
+			$warnings[] = $message;
+		};
+		add_action( 'mainwp_log_warning', $listener );
+		try {
+			$this->assertTrue( $provider->delete_object( '4/42/missing.bin' ) );
+			$provider->cleanup_snapshot_directories( '4/42/' );
+		} finally {
+			remove_action( 'mainwp_log_warning', $listener );
+		}
+		$this->assertCount( 3, $connection->rmdir_calls );
+		$this->assertCount( 3, $warnings );
+	}
+
+	/**
+	 * A cold resumed cleanup makes only one failed connection attempt.
+	 *
+	 * @return void
+	 */
+	public function test_cleanup_connects_only_once_when_connection_fails() {
+		$calls    = 0;
+		$warnings = array();
+		$provider = new MainWP_Backup_Storage_SFTP(
+			array( 'base_path' => '/backups' ),
+			static function () use ( &$calls ) {
+				++$calls;
+				throw new \RuntimeException( 'Connection failed.' );
+			}
+		);
+		$listener = static function ( $message ) use ( &$warnings ) {
+			$warnings[] = $message;
+		};
+		add_action( 'mainwp_log_warning', $listener );
+		try {
+			$provider->cleanup_snapshot_directories( '4/42/' );
+		} finally {
+			remove_action( 'mainwp_log_warning', $listener );
+		}
+		$this->assertSame( 1, $calls );
+		$this->assertCount( 1, $warnings );
 	}
 
 	/**

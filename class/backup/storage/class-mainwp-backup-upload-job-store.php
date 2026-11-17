@@ -159,10 +159,11 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      * @param int      $lease_seconds Lease length.
      * @param int|null $now           Clock override for tests.
      * @param string   $kind          Job kind: 'upload' or 'delete'.
+     * @param int[]    $exclude_ids   Jobs already attempted by this tick.
      *
      * @return object|null The locked job, or null when none is runnable.
      */
-    public function acquire_next_job( string $token, int $lease_seconds = 300, ?int $now = null, string $kind = self::KIND_UPLOAD ): ?object {
+    public function acquire_next_job( string $token, int $lease_seconds = 300, ?int $now = null, string $kind = self::KIND_UPLOAD, array $exclude_ids = array() ): ?object {
         $now = null === $now ? time() : $now;
 
         $runnable = array(
@@ -177,6 +178,13 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         // ceiling is killed here, before it can be handed out again.
         $this->fail_jobs_over_reclaim_ceiling( $kind, $runnable, $now );
 
+        $exclude_ids = array_values( array_unique( array_filter( array_map( 'absint', $exclude_ids ) ) ) );
+        $exclusion   = empty( $exclude_ids ) ? '' : ' AND id NOT IN (' . implode( ', ', array_fill( 0, count( $exclude_ids ), '%d' ) ) . ')';
+        // Upload slices rotate by last activity. Same-second ties use id;
+        // the driver's exclusions still give each job only one turn per tick.
+        // Delete jobs retain their existing oldest-id ordering.
+        $order = self::KIND_UPLOAD === $kind ? 'updated ASC, id ASC' : 'id ASC';
+
         // Single-table UPDATE with ORDER BY + LIMIT is atomic under InnoDB
         // row locking; only one caller wins the row. reclaim_count's CASE
         // WHEN must read locked_by before locked_by is itself reassigned
@@ -188,13 +196,14 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         // both of which leave locked_by empty). Expired prune claims are
         // also fresh pickups, never worker reclaims.
         $claimed = $this->wpdb->query(
-            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the merged arrays supply all eleven replacements.
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- merged arrays supply the fixed arguments and optional excluded ids.
                 'UPDATE ' . $this->table_name( 'wp_backup_upload_job' ) .
-                " SET reclaim_count = CASE WHEN locked_by <> '' AND LEFT(locked_by, 6) <> 'prune:' THEN reclaim_count + 1 ELSE reclaim_count END, locked_until = %d, locked_by = %s, updated = %d WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND next_retry_at <= %d AND locked_until < %d ORDER BY id ASC LIMIT 1",
+                " SET reclaim_count = CASE WHEN locked_by <> '' AND LEFT(locked_by, 6) <> 'prune:' THEN reclaim_count + 1 ELSE reclaim_count END, locked_until = %d, locked_by = %s, updated = %d WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND next_retry_at <= %d AND locked_until < %d{$exclusion} ORDER BY {$order} LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- exclusion contains counted placeholders; order is selected from fixed strings.
                 array_merge(
                     array( $now + $lease_seconds, $token, $now, $kind ),
                     $runnable,
-                    array( $now, $now )
+                    array( $now, $now ),
+                    $exclude_ids
                 )
             )
         );
@@ -226,17 +235,20 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
     /**
      * Whether acquire_next_job() could hand out an upload at this time.
      *
-     * @param int $now Current time.
+     * @param int   $now Current time.
+     * @param int[] $exclude_ids Jobs already attempted without yielding.
      *
      * @return bool True when a job is active, past its backoff and not leased.
      */
-    public function has_runnable_job( int $now ): bool {
-        $statuses = static::active_statuses();
-        $holders  = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
-        $found    = $this->wpdb->get_var(
+    public function has_runnable_job( int $now, array $exclude_ids = array() ): bool {
+        $statuses    = static::active_statuses();
+        $holders     = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+        $exclude_ids = array_values( array_unique( array_filter( array_map( 'absint', $exclude_ids ) ) ) );
+        $exclusion   = empty( $exclude_ids ) ? '' : ' AND id NOT IN (' . implode( ', ', array_fill( 0, count( $exclude_ids ), '%d' ) ) . ')';
+        $found       = $this->wpdb->get_var(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- status placeholders and bind array grow together.
-                'SELECT id FROM ' . $this->table() . " WHERE kind = %s AND status IN ( {$holders} ) AND next_retry_at <= %d AND locked_until < %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholder list built from the counted status array.
-                array_merge( array( self::KIND_UPLOAD ), $statuses, array( $now, $now ) )
+                'SELECT id FROM ' . $this->table() . " WHERE kind = %s AND status IN ( {$holders} ) AND next_retry_at <= %d AND locked_until < %d{$exclusion} LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholder lists built from counted status and exclusion arrays.
+                array_merge( array( self::KIND_UPLOAD ), $statuses, array( $now, $now ), $exclude_ids )
             )
         );
 
@@ -620,14 +632,35 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      *              checkpoint, a lost lease or an unconfirmed write.
      */
     public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
-        $row = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT kind, checkpoint FROM %i WHERE id = %d', $this->table(), $job_id ) );
+        $row = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT kind, checkpoint, attempt_count FROM %i WHERE id = %d', $this->table(), $job_id ) );
         if ( null === $row ) {
             return false;
         }
         if ( self::KIND_UPLOAD !== $row->kind ) {
             return $this->update_job( $job_id, array( 'checkpoint' => (string) wp_json_encode( $checkpoint ) ), array( '%s' ), $lock_token );
         }
-        $current = json_decode( (string) $row->checkpoint, true );
+        $current  = json_decode( (string) $row->checkpoint, true );
+        $progress = static function ( array $value ): int {
+            $count = 0;
+            foreach ( $value['artifacts'] ?? array() as $artifact ) {
+                if ( 'whole' === ( $artifact['mode'] ?? '' ) ) {
+                    $count += empty( $artifact['done'] ) ? 0 : 1;
+                    continue;
+                }
+                $chunks = is_array( $artifact['chunks'] ?? null ) ? $artifact['chunks'] : array();
+                foreach ( $chunks as $chunk ) {
+                    $count += empty( $chunk['remote_present'] ) ? 0 : 1;
+                }
+            }
+            return $count;
+        };
+        // Rebase only with confirmed remote progress in this fenced checkpoint.
+        $retry_floor = $progress( $checkpoint ) > $progress( is_array( $current ) ? $current : array() )
+            ? (int) $row->attempt_count : (int) ( $current['retry_attempt_floor'] ?? 0 );
+        unset( $checkpoint['retry_attempt_floor'] );
+        if ( $retry_floor > 0 ) {
+            $checkpoint['retry_attempt_floor'] = $retry_floor;
+        }
         if ( (int) ( $current['storage_age_floor'] ?? 0 ) > 0 ) {
             $checkpoint['storage_age_floor'] = (int) $current['storage_age_floor'];
         }
@@ -641,7 +674,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         }
         $now = time();
         // Compare a digest so the UPDATE only sends one copy of a large checkpoint.
-        $binds = array( $this->table(), $encoded, $now, $job_id, md5( (string) $row->checkpoint ) );
+        $binds = array( $this->table(), $encoded, $now, $job_id, md5( (string) $row->checkpoint ), (int) $row->attempt_count );
         $fence = '';
         if ( null !== $lock_token ) {
             $fence   = ' AND locked_by = %s AND locked_until >= %d';
@@ -650,7 +683,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         }
         $changed = $this->wpdb->query(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- optional fence and bind array grow together.
-                "UPDATE %i SET `checkpoint` = %s, `updated` = %d WHERE id = %d AND MD5(checkpoint) = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence, placeholder values.
+                "UPDATE %i SET `checkpoint` = %s, `updated` = %d WHERE id = %d AND MD5(checkpoint) = %s AND attempt_count = %d{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence, placeholder values.
                 $binds
             )
         );
@@ -697,6 +730,18 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         }
         $saved = $this->get_job( $job_id );
         return (int) ( $saved->checkpoint['storage_age_floor'] ?? 0 );
+    }
+
+    /**
+     * Defer a refused checkpoint without consuming a provider retry or releasing its lease.
+     *
+     * @param int    $job_id Job identity.
+     * @param int    $until Earliest next attempt.
+     * @param string $lock_token Current lease owner.
+     * @return bool Whether the fenced deferral persisted.
+     */
+    public function defer_checkpoint_retry( int $job_id, int $until, string $lock_token ): bool {
+        return $this->update_job( $job_id, array( 'next_retry_at' => $until ), array( '%d' ), $lock_token );
     }
 
     /**

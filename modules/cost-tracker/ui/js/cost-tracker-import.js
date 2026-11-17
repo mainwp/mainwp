@@ -7,6 +7,12 @@ let import_cost_count_success = 0;
 let import_cost_count_fails = 0;
 let import_cost_stop_by_user = false;
 
+// Uploaded CSV rows and server messages are data, not markup — escape
+// everything of that origin before it lands in the progress log HTML.
+const mainwp_cost_tracker_import_esc = function (text) {
+    return jQuery('<span>').text(text ?? '').html();
+};
+
 jQuery(document).ready(function () {
     import_cost_total = Number.parseInt(jQuery('#mainwp_managecosts_total_import').val());
     if (1 ===  Number.parseInt(jQuery('#mainwp_managecosts_do_import').val())) {
@@ -67,8 +73,8 @@ const mainwp_cost_tracker_import_cost = function () { // NOSONAR - complex.
     try {
         decoded_cost_val = JSON.parse(encoded_data);
     } catch (error) {
-        jQuery('#mainwp_cost_tracker_import_logging .log').append('<strong>[' + import_cost_current + '] &lt;&lt; ' + original_line + '</strong><br/>');
-        jQuery('#mainwp_cost_tracker_import_logging .log').append('<span style="color:red;">ERROR: Invalid JSON data - ' + error.message + '</span><br/>');
+        jQuery('#mainwp_cost_tracker_import_logging .log').append('<strong>[' + import_cost_current + '] &lt;&lt; ' + mainwp_cost_tracker_import_esc(original_line) + '</strong><br/>');
+        jQuery('#mainwp_cost_tracker_import_logging .log').append('<span style="color:red;">ERROR: Invalid JSON data - ' + mainwp_cost_tracker_import_esc(error.message) + '</span><br/>');
         jQuery('#mainwp_cost_tracker_import_fail_logging').append(original_line + '\n');
         import_cost_count_fails++;
         jQuery('#mainwp_cost_tracker_import_logging').scrollTop(jQuery('#mainwp_cost_tracker_import_logging .log').height());
@@ -88,7 +94,7 @@ const mainwp_cost_tracker_import_cost = function () { // NOSONAR - complex.
     const cost_status = decoded_cost_val?.['cost.cost_status'] ?? '';
     const select_sites = decoded_cost_val?.['cost.select_sites'] ?? [];
 
-    jQuery('#mainwp_cost_tracker_import_logging .log').append('<strong>[' + import_cost_current + '] &lt;&lt; ' + original_line + '</strong><br/>');
+    jQuery('#mainwp_cost_tracker_import_logging .log').append('<strong>[' + import_cost_current + '] &lt;&lt; ' + mainwp_cost_tracker_import_esc(original_line) + '</strong><br/>');
 
     const errors = [];
     if ('' === cost_name) {
@@ -133,8 +139,8 @@ const mainwp_cost_tracker_import_cost = function () { // NOSONAR - complex.
             jQuery('#mainwp_cost_tracker_import_logging .log').append('<span style="color:green;">SUCCESS</span><br/>');
         } else {
             import_cost_count_fails++;
-            const error_message = response?.data ?? 'Unknown error occurred.';
-            jQuery('#mainwp_cost_tracker_import_logging .log').append('<span style="color:red;">ERROR: ' + error_message + '</span><br/>');
+            const error_message = response?.data?.message ?? 'Unknown error occurred.';
+            jQuery('#mainwp_cost_tracker_import_logging .log').append('<span style="color:red;">ERROR: ' + mainwp_cost_tracker_import_esc(error_message) + '</span><br/>');
             jQuery('#mainwp_cost_tracker_import_fail_logging').append(original_line + '\n');
         }
         jQuery('#mainwp_cost_tracker_import_logging').scrollTop(jQuery('#mainwp_cost_tracker_import_logging .log').height());

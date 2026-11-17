@@ -547,7 +547,6 @@ globalThis.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, e
                         el.text = obj_err.el_text;
                         el.href = obj_err.el_link;
                         el.target = "_blank";
-                        console.log(el);
                         jQuery('#' + elemId).html('').append(document.createTextNode(obj_err.el_before), el, document.createTextNode(elafter));
                         feedback_scroll(elemId, 'red');
                     }
@@ -557,7 +556,6 @@ globalThis.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, e
                 return false; // it is not or invalid json.
             }
         } catch (e) {
-            console.log(e);
             return false; // it is not or invalid json.
         }
     }
@@ -3837,7 +3835,6 @@ function isUrl(url) {
         new URL(url);
         return true;
     } catch (e) {
-        console.log(e);
     }
     return false;
 }
@@ -3850,7 +3847,6 @@ function removeUrlParams(url, params) {
         });
         return urlObj.toString();
     } catch (e) {
-        console.log(e);
     }
     return '';
 }
@@ -4291,7 +4287,6 @@ globalThis.serverinfo_prepare_download_info = function (communi) {
         }
         jQuery("#download-server-information textarea").val(report).trigger("select");
     } catch {
-        console.log('Error:');
     }
     return false;
 }
@@ -5397,8 +5392,11 @@ let mainwp_setttings_fields_indicator_show = function (specific_header_indicator
 let mainwp_setttings_fields_indicator_specific_show = function (obj) {
     let cls = jQuery(obj).attr('field-indicator-wrapper-class');
     if ('' != cls && jQuery('.' + cls + ' .settings-field-icon-indicator.visible-indicator').length > 0) {
-        jQuery(this).attr('style', 'display:inline-block;');
-        jQuery(this).addClass('visible-indicator');
+        jQuery(obj).attr('style', 'display:inline-block;');
+        jQuery(obj).addClass('visible-indicator');
+    } else {
+        jQuery(obj).attr('style', 'display:none;');
+        jQuery(obj).removeClass('visible-indicator');
     }
 }
 
@@ -5461,6 +5459,7 @@ jQuery(function ($) {
                 }
             }
         }
+        mainwp_setttings_fields_indicator_show(); // a field dot just changed, so re-sync every header dot (few nodes on a settings page).
     }
 });
 

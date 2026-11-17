@@ -1283,9 +1283,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param int    $site_id Website identity.
      * @param string $context Calling transport.
+     * @param bool   $cancel_download Whether to stop collection of an already completed Child archive.
      * @return array|\WP_Error
      */
-    public static function cancel_site_backup( int $site_id, string $context = 'ability' ) {
+    public static function cancel_site_backup( int $site_id, string $context = 'ability', bool $cancel_download = false ) {
         $website = self::authorize_site( $site_id, 'execute_backups', $context );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1323,7 +1324,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     break;
                 case 'already_terminal':
                     if ( 'completed' === ( $reply['phase'] ?? null ) ) {
-                        $result = 'already_finished';
+                        $result = 'ui' === $context || $cancel_download ? 'cancelled' : 'already_finished';
                     } elseif ( 'failed' === ( $reply['phase'] ?? null ) ) {
                         $result = 'already_failed';
                     }
@@ -1345,30 +1346,83 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( null === $result ) {
             return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
         }
-        if ( 'cancelled' === $result ) {
-            MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'cancelled', $site_id );
-            // Close the local manual run so the next poll does not re-report it as
-            // running; the child confirmed this cancellation. The cancelled note and
-            // log line are the diagnostic trace: without them a cancelled run is
-            // indistinguishable from an ordinary completion later.
-            $db->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
-            $db->update_backup_notices( (int) $task->id, esc_html__( 'Backup cancelled from the dashboard.', 'mainwp' ) . "\n" );
-            // Drop the cancelled child task from the progress row, or the
-            // progress poll keeps projecting it as running / waiting forever.
-            $db->update_backup_task_progress(
-                (int) $task->id,
-                $site_id,
-                array(
-                    'child_backup_task_id' => '',
-                    'child_phase'          => '',
-                )
-            );
-            MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup cancelled from the dashboard (child task: ' . $id . ')' );
+        if ( in_array( $result, array( 'cancelled', 'already_failed' ), true ) ) {
+            try {
+                $closed = MainWP_Backup_Executor::with_run_publication(
+                    $task,
+                    static function () use ( $db, $task, $site_id, $website, $id, $reply, $result ): bool {
+                        $cleanup_owed = 'already_terminal' === $reply['result'] && ! self::child_task_owns_published_snapshot( $site_id, $task, $id );
+                        if ( ! $db->complete_cancelled_manual_run( (int) $task->id, (int) $task->last_run, $site_id, $id, $cleanup_owed ) ) {
+                            return false;
+                        }
+                        MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'already_failed' === $result ? 'failed' : 'cancelled', $site_id );
+                        MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup cancelled from the dashboard (child task: ' . $id . ')' );
+                        return true;
+                    }
+                );
+                if ( ! $closed ) {
+                    $result = 'busy';
+                }
+            } catch ( MainWP_Exception $error ) {
+                if ( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING !== $error->get_message_error_code() ) {
+                    return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
+                }
+                $result = 'busy';
+            }
         }
         return array(
             'status' => $result,
             'result' => $result,
         );
+    }
+
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory returns MainWP_Exception.
+    /**
+     * Preserve published snapshots, including older rows recorded without a run key.
+     *
+     * @param int    $site_id Child site identity.
+     * @param object $task Dashboard run being cancelled.
+     * @param string $child_id Child task identity.
+     * @return bool Whether the archive has a published owner.
+     * @throws MainWP_Exception When the ownership check cannot be read safely.
+     */
+    private static function child_task_owns_published_snapshot( int $site_id, object $task, string $child_id ): bool {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        global $wpdb;
+        $snapshots = MainWP_Backup_Snapshots::instance();
+        if ( MainWP_Install::backup_snapshot_run_key_ready() ) {
+            $owns_snapshot = $snapshots->has_complete_for_child_task( $site_id, (int) $task->id, $child_id );
+            if ( '' !== $wpdb->last_error ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- DB failure leaves ownership unknown.
+            }
+            if ( $owns_snapshot ) {
+                return true;
+            }
+        }
+
+        $latest = $snapshots->get_latest_complete( $site_id, (int) $task->id );
+        if ( '' !== $wpdb->last_error ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- DB failure leaves ownership unknown.
+        }
+        $floor = (int) $task->last > 0 ? min( (int) $task->last, (int) $task->last_run ) : (int) $task->last_run;
+        if ( ! $latest || ! empty( $latest->run_key ) || (int) $latest->created < $floor ) {
+            return false;
+        }
+
+        $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+        if ( '' !== $wpdb->last_error ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- DB failure leaves ownership unknown.
+        }
+        $paths     = array_filter( array_column( $latest->archives, 'path' ) );
+        $downloads = array( $progress->downloadedDB ?? '', $progress->downloadedFULL ?? '' );
+        $run_dir   = MainWP_Backup_Executor::run_dir_name( $child_id );
+        foreach ( $paths as $path ) {
+            if ( is_string( $path ) && ( in_array( $path, $downloads, true ) || basename( dirname( $path ) ) === $run_dir ) ) {
+                return true;
+            }
+        }
+        // Without a key or any paths the legacy row cannot safely be disowned.
+        return empty( $paths );
     }
 
     /**

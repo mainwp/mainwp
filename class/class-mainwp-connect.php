@@ -1015,6 +1015,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     }
                 }
 
+                if ( 'backup_safety_archive' === $what && isset( $params['binding'], $params['remove'] ) ) {
+                    $data_sign_v2['binding'] = $params['binding'];
+                    $data_sign_v2['remove']  = (string) $params['remove'];
+                }
+
                 $sign_success_v2 = null;
 
                 $sign_value_v2 = wp_json_encode( $data_sign_v2 );
@@ -2592,7 +2597,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     @curl_multi_remove_handle( $mh, $info['handle'] );
                     curl_close( $info['handle'] );
                 }
-                usleep( 10000 );
+                // Ready restore uploads can advance immediately; sleeping here throttles every send buffer.
+                if ( 'restore_artifact_chunk' !== $what || $rc <= 0 ) {
+                    usleep( 10000 );
+                }
             } while ( $running > 0 );
 
             if ( static::is_valid_curl_handle( $mh ) ) {
@@ -3605,6 +3613,38 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $curl_error    = curl_error( $ch );
         $status        = (int) curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
         $effective_url = (string) curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
+        $attempt       = array(
+            'http_status'         => $status,
+            'requested_offset'    => $requested_offset,
+            'requested_range_end' => $range_end,
+            'content_range_start' => null,
+            'content_encoding'    => '',
+            'received_bytes'      => (int) curl_getinfo( $ch, CURLINFO_SIZE_DOWNLOAD ),
+            'written_bytes'       => 'a' === $state->mode ? $state->bytes - $requested_offset : $state->bytes,
+            'duration_s'          => (float) curl_getinfo( $ch, CURLINFO_TOTAL_TIME ),
+            'curl_errno'          => $curl_errno,
+        );
+        foreach ( $response_headers as $header_line ) {
+            if ( 0 === stripos( $header_line, 'Content-Range:' ) ) {
+                $range                          = static::parse_content_range_header( $header_line );
+                $attempt['content_range_start'] = is_array( $range ) && isset( $range['start'] ) ? (int) $range['start'] : null;
+            } elseif ( 0 === stripos( $header_line, 'Content-Encoding:' ) ) {
+                $encoding                    = strtolower( trim( substr( $header_line, 17 ) ) );
+                $attempt['content_encoding'] = in_array( $encoding, array( 'identity', 'gzip', 'deflate', 'br', 'zstd' ), true ) ? $encoding : 'other';
+            }
+        }
+        try {
+            do_action(
+                'mainwp_backup_diag_poll',
+                $attempt,
+                $attempt['duration_s'],
+                array(
+                    'op'      => 'download',
+                    'site_id' => null !== $website ? (int) $website->id : 0,
+                )
+            );
+        } catch ( \Throwable $listener_error ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must not change download control flow.
+        }
         if ( static::is_valid_curl_handle( $ch ) ) {
             curl_close( $ch );
         }

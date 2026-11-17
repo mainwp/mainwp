@@ -63,8 +63,9 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_list_tags' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -92,8 +93,9 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_tag' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -121,8 +123,9 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_add_tag' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/add-tag-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -150,8 +153,9 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_update_tag' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-tag-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -179,8 +183,9 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_delete_tag' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-tag-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Destructive operation - requires confirm:true or dry_run:true. Only call when user explicitly requests deletion.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -208,8 +213,9 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_tag_sites' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -237,8 +243,9 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_tag_clients' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -902,6 +909,8 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|WP_Error Created tag object or error.
      */
     public static function execute_add_tag( $input ) {
+        // Creation stays open to scoped callers: a new tag carries a name
+        // and color only, no site data to scope.
         $name  = sanitize_text_field( $input['name'] );
         $color = isset( $input['color'] ) ? sanitize_hex_color( $input['color'] ) : null;
         // sanitize_hex_color() returns empty string for invalid input; normalize to null.

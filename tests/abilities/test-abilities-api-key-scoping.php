@@ -213,7 +213,7 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $outside = $this->create_test_site( array( 'url' => 'https://test-outside.example.com/' ) );
         $this->restrict_ability_layer_only( array( $allowed ) );
 
-        $result = $this->execute_ability( $ability_name, array() );
+        $result = $this->execute_ability( $ability_name, array( 'site_ids_or_domains' => array( $allowed ) ) );
 
         $this->assertNotWPError( $result );
         $this->assertIsArray( $result );
@@ -413,6 +413,23 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             $mixed = $this->execute_ability( $ability_name, array( $parameter => array( $visible, $hidden ) ) );
             $this->assertSame( $control, $mixed );
         }
+    }
+
+    /** The schema documents tag_id 0 as "no tag filter"; a tag-scoped caller must still see its sites. */
+    public function test_list_sites_tag_id_zero_is_no_tag_filter_for_tag_scoped_caller() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $site_id = $this->create_test_site();
+        $visible = $this->create_test_tag();
+        $this->assign_site_to_tag( $site_id, $visible );
+        $this->restrict_ability_layer_only( array( $site_id ) );
+        $this->restrict_current_user_to_groups( array( $visible ) );
+
+        $result = $this->execute_ability( 'mainwp/list-sites-v1', array( 'tag_id' => 0 ) );
+
+        $this->assertNotWPError( $result );
+        $this->assertSame( 1, $result['total'] );
+        $this->assertSame( array( $site_id ), array_column( $result['items'], 'id' ) );
     }
 
     /**

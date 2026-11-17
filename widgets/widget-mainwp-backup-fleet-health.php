@@ -117,7 +117,7 @@ class MainWP_Backup_Fleet_Health { // phpcs:ignore Generic.Classes.OpeningBraceS
     private static function filter_url( string $bucket_key ): string {
         return add_query_arg(
             array(
-                'page'   => 'managesites',
+                'page'          => 'managesites',
                 'backup_health' => $bucket_key,
             ),
             'admin.php'

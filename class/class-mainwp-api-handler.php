@@ -89,6 +89,11 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         $rslt->key_status  = '';
                         $rslt->apiManager  = 1;
 
+                        $changes = static::validate_changes( $response['changes'] ?? null );
+                        if ( null !== $changes ) {
+                            $rslt->changes = $changes;
+                        }
+
                         if ( isset( $response['errors'] ) ) {
                             $rslt->error = $response['errors'];
                         }
@@ -142,6 +147,12 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     $rslt->package     = $response->package;
                     $rslt->key_status  = '';
                     $rslt->apiManager  = 1;
+
+                    $changes = static::validate_changes( $response->changes ?? null );
+                    if ( null !== $changes ) {
+                        $rslt->changes = $changes;
+                    }
+
                     if ( isset( $response->errors ) ) {
                         $rslt->error = $response->errors;
                     }
@@ -150,6 +161,46 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             }
         }
         return $rslt;
+    }
+
+    /**
+     * Keep plain changelog entries from either license response format.
+     *
+     * @param mixed $changes Optional API changelog data.
+     * @return array|null Valid entries, or null when the field is malformed or absent.
+     */
+    private static function validate_changes( $changes ) {
+        if ( ! is_array( $changes ) ) {
+            return null;
+        }
+
+        $valid = array();
+        foreach ( array_slice( $changes, 0, 7 ) as $change ) {
+            if ( ! is_array( $change ) || ! isset( $change['version'], $change['items'] ) || ! is_string( $change['version'] ) || '' === $change['version'] || preg_match( '/<[a-z\/!?]/i', $change['version'] ) || ! is_array( $change['items'] ) ) {
+                continue;
+            }
+            $items = array();
+            foreach ( array_slice( $change['items'], 0, 100 ) as $item ) {
+                if ( is_array( $item ) && isset( $item['type'], $item['text'] ) && in_array( $item['type'], array( 'added', 'fixed', 'updated', 'removed' ), true ) && is_string( $item['text'] ) && ! preg_match( '/<[a-z\/!?]/i', $item['text'] ) ) {
+                    $text = trim( $item['text'] );
+                    if ( mb_strlen( $text, 'UTF-8' ) <= 500 ) {
+                        $items[] = array(
+                            'type' => $item['type'],
+                            'text' => $text,
+                        );
+                    }
+                }
+            }
+            if ( ! empty( $change['items'] ) && empty( $items ) ) {
+                continue;
+            }
+            $valid[] = array(
+                'version' => $change['version'],
+                'items'   => $items,
+            );
+        }
+
+        return empty( $changes ) || ! empty( $valid ) ? $valid : null;
     }
 
     /**

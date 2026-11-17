@@ -1,0 +1,176 @@
+/*
+ * Consent, authorization error and approval pages. These pages load no theme and allow only
+ * same-origin styles, so the Dashboard's theme variables aren't available: the values below are
+ * the Dashboard light theme's.
+ */
+body.mainwp-oauth {
+	margin: 0;
+	padding: 32px 16px;
+	background: #f4f5f7;
+	color: #2f3437;
+	font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.mainwp-oauth-card {
+	box-sizing: border-box;
+	max-width: 600px;
+	margin: 0 auto;
+	padding: 28px;
+	background: #fff;
+	border: 1px solid #dedee3;
+	border-radius: 6px;
+}
+
+.mainwp-oauth a {
+	color: #357da8;
+}
+
+.mainwp-oauth h1 {
+	margin: 0 0 8px;
+	color: #202427;
+	font-size: 22px;
+	line-height: 1.3;
+}
+
+.mainwp-oauth h2 {
+	margin: 20px 0 8px;
+	color: #202427;
+	font-size: 18px;
+}
+
+.mainwp-oauth h3 {
+	margin: 20px 0 8px;
+	font-size: 15px;
+}
+
+.mainwp-oauth-eyebrow,
+.mainwp-oauth-secondary,
+.mainwp-oauth-user,
+.mainwp-approval-app {
+	color: #5e6266;
+	font-size: 13px;
+}
+
+.mainwp-oauth-eyebrow {
+	margin: 0 0 16px;
+}
+
+.mainwp-oauth-secondary {
+	margin: 0 0 16px;
+}
+
+.mainwp-oauth-warning,
+.mainwp-approval-caution,
+.mainwp-approval-warning {
+	padding: 10px 12px;
+	background: #fcf9e8;
+	border-left: 4px solid #d7b33e;
+}
+
+.mainwp-oauth-note,
+.mainwp-approval-note,
+.mainwp-approval-notice {
+	padding: 10px 12px;
+	background: #f0f6fc;
+	border-left: 4px solid #3f83ad;
+}
+
+.mainwp-oauth fieldset {
+	margin: 16px 0;
+	padding: 0;
+	border: 0;
+}
+
+.mainwp-oauth legend {
+	margin-bottom: 8px;
+	font-weight: 600;
+}
+
+.mainwp-oauth label {
+	display: block;
+	margin: 0 0 10px;
+}
+
+.mainwp-oauth label span {
+	display: block;
+	margin-left: 24px;
+	color: #5e6266;
+	font-size: 13px;
+}
+
+/* Hands-off is the choice that gives something up, so its description carries the warning edge. */
+.mainwp-oauth label .mainwp-oauth-hands-off {
+	padding-left: 10px;
+	border-left: 4px solid #d7b33e;
+}
+
+.mainwp-approval-arguments {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 6px 16px;
+	margin: 12px 0;
+}
+
+.mainwp-approval-arguments dt {
+	font-weight: 600;
+}
+
+.mainwp-approval-arguments dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.mainwp-approval-sites {
+	margin: 0;
+	padding-left: 20px;
+	overflow-wrap: anywhere;
+}
+
+.mainwp-approval-details summary {
+	margin: 16px 0 8px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.mainwp-approval-preview {
+	max-height: 320px;
+	overflow: auto;
+	padding: 10px;
+	background: #f6f7f7;
+	border: 1px solid #dedee3;
+	font-size: 12px;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.mainwp-oauth-actions,
+.mainwp-approval-actions {
+	display: flex;
+	gap: 12px;
+	margin-top: 20px;
+}
+
+.mainwp-oauth button {
+	padding: 8px 18px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #f6f7f7;
+	color: #2f3437;
+	font-size: 15px;
+	cursor: pointer;
+}
+
+/* The page loads only this stylesheet, so nothing else supplies a focus ring. */
+.mainwp-oauth button:focus-visible {
+	outline: 2px solid #2f3437;
+	outline-offset: 2px;
+}
+
+/* Darker than the Dashboard green so white text meets WCAG AA (about 5.6:1). */
+.mainwp-oauth .mainwp-oauth-approve,
+.mainwp-oauth .mainwp-approval-approve,
+.mainwp-oauth .mainwp-approval-run {
+	border-color: #3c5a00;
+	background: #4d7300;
+	color: #fff;
+}

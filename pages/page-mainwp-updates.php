@@ -297,7 +297,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Sets the MainWP Update page page title and pass it off to method MainWP_UI::render_top_header().
      *
-     * @param string $current_tab Current tab being rendered.
+     * @param string $current_tab Tab being rendered. Selects the page title: 'abandoned-plugins' and
+     *                            'abandoned-themes' get their own, anything else gets Available Updates.
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      */
@@ -2174,9 +2175,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         //phpcs:disable WordPress.Security.NonceVerification.Missing
         if ( isset( $_POST['mainwpStagingNonceView'] ) && wp_verify_nonce( sanitize_key( $_POST['mainwpStagingNonceView'] ), 'mainwpStagingNonceView' ) ) {
             global $current_user;
-            $staging_options_siteview = isset( $_POST['select_staging_options_siteview'] ) ? sanitize_key( wp_unslash( $_POST['select_staging_options_siteview'] ) ) : '';
-            if ( in_array( $staging_options_siteview, array( 'live', 'staging' ), true ) ) {
-                update_user_option( $current_user->ID, 'mainwp_staging_options_updates_view', $staging_options_siteview );
+            $staging_view = isset( $_POST['select_staging_options_siteview'] ) ? sanitize_key( wp_unslash( $_POST['select_staging_options_siteview'] ) ) : '';
+            if ( in_array( $staging_view, array( 'live', 'staging' ), true ) ) {
+                update_user_option( $current_user->ID, 'mainwp_staging_options_updates_view', $staging_view );
             }
         }
        //phpcs:enable WordPress.Security.NonceVerification.Missing

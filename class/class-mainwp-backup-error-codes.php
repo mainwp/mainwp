@@ -242,6 +242,22 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Retain only the numeric status supplied by the archive downloader.
+     * Bare HTTP details for these codes originate in MainWP_Connect::decide_download_mode().
+     *
+     * @param string $code Registered transfer error code.
+     * @param string $extra Transfer exception detail.
+     * @return string Safe archive phase and status, or an empty string.
+     */
+    public static function archive_download_detail( string $code, string $extra ): string {
+        if ( ! in_array( $code, array( self::ERR_HTTP_ERROR, self::ERR_DOWNLOAD_TOO_LARGE ), true ) || ! preg_match( '/^HTTP ([1-5][0-9]{2})$/D', $extra, $match ) ) {
+            return '';
+        }
+        // Keep the HTTP token at the end so history can read it in any locale.
+        return esc_html__( 'Archive download failed:', 'mainwp' ) . ' HTTP ' . (int) $match[1];
+    }
+
+    /**
      * Get the severity for an error code.
      *
      * @param string $code Error code.

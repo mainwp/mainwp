@@ -452,7 +452,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @return bool Whether the safety backup is available to this job.
      */
     public function has_rollback_source( object $job ): bool {
-        if ( empty( $job->checkpoint['pre_snapshot_artifacts'] ) || ! empty( $job->checkpoint['pre_snapshot_pruned'] ) || ! empty( $job->checkpoint['pre_snapshot_pruning'] ) ) {
+        if ( empty( $job->checkpoint['pre_snapshot_artifacts'] ) || ! empty( $job->checkpoint['pre_snapshot_pruned'] ) || ! empty( $job->checkpoint['pre_snapshot_pruning'] ) || ! empty( $job->checkpoint['safety_removal_pending'] ) || ! empty( $job->checkpoint['safety_removed'] ) ) {
             return false;
         }
         if ( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED === $job->status && ( ! empty( $job->checkpoint['is_rollback'] ) || $this->superseded_by_later_completion( $job ) ) ) {
@@ -460,6 +460,153 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         return ! $this->rollback_started_for( $job );
+    }
+
+    /**
+     * Remove a safety archive, keeping unknown outcomes durable until reconciled.
+     *
+     * @param object $job Authorized restore history job.
+     * @param bool   $reconcile Read Child state without repeating deletion.
+     * @return array Confirmed state or a user-facing error.
+     */
+    public function remove_safety_archive( object $job, bool $reconcile = false ): array {
+        $store       = MainWP_Backup_Restore_Job_Store::instance();
+        $reservation = $store->reserve_site( (int) $job->site_id, 'safety-delete' );
+        if ( ! $reservation || ! $store->renew_reservation( $reservation ) ) {
+            if ( $reservation ) {
+                $store->release_reservation( $reservation );
+            }
+            return array( 'error' => __( 'A restore or rollback is active on this site.', 'mainwp' ) );
+        }
+        try {
+            $job = $store->get_job( (int) $job->id );
+            if ( null === $job || ! in_array( $job->status, array( 'completed', 'failed_permanent', 'cancelled' ), true ) || ! empty( $job->checkpoint['is_rollback'] )
+                || empty( $job->checkpoint['options']['pre_snapshot'] ) || empty( $job->pre_snapshot_task_id ) ) {
+                return array( 'error' => __( 'This safety backup is still needed for recovery or cannot be verified.', 'mainwp' ) );
+            }
+            if ( ! empty( $job->checkpoint['pre_snapshot_pruned'] ) ) {
+                $checkpoint = $job->checkpoint;
+                unset( $checkpoint['safety_removal_pending'] );
+                $checkpoint['safety_removed'] = true;
+                if ( $store->save_checkpoint( (int) $job->id, $checkpoint ) ) {
+                    return array( 'state' => 'removed' );
+                }
+                return array( 'error' => __( 'The confirmed removal could not be recorded. Check removal again.', 'mainwp' ) );
+            }
+            global $wpdb;
+            $held_for_recovery = $this->safety_backup_held_by_rollback( $job, $job->checkpoint );
+            if ( '' !== $wpdb->last_error || $held_for_recovery ) {
+                return array( 'error' => __( 'This safety backup is still needed for recovery or cannot be verified.', 'mainwp' ) );
+            }
+            if ( ! empty( $job->checkpoint['safety_removed'] ) ) {
+                return array( 'state' => 'removed' );
+            }
+            $archive = null;
+            foreach ( $job->checkpoint['pre_snapshot_artifacts'] ?? array() as $entry ) {
+                if ( 'full' === ( $entry['role'] ?? '' ) ) {
+                    if ( null !== $archive ) {
+                        return array( 'error' => __( 'The safety backup does not have a single archive.', 'mainwp' ) );
+                    }
+                    $archive = $entry;
+                }
+            }
+            if ( null === $archive ) {
+                return array( 'error' => __( 'The safety backup archive could not be verified.', 'mainwp' ) );
+            }
+            $checkpoint  = $job->checkpoint;
+            $was_pending = ! empty( $checkpoint['safety_removal_pending'] );
+            $binding     = array(
+                'task_id'            => (string) $job->pre_snapshot_task_id,
+                'restore_id'         => (string) $job->id,
+                'restore_job_uuid'   => (string) ( $checkpoint['restore_id'] ?? '' ),
+                'restore_task_id'    => (string) $job->child_task_id,
+                'legacy_attestation' => true,
+                'file'               => $archive['file'],
+                'size'               => $archive['size'],
+            );
+            if ( isset( $checkpoint['safety_archive_identity'] ) && is_array( $checkpoint['safety_archive_identity'] ) ) {
+                $binding = array_merge( $binding, $checkpoint['safety_archive_identity'] );
+            }
+            try {
+                $website = $this->website( $job );
+                if ( ! $reconcile && ! $was_pending ) {
+                    $probe = MainWP_Connect::fetch_url_authed(
+                        $website,
+                        'backup_safety_archive',
+                        array(
+                            'binding' => wp_json_encode( $binding ),
+                            'remove'  => 0,
+                        ),
+                        false,
+                        false,
+                        false,
+                        null,
+                        true
+                    );
+                    if ( ! is_array( $probe ) || isset( $probe['error'] ) || 'present' !== ( $probe['state'] ?? '' ) || ( $probe['task_id'] ?? '' ) !== $binding['task_id'] || ( $probe['file'] ?? '' ) !== $binding['file']
+                        || empty( $probe['mtime'] ) || ! is_numeric( $probe['mtime'] ) || empty( $probe['task_started_at'] ) || ! is_string( $probe['task_started_at'] ) ) {
+                        return array(
+                            'error' => __( 'The Child could not verify this safety backup. Removal was not started.', 'mainwp' ),
+                        );
+                    }
+                    $checkpoint['safety_archive_identity'] = array(
+                        'mtime'           => (int) $probe['mtime'],
+                        'task_started_at' => $probe['task_started_at'],
+                    );
+                    $checkpoint['safety_removal_pending']  = true;
+                    $binding                               = array_merge( $binding, $checkpoint['safety_archive_identity'] );
+                    if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint ) ) {
+                        return array(
+                            'error' => __( 'The safety backup identity could not be recorded. Removal was not started.', 'mainwp' ),
+                        );
+                    }
+                }
+                $reply = MainWP_Connect::fetch_url_authed(
+                    $website,
+                    'backup_safety_archive',
+                    array(
+                        'binding' => wp_json_encode( $binding ),
+                        'remove'  => $reconcile || $was_pending ? 0 : 1,
+                    ),
+                    false,
+                    false,
+                    false,
+                    null,
+                    true
+                );
+            } catch ( \Throwable $error ) {
+                if ( ! $was_pending && empty( $checkpoint['safety_removal_pending'] ) ) {
+                    return array( 'error' => __( 'Removal was not started. The Child did not confirm this safety backup.', 'mainwp' ) );
+                }
+                return array(
+                    'error'       => __( 'Removal not confirmed. Check the safety backup status before using Roll Back.', 'mainwp' ),
+                    'unconfirmed' => true,
+                );
+            }
+            $identified = is_array( $reply ) && ( $reply['task_id'] ?? '' ) === $binding['task_id'] && ( $reply['file'] ?? '' ) === $binding['file'];
+            $confirmed  = $identified && ( ! isset( $reply['error'] ) || 'present' === ( $reply['state'] ?? '' ) );
+            if ( $confirmed && in_array( $reply['state'] ?? '', array( 'removed', 'present' ), true ) ) {
+                unset( $checkpoint['safety_removal_pending'] );
+                if ( 'removed' === $reply['state'] ) {
+                    $checkpoint['safety_removed'] = true;
+                }
+                if ( $store->save_checkpoint( (int) $job->id, $checkpoint ) ) {
+                    if ( isset( $reply['error'] ) ) {
+                        return array(
+                            'state' => 'present',
+                            'error' => __( 'The safety backup is still present. The Child refused removal because it is in use.', 'mainwp' ),
+                        );
+                    }
+                    return array( 'state' => $reply['state'] );
+                }
+            }
+            return array(
+                'error'       => __( 'Removal not confirmed. Check the safety backup status before using Roll Back.', 'mainwp' ),
+                'unconfirmed' => true,
+            );
+        } finally {
+            $store->release_reservation( $reservation );
+        }
     }
 
     /**
@@ -596,6 +743,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         $artifacts = isset( $failed_job->checkpoint['pre_snapshot_artifacts'] ) ? (array) $failed_job->checkpoint['pre_snapshot_artifacts'] : array();
         if ( ! $this->has_rollback_source( $failed_job ) ) {
+            if ( ! empty( $failed_job->checkpoint['safety_removed'] ) ) {
+                throw new MainWP_Exception( esc_html__( 'The safety backup from this restore was removed, so there is nothing to roll back to.', 'mainwp' ), null, 'mainwp_restore_rollback_status' );
+            }
+            if ( ! empty( $failed_job->checkpoint['safety_removal_pending'] ) ) {
+                throw new MainWP_Exception( esc_html__( 'Removal of this safety backup is not confirmed. Check its status before rolling back.', 'mainwp' ), null, 'mainwp_restore_rollback_status' );
+            }
             if ( empty( $artifacts ) ) {
                 throw new MainWP_Exception( esc_html__( 'No safety backup was taken before this restore, so there is nothing to roll back to.', 'mainwp' ), null, 'mainwp_restore_rollback_status' );
             }

@@ -50,15 +50,6 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
     }
 
     /**
-     * Constructor.
-     *
-     * Run each time the class is called.
-     */
-    public function __construct() {
-        parent::__construct();
-    }
-
-    /**
      * Method hook_db_install_tables()
      *
      * Get the query to install db tables.
@@ -143,10 +134,12 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
             return false;
         }
         if ( 'action_id' === $by ) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table_actions is the wp_actions table identifier from table_name(); $value is parameterized with %d.
             if ( $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_actions} WHERE action_id=%d ", $value ) ) ) {
                 return true;
             }
         } elseif ( 'wpid' === $by ) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table_actions is the wp_actions table identifier from table_name(); the site $value is parameterized with %d.
             if ( $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_actions} WHERE wpid=%d ", $value ) ) ) {
                 return true;
             }
@@ -163,6 +156,7 @@ class MainWP_DB_Site_Actions extends MainWP_DB { // phpcs:ignore Generic.Classes
      */
     public function delete_all_actions() {
         $table_actions = esc_sql( $this->table_name( 'wp_actions' ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table_actions is the wp_actions table identifier from the literal table_name() suffix; the remaining SQL is static.
         return $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_actions}" ) );
     }
 

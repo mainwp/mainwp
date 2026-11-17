@@ -84,23 +84,22 @@ class MainWP_Abilities {
     }
 
     /**
-     * Include Abilities API routes in MainWP REST authentication.
+     * Keep Abilities API routes on native WordPress REST authentication.
      *
-     * This filter allows MainWP abilities to be accessed via both:
-     * 1. MainWP's consumer_key/consumer_secret API authentication
-     * 2. WordPress Application Passwords (standard REST auth)
-     *
-     * For Application Passwords to work, we must NOT force MainWP auth
-     * on Abilities API requests, as that would conflict with WP's native auth.
+     * Abilities API endpoints (wp-abilities/v1/...) authenticate through
+     * WordPress itself - cookie auth or Application Passwords - and are
+     * deliberately excluded from MainWP's consumer_key/consumer_secret
+     * system; MainWP_REST_Authentication only intercepts mainwp/ and
+     * mainwp-* namespaces. MainWP API keys do not authenticate Abilities
+     * requests.
      *
      * @param bool $is_mainwp_api Whether the current request is to a MainWP REST API.
      * @return bool True only for actual MainWP REST API requests (not abilities).
      */
     public static function include_abilities_in_rest_auth( bool $is_mainwp_api ): bool {
-        // Pass through the original detection - don't extend MainWP auth to Abilities API.
-        // Abilities API has its own permission_callback that checks current_user_can()
-        // which works with both MainWP API keys (via MainWP_REST_Authentication) and
-        // WordPress Application Passwords (via native WP REST auth).
+        // Pass through the original detection - don't extend MainWP auth to the
+        // Abilities API. Each ability's permission_callback runs current_user_can()
+        // against the user WordPress native REST auth established.
         return $is_mainwp_api;
     }
 
@@ -332,6 +331,33 @@ class MainWP_Abilities {
                 'description' => __( 'Abilities for monitoring queued batch operations including sync, update, and site management tasks.', 'mainwp' ),
             )
         );
+
+        // Insights category.
+        wp_register_ability_category(
+            'mainwp-insights',
+            array(
+                'label'       => __( 'MainWP Insights', 'mainwp' ),
+                'description' => __( 'Read-only analytical abilities over dashboard data: activity history, network snapshot, and cost renewals.', 'mainwp' ),
+            )
+        );
+
+        // Fleet category.
+        wp_register_ability_category(
+            'mainwp-fleet',
+            array(
+                'label'       => __( 'MainWP Fleet', 'mainwp' ),
+                'description' => __( 'Fleet-wide segment and version-distribution abilities across all child sites.', 'mainwp' ),
+            )
+        );
+
+        // Monitoring category.
+        wp_register_ability_category(
+            'mainwp-monitoring',
+            array(
+                'label'       => __( 'MainWP Monitoring', 'mainwp' ),
+                'description' => __( 'Read-only uptime monitoring abilities: uptime stats and downtime incidents.', 'mainwp' ),
+            )
+        );
     }
 
     /**
@@ -357,12 +383,19 @@ class MainWP_Abilities {
         // Batch abilities.
         MainWP_Abilities_Batch::register();
 
+        // Insights abilities.
+        MainWP_Abilities_Insights::register();
+
+        // Fleet abilities.
+        MainWP_Abilities_Fleet::register();
+
+        // Monitoring abilities.
+        MainWP_Abilities_Monitoring::register();
+
         // Knowledge abilities.
         MainWP_Abilities_Knowledge::register();
         MainWP_Abilities_Backups::register();
 
         // NOTE: Extensions register their own abilities in their own codebases.
-        // Total core abilities: 102 (30 sites + 14 updates + 11 clients + 7 tags + 1 batch + 7 knowledge + 32 backups).
-        // API Backups adds 2 read abilities when its module is enabled (104 total).
     }
 }

@@ -32,6 +32,7 @@ class MainWP_Backup_Restore_Ajax_Test extends \WP_UnitTestCase {
 		'mainwp_restore_progress',
 		'mainwp_restore_cancel',
 		'mainwp_restore_rollback',
+		'mainwp_restore_delete_safety',
 	);
 
 	/**

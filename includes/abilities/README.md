@@ -559,6 +559,14 @@ $status = wp_execute_ability( 'mainwp/get-batch-job-status-v1', array(
 ) );
 ```
 
+REST clients can poll the same owner-scoped status through the MainWP v2 route:
+
+```text
+GET /wp-json/mainwp/v2/jobs/<id>
+```
+
+The route delegates to `mainwp/get-batch-job-status-v1` and accepts the `job_id` emitted by a queued response's `job_id` or `status_url` field.
+
 **Response structure:**
 
 ```php

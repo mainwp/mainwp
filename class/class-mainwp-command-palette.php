@@ -33,6 +33,9 @@ class MainWP_Command_Palette { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'searchError'   => __( 'Search failed. Select to try again.', 'mainwp' ),
                 'syncingAction' => __( 'Syncing…', 'mainwp' ),
                 'searchLabel'   => __( 'Search sites, clients and commands', 'mainwp' ),
+                /* translators: %s: Question typed in the command palette. */
+                'assistantAsk'  => __( 'Ask the MainWP Assistant: %s', 'mainwp' ),
+                'assistantOpen' => __( 'Open the MainWP Assistant', 'mainwp' ),
                 /* translators: %s: Child Site name. */
                 'actionsFor'    => __( 'Actions for %s', 'mainwp' ),
                 /* translators: 1: Action label, 2: Child Site name. */
@@ -56,7 +59,8 @@ class MainWP_Command_Palette { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- secure_request() verifies the action nonce above.
         if ( isset( $_POST['recent'] ) ) {
             // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- secure_request() verifies the nonce; get_recent_commands() strictly validates decoded command names.
-            $names = is_string( $_POST['recent'] ) && strlen( $_POST['recent'] ) <= 512 ? json_decode( wp_unslash( $_POST['recent'] ), true ) : array();
+            $recent = wp_unslash( $_POST['recent'] );
+            $names  = is_string( $recent ) && strlen( $recent ) <= 512 ? json_decode( $recent, true ) : array();
             wp_send_json_success( static::get_recent_commands( $names ) );
         }
 
@@ -140,7 +144,7 @@ class MainWP_Command_Palette { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             // Apply the client dashboard's "at least one allowed site" scope
             // before LIMIT, so inaccessible matches cannot crowd out results.
             $placeholders = implode( ',', array_fill( 0, count( $allowed ), '%d' ) );
-            $where       .= $wpdb->prepare( " AND EXISTS (SELECT 1 FROM {$sites} wp WHERE wp.client_id = wc.client_id AND wp.is_staging = 0 AND wp.id IN ({$placeholders}))", ...$allowed ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal table name and generated integer placeholders.
+            $where       .= $wpdb->prepare( " AND EXISTS (SELECT 1 FROM {$sites} wp WHERE wp.client_id = wc.client_id AND wp.is_staging = 0 AND wp.id IN ({$placeholders}))", ...$allowed ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Internal table name and generated integer placeholders.
         }
 
         $orderby = empty( $ids ) ? $wpdb->prepare(
@@ -209,7 +213,7 @@ class MainWP_Command_Palette { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $prefix,
             $prefix
         ) : 'wp.name ASC, wp.id ASC';
-        $sql      = $db->get_sql_websites_for_current_user_by_params(
+        $sql     = $db->get_sql_websites_for_current_user_by_params(
             array(
                 'view'               => 'custom_view',
                 'select_wp_fields'   => array( 'id', 'name', 'url', 'userid' ),

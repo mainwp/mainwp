@@ -191,7 +191,6 @@ jQuery(function ($) {
 			$('#jj').val(jj);
 			$('#hh').val(hh);
 			$('#mn').val(mn);
-			console.log(aa + ' ' + mm + ' ' + jj + ' ' + hh + ' ' + mn);
 
 			return updateText(); // not set if invalid date
 		},

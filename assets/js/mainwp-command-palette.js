@@ -385,7 +385,8 @@
 
     function useSiteSearch( { search } ) {
         const query = ( search || '' ).trim();
-        const canSearch = Array.from( query ).length >= 2 && query.length <= 200;
+        const hasSearchText = Array.from( query ).length >= 2;
+        const canSearch = hasSearchText && query.length <= 200;
         const history = window.wp.data.useSelect( ( select ) => select( 'core/preferences' ).get( 'core/commands', 'recentlyUsed' ) || [], [] );
         const recent = ! query && Array.isArray( history ) ? history.slice( 0, 5 ).filter( ( name ) => typeof name === 'string' && /^mainwp\/(site|client)\/[1-9]\d*$/.test( name ) ) : [];
         const requestKey = query ? 'search:' + query : 'recent:' + JSON.stringify( recent );
@@ -436,8 +437,25 @@
             };
         }, [ requestKey, canLoad, result ] );
 
+        const assistantCommands = hasSearchText && ( ! canLoad || ( result.query === requestKey && ! result.isLoading ) ) &&
+            typeof window.MainWPAssistantPanel?.ask === 'function' && document.getElementById( 'mainwp-assistant-panel' ) ? [ {
+                name: 'mainwp/assistant-ask',
+                label: window.wp.i18n.sprintf( siteConfig.strings.assistantAsk, query ),
+                // Match through keywords so Ask cannot outrank site and client results.
+                searchLabel: '~',
+                keywords: [ query ],
+                category: 'command',
+                callback: ( { close } = {} ) => {
+                    const dismiss = close || getDispatcher()?.close;
+                    if ( typeof dismiss === 'function' ) {
+                        dismiss();
+                    }
+                    window.MainWPAssistantPanel.ask( query );
+                },
+            } ] : [];
+
         if ( ! canLoad ) {
-            return { commands: [], isLoading: false };
+            return { commands: assistantCommands, isLoading: false };
         }
         if ( result.query !== requestKey ) {
             return { commands: [], isLoading: true };
@@ -453,11 +471,11 @@
                     keywords: [ query ],
                     category: 'command',
                     callback: () => setRetry( ( value ) => value + 1 ),
-                } ],
+                }, ...assistantCommands ],
                 isLoading: false,
             };
         }
-        return { commands: result.commands, isLoading: !! result.isLoading };
+        return { commands: [ ...result.commands, ...assistantCommands ], isLoading: !! result.isLoading };
     }
 
     function getDispatcher() {
@@ -511,6 +529,24 @@
                 },
             } );
         } );
+
+        // The Assistant has no page of its own; its menu item opens the chat panel in place.
+        if ( typeof window.MainWPAssistantPanel?.openChat === 'function' && document.getElementById( 'mainwp-assistant-panel' ) && siteConfig.strings?.assistantOpen ) {
+            dispatcher.registerCommand( {
+                name: 'mainwp/assistant-open',
+                label: siteConfig.strings.assistantOpen,
+                searchLabel: siteConfig.strings.assistantOpen,
+                keywords: [ 'mainwp', 'assistant', 'chat', 'ai' ],
+                category: 'command',
+                callback: ( { close } = {} ) => {
+                    const dismiss = close || getDispatcher()?.close;
+                    if ( typeof dismiss === 'function' ) {
+                        dismiss();
+                    }
+                    window.MainWPAssistantPanel.openChat();
+                },
+            } );
+        }
 
         if (
             ! siteLoaderRegistered && siteConfig.ajaxUrl && siteConfig.searchNonce &&

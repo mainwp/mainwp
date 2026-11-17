@@ -1,0 +1,72 @@
+/**
+ * MainWP Assistant Insights Styles
+ *
+ * Styles for the Assistant Insights widgets.
+ *
+ * @package MainWP/Dashboard
+ */
+
+/* Summary cards */
+#assistant-summary-cards .ui.cards {
+    margin-bottom: 0;
+}
+
+/* Activity table status colors */
+#assistant-activity-table .status-executed {
+    color: var(--mainwp-accent-color, #7fb100);
+}
+
+#assistant-activity-table .status-failed {
+    color: var(--mainwp-danger-color, #AD0000);
+}
+
+#assistant-activity-table .status-confirmed {
+    color: var(--mainwp-warning-color, #FFD300);
+}
+
+/* Summary card icon colors */
+#assistant-summary-cards .icon.assistant-success {
+    color: var(--mainwp-accent-color, #7fb100);
+}
+
+#assistant-summary-cards .icon.assistant-error {
+    color: var(--mainwp-danger-color, #AD0000);
+}
+
+#assistant-summary-cards .icon.assistant-warning {
+    color: var(--mainwp-warning-color, #FFD300);
+}
+
+#assistant-summary-cards .icon.assistant-info {
+    color: var(--mainwp-info-color, #4682b4);
+}
+
+/* Conversation modal */
+#assistant-conversation-modal .content {
+    max-height: 500px;
+}
+
+#assistant-conversation-modal .conversation-message {
+    padding: 1em;
+    margin-bottom: 1em;
+    border-radius: 8px;
+}
+
+/* The two surface tokens resolve within a few percent of each other in every
+   theme, so the user bubble carries an info tint to stay distinguishable. The
+   flat line is the fallback for engines without color-mix(). */
+#assistant-conversation-modal .conversation-message.user {
+    background-color: #e8f4fd;
+    background-color: color-mix(in srgb, var(--mainwp-info-color, #4682b4) 15%, var(--mainwp-primary-background-color, #ffffff));
+    margin-left: 2em;
+}
+
+#assistant-conversation-modal .conversation-message.assistant {
+    background-color: var(--mainwp-secondary-background-color, #f8f8f8);
+    margin-right: 2em;
+}
+
+#assistant-conversation-modal .conversation-message .role {
+    font-weight: bold;
+    margin-bottom: 0.5em;
+}

@@ -551,6 +551,86 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Test that a filtered empty result tells the model which filters applied.
+	 *
+	 * With type/site filters in play an empty updates list is otherwise
+	 * indistinguishable from "everything is up to date".
+	 *
+	 * @return void
+	 */
+	public function test_list_updates_filtered_empty_result_includes_note() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site( [
+			'name'                 => 'Updates Note Site',
+			'offline_check_result' => 1,
+		] );
+
+		// Theme upgrade exists, but the types filter excludes it.
+		$this->set_site_theme_upgrades( $site_id, [
+			'twentytwentyfour' => [
+				'Name'        => 'Twenty Twenty-Four',
+				'Version'     => '1.0',
+				'new_version' => '1.1',
+			],
+		] );
+
+		$result = $this->execute_ability( 'mainwp/list-updates-v1', [
+			'types' => [ 'plugins' ],
+		] );
+
+		$this->assertNotWPError( $result );
+		$this->assertSame( [], $result['updates'] );
+		$this->assertArrayHasKey( 'note', $result, 'Filtered empty result must explain itself to the caller.' );
+		$this->assertStringContainsString( 'types', $result['note'] );
+
+		// An unfiltered empty result never carries the note.
+		$this->set_site_theme_upgrades( $site_id, [] );
+		$unfiltered = $this->execute_ability( 'mainwp/list-updates-v1', [] );
+		$this->assertNotWPError( $unfiltered );
+		$this->assertArrayNotHasKey( 'note', $unfiltered );
+	}
+
+	/**
+	 * Test that a filtered empty ignored list tells the model which filters applied.
+	 *
+	 * @return void
+	 */
+	public function test_list_ignored_updates_filtered_empty_result_includes_note() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site( [
+			'name'                 => 'Ignored Note Site',
+			'offline_check_result' => 1,
+		] );
+
+		// A theme ignore exists, but the types filter excludes it.
+		$this->set_site_ignored_themes( $site_id, [
+			'twentytwentyfour' => [
+				'Name'            => 'Twenty Twenty-Four',
+				'ignored_version' => '1.1',
+			],
+		] );
+
+		$result = $this->execute_ability( 'mainwp/list-ignored-updates-v1', [
+			'types' => [ 'plugins' ],
+		] );
+
+		$this->assertNotWPError( $result );
+		$this->assertSame( [], $result['ignored'] );
+		$this->assertArrayHasKey( 'note', $result, 'Filtered empty result must explain itself to the caller.' );
+		$this->assertStringContainsString( 'types', $result['note'] );
+
+		// An unfiltered empty result never carries the note.
+		$this->set_site_ignored_themes( $site_id, [] );
+		$unfiltered = $this->execute_ability( 'mainwp/list-ignored-updates-v1', [] );
+		$this->assertNotWPError( $unfiltered );
+		$this->assertArrayNotHasKey( 'note', $unfiltered );
+	}
+
+	/**
 	 * Test that list-updates filters by site IDs.
 	 *
 	 * @return void

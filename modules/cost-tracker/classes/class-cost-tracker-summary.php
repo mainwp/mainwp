@@ -365,7 +365,7 @@ class Cost_Tracker_Summary {
         $costs_count = count( $costs );
         ?>
         <div class="ui segment mainwp-primary-content-wrap">
-            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cost-summany-welcome-message' ) && 0 == $costs_count ) : ?>
+            <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cost-summany-welcome-message' ) && 0 === $costs_count ) : ?>
             <div class="ui segment" style="margin-bottom:0px;">
                 <div class="ui icon message mainwp-welcome-message" style="margin-bottom:0px;">
                     <em data-emoji=":wave:" class="big"></em>
@@ -419,7 +419,7 @@ class Cost_Tracker_Summary {
                     jQuery('#mainwp-widgets-placeholder').dimmer('show');
                 });
                 </script>
-                <?php MainWP_UI::do_widget_boxes( $screen->id, array( 'costs_data' => $costs_data, ) ); ?>
+                <?php MainWP_UI::do_widget_boxes( $screen->id, array( 'costs_data' => $costs_data ) ); ?>
             </div>
             <?php
             /**

@@ -1241,7 +1241,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         $parent_str = '';
                         if ( isset( $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) && 1 === (int) $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) {
                             /* translators: %s: Child theme name */
-                            $parent_str = '<span data-tooltip="' . sprintf( esc_html__( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] ) ? $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] : '' ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
+                            $parent_str = '<span data-tooltip="' . esc_attr( sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] ) ? $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] : '' ) ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
                             $not_delete = true;
                         }
 
@@ -1544,7 +1544,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                             $parent_str = '';
                             if ( isset( $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) && 1 === (int) $siteThemes[ $site_id ][ $slug_ver ]['parent_active'] ) {
                                 /* translators: %s: Child theme name */
-                                $parent_str = '<span data-tooltip="' . sprintf( esc_html__( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] ) ? $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] : '' ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
+                                $parent_str = '<span data-tooltip="' . esc_attr( sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] ) ? $siteThemes[ $site_id ][ $slug_ver ]['child_theme'] : '' ) ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
                                 $not_delete = true;
                             }
 
@@ -2392,7 +2392,7 @@ class MainWP_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php if ( '' === $esc_note ) : ?>
                         <a href="javascript:void(0)" class="mainwp-edit-theme-note"><i class="sticky note outline icon"></i></a>
                     <?php else : ?>
-                        <a href="javascript:void(0)" class="mainwp-edit-theme-note" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); //phpcs:ignore -- escaped. ?>" data-position="center left" data-inverted=""><i class="sticky green note icon"></i></a>
+                        <a href="javascript:void(0)" class="mainwp-edit-theme-note" data-tooltip="<?php echo MainWP_Utility::esc_note_attr( $strip_note ); //phpcs:ignore WordPress.Security.EscapeOutput -- escaped by esc_note_attr(). ?>" data-position="center left" data-inverted=""><i class="sticky green note icon"></i></a>
                     <?php endif; ?>
                         <span style="display: none" class="esc-content-note"><?php echo $esc_note; //phpcs:ignore -- escaped. ?></span>
                     </td>

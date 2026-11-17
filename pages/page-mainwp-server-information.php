@@ -1354,8 +1354,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( ! is_string( $key ) || ! hash_equals( static::get_cron_secret(), $key ) ) {
                 return false;
             }
-            if ( array_intersect_key( $state, array_flip( array( 'keyless_seen', 'keyless_script', 'keyless_blocked' ) ) ) ) {
+            // Without a mode, install() has not run for this request; leave the option for it to seed.
+            if ( ! empty( $state['mode'] ) && ( empty( $state['keyed_seen'] ) || array_intersect_key( $state, array_flip( array( 'keyless_seen', 'keyless_script', 'keyless_blocked' ) ) ) ) ) {
                 unset( $state['keyless_seen'], $state['keyless_script'], $state['keyless_blocked'] );
+                // If the notice returns, this tells it an old keyless job runs next to a keyed one.
+                $state['keyed_seen'] = $now ?? time();
                 update_option( 'mainwp_cron_key_state', $state, true );
             }
             return true;

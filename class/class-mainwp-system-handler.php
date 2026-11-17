@@ -504,8 +504,16 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
 
-            $enabled1 = ! isset( $_POST['mainwp-guided-chatbase-option'] ) ? 0 : 1;
-            MainWP_Utility::update_option( 'mainwp_enable_guided_chatbase', $enabled1 );
+            // The Assistant toggle is admin-only (the setter refuses without
+            // manage_options), and its checkbox is disabled for everyone else, so
+            // staff with the settings right still save the rest of this form.
+            if ( current_user_can( 'manage_options' ) ) {
+                $enabled1         = ! isset( $_POST['mainwp-guided-chatbase-option'] ) ? 0 : 1;
+                $assistant_result = MainWP_Assistant_Policies::instance()->set_assistant_enabled( (bool) $enabled1 );
+                if ( is_wp_error( $assistant_result ) || true !== $assistant_result ) {
+                    wp_die( esc_html( is_wp_error( $assistant_result ) ? $assistant_result->get_error_message() : __( 'Failed to update AI Assistant setting.', 'mainwp' ) ) );
+                }
+            }
 
             $enabled2 = ! isset( $_POST['mainwp-guided-video-option'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_enable_guided_video', $enabled2 );
@@ -1264,7 +1272,9 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
-     * Method hook_refresh_trusted_extension_package_url
+     * Download a fresh licensed package for a registered MainWP add-on.
+     *
+     * Stable rollbacks use Plugin_Upgrader::install() without a hook_extra plugin key and pass through.
      *
      * @param  mixed $reply The reply from the upgrader.
      * @param  mixed $package The package URL.
@@ -1272,17 +1282,28 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param  mixed $hook_extra Extra information about the upgrade, including the plugin being updated.
      * @return mixed The reply from the upgrader.
      */
-    public function hook_refresh_trusted_extension_package_url( $reply, $package, $upgrader, $hook_extra ) {
-        if ( isset( $hook_extra['plugin'] ) ) {
-            $ext_api_slug = dirname( $hook_extra['plugin'] );
-            if ( ! empty( $ext_api_slug ) ) {
-                $rslt_info = MainWP_API_Handler::get_upgrade_information( $ext_api_slug );
-                if ( ! empty( $rslt_info ) && is_object( $rslt_info ) && property_exists( $rslt_info, 'package' ) && ! empty( $rslt_info->package ) ) {
-                    // Replace package URL.
-                    $upgrader->skin->options['package'] = $rslt_info->package;
-                    unset( $package );
-                }
+    public function hook_refresh_trusted_extension_package_url( $reply, $package, $upgrader, $hook_extra ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundBeforeLastUsed -- Preserve the four-argument upgrader filter contract.
+        if ( false !== $reply || empty( $hook_extra['plugin'] ) ) {
+            return $reply;
+        }
+
+        foreach ( MainWP_Extensions_Handler::get_extensions() as $extension ) {
+            if ( empty( $extension['apiManager'] ) || empty( $extension['api'] ) || ! isset( $extension['slug'] ) || $extension['slug'] !== $hook_extra['plugin'] ) {
+                continue;
             }
+
+            $rslt_info = MainWP_API_Handler::get_upgrade_information( $extension['api'] );
+            if ( is_object( $rslt_info ) && ! empty( $rslt_info->error ) ) {
+                $detail = is_scalar( $rslt_info->error ) ? (string) $rslt_info->error : wp_json_encode( $rslt_info->error );
+                $detail = mb_substr( sanitize_text_field( $detail ), 0, 200, 'UTF-8' );
+                return new \WP_Error( 'mainwp_extension_license_error', __( 'The license check for this add-on failed. Check its license on the Extensions page.', 'mainwp' ), $detail );
+            }
+            if ( ! is_object( $rslt_info ) || empty( $rslt_info->package ) || ! is_string( $rslt_info->package ) ) {
+                return new \WP_Error( 'mainwp_extension_package_unavailable', __( 'Could not refresh the MainWP add-on package URL. Please try again.', 'mainwp' ) );
+            }
+
+            // WP_Upgrader keeps its original $package after this filter; changing the skin has no effect.
+            return download_url( $rslt_info->package );
         }
         return $reply;
     }

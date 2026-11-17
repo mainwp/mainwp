@@ -13,6 +13,7 @@ use MainWP\Dashboard\MainWP_Settings;
 use MainWP\Dashboard\MainWP_Notification_Settings;
 use MainWP\Dashboard\MainWP_Settings_Indicator;
 use MainWP\Dashboard\MainWP_System_Utility;
+use MainWP\Dashboard\MainWP_Assistant_Policies;
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Utility;
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Admin;
 use MainWP\Dashboard\Module\ApiBackups\Api_Backups_3rd_Party;
@@ -1876,6 +1877,18 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return $user_id;
         }
 
+        // Note: REST API parameter 'chatbase' maps to 'mainwp_enable_guided_chatbase' option.
+        // Consider renaming to 'mintlify_assistant' in future major version for consistency.
+        // Handled first: the setter can refuse (admin-only), and a refusal must
+        // not leave the other fields in this request already saved.
+        if ( isset( $body['chatbase'] ) ) {
+            $assistant_enabled = (bool) $this->cast_field_value( $body['chatbase'], 'bool' );
+            $result            = MainWP_Assistant_Policies::instance()->set_assistant_enabled( $assistant_enabled );
+            if ( is_wp_error( $result ) ) {
+                return $result;
+            }
+        }
+
         // update theme option.
         if ( isset( $body['mainwp_theme'] ) && ! empty( $body['mainwp_theme'] ) ) {
             update_user_option( $user_id, 'mainwp_selected_theme', $body['mainwp_theme'] );
@@ -1884,7 +1897,6 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Update option.
         $this->update_option_if_present( $body, 'mainwp_theme', 'mainwp_selected_theme', 'string' );
         $this->update_option_if_present( $body, 'guided_tours', 'mainwp_enable_guided_tours', 'bool' );
-        $this->update_option_if_present( $body, 'chatbase', 'mainwp_enable_guided_chatbase', 'bool' );
         $this->update_option_if_present( $body, 'guided_video', 'mainwp_enable_guided_video', 'bool' );
 
         return rest_ensure_response(

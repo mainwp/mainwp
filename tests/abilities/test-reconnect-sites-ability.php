@@ -141,7 +141,7 @@ class Test_ReconnectSites_Ability extends MainWP_Abilities_Test_Case {
             for ( $i = 1; $i <= 3; $i++ ) {
                 $site_ids[] = $this->create_test_site( [
                     'name' => "Batch Test Site {$i}",
-                    'url'  => "https://batch-reconnect-{$i}.example.com/",
+                    'url'  => "https://test-batch-reconnect-{$i}.example.com/",
                 ] );
             }
 

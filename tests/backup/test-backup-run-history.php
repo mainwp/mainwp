@@ -159,6 +159,12 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 				'zip_support' => true,
 			);
 		}
+		if ( 'backup_download_token' === $what ) {
+			return array(
+				'token' => 'private-download-token',
+				'hash'  => str_repeat( 'a', 64 ),
+			);
+		}
 		if ( 'backup_task_create' === $what ) {
 			return array( 'task_id' => 'history-child-' . $site->id );
 		}
@@ -232,6 +238,146 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	private function rows(): array {
 		global $wpdb;
 		return $wpdb->get_results( 'SELECT * FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ) . ' ORDER BY id', ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table.
+	}
+
+	/** Archive HTTP refusals survive both terminal lanes and history readback.
+	 *
+	 * @dataProvider archive_http_failures
+	 * @param int  $status Archive HTTP status.
+	 * @param bool $manual Whether to use Back Up Now.
+	 */
+	public function test_archive_http_failure_keeps_status( int $status, bool $manual ): void {
+		$site = $this->site();
+		$fail = static function () use ( $status ) {
+			\MainWP\Dashboard\MainWP_Connect::decide_download_mode( $status, 0, false, 0, 4096 );
+		};
+		add_filter( 'mainwp_download_to_file_pre', $fail, 20 );
+		try {
+			if ( $manual ) {
+				MainWP_Backup_Operations::start_site_backup( $site, 'ui' );
+				$task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site );
+			} else {
+				$task = $this->task( array( $site ) );
+				MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+			}
+			for ( $attempt = 0; $attempt < 10; ++$attempt ) {
+				if ( 'running' !== $this->rows()[0]['outcome'] ) {
+					break;
+				}
+				$this->finish_task( $task );
+			}
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $fail, 20 );
+		}
+		$row = $this->rows()[0];
+		$this->assertSame( 'failed', $row['outcome'] );
+		$expected_code = 413 === $status ? MainWP_Backup_Error_Codes::ERR_DOWNLOAD_TOO_LARGE : MainWP_Backup_Error_Codes::ERR_HTTP_ERROR;
+		$this->assertSame( $expected_code, $row['error_code'] );
+		$expected = 'Archive download failed: HTTP ' . $status;
+		$this->assertStringContainsString( $expected, $row['message'] );
+		$read = MainWP_Backup_Run_History::query( array(), 1, 10, array( $site ) )['items'][0];
+		$this->assertStringContainsString( $expected, $read['message'] );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site );
+		$this->assertStringContainsString( $expected, $progress->last_error );
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertStringContainsString( $expected, $fresh->backup_errors );
+		if ( $manual ) {
+			$nonce                = wp_create_nonce( 'mainwp_native_backup_progress' );
+			$saved_post           = $_POST;
+			$saved_request        = $_REQUEST;
+			$_POST                = array(
+				'site_id'  => $site,
+				'since'    => 0,
+				'security' => $nonce,
+			);
+			$_REQUEST['security'] = $nonce;
+			$die                  = static function () {
+				return static function () {
+					throw new \RuntimeException( 'archive-progress-json-end' );
+				};
+			};
+			add_filter( 'wp_doing_ajax', '__return_true' );
+			add_filter( 'wp_die_ajax_handler', $die );
+			ob_start();
+			try {
+				try {
+					\MainWP\Dashboard\MainWP_Post_Backup_Handler::instance()->mainwp_native_backup_progress();
+				} catch ( \RuntimeException $error ) {
+					$this->assertSame( 'archive-progress-json-end', $error->getMessage() );
+				}
+				$response = json_decode( ob_get_contents(), true );
+			} finally {
+				ob_end_clean();
+				remove_filter( 'wp_die_ajax_handler', $die );
+				remove_filter( 'wp_doing_ajax', '__return_true' );
+				$_POST    = $saved_post;
+				$_REQUEST = $saved_request;
+			}
+			$this->assertSame( 'failed', $response['status'] );
+			$this->assertSame( $expected_code, $response['error_code'] );
+			$this->assertStringContainsString( $expected, $response['error'] );
+			$this->assertStringNotContainsString( 'private-download-token', wp_json_encode( $response ) );
+		}
+
+		foreach ( array( $row['message'], $read['message'], $progress->last_error, $fresh->backup_errors ) as $message ) {
+			$this->assertStringNotContainsString( 'private-download-token', $message );
+			$this->assertStringNotContainsString( 'dltoken', $message );
+		}
+	}
+
+	/**
+	 * Archive refusals for both entry paths.
+	 *
+	 * @return array
+	 */
+	public static function archive_http_failures(): array {
+		return array(
+			'scheduled 401' => array( 401, false ),
+			'scheduled 503' => array( 503, false ),
+			'manual 401'    => array( 401, true ),
+			'manual 503'    => array( 503, true ),
+			'scheduled 413' => array( 413, false ),
+			'manual 413'    => array( 413, true ),
+		);
+	}
+
+	/** Stored wording can differ from the reader's current language. */
+	public function test_archive_http_history_readback_keeps_status_across_wording_changes(): void {
+		global $wpdb;
+		$site = $this->site();
+		$id   = MainWP_Backup_Run_History::start( 1, $site, time() );
+		$this->assertTrue( MainWP_Backup_Run_History::finalize( $id, 'failed', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, null, 'HTTP 503' ) );
+		$this->assertSame( 1, $wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ), array( 'message' => 'Earlier translated guidance. Earlier translated phase HTTP 503' ), array( 'id' => $id ) ) );
+		$read = MainWP_Backup_Run_History::query( array(), 1, 10, array( $site ) )['items'][0];
+		$this->assertStringContainsString( 'Archive download failed: HTTP 503', $read['message'] );
+		$this->assertStringNotContainsString( 'Earlier translated', $read['message'] );
+	}
+
+	/** History stores plain text even when the translated phase needs escaping. */
+	public function test_archive_http_history_decodes_translated_detail(): void {
+		$site      = $this->site();
+		$translate = static function ( $translated, $text, $domain ) {
+			return 'mainwp' === $domain && 'Archive download failed:' === $text ? "L'archive:" : $translated;
+		};
+		add_filter( 'gettext', $translate, 10, 3 );
+		try {
+			$id = MainWP_Backup_Run_History::start( 1, $site, time() );
+			$this->assertTrue( MainWP_Backup_Run_History::finalize( $id, 'failed', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, null, 'HTTP 401' ) );
+			$this->assertStringContainsString( "L'archive: HTTP 401", $this->rows()[0]['message'] );
+		} finally {
+			remove_filter( 'gettext', $translate, 10 );
+		}
+		$read = MainWP_Backup_Run_History::query( array(), 1, 10, array( $site ) )['items'][0];
+		$this->assertStringContainsString( 'Archive download failed: HTTP 401', $read['message'] );
+	}
+
+	/** An unrelated registered error cannot acquire an archive phase from its extra. */
+	public function test_archive_http_detail_rejects_other_error_codes(): void {
+		$this->assertSame( '', MainWP_Backup_Error_Codes::archive_download_detail( MainWP_Backup_Error_Codes::ERR_TIMEOUT, 'HTTP 503' ) );
+		$site = $this->site();
+		$id   = MainWP_Backup_Run_History::start( 1, $site, time() );
+		$this->assertTrue( MainWP_Backup_Run_History::finalize( $id, 'failed', MainWP_Backup_Error_Codes::ERR_TIMEOUT, null, 'HTTP 503' ) );
+		$this->assertSame( MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_TIMEOUT )['message'], $this->rows()[0]['message'] );
 	}
 
 	/**
@@ -498,18 +644,22 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		$unknown = 'mainwp_backup_new_child_error';
 		$generic = MainWP_Backup_Operations::safe_error( '' )['message'];
 		return array(
-			'unknown Child' => array( $unknown, 'Try a new backup.', 'Try a new backup.' ),
-			'64-byte code'  => array( 'mainwp_' . str_repeat( 'a', 57 ), 'Try a new backup.', 'Try a new backup.' ),
-			'65-byte code'  => array( 'mainwp_' . str_repeat( 'a', 58 ), 'Try a new backup.', $generic ),
-			'empty Child'   => array( $unknown, '', $generic ),
-			'blank Child'   => array( $unknown, '   ', $generic ),
-			'invalid code'  => array( 'untrusted_error', 'Try a new backup.', $generic ),
-			'newline code'  => array( $unknown . "\n", 'Try a new backup.', $generic ),
-			'registered'    => array( MainWP_Backup_Error_Codes::ERR_ZIP_FAILED, 'Ignore the registry.', MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_ZIP_FAILED )['message'] ),
-			'house'         => array( 'mainwp_permission_denied', 'Ignore permissions.', MainWP_Backup_Operations::safe_error( 'mainwp_permission_denied' )['message'] ),
-			'replay cause'  => array( MainWP_Backup_Error_Codes::ERR_TIMEOUT, 'AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_TIMEOUT )['message'] . ' (AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_HTTP_ERROR . ')' ),
-			'UTF-8 cap'     => array( $unknown, str_repeat( 'a', 1999 ) . 'éover', str_repeat( 'a', 1999 ) . 'é' ),
-			'sensitive'     => array( $unknown, "Cannot read `private_table`. Table 'private_name'. SELECT secret FROM private_rows WHERE id=1; backup-aB3dE5fG7hJ9kL2m", "Cannot read [redacted]. Table '[redacted]'. [SQL removed]; backup-[redacted]" ),
+			'unknown Child'         => array( $unknown, 'Try a new backup.', 'Try a new backup.' ),
+			'64-byte code'          => array( 'mainwp_' . str_repeat( 'a', 57 ), 'Try a new backup.', 'Try a new backup.' ),
+			'65-byte code'          => array( 'mainwp_' . str_repeat( 'a', 58 ), 'Try a new backup.', $generic ),
+			'empty Child'           => array( $unknown, '', $generic ),
+			'blank Child'           => array( $unknown, '   ', $generic ),
+			'invalid code'          => array( 'untrusted_error', 'Try a new backup.', $generic ),
+			'newline code'          => array( $unknown . "\n", 'Try a new backup.', $generic ),
+			'HTTP without status'   => array( MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, '', MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_HTTP_ERROR )['message'] ),
+			'HTTP secret detail'    => array( MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, 'HTTP 401 https://private.example/?dltoken=secret Authorization: secret body', MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_HTTP_ERROR )['message'] ),
+			'HTTP trailing newline' => array( MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, "HTTP 401\n", MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_HTTP_ERROR )['message'] ),
+			'HTTP invalid status'   => array( MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, 'HTTP 999', MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_HTTP_ERROR )['message'] ),
+			'registered'            => array( MainWP_Backup_Error_Codes::ERR_ZIP_FAILED, 'Ignore the registry.', MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_ZIP_FAILED )['message'] ),
+			'house'                 => array( 'mainwp_permission_denied', 'Ignore permissions.', MainWP_Backup_Operations::safe_error( 'mainwp_permission_denied' )['message'] ),
+			'replay cause'          => array( MainWP_Backup_Error_Codes::ERR_TIMEOUT, 'AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_TIMEOUT )['message'] . ' (AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_HTTP_ERROR . ')' ),
+			'UTF-8 cap'             => array( $unknown, str_repeat( 'a', 1999 ) . 'éover', str_repeat( 'a', 1999 ) . 'é' ),
+			'sensitive'             => array( $unknown, "Cannot read `private_table`. Table 'private_name'. SELECT secret FROM private_rows WHERE id=1; backup-aB3dE5fG7hJ9kL2m", "Cannot read [redacted]. Table '[redacted]'. [SQL removed]; backup-[redacted]" ),
 		);
 	}
 
@@ -548,15 +698,16 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		$site = $this->site();
 		$task = $this->task( array( $site ) );
 		$now  = time();
+		$slot = $now + ( $ahead ? HOUR_IN_SECONDS : -HOUR_IN_SECONDS );
 		MainWP_DB_Backup::instance()->update_backup_task_with_values(
 			$task->id,
 			array(
 				'schedule'       => $schedule,
 				'interval_hours' => 'interval' === $schedule ? 4 : 0,
-				'time_of_day'    => wp_date( 'H:i', $now + ( $ahead ? HOUR_IN_SECONDS : -HOUR_IN_SECONDS ) ),
-				'day_of_week'    => (int) wp_date( 'w', $now ),
-				'day_of_month'   => (int) wp_date( 'j', $now ),
-				'next_run'       => $now + ( $ahead ? HOUR_IN_SECONDS : -HOUR_IN_SECONDS ) - $now % 60,
+				'time_of_day'    => wp_date( 'H:i', $slot ),
+				'day_of_week'    => (int) wp_date( 'w', $slot ),
+				'day_of_month'   => (int) wp_date( 'j', $slot ),
+				'next_run'       => $slot - $now % 60,
 				'last_run'       => $now - DAY_IN_SECONDS,
 				'completed'      => $now - DAY_IN_SECONDS,
 			)
@@ -1172,8 +1323,9 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	 * @dataProvider cancel_answers
 	 * @param array  $answer Child response.
 	 * @param string $outcome Expected history outcome.
+	 * @param bool   $cancel_download Whether the ability caller stops download.
 	 */
-	public function test_cancel_lane( array $answer, string $outcome ): void {
+	public function test_cancel_lane( array $answer, string $outcome, bool $cancel_download = false ): void {
 		$site = $this->site();
 		MainWP_Backup_Operations::start_site_backup( $site, 'ui' );
 		$override = static function ( $pre, $website, $what ) use ( $answer ) {
@@ -1181,7 +1333,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		};
 		add_filter( 'mainwp_fetch_url_authed_pre', $override, 20, 3 );
 		try {
-			MainWP_Backup_Operations::cancel_site_backup( $site );
+			MainWP_Backup_Operations::cancel_site_backup( $site, 'ability', $cancel_download );
 			$this->assertCount( 1, $this->rows() );
 			$this->assertSame( $outcome, $this->rows()[0]['outcome'] );
 		} finally {
@@ -1196,16 +1348,24 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function cancel_answers(): array {
 		return array(
-			'confirmed' => array( array( 'result' => 'ok' ), 'cancelled' ),
-			'finished'  => array(
+			'confirmed'        => array( array( 'result' => 'ok' ), 'cancelled' ),
+			'finished'         => array(
 				array(
 					'result' => 'already_terminal',
 					'phase'  => 'completed',
 				),
 				'running',
 			),
-			'busy'      => array( array( 'result' => 'busy' ), 'running' ),
-			'failure'   => array( array( 'error' => 'secret' ), 'running' ),
+			'stopped download' => array(
+				array(
+					'result' => 'already_terminal',
+					'phase'  => 'completed',
+				),
+				'cancelled',
+				true,
+			),
+			'busy'             => array( array( 'result' => 'busy' ), 'running' ),
+			'failure'          => array( array( 'error' => 'secret' ), 'running' ),
 		);
 	}
 

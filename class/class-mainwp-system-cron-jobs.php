@@ -43,6 +43,13 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     public $last_auto_logging = null;
 
     /**
+     * Whether the assistant tables were found during this request.
+     *
+     * @var bool
+     */
+    private bool $assistant_tables_found = false;
+
+    /**
      * MainWP Cron Instance.
      *
      * @return self $instance
@@ -101,6 +108,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_crondeactivatedlicensesalert_action', array( $this, 'cron_deactivated_licenses_alert' ) );
         add_action( 'mainwp_cronuptimemonitoringcheck_action', array( MainWP_Uptime_Monitoring_Schedule::instance(), 'cron_uptime_check' ) );
         add_action( 'mainwp_cron_perform_general_process', array( $this, 'cron_perform_general_process' ) );
+        if ( $this->assistant_cleanup_tables_exist() ) {
+            add_action( 'mainwp_assistant_cleanup_history', array( $this, 'cron_assistant_cleanup' ) );
+        }
         // Site URL correction runs inside the regular-sequence dispatcher so it
         // works under both WP cron and server cron ( cron/generalschedules.php ).
         add_filter( 'mainwp_register_regular_sequence_process', array( MainWP_Site_Url_Corrector::class, 'hook_regular_sequence_process' ) );
@@ -143,6 +153,12 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             'mainwp_cronuptimemonitoringcheck_action'    => 'minutely',
             'mainwp_cron_perform_general_process'        => 'minutely',
         );
+
+        if ( $this->assistant_cleanup_tables_exist() ) {
+            $jobs['mainwp_assistant_cleanup_history'] = 'daily';
+        } else {
+            wp_clear_scheduled_hook( 'mainwp_assistant_cleanup_history' );
+        }
 
         if ( ! $useWPCron && ! get_option( 'mainwp_individual_uptime_monitoring_schedule_enabled' ) ) {
             unset( $jobs['mainwp_cronuptimemonitoringcheck_action'] );
@@ -2263,5 +2279,92 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
         }
         return false;
+    }
+
+    /**
+     * Method cron_assistant_cleanup()
+     *
+     * Cron handler for assistant conversation cleanup.
+     *
+     * Iterates through users with conversations and applies per-user retention settings.
+     * Default retention: 30 days. Values: -1 = keep forever, 0 or empty = 30 days.
+     */
+    public function cron_assistant_cleanup() {
+        global $wpdb;
+
+        if ( ! $this->assistant_cleanup_tables_exist() ) {
+            return;
+        }
+
+        // Query distinct user_ids from conversations table.
+        $table = $wpdb->prefix . 'mainwp_assistant_conversations';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- mainwp_assistant_conversations is MainWP's own table; WP exposes no API for it.
+        $user_ids = $wpdb->get_col(
+            $wpdb->prepare( 'SELECT DISTINCT user_id FROM %i', $table ) // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnsupportedIdentifierPlaceholder -- table identifier.
+        );
+
+        if ( empty( $user_ids ) ) {
+            return;
+        }
+
+        $default_retention = 30;
+
+        foreach ( $user_ids as $user_id ) {
+            $user_id = absint( $user_id );
+            if ( ! $user_id ) {
+                continue;
+            }
+
+            // Get user's retention setting (default 30 days).
+            $retention_days = get_user_meta( $user_id, 'mainwp_assistant_history_retention', true );
+            $retention_days = is_numeric( $retention_days ) ? (int) $retention_days : $default_retention;
+
+            if ( 0 === $retention_days ) {
+                $retention_days = $default_retention;
+            }
+
+            if ( -1 === $retention_days ) {
+                continue; // -1 = keep forever.
+            } elseif ( $retention_days < 0 ) {
+                $retention_days = $default_retention;
+            }
+
+            // Delegate cleanup to DB class.
+            $cleanup_result = MainWP_DB_Assistant::instance()->cleanup_old_conversations( $retention_days, $user_id );
+            if ( is_wp_error( $cleanup_result ) ) {
+                MainWP_Logger::instance()->debug( 'Assistant cleanup failed for user ' . $user_id . ': ' . $cleanup_result->get_error_message() );
+            }
+        }
+    }
+
+    /**
+     * Check whether the assistant cleanup tables exist.
+     *
+     * @return bool
+     */
+    private function assistant_cleanup_tables_exist() {
+        global $wpdb;
+
+        // init_jobs() runs on every request, front end included, and calls this twice.
+        // Only a positive result is kept, so tables created later in the request are still seen.
+        if ( $this->assistant_tables_found ) {
+            return true;
+        }
+
+        $conversations_table = $wpdb->prefix . 'mainwp_assistant_conversations';
+        $messages_table      = $wpdb->prefix . 'mainwp_assistant_messages';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- SHOW TABLES existence probe on MainWP's own table; WP has no API for this.
+        $conversations_exists = (bool) $wpdb->get_var(
+            $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $conversations_table ) )
+        );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- SHOW TABLES existence probe on MainWP's own table; WP has no API for this.
+        $messages_exists = (bool) $wpdb->get_var(
+            $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $messages_table ) )
+        );
+
+        $this->assistant_tables_found = $conversations_exists && $messages_exists;
+
+        return $this->assistant_tables_found;
     }
 }

@@ -195,13 +195,12 @@ class Test_List_Clients_Ability extends MainWP_Abilities_Test_Case {
 
 		$this->assertNotWPError( $active_result );
 
-		$active_found = false;
-		foreach ( $active_result['items'] as $item ) {
-			if ( (int) $item['id'] === $active_id ) {
-				$active_found = true;
-			}
-		}
-		$this->assertTrue( $active_found, 'Active client should be in active filter.' );
+		// Exclusion matters as much as inclusion: a silently ignored filter
+		// (S2: 'suspended' arg vs the 'status' key get_wp_clients reads)
+		// returns both clients in both calls.
+		$active_ids = array_map( 'intval', array_column( $active_result['items'], 'id' ) );
+		$this->assertContains( $active_id, $active_ids, 'Active client should be in active filter.' );
+		$this->assertNotContains( $suspended_id, $active_ids, 'Suspended client must not pass the active filter.' );
 
 		$suspended_result = $this->execute_ability( 'mainwp/list-clients-v1', [
 			'status' => 'suspended',
@@ -209,13 +208,9 @@ class Test_List_Clients_Ability extends MainWP_Abilities_Test_Case {
 
 		$this->assertNotWPError( $suspended_result );
 
-		$suspended_found = false;
-		foreach ( $suspended_result['items'] as $item ) {
-			if ( (int) $item['id'] === $suspended_id ) {
-				$suspended_found = true;
-			}
-		}
-		$this->assertTrue( $suspended_found, 'Suspended client should be in suspended filter.' );
+		$suspended_ids = array_map( 'intval', array_column( $suspended_result['items'], 'id' ) );
+		$this->assertContains( $suspended_id, $suspended_ids, 'Suspended client should be in suspended filter.' );
+		$this->assertNotContains( $active_id, $suspended_ids, 'Active client must not pass the suspended filter.' );
 	}
 
 	/**
@@ -247,6 +242,37 @@ class Test_List_Clients_Ability extends MainWP_Abilities_Test_Case {
 		}
 
 		$this->assertTrue( $found, 'Search should find client with matching name.' );
+	}
+
+	/**
+	 * Test that a filtered empty result tells the model which filters applied.
+	 *
+	 * A status- or search-filtered empty list is otherwise indistinguishable
+	 * from "no clients exist".
+	 *
+	 * @return void
+	 */
+	public function test_list_clients_filtered_empty_result_includes_note() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$this->create_test_client( [ 'name' => 'Active Note Client' ] );
+
+		$result = $this->execute_ability( 'mainwp/list-clients-v1', [
+			'status' => 'suspended',
+			'search' => 'zzz-no-such-client',
+		] );
+
+		$this->assertNotWPError( $result );
+		$this->assertSame( [], $result['items'] );
+		$this->assertArrayHasKey( 'note', $result, 'Filtered empty result must explain itself to the caller.' );
+		$this->assertStringContainsString( 'status', $result['note'] );
+		$this->assertStringContainsString( 'search', $result['note'] );
+
+		// An unfiltered call never carries the note.
+		$unfiltered = $this->execute_ability( 'mainwp/list-clients-v1', [] );
+		$this->assertNotWPError( $unfiltered );
+		$this->assertArrayNotHasKey( 'note', $unfiltered );
 	}
 
 	/**

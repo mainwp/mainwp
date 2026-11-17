@@ -315,8 +315,6 @@ globalThis.mainwp_sites_selection_onvisible_callback = function (me) {
         select_by = mainwp_sites_selection_clear_other_tabs(parent, selected_tab);
     }
 
-    console.log('select by: ' + select_by);
-
     parent.find('input[name="select_by"]').val(select_by);
     parent.find('input[name="select_sites_tab"]').val(selected_tab);
 
@@ -454,7 +452,6 @@ jQuery(function () {
 
 globalThis.mainwp_sidebar_accordion_init = function () {
     if (jQuery('.mainwp-sidebar-accordion').length > 0) {
-        console.log('sidebar accordion init');
         jQuery('.mainwp-sidebar-accordion').accordion({
             "onOpening": function () {
                 let parent = jQuery(this).closest('.mainwp-sidebar-accordion');
@@ -550,8 +547,6 @@ globalThis.mainwp_tags_filter_select = function (objInput) {
 
     tags = parent.find('a.item');
 
-    console.log(tags);
-
     for (let id of tags) {
         let currentElement = jQuery(id);
         let value = currentElement.text().toLowerCase();
@@ -595,7 +590,6 @@ let mainwp_get_icon_start_next = function () {
     if (itemIconProcess.length > 0) {
         mainwp_get_icon_start_specific(itemIconProcess);
     } else {
-        console.log('Finished update icons.');
     }
 };
 
@@ -870,71 +864,224 @@ let mainwp_guidedtours_onchange = function (me) {
     });
 }
 
-let mainwp_help_modal_content_onclick = function (hide, isToolsPage) {
+jQuery(document).on('change', '#mainwp-help-modal-options input[type="checkbox"]', function () {
+    const label = jQuery(this).siblings('label');
+    label.text(label.attr(this.checked ? 'data-enabled' : 'data-disabled'));
+    const message = jQuery('#mainwp-support-settings-message');
+    message.removeClass('positive negative').text(message.attr('data-pending')).show();
+});
 
-    // to fix confict ids when current page is tool page.
+let mainwp_help_modal_content_onclick = function (reload, isToolsPage) {
+
+    // The modal inputs carry mainwp-help-* ids so they don't collide with the Settings page inputs.
+    let tourCheckbox = jQuery('#mainwp-help-tours-option');
+    let videoCheckbox = jQuery('#mainwp-help-video-option');
+    let assistantCheckbox = jQuery('#mainwp-help-chatbase-option');
     let enab_tour = jQuery('#mainwp-guided-tours-check').checkbox('is checked') ? 1 : 0;
     let enab_video = jQuery('#mainwp-guided-video-check').checkbox('is checked') ? 1 : 0;
     let enab_chatbase = jQuery('#mainwp-guided-chatbase-check').checkbox('is checked') ? 1 : 0;
 
     const me = jQuery('#mainwp-update-permissions-button');
+    if (me.hasClass('loading')) {
+        return;
+    }
+    const message = jQuery('#mainwp-support-settings-message').hide();
+    const startChatCard = jQuery('#mainwp-start-chat-card');
+    const canOpenAssistant = '1' === String(startChatCard.data('can-open-assistant'));
+
+    const setCheckboxState = function (checkbox, enabled) {
+        if (!checkbox.length) {
+            return;
+        }
+
+        checkbox.prop('checked', !!enabled);
+        checkbox.prop('defaultChecked', !!enabled);
+
+        const label = checkbox.siblings('label');
+        label.text(label.attr(enabled ? 'data-enabled' : 'data-disabled'));
+
+        const checkboxWrapper = checkbox.closest('.ui.checkbox');
+        if (checkboxWrapper.length && checkboxWrapper.checkbox) {
+            checkboxWrapper.checkbox(enabled ? 'set checked' : 'set unchecked');
+        }
+    };
+
+    const setCardEnabled = function (card, enabled) {
+        card.toggleClass('mainwp-disabled-link', !enabled)
+            .prop('disabled', !enabled)
+            .attr('aria-disabled', enabled ? null : 'true');
+    };
+
+    const syncCardsFromState = function (state) {
+        setCardEnabled(startChatCard, !!(state.assistant_enabled && canOpenAssistant));
+        setCardEnabled(jQuery('#mainwp-start-tour-card'), !!state.tour_enabled);
+        setCardEnabled(jQuery('#mainwp-start-video-card'), !!state.video_enabled);
+
+        if (!state.video_enabled) {
+            jQuery('#mainwp-chatbase-video-screen').hide().find('iframe').attr('src', '');
+        }
+    };
+
+    // A refused or failed save puts the toggles back to what the server holds,
+    // since the Assistant toggle can be refused by policy and a retry won't change that.
+    const restoreSavedState = function () {
+        const savedState = {
+            assistant_enabled: assistantCheckbox.length ? assistantCheckbox.prop('defaultChecked') : false,
+            tour_enabled: tourCheckbox.length ? tourCheckbox.prop('defaultChecked') : false,
+            video_enabled: videoCheckbox.length ? videoCheckbox.prop('defaultChecked') : false,
+        };
+
+        setCheckboxState(assistantCheckbox, savedState.assistant_enabled);
+        setCheckboxState(tourCheckbox, savedState.tour_enabled);
+        setCheckboxState(videoCheckbox, savedState.video_enabled);
+        syncCardsFromState(savedState);
+    };
+
+    const saveFailed = function (errorMessage) {
+        restoreSavedState();
+        message.removeClass('positive').addClass('negative').text(errorMessage || message.attr('data-error')).show();
+    };
 
     let data = mainwp_secure_data({
         action: 'mainwp_help_modal_content_update',
         enable_tour: enab_tour,
         enable_video: enab_video,
-        enable_chatbase: enab_chatbase,
     });
 
-    jQuery(me).html('<i class="notched circle loading icon"></i> Saving...').addClass('disabled');
+    if (!assistantCheckbox.is(':disabled')) {
+        data.enable_chatbase = enab_chatbase;
+    }
 
-    jQuery.post(ajaxurl, data, function () {
-        if (isToolsPage !== undefined && isToolsPage) {
-            mainwp_forceReload('admin.php?page=MainWPTools');
-        } else {
-            if (jQuery('#mainwp-guided-chatbase-option').is(':checked')) {
-                jQuery('#mainwp-start-chat-card').removeClass('mainwp-disabled-link');
-            } else {
-                jQuery('#mainwp-start-chat-card').addClass('mainwp-disabled-link');
-                jQuery('#mainwp-chatbase-chat-screen').fadeIn('100').find('iframe').attr('src', '');
+    me.addClass('loading disabled').prop('disabled', true);
+
+    jQuery.post(ajaxurl, data)
+        .done(function (response) {
+            if (!response || !response.success || !response.data) {
+                saveFailed(response && response.data ? response.data.message : '');
+                return;
             }
 
-            if (jQuery('#mainwp-guided-tours-option').is(':checked')) {
-                jQuery('#mainwp-start-tour-card').removeClass('mainwp-disabled-link');
-            } else {
-                jQuery('#mainwp-start-tour-card').addClass('mainwp-disabled-link');
+            const savedState = {
+                assistant_enabled: !!response.data.assistant_enabled,
+                tour_enabled: !!response.data.tour_enabled,
+                video_enabled: !!response.data.video_enabled
+            };
+
+            if (isToolsPage !== undefined && isToolsPage) {
+                mainwp_forceReload('admin.php?page=MainWPTools');
+                return;
             }
 
-            if (jQuery('#mainwp-guided-video-option').is(':checked')) {
-                jQuery('#mainwp-start-video-card').removeClass('mainwp-disabled-link');
-            } else {
-                jQuery('#mainwp-start-video-card').addClass('mainwp-disabled-link');
-                jQuery('#mainwp-chatbase-video-screen').fadeIn('100').find('iframe').attr('src', '');
+            if (reload === true || String(enab_tour) !== jQuery('#mainwp-guided-tours-check').attr('data-saved')) {
+                mainwp_forceReload();
+                return;
             }
 
-            jQuery(me).html('Update Permissions').removeClass('disabled');
-        }
-    });
+            // Only the saved baseline moves here; a toggle changed while the save was in flight stays as the user left it.
+            assistantCheckbox.prop('defaultChecked', savedState.assistant_enabled);
+            tourCheckbox.prop('defaultChecked', savedState.tour_enabled);
+            videoCheckbox.prop('defaultChecked', savedState.video_enabled);
+            syncCardsFromState(savedState);
+
+            const hasPendingChange = (jQuery('#mainwp-guided-tours-check').checkbox('is checked') ? 1 : 0) !== enab_tour
+                || (jQuery('#mainwp-guided-video-check').checkbox('is checked') ? 1 : 0) !== enab_video
+                || (jQuery('#mainwp-guided-chatbase-check').checkbox('is checked') ? 1 : 0) !== enab_chatbase;
+            if (hasPendingChange) {
+                message.removeClass('positive negative').text(message.attr('data-pending')).show();
+            } else {
+                message.removeClass('negative').addClass('positive').text(message.attr('data-saved')).show();
+            }
+        })
+        .fail(function (xhr) {
+            saveFailed(xhr && xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : '');
+        })
+        .always(function () {
+            me.removeClass('loading disabled').prop('disabled', false);
+        });
 }
 
-let mainwp_help_modal_start_content_onclick = function (tour_id, video_id, show_chat) {
-    jQuery('#mainwp-chatbase-chat-screen').fadeOut('100');
-    jQuery('#mainwp-chatbase-video-screen').fadeOut('100');
-    jQuery('#mainwp-help-modal-options').fadeOut('50');
-
+let mainwp_help_modal_start_content_onclick = function (tour_id, video_id) {
     if (tour_id) {
         globalThis.USETIFUL.tour.start(tour_id);
+        return;
     }
+
+    jQuery('#mainwp-support-settings-help, #mainwp-support-settings-message').hide();
+    jQuery('#mainwp-chatbase-video-screen').fadeOut('100');
+    jQuery('#mainwp-help-modal-options').fadeOut('50');
 
     if (video_id) {
         jQuery('#mainwp-chatbase-video-screen').fadeIn('100').find('iframe').attr('src', 'https://www.youtube.com/embed/' + video_id);
     }
-
-    if (show_chat) {
-        jQuery('#mainwp-chatbase-chat-screen').fadeIn('100').find('iframe').attr('src', 'https://supportassistant.mainwp.com/chatbot-iframe/Tv5dqV-xiQxwgPeMQFCZ4');
-        jQuery('#mainwp-start-tour-button').fadeIn('100');
-    }
 }
+
+// The MainWP Assistant card used to carry a server-baked onclick, so a card
+// un-dimmed after the permission save stayed dead until a reload. Gate the
+// open on the card's current state instead.
+jQuery(document).on('click', '#mainwp-start-chat-card', function (e) {
+    e.preventDefault();
+
+    const card = jQuery(this);
+    if (card.hasClass('mainwp-disabled-link') || '1' !== String(card.data('can-open-assistant'))) {
+        return;
+    }
+
+    // The panel script and DOM only load when the assistant was already on at
+    // page load, so a card enabled in this modal needs a reload to reach them.
+    if (typeof MainWPAssistantPanel === 'undefined') {
+        mainwp_forceReload();
+        return;
+    }
+
+    MainWPAssistantPanel.open('chat');
+    jQuery('#mainwp-help-modal').modal('hide');
+});
+
+jQuery(document).on('click', '#mainwp-start-tour-card', function (e) {
+    e.preventDefault();
+
+    const card = jQuery(this);
+    if (card.hasClass('mainwp-disabled-link')) {
+        return;
+    }
+
+    // No tour is mapped to this page, so there is nothing to start; bailing
+    // beats fading the options out and leaving an empty modal behind.
+    const tourId = parseInt(card.data('tour-id'), 10);
+    if (!tourId) {
+        return;
+    }
+
+    jQuery('#mainwp-help-modal').modal('hide');
+    mainwp_help_modal_start_content_onclick(tourId);
+});
+
+jQuery(document).on('click', '#mainwp-start-video-card', function (e) {
+    e.preventDefault();
+
+    const card = jQuery(this);
+    if (card.hasClass('mainwp-disabled-link')) {
+        return;
+    }
+
+    const videoId = String(card.data('video-id') || '');
+    if ('' === videoId) {
+        return;
+    }
+
+    jQuery('#mainwp-update-permissions-button').fadeOut(200);
+    jQuery('#mainwp-help-back-button').fadeIn(200);
+    mainwp_help_modal_start_content_onclick(false, videoId);
+});
+
+// Reopening the modal kept whatever view it was left in, so a reopen after
+// watching a video landed on an empty panel.
+jQuery(document).on('click', '#mainwp-help-menu-item, #mainwp-help-menu-item-mobile', function () {
+    jQuery('#mainwp-chatbase-video-screen').hide().find('iframe').attr('src', '');
+    jQuery('#mainwp-help-modal-options, #mainwp-support-settings-help').show();
+    jQuery('#mainwp-help-back-button').hide();
+    jQuery('#mainwp-update-permissions-button').show();
+});
 
 jQuery(document).on('click', '.mainwp-theme-picker [data-mainwp-theme]', function () {
     if (this.getAttribute('aria-pressed') === 'true') {
@@ -1004,6 +1151,31 @@ jQuery(function ($) {
         });
     }
     updateHeader();
+});
+
+/**
+ * Assistant chat toggle menu item click handler.
+ *
+ * Opens the floating assistant panel with the chat screen.
+ * Provides quick access to the AI Assistant from the main navigation.
+ *
+ * Note: The dimmer handler in class-mainwp-ui.php binds directly to .left-menu-item-level-0
+ * elements and runs BEFORE this delegated handler. We must hide the dimmer since there's
+ * no actual page navigation.
+ */
+jQuery(document).on('click', '#mainwp-assistant-chat-menu-item, .mainwp-assistant-chat-toggle', function(e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    // Hide the nav dimmer immediately since we're not navigating to a page.
+    jQuery('#mainwp-nav-dimmer').dimmer('hide');
+
+    // Open the floating assistant panel with chat.
+    if (typeof MainWPAssistantPanel !== 'undefined') {
+        MainWPAssistantPanel.open('chat');
+    }
+
+    return false;
 });
 
 /**

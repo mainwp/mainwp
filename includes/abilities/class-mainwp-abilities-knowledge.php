@@ -59,8 +59,9 @@ class MainWP_Abilities_Knowledge {
                 'execute_callback'    => array( self::class, 'execute_get_knowledge_record' ),
                 'permission_callback' => self::permission_callback( 'record' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'readonly'     => true,
                         'destructive'  => false,
                         'idempotent'   => true,
@@ -92,8 +93,9 @@ class MainWP_Abilities_Knowledge {
                     return is_wp_error( $result ) && 'mainwp_site_not_found' === $result->get_error_code() ? true : $result;
                 },
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'readonly'     => true,
                         'destructive'  => false,
                         'idempotent'   => true,
@@ -121,8 +123,9 @@ class MainWP_Abilities_Knowledge {
                 'execute_callback'    => array( self::class, 'execute_get_client_knowledge' ),
                 'permission_callback' => self::permission_callback( 'client' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'readonly'     => true,
                         'destructive'  => false,
                         'idempotent'   => true,
@@ -154,8 +157,9 @@ class MainWP_Abilities_Knowledge {
                 'execute_callback'    => array( self::class, 'execute_list_knowledge' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'readonly'     => true,
                         'destructive'  => false,
                         'idempotent'   => true,
@@ -183,8 +187,9 @@ class MainWP_Abilities_Knowledge {
                 'execute_callback'    => array( self::class, 'execute_create_knowledge_record' ),
                 'permission_callback' => self::permission_callback( 'create' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => false,
@@ -212,8 +217,9 @@ class MainWP_Abilities_Knowledge {
                 'execute_callback'    => array( self::class, 'execute_update_knowledge_record' ),
                 'permission_callback' => self::permission_callback( 'update' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => false,
@@ -241,8 +247,9 @@ class MainWP_Abilities_Knowledge {
                 'execute_callback'    => array( self::class, 'execute_delete_knowledge_record' ),
                 'permission_callback' => self::permission_callback( 'delete' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => true,

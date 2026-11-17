@@ -1,0 +1,32 @@
+{
+    "name": "get_remote_job_status_v1",
+    "description": "[remote mcp] Get the progress of a change this connection started as a background job: its status, how many entries are done out of the total, the sites the running entry acts on, and the reason when it was cancelled. Only jobs you started are visible. Read-only. Safe to call without confirmation.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "job_id": {
+                "type": "integer",
+                "minimum": 1
+            }
+        },
+        "required": [
+            "job_id"
+        ],
+        "additionalProperties": false
+    },
+    "annotations": {
+        "title": "Get remote job status",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+    },
+    "securitySchemes": [
+        {
+            "type": "oauth2",
+            "scopes": [
+                "mainwp:read"
+            ]
+        }
+    ]
+}

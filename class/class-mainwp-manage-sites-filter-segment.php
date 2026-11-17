@@ -281,10 +281,10 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
         //phpcs:disable WordPress.Security.NonceVerification.Missing
 
         $not_filters = array(
-            'seg_site_tags'    => 'nogroups',
+            'seg_site_tags'       => 'nogroups',
             'seg_site_tags_logic' => 'or',
-            'seg_site_status'  => 'all',
-            'seg_site_clients' => 'noclients',
+            'seg_site_status'     => 'all',
+            'seg_site_clients'    => 'noclients',
         );
 
         $fields = array(

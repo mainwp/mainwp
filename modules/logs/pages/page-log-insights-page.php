@@ -16,6 +16,12 @@ use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Ui_Manage_Widgets_Layout;
+use MainWP\Dashboard\MainWP_System;
+use MainWP\Dashboard\MainWP_Assistant_Insights;
+use MainWP\Dashboard\MainWP_Assistant_Summary_Widget;
+use MainWP\Dashboard\MainWP_Assistant_Top_Abilities_Widget;
+use MainWP\Dashboard\MainWP_Assistant_Provider_Usage_Widget;
+use MainWP\Dashboard\MainWP_Assistant_Activity_Widget;
 use MainWP\Dashboard\MainWP_Site_Actions;
 
 // Exit if accessed directly.
@@ -183,9 +189,12 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
 
         static::add_meta_boxes( $page );
 
+        if ( MainWP_System::is_assistant_enabled() && \mainwp_modules_is_enabled( 'logs' ) ) {
+            MainWP_Assistant_Insights::enqueue_scripts();
+        }
+
         add_filter( 'mainwp_header_actions_right', array( $this, 'screen_options' ), 10, 2 );
         add_filter( 'mainwp_widget_boxes_show_widgets', array( $this, 'hook_show_widgets' ), 10, 2 );
-        add_filter( 'mainwp_page_admin_body_class', array( $this, 'hook_admin_body_class' ), 10, 1 );
     }
 
     /**
@@ -220,17 +229,6 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         }
         return $values;
     }
-
-    /**
-     * Method hook_admin_body_class()
-     *
-     * @param string $body_classes Body classes.
-     * @return string $body_classes Body classes.
-     */
-    public function hook_admin_body_class( $body_classes ) {
-        return $body_classes . ' mainwp-hidden-second-level-navigation ';
-    }
-
 
     /**
      * Initiates Insights MainWP menu.
@@ -287,6 +285,14 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
 
+        // Always register Assistant widgets — each widget renders its own
+        // disabled-state or missing-logs fallback so layouts stay stable
+        // when the Assistant feature is toggled on/off.
+        static::$enable_widgets['assistant_summary']        = true;
+        static::$enable_widgets['assistant_top_abilities']  = true;
+        static::$enable_widgets['assistant_provider_usage'] = true;
+        static::$enable_widgets['assistant_activity']       = true;
+
         /**
          * Unset unwanted Widgets
          *
@@ -318,6 +324,23 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         // 4. Load the PHP versoion graph widget.
         if ( ! empty( static::$enable_widgets['log_graph_php'] ) ) {
             MainWP_UI::add_widget_box( 'log_graph_php', array( Log_Graph_Php_Widget::instance(), 'render' ), $page, array( -1, -1, 3, 32 ) );
+        }
+
+        // Assistant summary widget — registered after header graphs so it appears
+        // near the top on fresh and reset layouts (auto-placement follows registration order).
+        if ( ! empty( static::$enable_widgets['assistant_summary'] ) ) {
+            MainWP_UI::add_widget_box( 'assistant_summary', array( MainWP_Assistant_Summary_Widget::instance(), 'render' ), $page, array( -1, -1, 12, 20 ) );
+        }
+
+        // Remaining assistant widgets — each renders its own disabled/no-logs fallback.
+        if ( ! empty( static::$enable_widgets['assistant_top_abilities'] ) ) {
+            MainWP_UI::add_widget_box( 'assistant_top_abilities', array( MainWP_Assistant_Top_Abilities_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+        if ( ! empty( static::$enable_widgets['assistant_provider_usage'] ) ) {
+            MainWP_UI::add_widget_box( 'assistant_provider_usage', array( MainWP_Assistant_Provider_Usage_Widget::instance(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+        if ( ! empty( static::$enable_widgets['assistant_activity'] ) ) {
+            MainWP_UI::add_widget_box( 'assistant_activity', array( MainWP_Assistant_Activity_Widget::instance(), 'render' ), $page, array( -1, -1, 12, 50 ) );
         }
 
         // 5. Load the Recent Activity widget.
@@ -614,6 +637,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                                         'today'     => esc_html__( 'Today', 'mainwp' ),
                                         'yesterday' => esc_html__( 'Yesterday', 'mainwp' ),
                                         'thisweek'  => esc_html__( 'This week', 'mainwp' ),
+                                        'last30'    => esc_html__( 'Last 30 days', 'mainwp' ),
                                         'thismonth' => esc_html__( 'This month', 'mainwp' ),
                                         'lastmonth' => esc_html__( 'Last month', 'mainwp' ),
                                         'thisyear'  => esc_html__( 'This year', 'mainwp' ),
@@ -724,7 +748,11 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                 'end'   => gmdate( $format, strtotime( '-1 day', $time ) ),
             ),
             'thisweek'  => array(
-                'start' => gmdate( $format, strtotime( 'last monday', $time ) ),
+                'start' => gmdate( $format, strtotime( 'monday this week', $time ) ),
+                'end'   => gmdate( $format, $time ),
+            ),
+            'last30'    => array(
+                'start' => gmdate( $format, strtotime( '-29 days', strtotime( 'today' ) ) ),
                 'end'   => gmdate( $format, $time ),
             ),
             'thismonth' => array(
@@ -744,7 +772,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                 'end'   => gmdate( $format, strtotime( 'last day of December ' . gmdate( 'Y' ) . '-1 year' ) ),
             ),
             'custom'    => array(
-                'start' => gmdate( $format, strtotime( 'last monday', $time ) ),
+                'start' => gmdate( $format, strtotime( 'monday this week', $time ) ),
                 'end'   => gmdate( $format, $time ),
             ),
         );
@@ -780,15 +808,41 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Method render_header()
      *
-     * Render Insights page header.
+     * Render Insights page header with tab navigation.
+     *
+     * @param string $shownPage Currently active page identifier ('overview' or 'assistant').
      */
-    public static function render_header() {
+    public static function render_header( $shownPage = 'overview' ) {
         $params = array(
-            'title'      => esc_html__( 'Insights', 'mainwp' ),
-            'which'      => 'page_insights_overview',
-            'wrap_class' => 'mainwp-module-logs-content-wrap',
+            'title' => esc_html__( 'Insights', 'mainwp' ),
+            'which' => 'page_insights_overview',
         );
+
+        // Only add Logs-specific wrap class for the Overview page.
+        if ( 'overview' === $shownPage ) {
+            $params['wrap_class'] = 'mainwp-module-logs-content-wrap';
+        }
+
         MainWP_UI::render_top_header( $params );
+
+        $renderItems   = array();
+        $renderItems[] = array(
+            'title'  => esc_html__( 'Overview', 'mainwp' ),
+            'href'   => 'admin.php?page=InsightsOverview',
+            'active' => ( 'overview' === $shownPage ),
+        );
+
+        /**
+         * Filter: mainwp_insights_page_navigation
+         *
+         * Allows adding tabs to the Insights page navigation.
+         *
+         * @param array  $renderItems Tab items array.
+         * @param string $shownPage   Currently active page identifier.
+         */
+        $renderItems = apply_filters( 'mainwp_insights_page_navigation', $renderItems, $shownPage );
+
+        MainWP_UI::render_page_navigation( $renderItems );
     }
 
     /**
@@ -981,11 +1035,22 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                         <div class="ui massive header"><?php esc_html_e( 'Welcome to Dashboard Insights', 'mainwp' ); ?></div>
                         <p><?php esc_html_e( 'Track how you and your team use the MainWP Dashboard, view trends, activity summaries, and key usage metrics.', 'mainwp' ); ?></p>
                         <p>
-                        <?php
-                                /* translators: %1$s: Opening anchor tag, %2$s: Closing anchor tag */
-                                printf( esc_html__( 'Start by configuring your %1$sNetwork Activity Settings%2$s to begin collecting data.', 'mainwp' ), '<a href="admin.php?page=SettingsInsights">', '</a>' );
-                        ?>
-                                </p>
+                            <?php
+                            /* translators: %1$s: Opening anchor tag, %2$s: Closing anchor tag */
+                            echo wp_kses(
+                                sprintf(
+                                    __( 'Start by configuring your %1$sNetwork Activity Settings%2$s to begin collecting data.', 'mainwp' ),
+                                    '<a href="' . esc_url( admin_url( 'admin.php?page=SettingsInsights' ) ) . '">',
+                                    '</a>'
+                                ),
+                                array(
+                                    'a' => array(
+                                        'href' => array(),
+                                    ),
+                                )
+                            );
+                            ?>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -997,7 +1062,23 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                     <i class="close icon mainwp-notice-dismiss" notice-id="insights-widgets"></i>
                     <?php
                     /* translators: %1$s: Bulb emoji, %2$s: Cog icon, %3$s: Layout icon */
-                    printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard, use Page Settings (%2$s) to show or hide widgets, and use Layout (%3$s) in the header to save and load your widget layouts.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>', '<i class="all border fitted icon"></i>' );
+                    echo wp_kses(
+                        sprintf(
+                            __( '%1$s Tip: You can drag and drop widgets to reorder your dashboard, use Page Settings (%2$s) to show or hide widgets, and use Layout (%3$s) in the header to save and load your widget layouts.', 'mainwp' ),
+                            '<em data-emoji=":bulb:" class="small"></em>',
+                            '<i class="cog fitted icon"></i>',
+                            '<i class="all border fitted icon"></i>'
+                        ),
+                        array(
+                            'em' => array(
+                                'class'      => array(),
+                                'data-emoji' => array(),
+                            ),
+                            'i'  => array(
+                                'class' => array(),
+                            ),
+                        )
+                    );
                     ?>
                 </div>
             </div>
@@ -1088,7 +1169,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                     <form method="POST" action="" name="mainwp_module_log_overview_screen_options_form" id="mainwp-module-log-overview-screen-options-form">
                         <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                         <input type="hidden" name="module_log_overview_options_nonce" value="<?php echo esc_attr( wp_create_nonce( 'module_log_overview_options_nonce' ) ); ?>" />
-                        <?php static::render_screen_options( false ); ?>
+                        <?php static::render_screen_options(); ?>
                         <?php
                         /**
                          * Action: mainwp_module_log_overview_screen_options_bottom
@@ -1144,6 +1225,11 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             'log_graph_tags'    => esc_html__( 'Tag Allocation Overview', 'mainwp' ),
             'log_graph_clients' => esc_html__( 'Client Sites Distribution', 'mainwp' ),
         );
+
+        $default_widgets['assistant_summary']        = esc_html__( 'AI Assistant Summary', 'mainwp' );
+        $default_widgets['assistant_top_abilities']  = esc_html__( 'Top Abilities', 'mainwp' );
+        $default_widgets['assistant_provider_usage'] = esc_html__( 'Provider Usage', 'mainwp' );
+        $default_widgets['assistant_activity']       = esc_html__( 'AI Assistant Activity', 'mainwp' );
 
         $custom_opts = array();
         /**

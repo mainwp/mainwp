@@ -1,0 +1,1 @@
+{"client_id":"https://claude.ai/oauth/claude-code-client-metadata","client_name":"Loopback Query","redirect_uris":["http://127.0.0.1/cb?mode=desktop","https://app.example.com/cb"],"token_endpoint_auth_method":"none"}

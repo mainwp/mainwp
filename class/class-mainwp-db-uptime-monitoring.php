@@ -1855,6 +1855,26 @@ KEY idx_wpid_issub (wpid, issub)";
 
 
     /**
+     * Get aggregated hourly uptime stats for a monitor between two timestamps.
+     *
+     * @param int $monitor_id Monitor ID.
+     * @param int $start_ts   Range start (unix seconds).
+     * @param int $end_ts     Range end (unix seconds).
+     * @return array|null Row with sum_up, sum_down, avg_ping, min_ping, max_ping, or null.
+     */
+    public function get_uptime_stats_aggregate( $monitor_id, $start_ts, $end_ts ) {
+        $table = esc_sql( $this->table_name( 'monitor_stat_hourly' ) );
+        $sql   = $this->wpdb->prepare(
+            'SELECT SUM(stho.up) AS sum_up, SUM(stho.down) AS sum_down, SUM(stho.ping_avg * stho.up) / NULLIF(SUM(stho.up), 0) AS avg_ping, MIN(NULLIF(stho.ping_min, 0)) AS min_ping, MAX(stho.ping_max) AS max_ping FROM ' . $table . ' stho WHERE stho.monitor_id = %d AND stho.timestamp BETWEEN %d AND %d', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name escaped.
+            $monitor_id,
+            $start_ts,
+            $end_ts
+        );
+        return $this->wpdb->get_row( $sql, ARRAY_A ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
+    }
+
+
+    /**
      * Method remove_outdated_hourly_uptime_stats
      *
      * @param  int $days days.
@@ -1958,6 +1978,77 @@ KEY idx_wpid_issub (wpid, issub)";
 
         $query = $this->wpdb->prepare( $sql, $monitor_id, $start, $end, $current_status, $prev_status );
         return (int) $this->wpdb->get_var( $query ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
+    }
+
+    /**
+     * Count UP→DOWN incident transitions for a monitor with exact datetime bounds.
+     *
+     * Same transition self-join as count_site_incidents_stats(), but takes
+     * full 'Y-m-d H:i:s' datetimes instead of day strings padded to whole days.
+     *
+     * @param int    $monitor_id Monitor ID.
+     * @param string $start_dt Range start (Y-m-d H:i:s).
+     * @param string $end_dt End (Y-m-d H:i:s).
+     *
+     * @return int Number of incident transitions.
+     */
+    public function count_site_incidents_between( $monitor_id, $start_dt, $end_dt ) {
+        $table_name = $this->table_name( 'monitor_heartbeat' );
+
+        $sql = "SELECT COUNT(*)
+            FROM {$table_name} h
+            LEFT JOIN {$table_name} p
+            ON p.monitor_id = h.monitor_id
+            AND p.time = (
+                SELECT MAX(time)
+                FROM {$table_name}
+                WHERE monitor_id = h.monitor_id
+                    AND time < h.time
+            )
+            WHERE h.monitor_id = %d
+            AND h.time BETWEEN %s AND %s
+            AND h.status = %d
+            AND p.status = %d";
+
+        $query = $this->wpdb->prepare( $sql, $monitor_id, $start_dt, $end_dt, MainWP_Uptime_Monitoring_Connect::DOWN, MainWP_Uptime_Monitoring_Connect::UP );
+        return (int) $this->wpdb->get_var( $query ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
+    }
+
+    /**
+     * Get UP→DOWN incident transition heartbeat rows for a monitor, newest first.
+     *
+     * Row-returning sibling of the transition self-join with SQL pagination.
+     *
+     * @param int    $monitor_id Monitor ID.
+     * @param string $start_dt Range start (Y-m-d H:i:s).
+     * @param string $end_dt End (Y-m-d H:i:s).
+     * @param int    $limit Maximum rows.
+     * @param int    $offset Rows to skip.
+     *
+     * @return array Heartbeat rows that start an incident.
+     */
+    public function get_site_incidents_paginated( $monitor_id, $start_dt, $end_dt, $limit, $offset = 0 ) {
+        $table_name = $this->table_name( 'monitor_heartbeat' );
+
+        $sql = "SELECT h.*
+            FROM {$table_name} h
+            LEFT JOIN {$table_name} p
+            ON p.monitor_id = h.monitor_id
+            AND p.time = (
+                SELECT MAX(time)
+                FROM {$table_name}
+                WHERE monitor_id = h.monitor_id
+                    AND time < h.time
+            )
+            WHERE h.monitor_id = %d
+            AND h.time BETWEEN %s AND %s
+            AND h.status = %d
+            AND p.status = %d
+            ORDER BY h.time DESC
+            LIMIT %d OFFSET %d";
+
+        $query = $this->wpdb->prepare( $sql, $monitor_id, $start_dt, $end_dt, MainWP_Uptime_Monitoring_Connect::DOWN, MainWP_Uptime_Monitoring_Connect::UP, $limit, $offset );
+        return (array) $this->wpdb->get_results( $query ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
     }
 
     /**

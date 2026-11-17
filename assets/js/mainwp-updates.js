@@ -2225,8 +2225,6 @@ let updatesoverview_upgrade_all_int = function (pSitesToUpdate, pSitesToUpgrade,
 
     mainwpVars.bulkTaskRunning = true;
 
-    console.log('Suspended sites: ' + mainwpVars.websitesSuspended.join(', '));
-
     updatesoverview_upgrade_all_loop_next();
 };
 
@@ -2258,8 +2256,6 @@ let updatesoverview_upgrade_all_upgrade_next = function () {
 
     let websiteId = mainwpVars.websitesToUpdate[mainwpVars.currentWebsite++];
     updatesoverview_upgrade_all_update_site_status(websiteId, waiting_icon);
-
-    console.log('Starting upgrade process for site ' + websiteId);
 
     // process suspended site here to avoid starting the upgrade process and then showing the error after few seconds, also to avoid retrying the upgrade process for suspended sites in case of retry mechanism is triggered for some reason.
     if (mainwpVars.websitesSuspended.includes(websiteId)) {

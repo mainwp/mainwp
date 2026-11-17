@@ -27,6 +27,7 @@ function fixture( supportsLoader = true, mainwpPage = true, withPalette = false,
     const syncQueues = [];
     const popups = [];
     const savedStatuses = [];
+    const asked = [];
     let recentNames = [];
     let reloaded = 0;
     let closed = 0;
@@ -110,7 +111,7 @@ function fixture( supportsLoader = true, mainwpPage = true, withPalette = false,
             commands: [ { name: 'existing-menu', label: 'Settings', url: '/settings' } ],
             siteSearch: {
                 ajaxUrl: adminDirectory + 'admin-ajax.php', searchNonce: 'search-nonce',
-                strings: { searchError: 'Retry search', syncingAction: 'Syncing…', searchLabel:'Search sites, clients and commands', actionsFor:'Actions for %s', siteAction:'%1$s for %2$s', selectSite:'Select site', actions:'Actions', search:'Search', enter:'Enter', keyboard:'Enter for %s' },
+                strings: { assistantAsk: 'Ask the MainWP Assistant: %s', assistantOpen: 'Open the MainWP Assistant', searchError: 'Retry search', syncingAction: 'Syncing…', searchLabel:'Search sites, clients and commands', actionsFor:'Actions for %s', siteAction:'%1$s for %2$s', selectSite:'Select site', actions:'Actions', search:'Search', enter:'Enter', keyboard:'Enter for %s' },
             },
         },
         wp: {
@@ -231,6 +232,15 @@ function fixture( supportsLoader = true, mainwpPage = true, withPalette = false,
     return {
         requests, registered, assigned, opened, spoken, elements, palette, input,
         syncCalls, syncQueues, popups, savedStatuses, sync: window.dashboardSync,
+        asked,
+        enableAssistant( withObject = true, withDOM = true ) {
+            if ( withObject ) window.MainWPAssistantPanel = { ask: text => asked.push( { text, closed } ), openChat: () => asked.push( { openChat: true, closed } ) };
+            if ( withDOM ) {
+                const panel = element( 'div' );
+                panel.id = 'mainwp-assistant-panel';
+                document.body.appendChild( panel );
+            }
+        },
         get reloaded() { return reloaded; },
         get closed() { return closed; },
         get activeElement() { return document.activeElement; },
@@ -662,4 +672,88 @@ test( 'valid entity navigation supports a Dashboard in a subdirectory', async ()
     commands[ 1 ].callback();
     assert.deepEqual( app.opened, [ [ 'http://dash.local/dashboard/wp-admin/admin.php?page=SiteOpen&websiteid=28&_opennonce=signed-value', '_blank', 'noopener,noreferrer' ] ] );
     assert.deepEqual( app.assigned, [ 'http://dash.local/dashboard/wp-admin/admin.php?page=ManageClients&client_id=1' ] );
+} );
+
+
+test( 'Assistant requires both its runtime API and panel DOM', async () => {
+    for ( const availability of [ [ false, false ], [ true, false ], [ false, true ] ] ) {
+        const app = fixture();
+        app.enableAssistant( ...availability );
+        app.render( 'alder' );
+        app.runTimers( 250 );
+        await app.respond( 0, [] );
+        assert.equal( app.render( 'alder' ).commands.length, 0 );
+    }
+} );
+
+test( 'Ask waits for the current search and follows sites and clients', async () => {
+    const app = fixture();
+    app.enableAssistant();
+    for ( const query of [ '', 'a', '😀' ] ) {
+        assert.equal( app.render( query ).commands.length, 0 );
+    }
+    assert.equal( app.render( 'alder' ).commands.length, 0, 'No Ask during debounce' );
+    app.runTimers( 250 );
+    assert.equal( app.render( 'alder' ).commands.length, 0, 'No Ask during request' );
+    await app.respond( 0, [ ...siteCommands(), clientCommand() ] );
+    const result = app.render( 'alder' );
+    assert.equal( result.isLoading, false );
+    assert.deepEqual( Array.from( result.commands, command => command.name ), [ 'mainwp/site/28', 'mainwp/client/1', 'mainwp/assistant-ask' ] );
+    const ask = result.commands[ 2 ];
+    assert.equal( ask.label, 'Ask the MainWP Assistant: alder' );
+    assert.equal( ask.searchLabel, '~' );
+    assert.deepEqual( Array.from( ask.keywords ), [ 'alder' ] );
+    ask.callback( { close: () => { app.customClosed = true; } } );
+    assert.equal( app.customClosed, true );
+    assert.equal( app.asked[ 0 ].text, 'alder' );
+    ask.callback();
+    assert.deepEqual( app.asked[ 1 ], { text: 'alder', closed: 1 }, 'Default close must happen before ask' );
+    assert.equal( app.render( 'another question' ).commands.length, 0, 'Old results must not expose Ask for new text' );
+    app.runTimers( 250 );
+    await app.respond( 1, [] );
+    assert.equal( app.render( 'another question' ).commands[ 0 ].name, 'mainwp/assistant-ask' );
+} );
+
+test( 'Ask accepts over 200 characters without a site request', () => {
+    const app = fixture();
+    app.enableAssistant();
+    const text = 'x'.repeat( 201 );
+    const result = app.render( text );
+    assert.equal( result.isLoading, false );
+    assert.equal( result.commands.length, 1 );
+    result.commands[ 0 ].callback();
+    assert.deepEqual( app.asked, [ { text, closed: 1 } ] );
+    app.runTimers( 250 );
+    assert.equal( app.requests.length, 0 );
+} );
+
+test( 'Ask is available after a failed site search, following retry', async () => {
+    const app = fixture();
+    app.enableAssistant();
+    app.render( 'ask' );
+    app.runTimers( 250 );
+    await app.respond( 0, [], false );
+    const result = app.render( 'ask' );
+    assert.deepEqual( Array.from( result.commands, command => command.name ), [ 'mainwp/site-search-retry', 'mainwp/assistant-ask' ] );
+    result.commands[ 0 ].callback();
+    assert.equal( app.render( 'ask' ).commands.length, 0, 'Retry hides Ask until the new request finishes' );
+} );
+
+test( 'Open the MainWP Assistant opens the chat panel instead of navigating', () => {
+    for ( const availability of [ [ false, false ], [ true, false ], [ false, true ] ] ) {
+        const app = fixture();
+        app.enableAssistant( ...availability );
+        app.runTimers( 150 );
+        assert.equal( app.registered.some( command => command.name === 'mainwp/assistant-open' ), false );
+    }
+    const app = fixture();
+    app.enableAssistant();
+    app.runTimers( 150 );
+    const open = app.registered.filter( command => command.name === 'mainwp/assistant-open' ).at( -1 );
+    assert.equal( open.label, 'Open the MainWP Assistant' );
+    open.callback( { close: () => { app.customClosed = true; } } );
+    assert.equal( app.customClosed, true );
+    open.callback();
+    assert.deepEqual( app.asked, [ { openChat: true, closed: 0 }, { openChat: true, closed: 1 } ], 'Default close must happen before opening' );
+    assert.deepEqual( app.assigned, [] );
 } );

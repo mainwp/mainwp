@@ -654,6 +654,16 @@ let mainwp_setup_managesites_add = function () {
   }
 };
 
+// Check if the URL field is valid value
+function isUrl(url) {
+  try {
+    new URL(url);
+    return true;
+  } catch (e) {
+  }
+  return false;
+}
+
 let mainwp_setup_secure_data = function (data) {
   if (data['action'] == undefined)
     return data;

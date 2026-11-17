@@ -103,15 +103,16 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'mainwp/list-sites-v1',
             array(
                 'label'               => __( 'List MainWP Sites', 'mainwp' ),
-                'description'         => __( 'List MainWP child sites with pagination and filtering. Returns basic site information including ID, URL, name, and connection status.', 'mainwp' ),
+                'description'         => __( 'List MainWP child sites with pagination and filtering. Returns basic site information including ID, URL, name, connection status, and last sync time.', 'mainwp' ),
                 'category'            => 'mainwp-sites',
                 'input_schema'        => self::get_list_sites_input_schema(),
                 'output_schema'       => self::get_list_sites_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_sites' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -139,8 +140,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_site' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -197,8 +199,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_site_plugins' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -226,8 +229,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_site_themes' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -270,24 +274,26 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 'status'    => array(
                     'type'        => 'string',
-                    'description' => __( 'Filter by connection status.', 'mainwp' ),
+                    'description' => __( 'Filter by connection status. Omit (or use "any") to list all sites.', 'mainwp' ),
                     'enum'        => array( 'any', 'connected', 'disconnected', 'suspended', 'available_update' ),
                     'default'     => 'any',
                 ),
                 'search'    => array(
                     'type'        => 'string',
-                    'description' => __( 'Search term for site name or URL.', 'mainwp' ),
+                    'description' => __( 'Search term for site name or URL. Omit to list all sites.', 'mainwp' ),
                     'default'     => '',
                 ),
                 'client_id' => array(
                     'type'        => 'integer',
-                    'description' => __( 'Filter by client ID.', 'mainwp' ),
-                    'minimum'     => 1,
+                    'description' => __( 'Restrict results to one client: pass a real client ID from list-clients. Use 0 (or omit) for no client filter.', 'mainwp' ),
+                    'minimum'     => 0,
+                    'default'     => 0,
                 ),
                 'tag_id'    => array(
                     'type'        => 'integer',
-                    'description' => __( 'Filter by tag/group ID.', 'mainwp' ),
-                    'minimum'     => 1,
+                    'description' => __( 'Restrict results to one tag/group: pass a real tag ID from list-tags. Use 0 (or omit) for no tag filter.', 'mainwp' ),
+                    'minimum'     => 0,
+                    'default'     => 0,
                 ),
             ),
             'additionalProperties' => false,
@@ -308,7 +314,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID (integer) or domain/URL (string).', 'mainwp' ),
+                    'description' => __( 'Site ID (integer), domain/URL, or unique site name (string).', 'mainwp' ),
                 ),
                 'include_stats'     => array(
                     'type'        => 'boolean',
@@ -332,7 +338,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'site_ids_or_domains' => array(
                     'type'        => 'array',
-                    'description' => __( 'Site IDs or domains to sync. Empty array means all sites.', 'mainwp' ),
+                    'description' => __( 'Site IDs, domains, or unique site names to sync. Empty array means all sites.', 'mainwp' ),
                     'items'       => array(
                         'type' => array( 'integer', 'string' ),
                     ),
@@ -372,7 +378,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain/URL.', 'mainwp' ),
+                    'description' => __( 'Site ID, domain/URL, or unique site name.', 'mainwp' ),
                 ),
                 'status'            => array(
                     'type'        => 'string',
@@ -401,7 +407,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain/URL.', 'mainwp' ),
+                    'description' => __( 'Site ID, domain/URL, or unique site name.', 'mainwp' ),
                 ),
                 'status'            => array(
                     'type'        => 'string',
@@ -466,6 +472,16 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                                 ),
                                 'description' => __( 'Associated client ID if any.', 'mainwp' ),
                             ),
+                            'last_sync' => array(
+                                'oneOf'       => array(
+                                    array(
+                                        'type'   => 'string',
+                                        'format' => 'date-time',
+                                    ),
+                                    array( 'type' => 'null' ),
+                                ),
+                                'description' => __( 'Time of the last successful sync (ISO 8601), or null if the site has never synced.', 'mainwp' ),
+                            ),
                         ),
                         'required'             => array( 'id', 'url', 'name', 'status' ),
                         'additionalProperties' => false,
@@ -482,6 +498,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'total'    => array(
                     'type'        => 'integer',
                     'description' => __( 'Total number of sites matching filters.', 'mainwp' ),
+                ),
+                'note'     => array(
+                    'type'        => 'string',
+                    'description' => __( 'Present only when applied filters matched no sites; names the filters so the caller can retry without them.', 'mainwp' ),
                 ),
             ),
             'required'   => array( 'items', 'page', 'per_page', 'total' ),
@@ -769,7 +789,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         $allowed        = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
         $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
-        if ( isset( $input['tag_id'] ) && 'all' !== $allowed_groups && ! in_array( (int) $input['tag_id'], $allowed_groups, true ) ) {
+        // tag_id 0 means no tag filter, matching the query below.
+        if ( ! empty( $input['tag_id'] ) && 'all' !== $allowed_groups && ! in_array( (int) $input['tag_id'], $allowed_groups, true ) ) {
             $allowed = array();
         }
         if ( array() === $allowed ) {
@@ -786,8 +807,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'paged'          => $input['page'] ?? 1,
             'items_per_page' => $input['per_page'] ?? 20,
             's'              => $input['search'] ?? '',
-            // Include status-related fields for format_site_for_output().
-            'fields'         => array( 'suspended', 'offline_check_result', 'sync_errors' ),
+            // Include status-related fields for format_site_for_output(),
+            // plus dtsSync for the per-item last_sync output.
+            'fields'         => array( 'suspended', 'offline_check_result', 'sync_errors', 'dtsSync' ),
         );
 
         // Status mapping: 'any' means no filter, otherwise wrap in array.
@@ -803,21 +825,23 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             $db_params['status'] = $db_status;
         }
 
-        // Client filter.
-        if ( isset( $input['client_id'] ) ) {
+        // Client filter (0 means no filter - the legal "not filtering" value
+        // for AI callers that always fill every parameter).
+        if ( ! empty( $input['client_id'] ) ) {
             $db_params['client'] = (string) $input['client_id'];
         }
 
-        // Tag/group filter (map tag_id to group_id for DB).
-        if ( isset( $input['tag_id'] ) ) {
-            $db_params['group_id'] = $input['tag_id'];
+        // Tag/group filter (0 means no filter). The fetch query has no tag
+        // param, so filter through the site-to-group join table.
+        if ( ! empty( $input['tag_id'] ) ) {
+            $db_params['where'] = ' wp.id IN ( SELECT wpid FROM ' . $db->get_table_name( 'wp_group' ) . ' WHERE groupid = ' . (int) $input['tag_id'] . ' ) ';
         }
 
         // Get total count using efficient COUNT(*) query.
         $count_filters = array(
             'status'    => ( 'any' !== $status ) ? $status : '',
-            'tags'      => isset( $input['tag_id'] ) ? array( (int) $input['tag_id'] ) : array(),
-            'client_id' => isset( $input['client_id'] ) ? (int) $input['client_id'] : 0,
+            'tags'      => ! empty( $input['tag_id'] ) ? array( (int) $input['tag_id'] ) : array(),
+            'client_id' => ! empty( $input['client_id'] ) ? (int) $input['client_id'] : 0,
             's'         => $input['search'] ?? '',
         );
         if ( 'all' !== $allowed ) {
@@ -848,16 +872,49 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         $items = array();
         if ( $websites ) {
             foreach ( $websites as $site ) {
-                $items[] = MainWP_Abilities_Util::format_site_for_output( $site );
+                $item = MainWP_Abilities_Util::format_site_for_output( $site );
+                // Aggregate sync questions must be answerable from one list
+                // call; without this only get-site exposes the sync time.
+                $item['last_sync'] = ! empty( $site->dtsSync ) ? gmdate( 'c', (int) $site->dtsSync ) : null;
+                $items[]           = $item;
             }
         }
 
-        return array(
+        $result = array(
             'items'    => $items,
             'page'     => (int) ( $input['page'] ?? 1 ),
             'per_page' => (int) ( $input['per_page'] ?? 20 ),
             'total'    => (int) $total,
         );
+
+        // A filtered empty result is indistinguishable from "no sites exist"
+        // to an AI caller, which then burns tool-loop iterations probing
+        // filter variations. Name the applied filters so it can retry without.
+        if ( empty( $items ) ) {
+            $filters_applied = array();
+            if ( 'any' !== $status ) {
+                $filters_applied[] = 'status';
+            }
+            if ( ! empty( $input['search'] ) ) {
+                $filters_applied[] = 'search';
+            }
+            if ( ! empty( $input['client_id'] ) ) {
+                $filters_applied[] = 'client_id';
+            }
+            if ( ! empty( $input['tag_id'] ) ) {
+                $filters_applied[] = 'tag_id';
+            }
+
+            if ( ! empty( $filters_applied ) ) {
+                $result['note'] = sprintf(
+                    /* translators: %s: comma-separated list of filter names */
+                    __( 'No sites matched the applied filters (%s). Omit those filters to list all sites.', 'mainwp' ),
+                    implode( ', ', $filters_applied )
+                );
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -921,9 +978,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $site_ids_or_domains = isset( $input['site_ids_or_domains'] ) && is_array( $input['site_ids_or_domains'] )
-            ? $input['site_ids_or_domains']
-            : array();
+        $site_ids_or_domains = MainWP_Abilities_Util::validate_site_identifiers( $input );
+        if ( is_wp_error( $site_ids_or_domains ) ) {
+            return $site_ids_or_domains;
+        }
         if ( empty( $site_ids_or_domains ) && ! empty( $site_ids ) ) {
             $site_ids_or_domains = $site_ids;
         }
@@ -1525,12 +1583,13 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'description'         => __( 'Update settings for a MainWP child site.', 'mainwp' ),
                 'category'            => 'mainwp-sites',
                 'input_schema'        => self::get_update_site_input_schema(),
-                'output_schema'       => self::get_site_output_schema(),
+                'output_schema'       => self::get_update_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_site' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -1554,7 +1613,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties'           => array(
                 'site_id_or_domain'  => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain', 'mainwp' ),
+                    'description' => __( 'Site ID, domain, or unique site name', 'mainwp' ),
                 ),
                 'name'               => array(
                     'type'        => 'string',
@@ -1603,6 +1662,23 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
             ),
         );
+    }
+
+    /**
+     * Get output schema for update-site-v1: the site object plus partial-failure warnings.
+     *
+     * @return array JSON Schema.
+     */
+    private static function get_update_site_output_schema(): array {
+        $schema = self::get_site_output_schema();
+
+        $schema['properties']['warnings'] = array(
+            'type'        => 'array',
+            'items'       => array( 'type' => 'string' ),
+            'description' => __( 'Secondary update steps that failed; the returned site reflects what was actually applied.', 'mainwp' ),
+        );
+
+        return $schema;
     }
 
     /**
@@ -1664,13 +1740,41 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
 
+        // The URL walks the same gauntlet as add-site: format validation,
+        // normalization, and a duplicate check that skips the site's own row.
+        $new_url = null;
+        if ( isset( $input['url'] ) ) {
+            $new_url = sanitize_text_field( $input['url'] );
+
+            if ( ! filter_var( $new_url, FILTER_VALIDATE_URL ) ) {
+                return new \WP_Error(
+                    'mainwp_invalid_url',
+                    __( 'Invalid site URL format.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
+
+            $new_url = MainWP_Abilities_Util::normalize_site_url( $new_url );
+
+            $existing = MainWP_DB::instance()->get_websites_by_url( $new_url );
+            foreach ( (array) $existing as $existing_site ) {
+                if ( (int) $existing_site->id !== (int) $site->id ) {
+                    return new \WP_Error(
+                        'mainwp_site_already_exists',
+                        __( 'A site with this URL already exists.', 'mainwp' ),
+                        array( 'status' => 409 )
+                    );
+                }
+            }
+        }
+
         $update_data = array();
 
         if ( isset( $input['name'] ) ) {
             $update_data['name'] = sanitize_text_field( $input['name'] );
         }
-        if ( isset( $input['url'] ) ) {
-            $update_data['url'] = sanitize_text_field( $input['url'] );
+        if ( null !== $new_url ) {
+            $update_data['url'] = $new_url;
         }
         if ( isset( $input['admin_username'] ) ) {
             $update_data['adminname'] = sanitize_text_field( $input['admin_username'] );
@@ -1691,10 +1795,20 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             $update_data['suspended'] = (int) $input['suspended'];
         }
 
+        // wpdb::update() returns false on error and 0 for a no-op write;
+        // only the former is a failure worth reporting.
+        $warnings = array();
+
         if ( ! empty( $update_data ) ) {
-            MainWP_DB::instance()->update_website_values( $site->id, $update_data );
+            $fields_updated = MainWP_DB::instance()->update_website_values( $site->id, $update_data );
+            if ( false === $fields_updated ) {
+                return new \WP_Error(
+                    'mainwp_site_update_failed',
+                    __( 'Failed to update site fields.', 'mainwp' ),
+                    array( 'status' => 500 )
+                );
+            }
             if ( isset( $update_data['url'] ) ) {
-                // A user-set URL that diverges from the child-reported address locks auto-correction.
                 MainWP_Site_Url_Corrector::after_user_set_url( $site, $update_data['url'] );
             }
         }
@@ -1716,27 +1830,56 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             }
 
             global $wpdb;
-            // Clear existing tag associations for this site.
-            //phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- for testing results.
-            $wpdb->query(
-                $wpdb->prepare(
-                    'DELETE FROM ' . $wpdb->prefix . 'mainwp_wp_group WHERE wpid = %d',
-                    $site->id
-                )
-            );
-            // Add new tag associations.
-            foreach ( array_unique( array_merge( $preserved, $validated_tag_ids ) ) as $tag_id ) {
-                MainWP_DB_Common::instance()->update_group_site( (int) $tag_id, $site->id );
+            // Replace as a delta, never delete-then-reinsert: an association
+            // the site keeps is left untouched, so a failed write can only
+            // miss a NEW tag — it can no longer erase an existing one.
+            $target_tag_ids  = array_values( array_unique( array_map( 'intval', array_merge( $preserved, $validated_tag_ids ) ) ) );
+            $current_tag_ids = array_map( 'intval', array_keys( (array) MainWP_DB_Common::instance()->get_groups_by_website_id( $site->id ) ) );
+
+            $tags_to_remove = array_values( array_diff( $current_tag_ids, $target_tag_ids ) );
+            $tags_to_add    = array_values( array_diff( $target_tag_ids, $current_tag_ids ) );
+
+            if ( ! empty( $tags_to_remove ) ) {
+                $placeholders = implode( ',', array_fill( 0, count( $tags_to_remove ), '%d' ) );
+                //phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- association delta mirrors MainWP_DB_Common with a checked return.
+                $tags_removed = $wpdb->query(
+                    $wpdb->prepare(
+                        'DELETE FROM ' . $wpdb->prefix . "mainwp_wp_group WHERE wpid = %d AND groupid IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- %d placeholder list built from a counted fill; values bound via prepare().
+                        array_merge( array( $site->id ), $tags_to_remove )
+                    )
+                );
+                if ( false === $tags_removed ) {
+                    $warnings[] = __( 'Some previous tag associations could not be removed.', 'mainwp' );
+                }
+            }
+
+            foreach ( $tags_to_add as $tag_id ) {
+                //phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- association insert mirrors MainWP_DB_Common::update_group_site() with a checked return.
+                $tag_added = $wpdb->insert(
+                    $wpdb->prefix . 'mainwp_wp_group',
+                    array(
+                        'wpid'    => $site->id,
+                        'groupid' => $tag_id,
+                    ),
+                    array( '%d', '%d' )
+                );
+                if ( false === $tag_added ) {
+                    /* translators: %d: tag id */
+                    $warnings[] = sprintf( __( 'Tag %d could not be assigned.', 'mainwp' ), $tag_id );
+                }
             }
         }
 
-        if ( null !== $new_client_id ) {
-            MainWP_DB::instance()->update_website_values( $site->id, array( 'client_id' => $new_client_id ) );
+        if ( null !== $new_client_id && false === MainWP_DB::instance()->update_website_values( $site->id, array( 'client_id' => $new_client_id ) ) ) {
+            $warnings[] = __( 'Client assignment could not be saved.', 'mainwp' );
         }
 
         $site = MainWP_DB::instance()->get_website_by_id( $site->id );
 
-        return MainWP_Abilities_Util::format_site_for_output( $site, true );
+        $output             = MainWP_Abilities_Util::format_site_for_output( $site, true );
+        $output['warnings'] = $warnings;
+
+        return $output;
     }
 
     /**
@@ -1756,8 +1899,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_delete_site' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Destructive operation - requires confirm:true or dry_run:true. Only call when user explicitly requests deletion.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -1780,7 +1924,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties' => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain', 'mainwp' ),
+                    'description' => __( 'Site ID, domain, or unique site name', 'mainwp' ),
                 ),
                 'confirm'           => array(
                     'type'        => 'boolean',
@@ -1968,8 +2112,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_reconnect_site' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/reconnect-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -1992,7 +2137,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties' => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain', 'mainwp' ),
+                    'description' => __( 'Site ID, domain, or unique site name', 'mainwp' ),
                 ),
             ),
         );
@@ -2082,8 +2227,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_disconnect_site' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/disconnect-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -2161,8 +2307,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_suspend_site' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/suspend-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -2242,8 +2389,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_unsuspend_site' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/unsuspend-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -2323,8 +2471,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_check_site' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/check-site-v1', array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -2463,8 +2612,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_activate_site_plugins' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/activate-site-plugins-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Destructive operation - use dry_run:true to preview, then confirm:true to apply. Without dry_run, the change applies right away; confirm is optional for existing callers.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -2487,7 +2637,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties' => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain', 'mainwp' ),
+                    'description' => __( 'Site ID, domain, or unique site name', 'mainwp' ),
                 ),
                 'plugins'           => array(
                     'type'        => 'array',
@@ -2769,8 +2919,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_deactivate_site_plugins' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/deactivate-site-plugins-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Destructive operation - use dry_run:true to preview, then confirm:true to apply. Without dry_run, the change applies right away; confirm is optional for existing callers.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -2793,7 +2944,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties' => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain', 'mainwp' ),
+                    'description' => __( 'Site ID, domain, or unique site name', 'mainwp' ),
                 ),
                 'plugins'           => array(
                     'type'        => 'array',
@@ -2917,8 +3068,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_delete_site_plugins' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-site-plugins-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Destructive operation - requires confirm:true or dry_run:true. Only call when user explicitly requests deletion. Permanently removes plugins from the child site.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -2941,7 +3093,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties' => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain', 'mainwp' ),
+                    'description' => __( 'Site ID, domain, or unique site name', 'mainwp' ),
                 ),
                 'plugins'           => array(
                     'type'        => 'array',
@@ -3234,8 +3386,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_abandoned_plugins' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -3349,8 +3502,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_activate_site_theme' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/activate-site-theme-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Destructive operation - use dry_run:true to preview, then confirm:true to apply. Without dry_run, the change applies right away; confirm is optional for existing callers.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -3373,7 +3527,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties' => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain', 'mainwp' ),
+                    'description' => __( 'Site ID, domain, or unique site name', 'mainwp' ),
                 ),
                 'theme'             => array(
                     'type'        => 'string',
@@ -3501,8 +3655,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_delete_site_themes' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-site-themes-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Destructive operation - requires confirm:true or dry_run:true. Only call when user explicitly requests deletion. Permanently removes themes from the child site.',
                         'readonly'     => false,
                         'destructive'  => true,
@@ -3525,7 +3680,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties' => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain', 'mainwp' ),
+                    'description' => __( 'Site ID, domain, or unique site name', 'mainwp' ),
                 ),
                 'themes'            => array(
                     'type'        => 'array',
@@ -3618,8 +3773,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_abandoned_themes' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -3733,8 +3889,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_site_security' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Returns security data from last sync. Does NOT perform real-time scanning. Requires Security module on child site for full data.',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -3818,8 +3975,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_site_changes' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Detects changes made outside MainWP (direct edits, other plugins). Requires Logs module enabled. Results paginated (default 20, max 100).',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -3842,7 +4000,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties' => array(
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
-                    'description' => __( 'Site ID or domain', 'mainwp' ),
+                    'description' => __( 'Site ID, domain, or unique site name', 'mainwp' ),
                 ),
                 'page'              => array(
                     'type'        => 'integer',
@@ -3989,8 +4147,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_site_client' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -4089,8 +4248,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_site_costs' ),
                 'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -4151,6 +4311,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $access_check;
         }
 
+        // The producer returns a site_id => cost[] map, not a flat list.
         $costs_map  = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_sites( array( $site->id ) );
         $costs_data = is_array( $costs_map ) ? ( $costs_map[ (int) $site->id ] ?? array() ) : array();
 
@@ -4185,8 +4346,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_count_sites' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -4208,17 +4370,21 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'properties' => array(
                 'status'    => array(
                     'type'        => 'string',
-                    'description' => __( 'Filter by status', 'mainwp' ),
-                    'enum'        => array( 'connected', 'disconnected', 'suspended' ),
+                    'description' => __( 'Filter by connection status. Omit (or use "any") to count all sites.', 'mainwp' ),
+                    'enum'        => array( 'any', 'connected', 'disconnected', 'suspended' ),
+                    'default'     => 'any',
                 ),
                 'tag_ids'   => array(
                     'type'        => 'array',
-                    'description' => __( 'Filter by tag IDs', 'mainwp' ),
+                    'description' => __( 'Restrict the count to tags: pass real tag IDs from list-tags. Omit (or pass an empty array) for no tag filter.', 'mainwp' ),
                     'items'       => array( 'type' => 'integer' ),
+                    'default'     => array(),
                 ),
                 'client_id' => array(
                     'type'        => 'integer',
-                    'description' => __( 'Filter by client ID', 'mainwp' ),
+                    'description' => __( 'Restrict the count to one client: pass a real client ID from list-clients. Use 0 (or omit) for no client filter.', 'mainwp' ),
+                    'minimum'     => 0,
+                    'default'     => 0,
                 ),
             ),
         );
@@ -4236,6 +4402,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'total' => array(
                     'type'        => 'integer',
                     'description' => __( 'Total count of sites', 'mainwp' ),
+                ),
+                'note'  => array(
+                    'type'        => 'string',
+                    'description' => __( 'Present only when applied filters matched no sites; names the filters so the caller can retry without them.', 'mainwp' ),
                 ),
             ),
         );
@@ -4269,8 +4439,12 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             $filters['include'] = $allowed;
         }
 
-        if ( ! empty( $input['status'] ) ) {
-            $filters['status'] = $input['status'];
+        // "any" is the legal no-filter status for AI callers that always
+        // fill every parameter; omit the key entirely so the DB layer never
+        // sees it.
+        $status = ! empty( $input['status'] ) ? $input['status'] : 'any';
+        if ( 'any' !== $status ) {
+            $filters['status'] = $status;
         }
 
         if ( ! empty( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
@@ -4283,9 +4457,33 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         $total = MainWP_DB::instance()->get_websites_count_for_current_user( $filters );
 
-        return array(
+        $result = array(
             'total' => (int) $total,
         );
+
+        // A filtered zero is indistinguishable from "no sites exist" to an
+        // AI caller, which then burns tool-loop iterations probing filter
+        // variations. Name the applied filters so it can retry without.
+        if ( 0 === (int) $total && ! empty( $filters ) ) {
+            $filters_applied = array();
+            if ( isset( $filters['status'] ) ) {
+                $filters_applied[] = 'status';
+            }
+            if ( isset( $filters['tags'] ) ) {
+                $filters_applied[] = 'tag_ids';
+            }
+            if ( isset( $filters['client_id'] ) ) {
+                $filters_applied[] = 'client_id';
+            }
+
+            $result['note'] = sprintf(
+                /* translators: %s: comma-separated list of filter names */
+                __( 'No sites matched the applied filters (%s). Omit those filters to count all sites.', 'mainwp' ),
+                implode( ', ', $filters_applied )
+            );
+        }
+
+        return $result;
     }
 
     /**
@@ -4305,8 +4503,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_get_sites_basic' ),
                 'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => '',
                         'readonly'     => true,
                         'destructive'  => false,
@@ -4340,14 +4539,23 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                     'maximum'     => 100,
                 ),
                 'status'    => array(
-                    'type' => 'string',
-                    'enum' => array( 'connected', 'disconnected', 'suspended' ),
+                    'type'        => 'string',
+                    'description' => __( 'Filter by connection status. Omit (or use "any") to include all sites.', 'mainwp' ),
+                    'enum'        => array( 'any', 'connected', 'disconnected', 'suspended' ),
+                    'default'     => 'any',
                 ),
                 'tag_ids'   => array(
-                    'type'  => 'array',
-                    'items' => array( 'type' => 'integer' ),
+                    'type'        => 'array',
+                    'description' => __( 'Restrict results to tags: pass real tag IDs from list-tags. Omit (or pass an empty array) for no tag filter.', 'mainwp' ),
+                    'items'       => array( 'type' => 'integer' ),
+                    'default'     => array(),
                 ),
-                'client_id' => array( 'type' => 'integer' ),
+                'client_id' => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Restrict results to one client: pass a real client ID from list-clients. Use 0 (or omit) for no client filter.', 'mainwp' ),
+                    'minimum'     => 0,
+                    'default'     => 0,
+                ),
             ),
         );
     }
@@ -4375,6 +4583,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'page'     => array( 'type' => 'integer' ),
                 'per_page' => array( 'type' => 'integer' ),
                 'total'    => array( 'type' => 'integer' ),
+                'note'     => array(
+                    'type'        => 'string',
+                    'description' => __( 'Present only when applied filters matched no sites; names the filters so the caller can retry without them.', 'mainwp' ),
+                ),
             ),
         );
     }
@@ -4397,6 +4609,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         $page     = max( 1, (int) $input['page'] );
         $per_page = max( 1, min( 100, (int) $input['per_page'] ) );
 
+        $db      = MainWP_DB::instance();
         $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
         if ( ! empty( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
             $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
@@ -4425,26 +4638,48 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         if ( 'all' !== $allowed ) {
             $filters['include'] = $allowed;
         }
+        $count_filters = array();
+        if ( 'all' !== $allowed ) {
+            $count_filters['include'] = $allowed;
+        }
 
-        if ( ! empty( $input['status'] ) ) {
-            $filters['status'] = $input['status'];
+        // "any" is the legal no-filter status for AI callers that always
+        // fill every parameter; omit the key entirely so the DB layer never
+        // sees it.
+        $status = ! empty( $input['status'] ) ? $input['status'] : 'any';
+        if ( 'any' !== $status ) {
+            $db_status = array( $status );
+            // The count query treats connected as "no sync errors and not
+            // suspended"; mirror that on the fetch so items match total.
+            if ( 'connected' === $status ) {
+                $db_status[] = 'unsuspended';
+            }
+            $filters['status']       = $db_status;
+            $count_filters['status'] = $status;
         }
 
         if ( ! empty( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
-            $filters['tags'] = $input['tag_ids'];
+            $tag_ids = array_filter( array_map( 'intval', $input['tag_ids'] ) );
+            if ( ! empty( $tag_ids ) ) {
+                // The fetch query has no tag param; filter through the
+                // site-to-group join table instead.
+                $filters['where']      = ' wp.id IN ( SELECT wpid FROM ' . $db->get_table_name( 'wp_group' ) . ' WHERE groupid IN ( ' . implode( ',', $tag_ids ) . ' ) ) ';
+                $count_filters['tags'] = $tag_ids;
+            }
         }
 
         if ( ! empty( $input['client_id'] ) ) {
-            $filters['client_id'] = (int) $input['client_id'];
+            $filters['client']          = (string) (int) $input['client_id'];
+            $count_filters['client_id'] = (int) $input['client_id'];
         }
 
-        $sites = MainWP_DB::instance()->get_websites_for_current_user( $filters );
+        $sites = $db->get_websites_for_current_user( $filters );
 
         if ( is_wp_error( $sites ) ) {
             return $sites;
         }
 
-        $total = MainWP_DB::instance()->get_websites_count_for_current_user( $filters );
+        $total = $db->get_websites_count_for_current_user( $count_filters );
 
         if ( is_wp_error( $total ) ) {
             return $total;
@@ -4459,12 +4694,38 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        return array(
+        $result = array(
             'items'    => $items,
             'page'     => $page,
             'per_page' => $per_page,
             'total'    => (int) $total,
         );
+
+        // A filtered empty result is indistinguishable from "no sites exist"
+        // to an AI caller, which then burns tool-loop iterations probing
+        // filter variations. Name the applied filters so it can retry without.
+        if ( empty( $items ) ) {
+            $filters_applied = array();
+            if ( isset( $count_filters['status'] ) ) {
+                $filters_applied[] = 'status';
+            }
+            if ( isset( $count_filters['tags'] ) ) {
+                $filters_applied[] = 'tag_ids';
+            }
+            if ( isset( $count_filters['client_id'] ) ) {
+                $filters_applied[] = 'client_id';
+            }
+
+            if ( ! empty( $filters_applied ) ) {
+                $result['note'] = sprintf(
+                    /* translators: %s: comma-separated list of filter names */
+                    __( 'No sites matched the applied filters (%s). Omit those filters to list all sites.', 'mainwp' ),
+                    implode( ', ', $filters_applied )
+                );
+            }
+        }
+
+        return $result;
     }
 
     // =========================================================================
@@ -4488,8 +4749,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_reconnect_sites' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/reconnect-sites-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Pass site_ids_or_domains with specific IDs, or empty array for all applicable sites. Operations with >200 sites are automatically queued for background processing.',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -4503,15 +4765,39 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Get input schema for batch site operations.
      *
+     * @param bool $require_non_empty Disruptive operations (disconnect, suspend)
+     *                                refuse an empty or omitted list instead of
+     *                                expanding it to all sites, so the schema
+     *                                requires at least one site and has no
+     *                                empty default.
+     *
      * @return array JSON Schema.
      */
-    private static function get_batch_sites_input_schema(): array {
+    private static function get_batch_sites_input_schema( bool $require_non_empty = false ): array {
+        if ( $require_non_empty ) {
+            return array(
+                'type'                 => 'object',
+                'required'             => array( 'site_ids_or_domains' ),
+                'properties'           => array(
+                    'site_ids_or_domains' => array(
+                        'type'        => 'array',
+                        'description' => __( 'Site IDs, domains, or unique site names. At least one site is required; an empty array is rejected.', 'mainwp' ),
+                        'items'       => array(
+                            'type' => array( 'integer', 'string' ),
+                        ),
+                        'minItems'    => 1,
+                    ),
+                ),
+                'additionalProperties' => false,
+            );
+        }
+
         return array(
             'type'                 => array( 'object', 'null' ),
             'properties'           => array(
                 'site_ids_or_domains' => array(
                     'type'        => 'array',
-                    'description' => __( 'Site IDs or domains. Empty array means all sites.', 'mainwp' ),
+                    'description' => __( 'Site IDs, domains, or unique site names. Empty array means all sites.', 'mainwp' ),
                     'items'       => array(
                         'type' => array( 'integer', 'string' ),
                     ),
@@ -4572,18 +4858,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     public static function execute_reconnect_sites( $input ) { // phpcs:ignore -- NOSONAR - complexity.
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        // Core schema validation coerce-accepts scalars for type:array but hands the raw
-        // value through; a non-array must not fall into the all-sites branch below.
-        // array_key_exists, not isset: an explicit null is a present non-array too.
-        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
-            return new \WP_Error(
-                'mainwp_invalid_input',
-                __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
-                array( 'status' => 400 )
-            );
+        $identifiers = MainWP_Abilities_Util::validate_site_identifiers( $input );
+        if ( is_wp_error( $identifiers ) ) {
+            return $identifiers;
         }
-
-        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
 
         // If empty, get all sites for current user.
         if ( empty( $identifiers ) ) {
@@ -4685,14 +4963,15 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'label'               => __( 'Disconnect MainWP Sites', 'mainwp' ),
                 'description'         => __( 'Disconnect multiple MainWP child sites. Operations with >200 sites are automatically queued.', 'mainwp' ),
                 'category'            => 'mainwp-sites',
-                'input_schema'        => self::get_batch_sites_input_schema(),
+                'input_schema'        => self::get_batch_sites_input_schema( true ),
                 'output_schema'       => self::get_batch_operation_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_disconnect_sites' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/disconnect-sites-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
-                        'instructions' => 'Pass site_ids_or_domains with specific IDs, or empty array for all applicable sites. Operations with >200 sites are automatically queued for background processing.',
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
+                        'instructions' => 'Pass site_ids_or_domains listing every site to disconnect. An empty array is rejected; this operation never expands to all sites. Operations with >200 sites are automatically queued for background processing.',
                         'readonly'     => false,
                         'destructive'  => false,
                         'idempotent'   => true,
@@ -4711,39 +4990,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     public static function execute_disconnect_sites( $input ) {
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        // Core schema validation coerce-accepts scalars for type:array but hands the raw
-        // value through; a non-array must not fall into the all-sites branch below.
-        // array_key_exists, not isset: an explicit null is a present non-array too.
-        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
-            return new \WP_Error(
-                'mainwp_invalid_input',
-                __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
-                array( 'status' => 400 )
-            );
-        }
-
-        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
-
-        // If empty, get all sites for current user.
-        if ( empty( $identifiers ) ) {
-            $all_sites = MainWP_DB::instance()->get_websites_for_current_user( array( 'selectgroups' => false ) );
-
-            // Handle potential errors from DB query.
-            if ( is_wp_error( $all_sites ) ) {
-                return $all_sites;
-            }
-
-            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
-            if ( 'all' !== $allowed ) {
-                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
-            }
-
-            $identifiers = array_map(
-                function ( $s ) {
-                    return (int) $s->id;
-                },
-                $all_sites ? $all_sites : array()
-            );
+        // Disconnecting is disruptive: the sites must be listed explicitly,
+        // an empty list is rejected rather than expanded to every site.
+        $identifiers = MainWP_Abilities_Util::validate_site_identifiers( $input, true );
+        if ( is_wp_error( $identifiers ) ) {
+            return $identifiers;
         }
 
         // Resolve sites and enforce per-site ACLs.
@@ -4811,8 +5062,9 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'execute_callback'    => array( self::class, 'execute_check_sites' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/check-sites-v1', array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
                         'instructions' => 'Pass site_ids_or_domains with specific IDs, or empty array for all applicable sites. Operations with >200 sites are automatically queued for background processing.',
                         'readonly'     => false,
                         'destructive'  => false,
@@ -4832,18 +5084,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     public static function execute_check_sites( $input ) { // phpcs:ignore -- NOSONAR - complexity.
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        // Core schema validation coerce-accepts scalars for type:array but hands the raw
-        // value through; a non-array must not fall into the all-sites branch below.
-        // array_key_exists, not isset: an explicit null is a present non-array too.
-        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
-            return new \WP_Error(
-                'mainwp_invalid_input',
-                __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
-                array( 'status' => 400 )
-            );
+        $identifiers = MainWP_Abilities_Util::validate_site_identifiers( $input );
+        if ( is_wp_error( $identifiers ) ) {
+            return $identifiers;
         }
-
-        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
 
         // If empty, get all sites for current user.
         if ( empty( $identifiers ) ) {
@@ -4953,14 +5197,15 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'label'               => __( 'Suspend MainWP Sites', 'mainwp' ),
                 'description'         => __( 'Suspend multiple MainWP child sites. Operations with >200 sites are automatically queued.', 'mainwp' ),
                 'category'            => 'mainwp-sites',
-                'input_schema'        => self::get_batch_sites_input_schema(),
+                'input_schema'        => self::get_batch_sites_input_schema( true ),
                 'output_schema'       => self::get_batch_operation_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_suspend_sites' ),
                 'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/suspend-sites-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
-                    'show_in_rest' => true,
-                    'annotations'  => array(
-                        'instructions' => 'Pass site_ids_or_domains with specific IDs, or empty array for all applicable sites. Operations with >200 sites are automatically queued for background processing.',
+                    'mainwp_team_control' => true,
+                    'show_in_rest'        => true,
+                    'annotations'         => array(
+                        'instructions' => 'Pass site_ids_or_domains listing every site to suspend. An empty array is rejected; this operation never expands to all sites. Operations with >200 sites are automatically queued for background processing.',
                         'readonly'     => false,
                         'destructive'  => false,
                         'idempotent'   => true,
@@ -4979,39 +5224,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     public static function execute_suspend_sites( $input ) {
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        // Core schema validation coerce-accepts scalars for type:array but hands the raw
-        // value through; a non-array must not fall into the all-sites branch below.
-        // array_key_exists, not isset: an explicit null is a present non-array too.
-        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
-            return new \WP_Error(
-                'mainwp_invalid_input',
-                __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
-                array( 'status' => 400 )
-            );
-        }
-
-        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
-
-        // If empty, get all sites for current user.
-        if ( empty( $identifiers ) ) {
-            $all_sites = MainWP_DB::instance()->get_websites_for_current_user( array( 'selectgroups' => false ) );
-
-            // Handle potential errors from DB query.
-            if ( is_wp_error( $all_sites ) ) {
-                return $all_sites;
-            }
-
-            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
-            if ( 'all' !== $allowed ) {
-                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
-            }
-
-            $identifiers = array_map(
-                function ( $s ) {
-                    return (int) $s->id;
-                },
-                $all_sites ? $all_sites : array()
-            );
+        // Suspending is disruptive: the sites must be listed explicitly,
+        // an empty list is rejected rather than expanded to every site.
+        $identifiers = MainWP_Abilities_Util::validate_site_identifiers( $input, true );
+        if ( is_wp_error( $identifiers ) ) {
+            return $identifiers;
         }
 
         // Resolve sites and enforce per-site ACLs.

@@ -896,6 +896,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $filter_dtsstop              = '';
         $array_clients_ids           = array();
         $array_groups_ids            = array();
+        $array_users_ids             = array();
         $array_usersfilter_sites_ids = array();
 
         $sources_conds     = '';
@@ -960,6 +961,15 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'sites_ids'             => $array_sites_ids,
             'events'                => $array_events_list,
         );
+
+        if ( isset( $insights_filters['filter_agent'] ) && 'mainwp_mcp' === $insights_filters['filter_agent'] ) {
+            $args['agent'] = 'mainwp_mcp';
+        }
+
+        // Forward validated user IDs to Log_Query.
+        if ( ! empty( $array_users_ids ) && is_array( $array_users_ids ) ) {
+            $args['user_ids'] = $array_users_ids;
+        }
 
         if ( isset( $_REQUEST['optimize_table'] ) && 1 === intval( $_REQUEST['optimize_table'] ) ) { //phpcs:ignore --ok.
             $args['optimize']           = 1;
@@ -1165,6 +1175,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
                                     if('mainwp_module_log_manage_events_display_rows' === ajax_action ){
                                         data.source =  $( '#mainwp-module-log-filter-source').length ? $( '#mainwp-module-log-filter-source').dropdown('get value') : '';
+                                        if ( $( '#mainwp-module-log-filter-agent').length ) {
+                                            data.agent = $( '#mainwp-module-log-filter-agent').dropdown('get value');
+                                        }
                                         data.sites =  $( '#mainwp-module-log-filter-sites').length ? $( '#mainwp-module-log-filter-sites').dropdown('get value') : '';
                                         data.events =  $( '#mainwp-module-log-filter-events').length ? $( '#mainwp-module-log-filter-events').dropdown('get value') : '';
                                     } else {
@@ -1185,6 +1198,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                         if ( 'mainwp_module_log_manage_events_display_rows' === ajax_action ) {
                                             if (
                                                 ( data.source === '' || data.source === 'allsource' ) &&
+                                                ( typeof data.agent === 'undefined' || data.agent === '' ) &&
                                                 ( data.events === '' || data.events === 'allevents' ) &&
                                                 ( data.sites === '' || data.sites === 'allsites' ) &&
                                                 ( data.group === '' || data.group === 'alltags' ) &&

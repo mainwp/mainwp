@@ -188,7 +188,10 @@ class MainWP_Assistant_ChatGPT_Plan extends MainWP_Post_Base_Handler {
             static function () use ( $user_id, $pasted ) {
                 $pending = get_user_meta( $user_id, self::PENDING, true );
                 $query   = self::callback_query( $pasted );
-                if ( is_wp_error( $query ) || ! is_array( $pending ) || empty( $pending['state'] ) || ! isset( $query['state'] ) || ! is_string( $query['state'] ) || ! hash_equals( $pending['state'], $query['state'] ) || ! hash_equals( $pending['session'], hash( 'sha256', wp_get_session_token() ) ) || $pending['created'] > time() || time() - $pending['created'] >= 15 * MINUTE_IN_SECONDS ) {
+                if ( is_wp_error( $query ) ) {
+                    return $query;
+                }
+                if ( ! is_array( $pending ) || empty( $pending['state'] ) || ! isset( $query['state'] ) || ! is_string( $query['state'] ) || ! hash_equals( $pending['state'], $query['state'] ) || ! hash_equals( $pending['session'], hash( 'sha256', wp_get_session_token() ) ) || $pending['created'] > time() || time() - $pending['created'] >= 15 * MINUTE_IN_SECONDS ) {
                     return self::error( 'invalid_callback' );
                 }
                 // Consume before any exchange, including callbacks that report a denied grant.
@@ -297,13 +300,23 @@ class MainWP_Assistant_ChatGPT_Plan extends MainWP_Post_Base_Handler {
      * @return array|\WP_Error
      */
     private static function callback_query( $pasted ) {
-        $pasted = trim( $pasted );
+        // Copying from an address bar picks up line breaks, quotes, a missing
+        // http:// or a trailing slash. None of that changes which
+        // sign-in the address belongs to; the state check in complete_connect() does.
+        $pasted = trim( (string) preg_replace( '/\s+/', '', (string) $pasted ), '"\'<>' );
         if ( '' === $pasted || strlen( $pasted ) > 16384 ) {
             return self::error( 'invalid_callback' );
         }
+        if ( preg_match( '#^127\.0\.0\.1:1456/#', $pasted ) ) {
+            $pasted = 'http://' . $pasted;
+        }
         if ( false !== strpos( $pasted, '://' ) ) {
-            $url = wp_parse_url( $pasted );
-            if ( ! is_array( $url ) || 'http' !== ( $url['scheme'] ?? '' ) || '127.0.0.1' !== ( $url['host'] ?? '' ) || '/auth/callback' !== ( $url['path'] ?? '' ) || 1456 !== ( $url['port'] ?? 0 ) || isset( $url['user'] ) || isset( $url['pass'] ) || isset( $url['fragment'] ) ) {
+            $url  = wp_parse_url( $pasted );
+            $host = is_array( $url ) ? strtolower( (string) ( $url['host'] ?? '' ) ) : '';
+            if ( preg_match( '/(?:^|\.)(?:openai|chatgpt)\.com$/', $host ) ) {
+                return self::error( 'signin_address' );
+            }
+            if ( ! is_array( $url ) || 'http' !== strtolower( (string) ( $url['scheme'] ?? '' ) ) || '127.0.0.1' !== $host || '/auth/callback' !== rtrim( (string) ( $url['path'] ?? '' ), '/' ) || 1456 !== ( $url['port'] ?? 0 ) || isset( $url['user'] ) || isset( $url['pass'] ) ) {
                 return self::error( 'invalid_callback' );
             }
             $pasted = $url['query'] ?? '';

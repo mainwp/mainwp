@@ -691,6 +691,11 @@
                 $plan.append( $( '<p></p>' ).text( text( status.status === 'plan_disabled' ? 'disabled' : 'reconnect' ) ) );
             }
             if ( config().can_connect === true ) {
+                // The settings page is where people read before they start, so
+                // the error page the sign-in ends on is no surprise.
+                if ( 'settings' === source && ! status.connected ) {
+                    $plan.append( signinSteps() );
+                }
                 $plan.append( connectButton( compact, false ) );
                 if ( status.status === 'disconnected' && ( status.email || status.client_id ) ) {
                     $plan.append( button( 'different', function() { openConnect( true ); }, false, compact ) );
@@ -739,14 +744,7 @@
         $modal = $( '<div id="mainwp-assistant-chatgpt-modal" class="ui small modal mainwp-assistant-connection-modal" role="dialog" aria-modal="true" aria-labelledby="mainwp-assistant-chatgpt-title"><div class="header" id="mainwp-assistant-chatgpt-title"></div><div class="content"><div data-step="start"></div><div data-step="paste" hidden><p></p><div class="ui form"><div class="field"><label for="mainwp-assistant-chatgpt-callback"></label><div class="ui fluid action input"><input id="mainwp-assistant-chatgpt-callback" type="text" autocomplete="off" spellcheck="false" autocapitalize="off"><button type="button" class="ui basic button" data-paste hidden></button></div></div></div><p class="mainwp-assistant-chatgpt-reopen" data-reopen hidden><a target="_blank" rel="noopener noreferrer"></a></p></div><div class="ui message" data-notice hidden role="status"></div><div class="ui red message" data-error hidden role="alert"></div></div><div class="actions"></div></div>' ).appendTo( 'body' );
         $modal.find( '.header' ).text( text( 'plan_title' ) );
         // The sign-in ends on a loopback error page, so say so before the user leaves.
-        $modal.find( '[data-step="start"]' ).append(
-            $( '<p></p>' ).text( text( 'plan_detail' ) ),
-            $( '<ol class="mainwp-assistant-chatgpt-steps"></ol>' ).append(
-                $( '<li></li>' ).text( text( 'step_signin' ) ),
-                $( '<li></li>' ).text( text( 'step_error' ) ),
-                $( '<li></li>' ).text( text( 'step_paste' ).replace( '%s', copyKeys() ) )
-            )
-        );
+        $modal.find( '[data-step="start"]' ).append( $( '<p></p>' ).text( text( 'plan_detail' ) ), signinSteps() );
         $modal.find( '[data-step="paste"] > p:first-child' ).text( text( 'paste_detail' ).replace( '%s', copyKeys() ) );
         $modal.find( 'label' ).text( text( 'callback' ) );
         $modal.find( '[data-reopen] a' ).text( text( 'reopen' ) );
@@ -792,6 +790,37 @@
         return $modal;
     }
 
+    // The account email stays off screen (screen shares, recordings) until
+    // the user hovers or clicks to see which account is connected.
+    function accountLine() {
+        var $line = $( '<p class="mainwp-assistant-plan-account"></p>' ), labelled = false;
+        if ( status.connected ) {
+            $line.append( $( '<span></span>' ).text( text( 'connected' ) ) );
+            labelled = true;
+        }
+        if ( status.email ) {
+            var $reveal = $( '<a href="#" role="button"></a>' ).text( text( 'show_account' ) )
+                .attr( 'data-tooltip', status.email ).attr( 'data-inverted', '' ).attr( 'data-position', 'top left' );
+            $reveal.on( 'click', function( event ) {
+                event.preventDefault();
+                $reveal.replaceWith( $( '<span></span>' ).text( status.email ) );
+            } );
+            if ( labelled ) {
+                $line.append( $( '<span></span>' ).text( ' · ' ) );
+            }
+            $line.append( $reveal );
+        }
+        return $line;
+    }
+
+    function signinSteps() {
+        return $( '<ol class="mainwp-assistant-chatgpt-steps"></ol>' ).append(
+            $( '<li></li>' ).text( text( 'step_signin' ) ),
+            $( '<li></li>' ).text( text( 'step_error' ) ),
+            $( '<li></li>' ).text( text( 'step_paste' ).replace( '%s', copyKeys() ) )
+        );
+    }
+
     // Name the copy shortcut the reader's keyboard has.
     function copyKeys() {
         var nav = root.navigator || {};
@@ -825,11 +854,27 @@
 
     // Only a quick shape check so obvious mistakes never auto-submit. The
     // server validates the address against the pending sign-in.
+    // Copies can carry line breaks, quotes, no http:// or a trailing slash;
+    // the server accepts the same variations.
+    function pastedUrl( value ) {
+        var raw = String( value || '' ).replace( /\s+/g, '' ).replace( /^["'<]+|["'>]+$/g, '' );
+        if ( /^127\.0\.0\.1:1456\//.test( raw ) ) {
+            raw = 'http://' + raw;
+        }
+        try { return new URL( raw ); } catch ( e ) { return null; }
+    }
+
     function isCallback( value ) {
-        var url;
-        try { url = new URL( String( value || '' ).trim() ); } catch ( e ) { return false; }
-        return url.protocol === 'http:' && url.hostname === '127.0.0.1' && url.pathname === '/auth/callback' &&
+        var url = pastedUrl( value );
+        return !! url && url.protocol === 'http:' &&
+            url.hostname === '127.0.0.1' && url.port === '1456' &&
+            url.pathname.replace( /\/+$/, '' ) === '/auth/callback' &&
             url.searchParams.has( 'state' ) && ( url.searchParams.has( 'code' ) || url.searchParams.has( 'error' ) );
+    }
+
+    function isSigninPage( value ) {
+        var url = pastedUrl( value );
+        return !! url && /(^|\.)(openai|chatgpt)\.com$/i.test( url.hostname );
     }
 
     function pasteFromClipboard() {
@@ -843,7 +888,7 @@
                 $input.val( String( value ).trim() );
                 complete();
             } else {
-                error( $modal.find( '[data-error]' ), 'clipboard_no_callback' );
+                error( $modal.find( '[data-error]' ), isSigninPage( value ) ? 'signin_address' : 'clipboard_no_callback' );
                 $input.trigger( 'focus' );
             }
         }, function() {
@@ -960,7 +1005,13 @@
             publish( response.data, true );
             if ( ! response.success ) {
                 error( $modal.find( '[data-error]' ), response.data.error_code );
-                offerRetry( $modal );
+                // The sign-in page's address leaves the attempt unused: the user
+                // still approves in that tab and pastes the next address.
+                if ( 'signin_address' === response.data.error_code ) {
+                    $modal.find( 'input' ).trigger( 'focus' );
+                } else {
+                    offerRetry( $modal );
+                }
                 return;
             }
             $modal.modal( 'hide' );
@@ -1039,7 +1090,7 @@
         var hasPlan = status.connected || status.status === 'needs_reconnect' || status.status === 'plan_disabled';
         if ( hasPlan ) {
             var $plan = $( '<section class="ui segment mainwp-assistant-plan-card"></section>' );
-            $plan.append( $( '<h3></h3>' ).text( text( 'plan_title' ) ), $( '<p></p>' ).text( status.email || '' ) );
+            $plan.append( $( '<h3></h3>' ).text( text( 'plan_title' ) ), accountLine() );
             if ( status.connected ) {
                 var $form = $( '<div class="ui form"><div class="field"><label for="mainwp-assistant-chatgpt-model"></label></div></div>' );
                 var $models = $( '<select id="mainwp-assistant-chatgpt-model" class="ui dropdown"></select>' );
@@ -1080,6 +1131,13 @@
                 publish( response.data, true );
             } else {
                 renderSettings();
+            }
+            // AI Connection renders "Sites mode uses your ChatGPT plan" on the
+            // server, so after a disconnect it would contradict the card. A
+            // notice the user must read keeps the page.
+            if ( 'disconnect' === action && response && response.success && response.data && ! response.data.connected && ! response.data.notice && $( '.mainwp-assistant-site-connection[data-plan-connected="1"]' ).length ) {
+                root.location.reload();
+                return;
             }
             if ( ! response || ! response.success ) {
                 error( $card.find( '[data-plan-error]' ), response && response.data && response.data.error_code );

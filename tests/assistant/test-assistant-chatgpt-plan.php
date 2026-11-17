@@ -686,6 +686,65 @@ class Test_Assistant_ChatGPT_Plan extends MainWP_Assistant_Test_Case {
 	}
 
 	/**
+	 * Ordinary copy mistakes still read as the same callback.
+	 *
+	 * @return void
+	 */
+	public function test_copied_callback_variations_parse() {
+		$parse = new \ReflectionMethod( Plan::class, 'callback_query' );
+		$parse->setAccessible( true );
+		$url      = 'http://127.0.0.1:1456/auth/callback?code=ac.1.AAAq0x&scope=openid+email&state=s-123&iss=https%3A%2F%2Fauth.openai.com&client_id=oaiapp_test';
+		$variants = array(
+			'exact'          => $url,
+			'no scheme'      => substr( $url, strlen( 'http://' ) ),
+			'line breaks'    => "  \n" . substr( $url, 0, 50 ) . "\n" . substr( $url, 50 ) . " \n",
+			'quotes'         => '"' . $url . '"',
+			'angle brackets' => '<' . $url . '>',
+			'trailing slash' => str_replace( '/auth/callback?', '/auth/callback/?', $url ),
+			'fragment'       => $url . '#',
+			'query only'     => '?' . wp_parse_url( $url, PHP_URL_QUERY ),
+		);
+		foreach ( $variants as $label => $pasted ) {
+			$query = $parse->invoke( null, $pasted );
+			$this->assertIsArray( $query, $label );
+			$this->assertSame( 's-123', $query['state'], $label );
+			$this->assertSame( 'ac.1.AAAq0x', $query['code'], $label );
+		}
+		foreach ( array( str_replace( '127.0.0.1', 'localhost', $url ), 'http://127.0.0.1:1455/auth/callback?state=s', 'http://example.com:1456/auth/callback?state=s', 'http://127.0.0.1:1456/other?state=s', 'http://user:pass@127.0.0.1:1456/auth/callback?state=s' ) as $wrong ) {
+			$this->assertSame( 'invalid_callback', $parse->invoke( null, $wrong )->get_error_code(), $wrong );
+		}
+	}
+
+	/**
+	 * A messy paste completes the real connection.
+	 *
+	 * @return void
+	 */
+	public function test_messy_paste_connects() {
+		$pending               = $this->start();
+		$this->claims['nonce'] = $pending['nonce'];
+		$this->token_reply     = $this->response( $this->tokens() );
+		$pasted                = str_replace( array( 'http://', '/auth/callback?' ), array( '', '/auth/callback/?' ), $this->callback_url() );
+		$result                = Plan::complete_connect( $this->user_id, "\n" . $pasted . "\n" );
+		$this->assertIsArray( $result );
+		$this->assertTrue( $result['connected'] );
+	}
+
+	/**
+	 * Pasting the sign-in page's own address names that mistake and keeps the attempt.
+	 *
+	 * @return void
+	 */
+	public function test_signin_page_address_keeps_the_attempt() {
+		$this->start();
+		$pending = get_user_meta( $this->user_id, Plan::PENDING, true );
+		$result  = Plan::complete_connect( $this->user_id, 'https://auth.openai.com/oauth/authorize?response_type=code&state=' . $pending['state'] );
+		$this->assertSame( 'signin_address', $result->get_error_code() );
+		$this->assertSame( $pending, get_user_meta( $this->user_id, Plan::PENDING, true ) );
+		$this->assertCount( 0, $this->calls( Plan::TOKEN ) );
+	}
+
+	/**
 	 * Untrusted claims must not create usable credentials.
 	 *
 	 * @return void

@@ -199,7 +199,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <label class="six wide column middle aligned"><?php esc_html_e( 'Keep last', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <input type="number" name="mainwp-backup-retention-count" id="mainwp-backup-retention-count" min="0" placeholder="<?php esc_attr_e( 'No limit', 'mainwp' ); ?>" value="<?php echo $retention_count > 0 ? esc_attr( $retention_count ) : ''; ?>"/>
-                <span class="ui small text"><?php esc_html_e( 'Number of backups to keep per site. Older backups are removed once newer ones complete, and the most recent backup always stays.', 'mainwp' ); ?></span>
+                <span class="ui small text"><?php esc_html_e( 'Number of backups to keep per site. Older backups are removed once newer ones complete, and the most recent backup always stays.', 'mainwp' ); ?> <?php esc_html_e( 'For incremental backups, Keep last counts whole chains per site and task, including each full backup and its incremental restore points.', 'mainwp' ); ?></span>
             </div>
         </div>
         <div class="ui grid field">

@@ -1396,16 +1396,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             exit;
         }
 
-        $request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-        $_pos        = strlen( $request_uri ) - strlen( '/wp-admin/' );
-        if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) === $_pos ) {
-            $referer = wp_get_referer();
-            if ( ! empty( $referer ) && strpos( $referer, 'wp-login.php?redirect_to' ) !== false && strpos( $referer, '&reauth=1' ) !== false && \mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
-                wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-                die();
-            }
-        }
-
         MainWP_Logger::instance()->check_log_daily();
     }
 

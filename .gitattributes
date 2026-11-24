@@ -16,6 +16,7 @@ phpunit.xml.dist export-ignore
 phpunit.integration.xml.dist export-ignore
 phpcs-tests.xml export-ignore
 phpdoc.dist.xml export-ignore
+investigation export-ignore
 
 # force everything to have Unix-style line endings (LF), except for Windows batch files that require CRLF:
 * text=auto eol=lf

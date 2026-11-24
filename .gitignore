@@ -22,3 +22,6 @@ composer.lock
 
 # Internal investigation notes (MWP-2469)
 /investigation/
+
+# Internal notes, plans and investigations (never commit)
+/.mwpdev/

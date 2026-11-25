@@ -168,7 +168,7 @@ MainWP is pronounced as the word "Main" followed by the letters "WP" ("double-u 
 * Fixed: Logging in through WordPress now respects the requested destination or custom login redirect.
 * Fixed: Manage Users can list and filter users when a connected site has missing or incomplete cached user data.
 * Fixed: Cost Tracker excludes subscriptions without a renewal date from upcoming renewals.
-* Updated: Excluded internal investigation notes from the plugin package.
+* Updated: Refined packaging rules to exclude development-only files.
 * Updated: Refreshed the plugin description, installation instructions, and frequently asked questions.
 
 = 6.5 - 11-17-2026 =

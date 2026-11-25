@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 6.5
+Stable tag: 6.5.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -162,6 +162,13 @@ MainWP is pronounced as the word "Main" followed by the letters "WP" ("double-u 
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.5.1 - 11-25-2026 =
+
+* Fixed: Logging in through WordPress now respects the requested destination or custom login redirect.
+* Fixed: Manage Users can list and filter users when a connected site has missing or incomplete cached user data.
+* Updated: Excluded internal investigation notes from the plugin package.
+* Updated: Refreshed the plugin description, installation instructions, and frequently asked questions.
 
 = 6.5 - 11-17-2026 =
 

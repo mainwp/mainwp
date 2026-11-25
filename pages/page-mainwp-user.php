@@ -1098,15 +1098,19 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             if ( $dbwebsites ) {
                 foreach ( $dbwebsites as $website ) {
-                    $allUsers         = json_decode( $website->users, true );
+                    $allUsers         = static::get_valid_cached_users( $website->users ?? '' );
                     $allUsersCount    = count( $allUsers );
                     $search_user_role = array();
                     if ( $check_users_role ) {
                         for ( $i = 0; $i < $allUsersCount; $i++ ) {
-                            $user = $allUsers[ $i ];
+                            $user       = $allUsers[ $i ];
+                            $user_roles = is_array( $user['role'] ) ? implode( ',', $user['role'] ) : $user['role'];
+                            if ( '' === $user_roles ) {
+                                continue;
+                            }
                             foreach ( $roles as $_role ) {
-                                if ( stristr( $user['role'], $_role ) ) {
-                                    if ( ! in_array( $user['id'], $search_user_role ) ) {
+                                if ( false !== stristr( $user_roles, $_role ) ) {
+                                    if ( ! in_array( $user['id'], $search_user_role, true ) ) {
                                         $search_user_role[] = $user['id'];
                                     }
                                     break;
@@ -1116,11 +1120,17 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     }
                     for ( $i = 0; $i < $allUsersCount; $i++ ) {
                         $user = $allUsers[ $i ];
-                        if ( ! empty( $search ) && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
+
+                        if (
+                            ! empty( $search ) &&
+                            false === stristr( $user['login'], trim( $search ) ) &&
+                            false === stristr( $user['display_name'], trim( $search ) ) &&
+                            false === stristr( $user['email'], trim( $search ) )
+                        ) {
                             continue;
                         }
 
-                        if ( $check_users_role && ! in_array( $user['id'], $search_user_role ) ) {
+                        if ( $check_users_role && ! in_array( $user['id'], $search_user_role, true ) ) {
                             continue;
                         }
 
@@ -1217,6 +1227,71 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( empty( $output->users ) ) {
             static::render_cache_not_found();
         }
+    }
+
+    /**
+     * Validate cached records once, before filtering or rendering them.
+     *
+     * @param mixed $data Cached JSON user list.
+     * @return array Valid users with defaults for optional legacy fields.
+     */
+    private static function get_valid_cached_users( $data ) {
+        $users = is_string( $data ) && '' !== $data ? json_decode( $data, true ) : array();
+        if ( ! is_array( $users ) ) {
+            return array();
+        }
+
+        $valid_users = array();
+        foreach ( $users as $user ) {
+            if ( ! is_array( $user ) || ! isset( $user['id'] ) || ( ! is_int( $user['id'] ) && ! is_string( $user['id'] ) ) ) {
+                continue;
+            }
+            $id = filter_var( $user['id'], FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) );
+            if ( false === $id ) {
+                continue;
+            }
+
+            foreach ( array( 'login', 'display_name', 'email', 'password_status' ) as $field ) {
+                if ( isset( $user[ $field ] ) && ! is_string( $user[ $field ] ) ) {
+                    continue 2;
+                }
+                $user[ $field ] = $user[ $field ] ?? '';
+            }
+            if ( '' === trim( $user['login'] ) ) {
+                continue;
+            }
+
+            // The existing renderer supports both a role string and a list of role strings.
+            $user['role'] = $user['role'] ?? '';
+            if ( is_array( $user['role'] ) ) {
+                foreach ( $user['role'] as $role ) {
+                    if ( ! is_string( $role ) ) {
+                        continue 2;
+                    }
+                }
+            } elseif ( ! is_string( $user['role'] ) ) {
+                continue;
+            }
+
+            foreach ( array( 'post_count', 'last_password_change', 'password_due_time' ) as $field ) {
+                $value = $user[ $field ] ?? 0;
+                if ( '' === $value ) {
+                    $value = 0;
+                }
+                if ( ! is_int( $value ) && ! is_string( $value ) ) {
+                    continue 2;
+                }
+                $value = filter_var( $value, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 0 ) ) );
+                if ( false === $value ) {
+                    continue 2;
+                }
+                $user[ $field ] = $value;
+            }
+
+            $user['id']    = $id;
+            $valid_users[] = $user;
+        }
+        return $valid_users;
     }
 
     /**

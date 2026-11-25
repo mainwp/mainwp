@@ -1,142 +1,151 @@
-=== MainWP Dashboard: Self-hosted WordPress Management for Agencies ===
+=== MainWP Dashboard: Self-Hosted WordPress Management, Backups & MCP ===
 Contributors: mainwp
-Tags: manage multiple WordPress sites, WordPress maintenance, update, backups, security
+Tags: manage multiple WordPress sites, update, backups, uptime monitoring, mcp
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 6.5
+Stable tag: 6.5.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Run updates, backups, security and reporting across all client sites from your own server. Keep data private and prove your value with branded reports.
+Manage multiple WordPress sites from your own server. Run free bulk updates, built-in backups, uptime monitoring, client tracking, AI, and MCP.
 
 == Description ==
 
-Managing multiple WordPress sites can be a time-consuming and frustrating task. The [MainWP Dashboard](https://mainwp.com/) empowers you to take back your time by allowing you to efficiently manage and secure all your WordPress sites from your own centralized Dashboard.
+Updating plugins, themes, and WordPress core across client sites one login at a time eats into every week. [MainWP Dashboard](https://mainwp.com/) puts every WordPress site you maintain in one self-hosted control center, so WordPress professionals and agencies save hours on weekly WordPress maintenance and protect care-plan margins without per-site SaaS fees.
 
-Designed for agencies, freelancers, and web professionals, MainWP offers comprehensive control with a privacy-first approach. Harness the power of MainWP for updates, backups, and more, ensuring your sites are always running smoothly and securely.
+The free MainWP Core pairs two open-source plugins: **MainWP Dashboard** runs on a dedicated WordPress site you control, and **[MainWP Child](https://wordpress.org/plugins/mainwp-child/)** runs on each site you manage. There is no site cap, and your site lists, client profiles, cost entries, and activity logs stay in your own WordPress database.
 
-**Features for Advanced WordPress Management:**
+Over 20,000 MainWP Dashboards manage over 700,000 child sites, and MainWP holds a 4.9-star rating from over 2,300 reviews on WordPress.org.
 
-* Centralized Updates: Keep all your WordPress sites up-to-date with single-click updates.
-* Secure Backups: Implement scheduled or on-demand backups for complete site security.
-* Manage both your sites and your clients with the Client Management module
-* The built-in Cost Tracker allows you to easily keep track of client costs
-* Private and Self-hosted: Your data stays yours, with full privacy and control.
+= What You Get in the Free MainWP Core =
 
-**Stop the Software as a Service (SaaS) Treadmill:**
+* **Centralized updates and Safe Updates:** Run bulk or per-site updates for WordPress core, plugins, themes, and translations, including premium plugins. Automate trusted updates, review plugin and theme change history, ignore specific updates, spot abandoned items, roll back plugin and theme updates automatically if one hits an error, and require a recent backup before updates run from Manage Sites, Updates, Plugins, or Themes.
+* **Daily site management:** Log in to any child site's WP Admin in one click without typing a password, and manage plugins, themes, users, posts, and pages across your network. Organize sites with tags, reconnect accessible disconnected sites from the Connection Status widget, and jump to pages or sites with the **Command Palette** (`Command + K` / `Ctrl + K`).
+* **Built-In Backups and API Backups:** Schedule or run full, database-only, files-only, and incremental WordPress backups without a separate backup plugin, and keep copies on your MainWP Dashboard server (including a mounted local path), S3-compatible storage (including Amazon S3, Wasabi, and Backblaze B2), Google Cloud Storage, Dropbox, pCloud (US and EU), or SFTP with optional archive encryption. Weekly **Test Restore** verifies each site's newest backup, **Roll Back** undoes a restore from its safety backup, and **MainWP API Backups** triggers host-level backups on cPanel, Plesk, Kinsta, Cloudways, GridPane, Vultr, Akamai (Linode), and DigitalOcean.
+* **Uptime and Site Health monitoring:** Run built-in uptime monitoring directly from your MainWP Dashboard with HTTP(s), Ping, or Keyword monitors on intervals from 5 minutes to 24 hours. Receive down and recovery email alerts, track WordPress Site Health, and run post-update HTTP checks.
+* **Client profiles and Cost Tracker:** Organize sites under client profiles with contacts, notes, custom fields, tags, CSV import, and one-click client suspension. Track recurring subscriptions and one-time hosting, plugin, theme, and service expenses in **Cost Tracker**, review monthly and yearly totals plus upcoming renewals in Cost Summary charts, and export chart data as SVG, PNG, or CSV.
+* **Network Activity and Dashboard Insights:** Audit actions taken in your MainWP Dashboard and directly in each child site's WP Admin (Non-MainWP Changes). Filter events by site, user, source, date, or **MainWP MCP** activity, save filters as segments, and view summaries plus MainWP Assistant usage in Dashboard Insights.
+* **Automation, APIs, and appearance:** Script workflows with MainWP REST API v2, `wp mainwp` WP-CLI commands, the free, open-source [MainWP Control](https://mainwp.com/mainwp-tools/mainwp-control/) CLI, and over 1,000 hooks and filters. Switch between Light, Dark, and System appearance modes and arrange widgets to fit your workflow.
 
-Built on WordPress's core principles, the MainWP Dashboard plugin is uniquely positioned as the go-to solution for WordPress management. It combines ease of use with robust features and unmatched privacy.
+= Built-In AI: MainWP Assistant, MainWP MCP, and Knowledge =
 
-The MainWP plugins are open-source and privacy-focused and come with their own privacy policies to ensure that the plugins do not collect any personally identifiable information (PII).
+Put AI assistants to work across your connected WordPress sites from your MainWP Dashboard while you stay in charge of every change. Built into the free MainWP Core in Dashboard 6.5, with no extra plugins required on your child sites:
 
-The MainWP Dashboard is extendable, allowing third-party developers to hook into it. It also provides support for CLI and has its own REST API, so anything you need or want to run your business your way can be developed for your MainWP Dashboard.
+* **MainWP Assistant (in-Dashboard AI chat):** Open the built-in chat panel from **Assistant** in your sidebar, the Support modal, or the Command Palette. **Docs** mode answers MainWP questions from official documentation with no AI key, and **Sites** mode works with your connected sites through your ChatGPT plan or AI provider key, starting in Read Only mode with confirmation prompts, protected tags, and daily spend limits.
+* **MainWP MCP (WordPress MCP server and direct connections):** Your Dashboard registers over 100 core abilities with the WordPress Abilities API. Connect apps such as claude.ai, ChatGPT, Claude Code, Cursor, and VS Code directly to your Dashboard over OAuth 2.1 under **AI > MainWP MCP > Connect an app** with no local install and no MainWP service in between, or run the free, open-source local [MainWP MCP](https://mainwp.com/mainwp-tools/mainwp-mcp/) server for private Dashboards.
+* **MainWP Knowledge:** Save Agency, Client, and Site standards (Context, Skills, and Memory) in your Dashboard so AI assistants load your rules before planning, while AI-written records wait on the **Review** tab for your approval.
 
-All of this makes MainWP the best non-SaaS alternative to ManageWP, InfiniteWP, WPRemote, and WP Umbrella.
+Explore workflows and safety controls on [MainWP AI](https://mainwp.com/mainwp-ai/).
 
-**Getting Started with MainWP:**
+= Privacy, Open Source, and Data Ownership =
 
-MainWP is designed to be user-friendly and intuitive, even for those new to WordPress management plugins. With a straightforward setup process and a clean, organized dashboard, you'll be able to start managing your WordPress sites efficiently in no time.
+Your MainWP Dashboard runs on your own WordPress site rather than a third-party SaaS server, keeping site lists, client profiles, cost entries, and activity logs in your own database. The free MainWP Dashboard and MainWP Child plugins include no telemetry or tracking by default. Review the [MainWP Plugin Privacy Policy](https://mainwp.com/privacy-policy/mainwp-plugin-privacy-policy/) and [Privacy & Data Handling](https://docs.mainwp.com/getting-started/are-you-guys-watching-what-i-am-doing) for full details.
 
-* Setting up MainWP is straightforward, install the dashboard on a private WordPress site, add the MainWP Child plugin to your other WordPress sites, and take control.
+[MainWP Dashboard](https://github.com/mainwp/mainwp), [MainWP Child](https://github.com/mainwp/mainwp-child), [MainWP MCP](https://github.com/mainwp/mainwp-mcp), and [MainWP Control](https://github.com/mainwp/mainwp-control) are open source under the GPL on GitHub so you can inspect the code. When you enable optional cloud backup storage, an external AI provider, or MainWP Assistant Docs mode (which sends MainWP documentation questions to the MainWP documentation service), requests go directly to the service you choose under its terms.
 
-**Your Guarantee of Privacy**
+= How MainWP Stays Free: Core, Essentials, and Pro =
 
-The MainWP plugins come with their own [privacy policies](https://mainwp.com/mainwp-plugin-privacy-policy/) to ensure that the plugins do not collect any personally identifiable information (PII).
+The free MainWP Core stays free for unlimited WordPress sites, whether you manage 5 sites or 500+. See every included feature on [MainWP Core Features](https://mainwp.com/mainwp-free-features/).
 
-**How Is MainWP Free? What’s the Catch? How Will You Continue to Pay Development Costs?**
+* **MainWP Essentials (free add-ons):** Over 10 free MainWP add-ons extend your MainWP Dashboard with a free MainWP.com account, including Vulnerability Checker, Jetpack Protect, Patchstack, MainWP Sucuri, BackWPup, UpdraftPlus, Custom Dashboard, Dashboard Lock, and Early Access.
+* **[MainWP Pro](https://mainwp.com/signup/) Integrations (flat-rate paid plan):** Connect third-party tools you already use, such as Wordfence, Solid Security, WP Rocket, WP Staging, MainWP Cache Control, Yoast SEO, Google Analytics, Matomo, Fathom, Google Search Console, and Pressable.
+* **[MainWP Pro](https://mainwp.com/signup/) Extensions (flat-rate paid plan):** MainWP-built add-ons for agencies and growing teams, including MainWP Pro Reports (scheduled branded client reports), MainWP White Label, MainWP Team Control, MainWP Clone, MainWP Maintenance, MainWP Code Snippets, and MainWP SSL Monitor. One flat plan covers unlimited sites, over 30 premium add-ons, and priority ticket support.
 
-MainWP Dashboard is [100% FREE](https://mainwp.com/mainwp-free-features/) and always will be. Whether you manage 5 sites or 5,000, the core dashboard remains free.
+Browse the catalog on [MainWP Add-ons](https://mainwp.com/mainwp-add-ons/) and compare plans on [MainWP Core vs Pro](https://mainwp.com/free-vs-pro/).
 
-We make money by offering [MainWP Pro](https://mainwp.com/signup/), which provides access to a wide range of premium add-ons. These premium add-ons are organized into two clear categories:
+= Get Started =
 
-- **Integrations:**
- Add-ons in this category enable seamless connections with popular third-party services and plugins, allowing you to integrate the tools you already use directly into your MainWP Dashboard.
-
-- **Extensions:**
- These are custom-built, standalone add-ons developed exclusively for the MainWP Dashboard, designed to add unique and specialized functionality to enhance your WordPress management experience.
-
-For more details, visit our [Premium Add-ons](https://mainwp.com/mainwp-add-ons/) page and see how our free and pro features compare at [Free vs. Pro: Know the Difference](https://mainwp.com/free-vs-pro/).
-
-**Experience the MainWP Difference**
-
-Are you ready to take the hassle out of managing your WordPress sites? MainWP makes it easy to keep everything updated, secure, and running just the way you need it. With over 20k site owners trusting MainWP with over 700k WordPress sites, every day, you'll quickly see how much simpler website management can be. Try it today and feel the difference for yourself!
+Install MainWP Dashboard on a dedicated WordPress site, add [MainWP Child](https://wordpress.org/plugins/mainwp-child/) to each site you manage, and follow the [MainWP installation overview](https://mainwp.com/install-mainwp/) or the [Getting Started with MainWP guide](https://docs.mainwp.com/getting-started/get-started-with-mainwp).
 
 == Installation ==
 
-= Note: MainWP is not tested on or designed for multisite installs. =
+= Single-site WordPress installation recommended =
 
-However, we have user reports that most functions work correctly, but support will be limited. We DO NOT recommend installing the MainWP Dashboard plugin on a multisite install.
+MainWP Dashboard is built and tested for standard single-site WordPress installations. Running it on its own dedicated single-site WordPress install keeps your MainWP Dashboard isolated from active client sites, multisite networks, and plugin conflicts.
 
-1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
-
-Using a new WordPress install will help reduce Plugin Conflicts and other issues caused by trying to run your MainWP Dashboard from an active site.
-
-Most hosting companies provide free subdomains ("demo.yourdomain.com"), and we recommend creating one if you do not have a specific dedicated domain to run your MainWP Dashboard. If you are not sure how to set up a subdomain, contact your hosting company's support.
-
-You can even install your MainWP Dashboard on a WordPress site located on your local computer using WAMP or any other setup that allows you to run [WordPress locally](https://make.wordpress.org/core/handbook/tutorials/installing-a-local-server/).
-
-2. Once you have set up the separate WordPress website, install the MainWP Dashboard plugin following your normal installation procedure, either the automatic process by searching MainWP or by uploading the MainWP plugin to the '/wp-content/plugins/' directory.
-
-3. Once installed then Activate the plugin through the Plugins menu in WordPress.
-
-4. Add your first Child Site to the MainWP Dashboard - [Documentation](https://docs.mainwp.com/getting-started/get-started-with-mainwp#add-a-site-to-your-dashboard)
-
-5. Set your MainWP Settings - [Documentation](https://docs.mainwp.com/sites/management/mainwp-dashboard-settings#mainwp-dashboard-settings)
+1. **Prepare a dedicated WordPress site:** Set up a fresh single-site WordPress install on a subdomain (such as `manage.yourdomain.com`), a separate domain, or a [local WordPress development environment](https://make.wordpress.org/core/handbook/tutorials/installing-a-local-server/). Your Dashboard site requires WordPress 6.2 or later and PHP 8.3 or later (WordPress 6.9 or later over HTTPS for the Abilities API and MainWP MCP; WordPress 7.0 or later for MainWP Assistant Sites mode).
+2. **Install MainWP Dashboard:** Search for **MainWP Dashboard** under **Plugins > Add New Plugin** in WP Admin, or upload the plugin folder to `/wp-content/plugins/`.
+3. **Activate and run setup:** Activate **MainWP Dashboard** from the **Plugins** menu and follow the Quick Setup Wizard.
+4. **Connect your first child site:** Install and activate [MainWP Child](https://wordpress.org/plugins/mainwp-child/) on a WordPress site you manage, then connect it to your Dashboard ([Add a Site to Your Dashboard](https://docs.mainwp.com/getting-started/get-started-with-mainwp#add-a-site-to-your-dashboard)).
+5. **Configure settings:** Review your update, backup, monitoring, and notification preferences ([MainWP Dashboard Settings](https://docs.mainwp.com/sites/management/mainwp-dashboard-settings)).
 
 == Frequently Asked Questions ==
 
-= What sets MainWP apart from other WordPress management platforms like ManageWP or InfiniteWP? =
-MainWP is a self-hosted, open-source WordPress management plugin that prioritizes user privacy and customization.
+= How is MainWP different from SaaS WordPress management tools? =
 
-Unlike SaaS (Software as a Service) platforms like ManageWP, WPUmbrella, or WPRemote, MainWP gives you complete control over your data and allows for extensive customization through its open-source architecture.
+MainWP is self-hosted and free for unlimited sites. Instead of paying per-site fees or keeping client records on a hosted platform such as ManageWP, WP Remote, or WP Umbrella, you run your MainWP Dashboard on your own WordPress install. MainWP Dashboard, MainWP Child, MainWP MCP, and MainWP Control are open source under the GPL on GitHub, and your Dashboard extends through hooks, filters, WP-CLI, REST API v2, and optional add-ons.
 
-= Can MainWP handle bulk updates for WordPress core, plugins, and themes? =
-Yes, MainWP makes it easy to perform bulk updates for WordPress core, plugins, and themes across all your managed sites. With just a few clicks, you can ensure all your sites are running the latest versions, saving you valuable time and effort.
+= How does MainWP secure connections to my client sites? =
 
-= How does MainWP help with client management for WordPress agencies and freelancers? =
-MainWP offers a robust client management system that allows you to organize sites by client, assign tags, and generate customizable client reports. This streamlines your workflow and helps you provide better service to your clients by keeping all their site information organized and easily accessible.
+Initial site setup verifies through administrator password authentication (used during initial setup and kept off your MainWP Dashboard and MainWP.com) or a Unique Security ID, or both. After connection, a per-site OpenSSL key pair signs requests between your Dashboard and each child site (defaulting to SHA256), with HTTPS encrypting traffic in transit. Unconnected MainWP Child installs auto-deactivate after 20 minutes by default. See [How Secure Is MainWP](https://mainwp.com/how-secure-is-mainwp/) and [MainWP Connection Security](https://docs.mainwp.com/advanced/miscellaneous/mainwp-connection-security).
 
-= Does MainWP offer any features for tracking costs associated with managing WordPress sites? =
-Yes, MainWP has a built-in Cost Tracker. This feature allows you to:
-* Record and categorize expenses for each site
-* Set up recurring costs
-* Generate detailed cost reports
-* Gain insights into your expenditure distribution
-* Track payments received and upcoming renewals
+= Can MainWP run bulk updates for WordPress core, plugins, themes, and translations? =
 
-= What security features does MainWP offer to protect my WordPress sites? =
-MainWP prioritizes security by providing features like real-time security monitoring, malware scanning, and vulnerability detection. The plugin also integrates with popular security plugins.
-
-= Can I use MainWP to manage WordPress sites hosted on different servers or hosting providers? =
-Yes, MainWP is designed to work with WordPress sites hosted on any server or hosting provider.
+Yes. Your MainWP Dashboard runs bulk or per-site updates for WordPress core, plugins, themes, and translations, including premium plugins. Trusted items can update automatically, Safe Updates restore the previous plugin or theme version automatically if an update hits an error (WordPress 6.3 or later), and a backup check can hold updates until a recent backup exists.
 
 = How does MainWP handle WordPress site backups? =
-MainWP offers multiple backup options, including built-in backup solutions for popular hosting providers and integrations with some of the most installed backup plugins.
 
-= How do you pronounce MainWP? =
-MainWP is a unique name that we created for our company, so it's understandable if you're unsure about how to pronounce it. Here's the easiest way to remember:
+The free MainWP Core includes **Built-In Backups** for scheduled and on-demand full, database-only, files-only, and incremental backups without a separate backup plugin. Backups support retention rules, optional archive encryption before remote upload, bulk backup deletion, weekly **Test Restore**, and safety-backup cleanup from Restore History once you verify a restored site (requires MainWP Child 6.5).
 
-**Main + WP = MainWP**
+MainWP Core also includes **MainWP API Backups** for host-level backups, and free add-ons connect BackWPup, UpdraftPlus, WP Time Capsule, Solid Backups, and WPvivid. See the [Built-In Backups guide](https://docs.mainwp.com/sites/backups/manage-backups).
 
-Think of it as the word "Main" followed by the letters "WP" (pronounced as "double-u pee"). In phonetic notation, it would look like this: /ˈmeɪn ˈdʌbəl juː ˈpiː/.
+= What security features come with MainWP Core vs. add-ons? =
 
-*But don't worry if you pronounce it differently – we answer to almost anything, including WP Main and WPMain!*
+The free MainWP Core helps you keep WordPress core, plugins, and themes patched quickly, runs basic built-in Site Hardening Checks across connected sites, and logs direct child-site changes in Network Activity.
 
-= I have an idea for MainWP; how do I let you know? =
-Please follow the steps outlined in the [MainWP Voice](https://voice.mainwp.com/) so you can add your idea to the MainWP Community to be voted on.
+For vulnerability detection, malware scanning, and security plugin management, free Essentials and third-party add-ons integrate MainWP Vulnerability Checker, Jetpack Protect, Patchstack, MainWP Sucuri, and Security Ninja. MainWP Pro adds integrations for Wordfence, Solid Security, Jetpack Scan, and Virusdie.
 
-= I have more questions. Do you have any other information? =
-Yes, we have a quick FAQ with many more questions and answers [here](https://mainwp.com/preinstall-faq/).
+= How does MainWP help with client management? =
+
+The free MainWP Core includes Client Management for client profiles (contacts, notes, and custom fields), site assignments, tags, CSV import, and suspending all of a client's sites in one action. Scheduled, branded client reports are added by **MainWP Pro Reports** in MainWP Pro.
+
+= What does the built-in Cost Tracker do? =
+
+Cost Tracker is built into the free MainWP Core to track your site and client expenses in one place:
+
+* Record recurring subscriptions and one-time (lifetime) costs for hosting, plugins, themes, and services
+* Assign each cost to sites, clients, or tags in default or custom categories and payment methods
+* Review monthly and yearly totals, category breakdowns, upcoming renewals, and payment left for this month in **Cost Summary**
+* Export Cost Summary chart data as SVG, PNG, or CSV
+* Filter costs, save filter segments, and import entries from CSV
+
+Automated subscription expiration email alerts are added by **MainWP Cost Tracker Assistant** in MainWP Pro.
+
+= How do MainWP Assistant and MainWP MCP work with AI tools? =
+
+**MainWP Assistant** is built into your MainWP Dashboard in version 6.5. Docs mode answers MainWP questions with no AI key, and Sites mode (WordPress 7.0 or later) works with your connected sites using your ChatGPT plan or AI provider key, starting in Read Only mode with confirmation prompts, protected tags, and daily spend limits.
+
+**MainWP MCP** exposes over 100 core abilities on WordPress 6.9 or later over HTTPS. Connect supported apps directly over OAuth 2.1 under **AI > MainWP MCP > Connect an app** with no local install and no MainWP service in between, or run the free, open-source local MCP server for private Dashboards.
+
+**MainWP Knowledge** stores Agency, Client, and Site standards that assistants load before planning, while AI-written records wait on the **Review** tab for your approval. See [MainWP AI](https://mainwp.com/mainwp-ai/).
+
+= Can I manage WordPress sites hosted on different servers or providers? =
+
+Yes. MainWP manages WordPress sites across different hosts and servers as long as your MainWP Dashboard can reach each connected child site.
+
+= Why do large backups take a long time to finish, and how should I configure cron? =
+
+Your MainWP Dashboard drives Built-In Backups from WP-Cron in one-minute slices, and WP-Cron runs when your Dashboard receives requests. On a low-traffic Dashboard, keep **Use WP Cron** enabled, set `DISABLE_WP_CRON` in `wp-config.php`, and add a system cron job that calls `wp-cron.php` every minute. If you call scripts in MainWP's `cron` folder over HTTP instead, include the cron security key shown under **MainWP > Info > Cron Schedules**, which also shows when the `Run backup steps` slice job last ran. See [Manage WP Cron on a Low-Traffic MainWP Dashboard](https://docs.mainwp.com/customization/manage-wp-cron-on-low-traffic-mainwp-dashboard) and [Cron Key for HTTP Cron Calls](https://docs.mainwp.com/customization/cron-key-for-http-cron-calls).
+
+= I have a feature idea for MainWP. Where should I share it? =
+
+Submit ideas and vote on community requests on [MainWP Voice](https://voice.mainwp.com/).
+
+= Where can I read more pre-installation questions? =
+
+Read our full [MainWP Pre-install FAQ](https://docs.mainwp.com/getting-started/pre-install-faq) for hosting, licensing, and setup details.
 
 = Where do I report security bugs found in this plugin? =
-Please report security bugs found in the source code of the MainWP plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/9e5fb39c-dd7e-4c6b-a871-c6a046430f0f). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
-= Why do large backups take a long time to finish? =
-The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron only runs when the Dashboard gets visits. On a Dashboard with little traffic, set DISABLE_WP_CRON in wp-config.php and add a system cron that requests wp-cron.php every minute. Server Information shows when the slice job last ran.
+Report security bugs found in the source code of the MainWP plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/9e5fb39c-dd7e-4c6b-a871-c6a046430f0f). The Patchstack team assists with verification, CVE assignment, and developer notification.
+
+= How do you pronounce MainWP? =
+
+MainWP is pronounced as the word "Main" followed by the letters "WP" ("double-u pee"): **Main + WP = MainWP** (`/ˈmeɪn ˈdʌbəl juː ˈpiː/`).
 
 == Screenshots ==
 
@@ -153,6 +162,14 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.5.1 - 11-25-2026 =
+
+* Fixed: Logging in through WordPress now respects the requested destination or custom login redirect.
+* Fixed: Manage Users can list and filter users when a connected site has missing or incomplete cached user data.
+* Fixed: Cost Tracker excludes subscriptions without a renewal date from upcoming renewals.
+* Updated: Refined packaging rules to exclude development-only files.
+* Updated: Refreshed the plugin description, installation instructions, and frequently asked questions.
 
 = 6.5 - 11-17-2026 =
 

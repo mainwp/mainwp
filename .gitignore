@@ -19,3 +19,9 @@ composer.lock
 /tests/e2e/node_modules/
 /tests/e2e/playwright-report/
 /tests/e2e/test-results/
+
+# Internal investigation notes (MWP-2469)
+/investigation/
+
+# Internal notes, plans and investigations (never commit)
+/.mwpdev/

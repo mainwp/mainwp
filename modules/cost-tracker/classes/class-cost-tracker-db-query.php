@@ -218,7 +218,8 @@ class Cost_Tracker_DB_Query extends Cost_Tracker_DB {
 
         if ( $filter_next_renewal ) {
             $stop_start = $filter_dtsstop - $filter_dtsstart;
-            $where     .= ' AND cost_status = "active" AND type = "subscription" AND ( CASE ';
+            // A missing renewal date is stored as 0; projecting it forward from 1970 would land in some windows.
+            $where     .= ' AND cost_status = "active" AND type = "subscription" AND next_renewal > 0 AND ( CASE ';
             $where     .= ' WHEN renewal_type = "weekly" AND ( ( next_renewal >= ' . intval( $filter_dtsstart ) . ' AND ( next_renewal <= ' . intval( $filter_dtsstop ) . ' ) ) OR ( next_renewal < ' . intval( $filter_dtsstart ) . ' AND ( MOD( ' . intval( $filter_dtsstop ) . ' - next_renewal, ' . intval( WEEK_IN_SECONDS ) . '  ) < ' . $stop_start . ' ) ) ) THEN true ';
             $where     .= ' WHEN renewal_type = "monthly" AND ( ( next_renewal >= ' . intval( $filter_dtsstart ) . ' AND ( next_renewal <= ' . intval( $filter_dtsstop ) . ' ) ) OR ( next_renewal < ' . intval( $filter_dtsstart ) . ' AND ( MOD( ' . intval( $filter_dtsstop ) . ' - next_renewal, ' . intval( MONTH_IN_SECONDS ) . '  ) < ' . $stop_start . ' ) ) ) THEN true ';
             $where     .= ' WHEN renewal_type = "yearly" AND ( ( next_renewal >= ' . intval( $filter_dtsstart ) . ' AND ( next_renewal <= ' . intval( $filter_dtsstop ) . ' ) ) OR ( next_renewal < ' . intval( $filter_dtsstart ) . ' AND ( MOD( ' . intval( $filter_dtsstop ) . ' - next_renewal, ' . intval( YEAR_IN_SECONDS ) . '  ) < ' . $stop_start . ' ) ) ) THEN true ';

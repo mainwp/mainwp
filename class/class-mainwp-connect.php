@@ -1020,6 +1020,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $data_sign_v2['remove']  = (string) $params['remove'];
                 }
 
+                if ( 'upgradepluginexact' === $what ) {
+                    // The Child refuses this command unless the signature covers the selection it acts on.
+                    foreach ( array( 'slug', 'current_version', 'target_version' ) as $_name ) {
+                        if ( isset( $params[ $_name ] ) ) {
+                            $data_sign_v2[ $_name ] = $params[ $_name ];
+                        }
+                    }
+                }
+
                 $sign_success_v2 = null;
 
                 $sign_value_v2 = wp_json_encode( $data_sign_v2 );
@@ -2002,7 +2011,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $others = array(
             'force_use_ipv4' => $website->force_use_ipv4,
-            'upgrade'        => ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ),
+            'upgrade'        => ( 'upgradepluginexact' === $what || 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ),
         );
 
         if ( isset( $rawResponse ) && $rawResponse ) {
@@ -2017,9 +2026,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $premium_update = 'process_premium_updates' === $what && ! empty( $params['premium_perform'] ) && 'premium_update' === $params['premium_perform'] ? true : false;
 
-        if ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what || $premium_update ) {
+        if ( 'upgradepluginexact' === $what || 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what || $premium_update ) {
             $updating_website = true;
-            if ( $premium_update ) {
+            if ( 'upgradepluginexact' === $what ) {
+                $type             = 'plugin';
+                $list             = is_string( $params['slug'] ?? null ) ? $params['slug'] : '';
+                $pRetryFailed     = false; // A lost exact-update response must not resend the mutation.
+                $verify_signature = true; // Only the advanced signature can bind the selection.
+            } elseif ( $premium_update ) {
                 $type = $params['premium_type'];
                 $list = $params['list'];
             } elseif ( 'upgradeplugintheme' === $what || 'upgradetranslation' === $what ) {

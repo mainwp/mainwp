@@ -265,6 +265,12 @@ class Test_REST_Exact_Plugin_Update extends MainWP_Abilities_Test_Case {
 		};
 		add_action( 'mainwp_website_before_updated', $before, 10, 3 );
 		add_action( 'mainwp_website_updated', $after, 10, 3 );
+		$key = openssl_pkey_new( array( 'private_key_bits' => 2048 ) );
+		openssl_pkey_export( $key, $pem );
+		// No per-site key file exists, so signing falls back to this raw PEM.
+		$this->site->privkey        = base64_encode( $pem ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- privkey is stored base64-encoded.
+		$this->site->verify_method  = 1;
+		$this->site->signature_algo = OPENSSL_ALGO_SHA256;
 		try {
 			Test_MainWP_Exact_Transport::$response = $this->response;
 			$result                                = Test_MainWP_Exact_Transport::fetch_url_authed(
@@ -276,6 +282,13 @@ class Test_REST_Exact_Plugin_Update extends MainWP_Abilities_Test_Case {
 			$this->assertTrue( Test_MainWP_Exact_Transport::$others['upgrade'] );
 			$this->assertFalse( Test_MainWP_Exact_Transport::$retry );
 			$this->assertSame( array( array( 'before', 'plugin', $expected_slug ), array( 'after', 'plugin', $expected_slug ) ), $events );
+			// Callers cannot opt out of the signature that binds the selection the Child acts on.
+			parse_str( Test_MainWP_Exact_Transport::$post, $post );
+			$signed = json_decode( $post['data_signature'], true );
+			$this->assertSame( 1, openssl_verify( $post['data_signature'], base64_decode( $post['mainwpsignature_adv'] ), openssl_pkey_get_details( $key )['key'], OPENSSL_ALGO_SHA256 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- Signature wire format.
+			$this->assertSame( array( 'upgradepluginexact', $post['nonce'] ), array( $signed['base_function'], $signed['nonce'] ) );
+			$this->assertSame( $selection, array_intersect_key( $signed, array_flip( array( 'slug', 'current_version', 'target_version' ) ) ) );
+			$this->assertSame( $selection, array_intersect_key( $post, $selection ) );
 		} finally {
 			remove_action( 'mainwp_website_before_updated', $before, 10 );
 			remove_action( 'mainwp_website_updated', $after, 10 );
@@ -313,15 +326,14 @@ class Test_REST_Exact_Plugin_Update extends MainWP_Abilities_Test_Case {
 }
 
 
-/** Run the actual transport lifecycle with only signing and network I/O replaced. */
+/** Run the actual transport lifecycle and signing with only network I/O replaced. */
 class Test_MainWP_Exact_Transport extends MainWP_Connect {
 	public static $response;
 	public static $others;
 	public static $retry;
-	public static function get_post_data_authed( &$website, $what, $params = null, $others = array() ) {
-		return $params;
-	}
+	public static $post;
 	public static function fetch_url( &$website, $url, $postdata, $checkConstraints = false, $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array(), &$output = array() ) {
+		self::$post   = $postdata;
 		self::$others = $others;
 		self::$retry  = $pRetryFailed;
 		return self::$response;

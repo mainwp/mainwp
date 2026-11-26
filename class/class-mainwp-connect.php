@@ -1020,6 +1020,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $data_sign_v2['remove']  = (string) $params['remove'];
                 }
 
+                if ( 'upgradepluginexact' === $what ) {
+                    // The Child refuses this command unless the signature covers the selection it acts on.
+                    foreach ( array( 'slug', 'current_version', 'target_version' ) as $_name ) {
+                        if ( isset( $params[ $_name ] ) ) {
+                            $data_sign_v2[ $_name ] = $params[ $_name ];
+                        }
+                    }
+                }
+
                 $sign_success_v2 = null;
 
                 $sign_value_v2 = wp_json_encode( $data_sign_v2 );
@@ -2020,9 +2029,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( 'upgradepluginexact' === $what || 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what || $premium_update ) {
             $updating_website = true;
             if ( 'upgradepluginexact' === $what ) {
-                $type         = 'plugin';
-                $list         = is_string( $params['slug'] ?? null ) ? $params['slug'] : '';
-                $pRetryFailed = false; // A lost exact-update response must not resend the mutation.
+                $type             = 'plugin';
+                $list             = is_string( $params['slug'] ?? null ) ? $params['slug'] : '';
+                $pRetryFailed     = false; // A lost exact-update response must not resend the mutation.
+                $verify_signature = true; // Only the advanced signature can bind the selection.
             } elseif ( $premium_update ) {
                 $type = $params['premium_type'];
                 $list = $params['list'];
